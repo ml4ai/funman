@@ -1,15 +1,59 @@
 
+from pysmt.shortcuts import get_model, And, LT, GE, TRUE
+
+POS_INFINITY = "inf"
+NEG_INFINITY = "-inf"
+
+class AnalysisScenario(object):
+    pass
+
+class ParameterSynthesisScenario(AnalysisScenario):
+    def __init__(self, parameters, model) -> None:
+        super().__init__()
+        self.parameters = parameters
+        self.model = model
+    
+class Box(object):
+    def __init__(self, parameters) -> None:
+        self.bounds = { p: [NEG_INFINITY, POS_INFINITY] for p in parameters}
+    
+    def to_smt(self):
+        return And(
+            [
+                And(
+                    (GE(p.symbol, b[0]) if b[0] != NEG_INFINITY else TRUE()), 
+                    (LT(p.symbol, b[1]) if b[1] != POS_INFINITY else TRUE())
+                    ).simplify()
+                for p, b in self.bounds.items()
+            ]
+        )
+        
+class AnalysisScenarioResult(object):
+    def __init__(self, scenario: AnalysisScenario) -> None:
+        self.scenario = scenario
+
+class ParameterSynthesisScenarioResult(AnalysisScenarioResult):
+    def __init__(self, scenario: ParameterSynthesisScenario) -> None:
+        super().__init__(scenario)
+
+class Model(object):
+    def __init__(self, formula) -> None:
+        self.formula = formula
+
+class Parameter(object):
+    def __init__(self, symbol) -> None:
+        self.symbol = symbol
 
 class Funman(object):
     def __init__(self) -> None:
         self.scenario_handlers = {
-            ParameterSynthesisScenario : synthesize_parameters
+            ParameterSynthesisScenario : self.synthesize_parameters
         }
 
-    def solve(problem: AnalysisScenario):
-        return self.scenario_handlers[problem](problem)
+    def solve(self, problem: AnalysisScenario) -> AnalysisScenarioResult:
+        return self.scenario_handlers[type(problem)](problem)
 
-    def synthesize_parameters(problem : ParameterSynthesisScenario):
+    def synthesize_parameters(self, problem : ParameterSynthesisScenario) -> ParameterSynthesisScenarioResult:
         """ Psuedocode:
 
             p = problem.parameters
@@ -58,22 +102,19 @@ class Funman(object):
         Args:
             problem (ParameterSynthesisScenario): _description_
         """
+        initial_box = Box(problem.parameters)
+
+        # FIXME The code below will create a formula phi that is the model and initial box.
+        #       It needs to be extended to find the parameter space, per notes above.
+        # You will need to extend the Box class to handle bisecting, and any other manipulations.
+        # Also, the call the solver will also need a different phi (e.g., Not(And(box, model)))
+        phi = And(initial_box.to_smt(), problem.model.formula).simplify()
+        res = get_model(phi) 
+
+        # FIXME the parameter space will be added the to object below, in addition to the problem.
+        #       Initially, the parameter space can be a set of boxes
+        return ParameterSynthesisScenarioResult(problem)
 
 
 
-class AnalysisScenario(object):
-    pass
-
-class ParameterSynthesisScenario(AnalysisScenario):
-    def __init__(self) -> None:
-        super().__init__()
-        self.parameters = [Parameter("foo"), Parameter("bar")]
-        self.model = Model()
-        
-class Model(object):
-    pass
-
-class Parameter(object):
-    def __init__(self, name) -> None:
-        self.name = name
 
