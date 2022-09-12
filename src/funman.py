@@ -132,7 +132,7 @@ class Funman(object):
                 res1 = get_model(phi1)
                 if res1:
                     b1, b2 = box.split()
-                    unknown_boxes = unknown_boxes + [b1, b2]
+                    unknown_boxes = unknown_boxes + [b2, b1]
                 else:
                     false_boxes.append(box)  # TODO consider merging lists of boxes
             else: # done
