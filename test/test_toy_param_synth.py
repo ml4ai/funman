@@ -1,4 +1,4 @@
-from pysmt.shortcuts import get_model, And, Symbol, FunctionType, Function, Equals, Int, Real, substitute, TRUE, FALSE, Iff, Plus, ForAll, LT, simplify, GT
+from pysmt.shortcuts import get_model, And, Symbol, FunctionType, Function, Equals, Int, Real, substitute, TRUE, FALSE, Iff, Plus, ForAll, LT, simplify, GT, LE, GE
 from pysmt.typing import INT, REAL, BOOL
 import unittest
 import os
@@ -13,8 +13,8 @@ class TestCompilation(unittest.TestCase):
         # 0.0 < x < 5
         model = Model(
             And(
-                LT(x, Real(5.0)), 
-                GT(x, Real(0.0))
+                LE(x, Real(5.0)), 
+                GE(x, Real(0.0))
                 )
             )
         

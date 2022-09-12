@@ -1,8 +1,11 @@
 
-from pysmt.shortcuts import get_model, And, LT, GE, TRUE
+from copy import deepcopy
+from pysmt.shortcuts import get_model, And, LT, GE, TRUE, Not, Real
+
 
 POS_INFINITY = "inf"
 NEG_INFINITY = "-inf"
+BIG_NUMBER = 1e6
 
 class AnalysisScenario(object):
     pass
@@ -21,12 +24,57 @@ class Box(object):
         return And(
             [
                 And(
-                    (GE(p.symbol, b[0]) if b[0] != NEG_INFINITY else TRUE()), 
-                    (LT(p.symbol, b[1]) if b[1] != POS_INFINITY else TRUE())
+                    (GE(p.symbol, Real(b[0])) if b[0] != NEG_INFINITY else TRUE()), 
+                    (LT(p.symbol, Real(b[1])) if b[1] != POS_INFINITY else TRUE())
                     ).simplify()
                 for p, b in self.bounds.items()
             ]
         )
+
+    def copy(self):
+        c = Box(list(self.bounds.keys()))
+        for p, b in self.bounds.items():
+            c.bounds[p] = b
+        return c
+    
+    def parameter_width(self, bound):
+        [lb, ub] = bound
+        if lb == NEG_INFINITY or ub == POS_INFINITY:
+            return BIG_NUMBER
+        else:
+            return ub - lb
+
+    def interval_split(self, interval):
+        [lb, ub] = interval
+        if lb == NEG_INFINITY and ub == POS_INFINITY:
+            return 0
+        elif lb == NEG_INFINITY:
+            return ub - BIG_NUMBER
+        if ub == POS_INFINITY:
+            return lb + BIG_NUMBER
+        else:
+            return ((ub - lb)/2) + lb
+
+    def get_max_width_parameter(self):
+        widths = [self.parameter_width(bounds) for p, bounds in self.bounds.items()]
+        param = list(self.bounds.keys())[widths.index(max(widths))]
+        return param
+
+    def split(self):
+        p = self.get_max_width_parameter()
+        b1 = self.copy()
+        b2 = self.copy()
+
+        mid = self.interval_split(self.bounds[p])
+
+        # b1 is lower half
+        b1.bounds[p] = [b1.bounds[p][0], mid]
+
+        # b2 is upper half
+        b2.bounds[p] = [mid, b2.bounds[p][1]]
+
+        return [b1, b2]
+        
         
 class AnalysisScenarioResult(object):
     def __init__(self, scenario: AnalysisScenario) -> None:
@@ -44,6 +92,18 @@ class Parameter(object):
     def __init__(self, symbol) -> None:
         self.symbol = symbol
 
+    def __eq__(self, other): 
+        if not isinstance(other, Parameter):
+            # don't attempt to compare against unrelated types
+            return NotImplemented
+
+        return self.symbol.symbol_name() == other.symbol.symbol_name()
+
+    def __hash__(self):
+        # necessary for instances to behave sanely in dicts and sets.
+        return hash(self.symbol)
+
+
 class Funman(object):
     def __init__(self) -> None:
         self.scenario_handlers = {
@@ -54,62 +114,37 @@ class Funman(object):
         return self.scenario_handlers[type(problem)](problem)
 
     def synthesize_parameters(self, problem : ParameterSynthesisScenario) -> ParameterSynthesisScenarioResult:
-        """ Psuedocode:
-
-            p = problem.parameters
-            b0 = problem.initial_box(p)  # b0 = {p1: [0, 1], p2: [-inf, inf], ...} b1 = {p1: [-1, 0), ...}
-            u = [b0] # unknown boxes
-            t = [] # known sat boxes
-            f = [] # known unsat boxes
-
-            Case 1:
-            while len(u) > 0:
-                b = u.pop()
-                b' = exists_forall(b, problem.model)   [  b  [ b' ]    ], # b' = {p1: [0.5, 1], p2: [0, 10], ...}
-                
-                if b':
-                    b'' = b \ b' , And(b, Not(b')) = b''
-                    u = u + [b'']
-                    t = t + [b']
-                else: # no b', forall_exists not b'
-                    f = f + [b']
-
-                    
-
-            Case 2: 
-            (un)sat = exists(Not(And(b, problem.model)))   
-            if sat: 
-                # b is not in t, and need to split
-                b1, b2 = bisect(b)  # b = {p1: [0.5, 1], p2: [0, 10], ...}, b1 = {p1: [0.5, 1], p2: [0, 5], ...}, b2 = {p1: [0.5, 1], p2: [5, 10], ...}
-                u = u + [b1, b2]
-            elif unsat:
-                # b is in t
-
-
-            - Representation of a box: 
-                - Case 1: Implicit, constraints
-                - Case 2: Explicit, sets of intervals
-
-            - Search Graph:
-                - Case 1: Multi-ary branching, branching driven by ExForAll, children (t-region, u-region, f-region )
-                - Case 2: Binary, bisections
-
-
-            How do we manage search to get the most t/f boxes possible 
-
-            Smoke test: Use Case 2, model = "x < 5, x > 0", param = "x", 
-
-        Args:
-            problem (ParameterSynthesisScenario): _description_
+        """ 
         """
         initial_box = Box(problem.parameters)
+
+        unknown_boxes = [initial_box]
+        true_boxes = []
+        false_boxes = []
+
+        while len(unknown_boxes) > 0:
+            box = unknown_boxes.pop()
+            phi = And(box.to_smt(), Not(problem.model.formula).simplify())
+            res = get_model(phi) 
+            if res: 
+                # split because values in box are not in model: either f or u
+                phi1 = And(box.to_smt(), problem.model.formula).simplify()
+                res1 = get_model(phi1)
+                if res1:
+                    b1, b2 = box.split()
+                    unknown_boxes = unknown_boxes + [b1, b2]
+                else:
+                    false_boxes.append(box)  # TODO consider merging lists of boxes
+            else: # done
+                true_boxes.append(box) # TODO consider merging lists of boxes
+
+            
 
         # FIXME The code below will create a formula phi that is the model and initial box.
         #       It needs to be extended to find the parameter space, per notes above.
         # You will need to extend the Box class to handle bisecting, and any other manipulations.
-        # Also, the call the solver will also need a different phi (e.g., Not(And(box, model)))
-        phi = And(initial_box.to_smt(), problem.model.formula).simplify()
-        res = get_model(phi) 
+        # Also, the call the solver will also need a different phi (e.g., (And(box, Not(model))))
+        
 
         # FIXME the parameter space will be added the to object below, in addition to the problem.
         #       Initially, the parameter space can be a set of boxes
