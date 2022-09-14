@@ -115,22 +115,30 @@ class Funman(object):
         """ 
         """
         initial_box = Box(problem.parameters)
-
+        num_parameters = len(list(initial_box.bounds.values()))
         unknown_boxes = [initial_box]
         true_boxes = []
         false_boxes = []
         max_uk_box_length = 10e10      ## initialization  
-        tol = 10e-3 ## arbitrary precision - gives the smallest box that you would still want to split.
+        tol = 10e-2 ## arbitrary precision - gives the smallest box that you would still want to split.
         while len(unknown_boxes) > 0 and max_uk_box_length > tol:
             ##print("number of unknown boxes:",len(unknown_boxes))
-            ## Create list of unknown boxes
-            uk_box_bounds = [list(i.bounds.values())[0] for i in unknown_boxes]
-            ## Calculate lengths of boxes
-            uk_box_lengths = [float(uk_box_bounds[i][1]) - float(uk_box_bounds[i][0]) for i in range(len(uk_box_bounds))]
-            ## choose to work on the largest unknown box first
-            max_uk_box_length = max(uk_box_lengths)
-            print('max unknown box length:',max_uk_box_length)
-            largest_uk_box_index = uk_box_lengths.index(max(uk_box_lengths))
+            ## Create list of unknown boxes for each parameter
+            max_uk_box_length_per_parameter = []
+            largest_uk_box_index_per_parameter = []
+            for j in range(num_parameters):
+                uk_box_bounds = [list(i.bounds.values())[j] for i in unknown_boxes]
+                ## Calculate lengths of boxes
+                uk_box_lengths = [float(uk_box_bounds[i][1]) - float(uk_box_bounds[i][0]) for i in range(len(uk_box_bounds))]
+                max_uk_box_length = max(uk_box_lengths)
+                largest_uk_box_index = uk_box_lengths.index(max(uk_box_lengths))
+                ## choose to work on the largest unknown box first
+                max_uk_box_length_per_parameter.append(max_uk_box_length) 
+                largest_uk_box_index_per_parameter.append(largest_uk_box_index)
+                ## find parameter with largest width
+                parameter_argmax = max_uk_box_length_per_parameter.index(max(max_uk_box_length_per_parameter)) 
+                ## find index of largest width element for that parameter
+                largest_uk_box_index = largest_uk_box_index_per_parameter[parameter_argmax] 
             box = unknown_boxes.pop(largest_uk_box_index) ## pop(0) is ok too 
             phi = And(box.to_smt(), Not(problem.model.formula).simplify())
             res = get_model(phi) 
@@ -146,11 +154,11 @@ class Funman(object):
             else: # done
                 true_boxes.append(box) # TODO consider merging lists of boxes
 
-            printable_list_false_boxes = [list((false_boxes[i].bounds.values()))[0] for i in range(len(false_boxes))]
+            printable_list_false_boxes = [list((false_boxes[i].bounds.values())) for i in range(len(false_boxes))]
             print('false boxes:', printable_list_false_boxes)
-            printable_list_true_boxes = [list((true_boxes[i].bounds.values()))[0] for i in range(len(true_boxes))]
+            printable_list_true_boxes = [list((true_boxes[i].bounds.values())) for i in range(len(true_boxes))]
             print('true boxes:', printable_list_true_boxes)
-            printable_list_unknown_boxes = [list((unknown_boxes[i].bounds.values()))[0] for i in range(len(unknown_boxes))]           
+            printable_list_unknown_boxes = [list((unknown_boxes[i].bounds.values())) for i in range(len(unknown_boxes))]           
             print('unknown boxes:', printable_list_unknown_boxes)
 
         # FIXME The code below will create a formula phi that is the model and initial box.
@@ -162,7 +170,4 @@ class Funman(object):
         # FIXME the parameter space will be added the to object below, in addition to the problem.
         #       Initially, the parameter space can be a set of boxes
         return ParameterSynthesisScenarioResult(problem)
-
-
-
 
