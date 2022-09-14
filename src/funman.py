@@ -1,7 +1,5 @@
-
 from copy import deepcopy
-from pysmt.shortcuts import get_model, And, LT, GE, TRUE, Not, Real
-
+from pysmt.shortcuts import get_model, And, LT, LE, GE, TRUE, Not, Real
 
 POS_INFINITY = "inf"
 NEG_INFINITY = "-inf"
@@ -121,12 +119,22 @@ class Funman(object):
         unknown_boxes = [initial_box]
         true_boxes = []
         false_boxes = []
-
-        while len(unknown_boxes) > 0:
-            box = unknown_boxes.pop()
+        max_uk_box_length = 10e10      ## initialization  
+        tol = 10e-3 ## arbitrary precision - gives the smallest box that you would still want to split.
+        while len(unknown_boxes) > 0 and max_uk_box_length > tol:
+            ##print("number of unknown boxes:",len(unknown_boxes))
+            ## Create list of unknown boxes
+            uk_box_bounds = [list(i.bounds.values())[0] for i in unknown_boxes]
+            ## Calculate lengths of boxes
+            uk_box_lengths = [float(uk_box_bounds[i][1]) - float(uk_box_bounds[i][0]) for i in range(len(uk_box_bounds))]
+            ## choose to work on the largest unknown box first
+            max_uk_box_length = max(uk_box_lengths)
+            print('max unknown box length:',max_uk_box_length)
+            largest_uk_box_index = uk_box_lengths.index(max(uk_box_lengths))
+            box = unknown_boxes.pop(largest_uk_box_index) ## pop(0) is ok too 
             phi = And(box.to_smt(), Not(problem.model.formula).simplify())
             res = get_model(phi) 
-            if res: 
+            if res:
                 # split because values in box are not in model: either f or u
                 phi1 = And(box.to_smt(), problem.model.formula).simplify()
                 res1 = get_model(phi1)
@@ -138,7 +146,12 @@ class Funman(object):
             else: # done
                 true_boxes.append(box) # TODO consider merging lists of boxes
 
-            
+            printable_list_false_boxes = [list((false_boxes[i].bounds.values()))[0] for i in range(len(false_boxes))]
+            print('false boxes:', printable_list_false_boxes)
+            printable_list_true_boxes = [list((true_boxes[i].bounds.values()))[0] for i in range(len(true_boxes))]
+            print('true boxes:', printable_list_true_boxes)
+            printable_list_unknown_boxes = [list((unknown_boxes[i].bounds.values()))[0] for i in range(len(unknown_boxes))]           
+            print('unknown boxes:', printable_list_unknown_boxes)
 
         # FIXME The code below will create a formula phi that is the model and initial box.
         #       It needs to be extended to find the parameter space, per notes above.
