@@ -1,5 +1,7 @@
 from copy import deepcopy
 from pysmt.shortcuts import get_model, And, LT, LE, GE, TRUE, Not, Real
+import matplotlib.pyplot as plt
+import numpy as np
 
 POS_INFINITY = "inf"
 NEG_INFINITY = "-inf"
@@ -120,7 +122,7 @@ class Funman(object):
         true_boxes = []
         false_boxes = []
         max_uk_box_length = 10e10      ## initialization  
-        tol = 10e-2 ## arbitrary precision - gives the smallest box that you would still want to split.
+        tol = 10e-3 ## arbitrary precision - gives the smallest box that you would still want to split.
         while len(unknown_boxes) > 0 and max_uk_box_length > tol:
             ##print("number of unknown boxes:",len(unknown_boxes))
             ## Create list of unknown boxes for each parameter
@@ -160,6 +162,54 @@ class Funman(object):
             print('true boxes:', printable_list_true_boxes)
             printable_list_unknown_boxes = [list((unknown_boxes[i].bounds.values())) for i in range(len(unknown_boxes))]           
             print('unknown boxes:', printable_list_unknown_boxes)
+            ### 1D Plotting
+            if num_parameters == 1: 
+                for i in printable_list_unknown_boxes:
+                    point1 = i[0][0]
+                    point2 = i[0][1]
+                    if float(point1) > -20 and float(point2) < 20:
+                        x_values = [point1, point2]
+                        plt.plot(x_values, np.zeros(len(x_values)),'b', linestyle="-")
+                for i in printable_list_true_boxes:
+                    point1 = i[0][0]
+                    point2 = i[0][1]
+                    if float(point1) > -20 and float(point2) < 20:
+                        x_values = [point1, point2]
+                        plt.plot(x_values, np.zeros(len(x_values)),'g', linestyle="-")
+                for i in printable_list_false_boxes:
+                    point1 = i[0][0]
+                    point2 = i[0][1]
+                    if float(point1) > -20 and float(point2) < 20:
+                        x_values = [point1, point2]
+                        plt.plot(x_values, np.zeros(len(x_values)),'r', linestyle="-")
+                plt.show(block=False)
+                plt.pause(1)
+                plt.close()
+            ### 2D Plotting
+            elif num_parameters == 2: 
+                for i in printable_list_unknown_boxes:
+                    x_limits = i[0]
+                    y_limits = i[1]
+                    if float(x_limits[0]) > -20 and float(x_limits[1]) < 20:
+                        x = np.linspace(x_limits[0], x_limits[1],1000)
+                        plt.fill_between(x, y_limits[0], y_limits[1], color='b')
+                for i in printable_list_false_boxes:
+                    x_limits = i[0]
+                    y_limits = i[1]
+                    if float(x_limits[0]) > -20 and float(x_limits[1]) < 20:
+                        x = np.linspace(x_limits[0], x_limits[1],1000)
+                        plt.fill_between(x, y_limits[0], y_limits[1], color='r')
+                for i in printable_list_true_boxes:
+                    x_limits = i[0]
+                    y_limits = i[1]
+                    if float(x_limits[0]) > -20 and float(x_limits[1]) < 20:
+                        x = np.linspace(x_limits[0], x_limits[1],1000)
+                        plt.fill_between(x, y_limits[0], y_limits[1], color='g')
+                plt.show(block=False)
+                plt.pause(1)
+                plt.close()
+
+            
 
         # FIXME The code below will create a formula phi that is the model and initial box.
         #       It needs to be extended to find the parameter space, per notes above.
