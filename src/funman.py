@@ -2,10 +2,15 @@ from copy import deepcopy
 from pysmt.shortcuts import get_model, And, LT, LE, GE, TRUE, Not, Real
 import matplotlib.pyplot as plt
 import numpy as np
+from IPython.display import clear_output
 
 POS_INFINITY = "inf"
 NEG_INFINITY = "-inf"
 BIG_NUMBER = 1e6
+
+import logging
+l = logging.getLogger(__file__)
+l.setLevel(logging.ERROR)
 
 class AnalysisScenario(object):
     pass
@@ -113,7 +118,7 @@ class Funman(object):
     def solve(self, problem: AnalysisScenario) -> AnalysisScenarioResult:
         return self.scenario_handlers[type(problem)](problem)
 
-    def synthesize_parameters(self, problem : ParameterSynthesisScenario) -> ParameterSynthesisScenarioResult:
+    def synthesize_parameters(self, problem : ParameterSynthesisScenario, tolerance: float = 0.1) -> ParameterSynthesisScenarioResult:
         """ 
         """
         initial_box = Box(problem.parameters)
@@ -122,8 +127,10 @@ class Funman(object):
         true_boxes = []
         false_boxes = []
         max_uk_box_length = 10e10      ## initialization  
-        tol = 10e-3 ## arbitrary precision - gives the smallest box that you would still want to split.
+        tol = tolerance ## arbitrary precision - gives the smallest box that you would still want to split.
+        counter = 0
         while len(unknown_boxes) > 0 and max_uk_box_length > tol:
+            counter += 1
             ##print("number of unknown boxes:",len(unknown_boxes))
             ## Create list of unknown boxes for each parameter
             max_uk_box_length_per_parameter = []
@@ -157,13 +164,15 @@ class Funman(object):
                 true_boxes.append(box) # TODO consider merging lists of boxes
 
             printable_list_false_boxes = [list((false_boxes[i].bounds.values())) for i in range(len(false_boxes))]
-            print('false boxes:', printable_list_false_boxes)
+            l.debug('false boxes:', printable_list_false_boxes)
             printable_list_true_boxes = [list((true_boxes[i].bounds.values())) for i in range(len(true_boxes))]
-            print('true boxes:', printable_list_true_boxes)
+            l.debug('true boxes:', printable_list_true_boxes)
             printable_list_unknown_boxes = [list((unknown_boxes[i].bounds.values())) for i in range(len(unknown_boxes))]           
-            print('unknown boxes:', printable_list_unknown_boxes)
+            l.debug('unknown boxes:', printable_list_unknown_boxes)
+
             ### 1D Plotting
             if num_parameters == 1: 
+                clear_output(wait=True)
                 for i in printable_list_unknown_boxes:
                     point1 = i[0][0]
                     point2 = i[0][1]
@@ -183,10 +192,11 @@ class Funman(object):
                         x_values = [point1, point2]
                         plt.plot(x_values, np.zeros(len(x_values)),'r', linestyle="-")
                 plt.show(block=False)
-                plt.pause(1)
-                plt.close()
+                # plt.pause(1)
+                # plt.close()
             ### 2D Plotting
-            elif num_parameters == 2: 
+            elif num_parameters == 2 and counter%10==0: 
+                clear_output(wait=True)
                 for i in printable_list_unknown_boxes:
                     x_limits = i[0]
                     y_limits = i[1]
@@ -206,8 +216,8 @@ class Funman(object):
                         x = np.linspace(x_limits[0], x_limits[1],1000)
                         plt.fill_between(x, y_limits[0], y_limits[1], color='g')
                 plt.show(block=False)
-                plt.pause(1)
-                plt.close()
+                # plt.pause(1)
+                # plt.close()
 
             
 
