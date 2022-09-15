@@ -204,7 +204,7 @@ class Funman(object):
                 # plt.pause(1)
                 # plt.close()
             ### 2D Plotting
-            elif num_parameters == 2 and counter%10==0: 
+            elif num_parameters == 2 and counter%50==0: 
                 clear_output(wait=True)
                 for i in printable_list_unknown_boxes:
                     x_limits = i[0]
