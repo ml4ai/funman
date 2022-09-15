@@ -1,6 +1,7 @@
 from copy import deepcopy
 from pysmt.shortcuts import get_model, And, LT, LE, GE, TRUE, Not, Real
 import matplotlib.pyplot as plt
+from matplotlib.lines import Line2D
 import numpy as np
 from IPython.display import clear_output
 
@@ -174,23 +175,31 @@ class Funman(object):
             if num_parameters == 1: 
                 clear_output(wait=True)
                 for i in printable_list_unknown_boxes:
-                    point1 = i[0][0]
-                    point2 = i[0][1]
-                    if float(point1) > -20 and float(point2) < 20:
+                    point1 = float(i[0][0])
+                    point2 = float(i[0][1])
+                    if point1 > -20 and point2 < 20:
                         x_values = [point1, point2]
                         plt.plot(x_values, np.zeros(len(x_values)),'b', linestyle="-")
+                    else:
+                        x_values = [-20, 20]
+                        plt.plot(x_values, np.zeros(len(x_values)),'b', linestyle="-")
+      
                 for i in printable_list_true_boxes:
-                    point1 = i[0][0]
-                    point2 = i[0][1]
-                    if float(point1) > -20 and float(point2) < 20:
+                    point1 = float(i[0][0])
+                    point2 = float(i[0][1])
+                    if point1 > -20 and point2 < 20:
                         x_values = [point1, point2]
                         plt.plot(x_values, np.zeros(len(x_values)),'g', linestyle="-")
                 for i in printable_list_false_boxes:
-                    point1 = i[0][0]
-                    point2 = i[0][1]
+                    point1 = float(i[0][0])
+                    point2 = float(i[0][1])
                     if float(point1) > -20 and float(point2) < 20:
                         x_values = [point1, point2]
                         plt.plot(x_values, np.zeros(len(x_values)),'r', linestyle="-")
+                plt.xlabel('x')
+                plt.title('0 <= x <= 5')
+                custom_lines = [Line2D([0], [0], color='b', lw=4),Line2D([0], [0], color='g', lw=4), Line2D([0], [0], color='r', lw=4)]
+                plt.legend(custom_lines,['unknown','true','false'])
                 plt.show(block=False)
                 # plt.pause(1)
                 # plt.close()
@@ -202,6 +211,9 @@ class Funman(object):
                     y_limits = i[1]
                     if float(x_limits[0]) > -20 and float(x_limits[1]) < 20:
                         x = np.linspace(x_limits[0], x_limits[1],1000)
+                        plt.fill_between(x, y_limits[0], y_limits[1], color='b')
+                    else:
+                        x = np.linspace(-20, 20, 1000)
                         plt.fill_between(x, y_limits[0], y_limits[1], color='b')
                 for i in printable_list_false_boxes:
                     x_limits = i[0]
@@ -215,6 +227,11 @@ class Funman(object):
                     if float(x_limits[0]) > -20 and float(x_limits[1]) < 20:
                         x = np.linspace(x_limits[0], x_limits[1],1000)
                         plt.fill_between(x, y_limits[0], y_limits[1], color='g')
+                plt.xlabel('x')
+                plt.ylabel('y')
+                plt.title('0 <= x <= 5, 10 <= y <= 12')
+                custom_lines = [Line2D([0], [0], color='b', lw=4),Line2D([0], [0], color='g', lw=4), Line2D([0], [0], color='r', lw=4)]
+                plt.legend(custom_lines,['unknown','true','false'])
                 plt.show(block=False)
                 # plt.pause(1)
                 # plt.close()
