@@ -5,11 +5,11 @@ name = "pypi"
 
 [packages]
 funman = {editable = true, path = "."}
-gromet2smtlib = {editable = true, path = "../gromet2smtlib"}
+gromet2smtlib = {editable = true, path = "./../gromet2smtlib"}
 automates = {editable = true, ref = "4562cb8ce409093cdc1ea4318472ed9cb5777dfa", git = "https://github.com/danbryce/automates.git"}
 
 [dev-packages]
-pytest = "7.1.2"
+pytest = "==7.1.2"
 
 [requires]
 python_version = "3.9"

@@ -15,7 +15,7 @@ setup(name='funman',
         #      Come back to determine if they can be factored out.
         "numpy",
         "matplotlib",
-        "ipython"
+        "jupyter"
       ],
       tests_require=["unittest"],
       zip_safe=False

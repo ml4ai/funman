@@ -6,7 +6,7 @@ from sim.CHIME.CHIME_SIR import main as run_CHIME_SIR
 import os
 import unittest
 
-RESOURCES = os.path.join("test", "resources")
+RESOURCES = os.path.join("resources")
 GROMET_FILE = os.path.join(RESOURCES, "CHIME_SIR_while_loop--Gromet-FN-auto.json")
 
 class Test_CHIME_SIR(unittest.TestCase):

@@ -6,7 +6,7 @@ from pysmt.typing import INT, REAL, BOOL
 import unittest
 import os
 
-RESOURCES = os.path.join("test", "resources")
+RESOURCES = os.path.join("resources")
 
 class TestHandcoded(unittest.TestCase):
     def test_toy(self):

@@ -5,7 +5,7 @@ from gromet2smtlib.translate import QueryableGromet
 import os
 import unittest
 
-RESOURCES = os.path.join("test", "resources")
+RESOURCES = os.path.join("resources")
 GROMET_FILE_1 = os.path.join(RESOURCES, "CHIME_SIR_while_loop--Gromet-FN-auto.json")
 GROMET_FILE_2 = os.path.join(RESOURCES, "CHIME_SIR_while_loop--Gromet-FN-auto-one-epoch.json")
 
