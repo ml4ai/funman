@@ -6,8 +6,8 @@ import os
 import unittest
 
 RESOURCES = os.path.join("resources")
-GROMET_FILE_1 = os.path.join(RESOURCES, "CHIME_SIR_while_loop--Gromet-FN-auto.json")
-GROMET_FILE_2 = os.path.join(RESOURCES, "CHIME_SIR_while_loop--Gromet-FN-auto-one-epoch.json")
+GROMET_FILE_1 = os.path.join(RESOURCES, "gromet", "CHIME_SIR_while_loop--Gromet-FN-auto.json")
+GROMET_FILE_2 = os.path.join(RESOURCES, "gromet", "CHIME_SIR_while_loop--Gromet-FN-auto-one-epoch.json")
 
 class Test_CHIME_SIR(unittest.TestCase):
 
