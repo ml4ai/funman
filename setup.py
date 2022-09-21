@@ -1,6 +1,4 @@
 from setuptools import setup, find_packages
-import sys
-import os
 
 setup(name='funman',
       version='0.1',
@@ -11,7 +9,14 @@ setup(name='funman',
       license='MIT',
       packages=find_packages('src'),
       package_dir={'':'src'},
-      install_requires=["gromet2smtlib"],
+      install_requires=[
+        "model2smtlib",
+        # TODO imported these do keep things turning over in reorg.
+        #      Come back to determine if they can be factored out.
+        "numpy",
+        "matplotlib",
+        "jupyter"
+      ],
       tests_require=["unittest"],
       zip_safe=False
       )

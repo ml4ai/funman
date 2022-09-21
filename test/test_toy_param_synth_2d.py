@@ -1,10 +1,9 @@
 from pysmt.shortcuts import get_model, And, Symbol, FunctionType, Function, Equals, Int, Real, substitute, TRUE, FALSE, Iff, Plus, ForAll, LT, simplify, GT, LE, GE
 import sys
-sys.path.append('/Users/dmosaphir/SIFT/Projects/ASKEM/code/funman/src')
 from pysmt.typing import INT, REAL, BOOL
 import unittest
 import os
-from funman import Funman, ParameterSynthesisScenario, Parameter, Model
+from funman.funman import Funman, ParameterSynthesisScenario, Parameter, Model
 
 class TestCompilation(unittest.TestCase):
     def test_toy(self):
