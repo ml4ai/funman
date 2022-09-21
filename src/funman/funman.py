@@ -1,13 +1,11 @@
-from copy import deepcopy
+from funman.constants import BIG_NUMBER, POS_INFINITY, NEG_INFINITY
+
 from pysmt.shortcuts import get_model, And, LT, LE, GE, TRUE, Not, Real
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 import numpy as np
 from IPython.display import clear_output
 
-POS_INFINITY = "inf"
-NEG_INFINITY = "-inf"
-BIG_NUMBER = 1e6
 
 import logging
 l = logging.getLogger(__file__)
