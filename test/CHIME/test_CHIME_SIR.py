@@ -1,4 +1,4 @@
-from gromet2smtlib.translate import QueryableGromet
+from model2smtlib.gromet.translate import QueryableGromet
 from funman.simulator import query_simulator
 
 from sim.CHIME.CHIME_SIR import main as run_CHIME_SIR

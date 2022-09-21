@@ -5,7 +5,7 @@ name = "pypi"
 
 [packages]
 funman = {editable = true, path = "."}
-gromet2smtlib = {editable = true, path = "./../gromet2smtlib"}
+model2smtlib = {editable = true, path = "./../model2smtlib"}
 automates = {editable = true, ref = "4562cb8ce409093cdc1ea4318472ed9cb5777dfa", git = "https://github.com/danbryce/automates.git"}
 
 [dev-packages]

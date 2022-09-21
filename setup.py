@@ -10,7 +10,7 @@ setup(name='funman',
       packages=find_packages('src'),
       package_dir={'':'src'},
       install_requires=[
-        "gromet2smtlib",
+        "model2smtlib",
         # TODO imported these do keep things turning over in reorg.
         #      Come back to determine if they can be factored out.
         "numpy",

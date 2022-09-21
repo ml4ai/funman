@@ -1,6 +1,6 @@
 from multiprocessing.heap import Arena
 from funman.parameter_space import ParameterSpace
-from gromet2smtlib.translate import QueryableGromet
+from model2smtlib.gromet.translate import QueryableGromet
 
 import os
 import unittest
