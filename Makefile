@@ -1,6 +1,6 @@
 PIPENV=PIPENV_VENV_IN_PROJECT=1 pipenv
 
-.PHONY: setup-dev-env destroy-dev-env
+.PHONY: setup-dev-env destroy-dev-env docs
 setup-dev-env: setup-pipenv setup-pysmt
 
 setup-pipenv:
@@ -24,3 +24,8 @@ set-conda:
 
 setup-conda-packages:
 	$(PIPENV) run conda install scipy pygraphviz scikit-learn igraph  python-igraph lxml Pillow coverage psutil
+
+docs:
+	sphinx-apidoc -f -o ./docs/source ./src/funman -t ./docs/apidoc_templates --no-toc
+	pyreverse ./src/funman -d ./docs/source/_static
+	cd docs && make clean html

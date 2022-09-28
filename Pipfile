@@ -10,6 +10,8 @@ automates = {editable = true, ref = "4562cb8ce409093cdc1ea4318472ed9cb5777dfa", 
 
 [dev-packages]
 pytest = "==7.1.2"
+sphinx = "==5.2.2"
+sphinx-rtd-theme = "==1.0.0"
 
 [requires]
 python_version = "3.9"

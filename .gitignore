@@ -10,6 +10,13 @@ Pipfile.lock
 # local solvers from the virtual environment's pysmt-install
 .smt-solvers/
 
+# docs
+# for now exclude these since they are generated
+docs/source/funman.rst
+docs/source/modules.rst
+docs/source/_static/classes.dot
+docs/source/_static/packages.dot
+
 ################################################################
 # The following is based on:
 # https://github.com/github/gitignore/blob/main/Python.gitignore
