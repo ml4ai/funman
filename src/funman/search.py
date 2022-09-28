@@ -370,14 +370,20 @@ class BoxSearchEpisode(SearchEpisode):
         false_boxes = false_boxes if false_boxes else self.false_boxes
         unknown_boxes = unknown_boxes if unknown_boxes else self.unknown_boxes
 
-        clear_output(wait=True)
-        for i in iter(true_boxes.get, None):
-            if plot_bounds.intersects(i) and i.finite():
-                self.plot1DBox(i, p1, color="g")
+        if self.closed:
+            t_boxes = self.t_boxes
+            f_boxes = self.f_boxes
+        else:
+            t_boxes = true_boxes
+            f_boxes = false_boxes
 
-        for i in iter(false_boxes.get, None):
-            if plot_bounds.intersects(i) and i.finite():
-                self.plot1DBox(i, p1, color="r")
+        for b in t_boxes:
+            if b and plot_bounds.intersects(b) and b.finite():
+                self.plot1DBox(b, p1, color="g")
+        for b in f_boxes:
+            if b and plot_bounds.intersects(b) and b.finite():
+                self.plot1DBox(b, p1, color="r")
+
         plt.xlabel(p1.name)
         plt.xlim([plot_bounds.bounds[p1].lb, plot_bounds.bounds[p1].ub])
 
@@ -419,13 +425,6 @@ class BoxSearchEpisode(SearchEpisode):
             t_boxes = self.t_boxes
             f_boxes = self.f_boxes
         else:
-            # with self.statistics.num_true.get_lock():
-            #     n_true = self.statistics.num_true.value
-            # t_boxes = self._get_box_queue(true_boxes, n_true)
-
-            # with self.statistics.num_false.get_lock():
-            #     n_false = self.statistics.num_false.value
-            # f_boxes = self._get_box_queue(false_boxes, n_false)
             t_boxes = true_boxes
             f_boxes = false_boxes
 
