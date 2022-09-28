@@ -553,7 +553,7 @@ class BoxSearch(object):
         self.episodes.append(episode)
         episode.on_start()
 
-        number_of_processes = 2  # cpu_count()
+        number_of_processes = cpu_count()
         processes = []
 
         rval = Queue()
