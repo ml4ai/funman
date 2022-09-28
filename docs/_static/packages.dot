@@ -1,0 +1,17 @@
+digraph "packages" {
+rankdir=BT
+charset="utf-8"
+"funman" [color="black", label="funman", shape="box", style="solid"];
+"funman.constants" [color="black", label="funman.constants", shape="box", style="solid"];
+"funman.funman" [color="black", label="funman.funman", shape="box", style="solid"];
+"funman.model" [color="black", label="funman.model", shape="box", style="solid"];
+"funman.parameter_space" [color="black", label="funman.parameter_space", shape="box", style="solid"];
+"funman.scenario" [color="black", label="funman.scenario", shape="box", style="solid"];
+"funman.search" [color="black", label="funman.search", shape="box", style="solid"];
+"funman.simulator" [color="black", label="funman.simulator", shape="box", style="solid"];
+"funman.funman" -> "funman.constants" [arrowhead="open", arrowtail="none"];
+"funman.funman" -> "funman.scenario" [arrowhead="open", arrowtail="none"];
+"funman.funman" -> "funman.search" [arrowhead="open", arrowtail="none"];
+"funman.search" -> "funman.constants" [arrowhead="open", arrowtail="none"];
+"funman.search" -> "funman.scenario" [arrowhead="open", arrowtail="none"];
+}

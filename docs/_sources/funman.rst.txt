@@ -1,0 +1,83 @@
+funman package
+==============
+
+Submodules
+----------
+
+funman.constants
+----------------
+.. inheritance-diagram:: funman.constants
+   :parts: 1
+
+.. automodule:: funman.constants
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+funman.funman
+-------------
+.. inheritance-diagram:: funman.funman
+   :parts: 1
+
+.. automodule:: funman.funman
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+funman.model
+------------
+.. inheritance-diagram:: funman.model
+   :parts: 1
+
+.. automodule:: funman.model
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+funman.parameter\_space
+-----------------------
+.. inheritance-diagram:: funman.parameter_space
+   :parts: 1
+
+.. automodule:: funman.parameter_space
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+funman.scenario
+---------------
+.. inheritance-diagram:: funman.scenario
+   :parts: 1
+
+.. automodule:: funman.scenario
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+funman.search
+-------------
+.. inheritance-diagram:: funman.search
+   :parts: 1
+
+.. automodule:: funman.search
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+funman.simulator
+----------------
+.. inheritance-diagram:: funman.simulator
+   :parts: 1
+
+.. automodule:: funman.simulator
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: funman
+   :members:
+   :undoc-members:
+   :show-inheritance:

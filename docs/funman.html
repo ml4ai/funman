@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>funman package &mdash; funman  documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="_static/graphviz.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="package diagram" href="packages.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="index.html" class="icon icon-home"> funman
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="classes.html">class diagram</a></li>
+<li class="toctree-l1"><a class="reference internal" href="packages.html">package diagram</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">funman package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#funman-constants">funman.constants</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#funman-funman">funman.funman</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#funman.funman.Funman"><code class="docutils literal notranslate"><span class="pre">Funman</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#funman.funman.Funman.solve"><code class="docutils literal notranslate"><span class="pre">Funman.solve()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#funman.funman.Funman.synthesize_parameters"><code class="docutils literal notranslate"><span class="pre">Funman.synthesize_parameters()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#funman-model">funman.model</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#funman.model.Model"><code class="docutils literal notranslate"><span class="pre">Model</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#funman.model.Parameter"><code class="docutils literal notranslate"><span class="pre">Parameter</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#funman-parameter-space">funman.parameter_space</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#funman.parameter_space.ParameterSpace"><code class="docutils literal notranslate"><span class="pre">ParameterSpace</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#funman.parameter_space.ParameterSpace.compare"><code class="docutils literal notranslate"><span class="pre">ParameterSpace.compare()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#funman.parameter_space.ParameterSpace.construct_all_equal"><code class="docutils literal notranslate"><span class="pre">ParameterSpace.construct_all_equal()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#funman.parameter_space.ParameterSpace.intersect"><code class="docutils literal notranslate"><span class="pre">ParameterSpace.intersect()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#funman.parameter_space.ParameterSpace.project"><code class="docutils literal notranslate"><span class="pre">ParameterSpace.project()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#funman-scenario">funman.scenario</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#funman.scenario.AnalysisScenario"><code class="docutils literal notranslate"><span class="pre">AnalysisScenario</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#funman.scenario.AnalysisScenarioResult"><code class="docutils literal notranslate"><span class="pre">AnalysisScenarioResult</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#funman.scenario.ParameterSynthesisScenario"><code class="docutils literal notranslate"><span class="pre">ParameterSynthesisScenario</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#funman.scenario.ParameterSynthesisScenarioResult"><code class="docutils literal notranslate"><span class="pre">ParameterSynthesisScenarioResult</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#funman-search">funman.search</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#funman.search.Box"><code class="docutils literal notranslate"><span class="pre">Box</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#funman.search.Box.contains"><code class="docutils literal notranslate"><span class="pre">Box.contains()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#funman.search.Box.split"><code class="docutils literal notranslate"><span class="pre">Box.split()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#funman.search.Box.to_smt"><code class="docutils literal notranslate"><span class="pre">Box.to_smt()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#funman.search.Box.width"><code class="docutils literal notranslate"><span class="pre">Box.width()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#funman.search.BoxSearch"><code class="docutils literal notranslate"><span class="pre">BoxSearch</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#funman.search.BoxSearch.initial_box"><code class="docutils literal notranslate"><span class="pre">BoxSearch.initial_box()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#funman.search.BoxSearch.plot"><code class="docutils literal notranslate"><span class="pre">BoxSearch.plot()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#funman.search.BoxSearch.plot1D"><code class="docutils literal notranslate"><span class="pre">BoxSearch.plot1D()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#funman.search.BoxSearch.plot1DBox"><code class="docutils literal notranslate"><span class="pre">BoxSearch.plot1DBox()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#funman.search.BoxSearch.plot2D"><code class="docutils literal notranslate"><span class="pre">BoxSearch.plot2D()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#funman.search.BoxSearch.plot2DBox"><code class="docutils literal notranslate"><span class="pre">BoxSearch.plot2DBox()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#funman.search.BoxSearch.plotBox"><code class="docutils literal notranslate"><span class="pre">BoxSearch.plotBox()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#funman.search.BoxSearch.search"><code class="docutils literal notranslate"><span class="pre">BoxSearch.search()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#funman.search.Interval"><code class="docutils literal notranslate"><span class="pre">Interval</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#funman.search.Interval.contains"><code class="docutils literal notranslate"><span class="pre">Interval.contains()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#funman.search.Interval.midpoint"><code class="docutils literal notranslate"><span class="pre">Interval.midpoint()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#funman.search.Interval.to_smt"><code class="docutils literal notranslate"><span class="pre">Interval.to_smt()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#funman.search.Interval.width"><code class="docutils literal notranslate"><span class="pre">Interval.width()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#funman-simulator">funman.simulator</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#funman.simulator.query_simulator"><code class="docutils literal notranslate"><span class="pre">query_simulator()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-funman">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">funman</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>funman package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/funman.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="funman-package">
+<h1>funman package<a class="headerlink" href="#funman-package" title="Permalink to this heading"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this heading"></a></h2>
+</section>
+<section id="funman-constants">
+<h2>funman.constants<a class="headerlink" href="#funman-constants" title="Permalink to this heading"></a></h2>
+<span class="target" id="module-funman.constants"></span></section>
+<section id="funman-funman">
+<h2>funman.funman<a class="headerlink" href="#funman-funman" title="Permalink to this heading"></a></h2>
+<div class="graphviz"><object data="_images/inheritance-af90d46f6876811923adfee86293f99daeeadf4f.svg" type="image/svg+xml" class="inheritance graphviz">
+<p class="warning">Inheritance diagram of funman.funman</p></object></div>
+<span class="target" id="module-funman.funman"></span><dl class="py class">
+<dt class="sig sig-object py" id="funman.funman.Funman">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">funman.funman.</span></span><span class="sig-name descname"><span class="pre">Funman</span></span><a class="headerlink" href="#funman.funman.Funman" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="funman.funman.Funman.solve">
+<span class="sig-name descname"><span class="pre">solve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#funman.scenario.AnalysisScenario" title="funman.scenario.AnalysisScenario"><span class="pre">AnalysisScenario</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#funman.scenario.AnalysisScenarioResult" title="funman.scenario.AnalysisScenarioResult"><span class="pre">AnalysisScenarioResult</span></a></span></span><a class="headerlink" href="#funman.funman.Funman.solve" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="funman.funman.Funman.synthesize_parameters">
+<span class="sig-name descname"><span class="pre">synthesize_parameters</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#funman.scenario.ParameterSynthesisScenario" title="funman.scenario.ParameterSynthesisScenario"><span class="pre">ParameterSynthesisScenario</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">tolerance</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.1</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#funman.scenario.ParameterSynthesisScenarioResult" title="funman.scenario.ParameterSynthesisScenarioResult"><span class="pre">ParameterSynthesisScenarioResult</span></a></span></span><a class="headerlink" href="#funman.funman.Funman.synthesize_parameters" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="funman-model">
+<h2>funman.model<a class="headerlink" href="#funman-model" title="Permalink to this heading"></a></h2>
+<div class="graphviz"><object data="_images/inheritance-0df3881488f5537d0b9d62f4c34fb3394cc6d6af.svg" type="image/svg+xml" class="inheritance graphviz">
+<p class="warning">Inheritance diagram of funman.model</p></object></div>
+<span class="target" id="module-funman.model"></span><dl class="py class">
+<dt class="sig sig-object py" id="funman.model.Model">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">funman.model.</span></span><span class="sig-name descname"><span class="pre">Model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">formula</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#funman.model.Model" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="funman.model.Parameter">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">funman.model.</span></span><span class="sig-name descname"><span class="pre">Parameter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">symbol</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#funman.model.Parameter" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+</dd></dl>
+
+</section>
+<section id="funman-parameter-space">
+<h2>funman.parameter_space<a class="headerlink" href="#funman-parameter-space" title="Permalink to this heading"></a></h2>
+<div class="graphviz"><object data="_images/inheritance-b274d072faf543bb434b6687f6a772625e444ad5.svg" type="image/svg+xml" class="inheritance graphviz">
+<p class="warning">Inheritance diagram of funman.parameter_space</p></object></div>
+<span class="target" id="module-funman.parameter_space"></span><dl class="py class">
+<dt class="sig sig-object py" id="funman.parameter_space.ParameterSpace">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">funman.parameter_space.</span></span><span class="sig-name descname"><span class="pre">ParameterSpace</span></span><a class="headerlink" href="#funman.parameter_space.ParameterSpace" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="funman.parameter_space.ParameterSpace.compare">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">compare</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ps1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ps2</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#funman.parameter_space.ParameterSpace.compare" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="funman.parameter_space.ParameterSpace.construct_all_equal">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">construct_all_equal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ps</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#funman.parameter_space.ParameterSpace" title="funman.parameter_space.ParameterSpace"><span class="pre">ParameterSpace</span></a></span></span><a class="headerlink" href="#funman.parameter_space.ParameterSpace.construct_all_equal" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="funman.parameter_space.ParameterSpace.intersect">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">intersect</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ps1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ps2</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#funman.parameter_space.ParameterSpace" title="funman.parameter_space.ParameterSpace"><span class="pre">ParameterSpace</span></a></span></span><a class="headerlink" href="#funman.parameter_space.ParameterSpace.intersect" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="funman.parameter_space.ParameterSpace.project">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">project</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#funman.parameter_space.ParameterSpace" title="funman.parameter_space.ParameterSpace"><span class="pre">ParameterSpace</span></a></span></span><a class="headerlink" href="#funman.parameter_space.ParameterSpace.project" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="funman-scenario">
+<h2>funman.scenario<a class="headerlink" href="#funman-scenario" title="Permalink to this heading"></a></h2>
+<div class="graphviz"><object data="_images/inheritance-4f4a3c0c59173f6909c6a2182deadb1057fe110f.svg" type="image/svg+xml" class="inheritance graphviz">
+<p class="warning">Inheritance diagram of funman.scenario</p></object></div>
+<span class="target" id="module-funman.scenario"></span><dl class="py class">
+<dt class="sig sig-object py" id="funman.scenario.AnalysisScenario">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">funman.scenario.</span></span><span class="sig-name descname"><span class="pre">AnalysisScenario</span></span><a class="headerlink" href="#funman.scenario.AnalysisScenario" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="funman.scenario.AnalysisScenarioResult">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">funman.scenario.</span></span><span class="sig-name descname"><span class="pre">AnalysisScenarioResult</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scenario</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#funman.scenario.AnalysisScenario" title="funman.scenario.AnalysisScenario"><span class="pre">AnalysisScenario</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#funman.scenario.AnalysisScenarioResult" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="funman.scenario.ParameterSynthesisScenario">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">funman.scenario.</span></span><span class="sig-name descname"><span class="pre">ParameterSynthesisScenario</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parameters</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#funman.scenario.ParameterSynthesisScenario" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#funman.scenario.AnalysisScenario" title="funman.scenario.AnalysisScenario"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnalysisScenario</span></code></a></p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="funman.scenario.ParameterSynthesisScenarioResult">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">funman.scenario.</span></span><span class="sig-name descname"><span class="pre">ParameterSynthesisScenarioResult</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scenario</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#funman.scenario.ParameterSynthesisScenario" title="funman.scenario.ParameterSynthesisScenario"><span class="pre">ParameterSynthesisScenario</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">result</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#funman.scenario.ParameterSynthesisScenarioResult" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#funman.scenario.AnalysisScenarioResult" title="funman.scenario.AnalysisScenarioResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnalysisScenarioResult</span></code></a></p>
+</dd></dl>
+
+</section>
+<section id="funman-search">
+<h2>funman.search<a class="headerlink" href="#funman-search" title="Permalink to this heading"></a></h2>
+<div class="graphviz"><object data="_images/inheritance-4fe57fc71648a7a05a9ed9d65579d15879151b82.svg" type="image/svg+xml" class="inheritance graphviz">
+<p class="warning">Inheritance diagram of funman.search</p></object></div>
+<span class="target" id="module-funman.search"></span><dl class="py class">
+<dt class="sig sig-object py" id="funman.search.Box">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">funman.search.</span></span><span class="sig-name descname"><span class="pre">Box</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parameters</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#funman.search.Box" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="funman.search.Box.contains">
+<span class="sig-name descname"><span class="pre">contains</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">other</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#funman.search.Box" title="funman.search.Box"><span class="pre">Box</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#funman.search.Box.contains" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="funman.search.Box.split">
+<span class="sig-name descname"><span class="pre">split</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#funman.search.Box.split" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="funman.search.Box.to_smt">
+<span class="sig-name descname"><span class="pre">to_smt</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#funman.search.Box.to_smt" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="funman.search.Box.width">
+<span class="sig-name descname"><span class="pre">width</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="headerlink" href="#funman.search.Box.width" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="funman.search.BoxSearch">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">funman.search.</span></span><span class="sig-name descname"><span class="pre">BoxSearch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#funman.scenario.ParameterSynthesisScenario" title="funman.scenario.ParameterSynthesisScenario"><span class="pre">ParameterSynthesisScenario</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#funman.search.BoxSearch" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="funman.search.BoxSearch.initial_box">
+<span class="sig-name descname"><span class="pre">initial_box</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#funman.search.Box" title="funman.search.Box"><span class="pre">Box</span></a></span></span><a class="headerlink" href="#funman.search.BoxSearch.initial_box" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="funman.search.BoxSearch.plot">
+<span class="sig-name descname"><span class="pre">plot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">true_boxes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">false_boxes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unknown_boxes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_bounds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#funman.search.Box" title="funman.search.Box"><span class="pre">Box</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#funman.search.BoxSearch.plot" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="funman.search.BoxSearch.plot1D">
+<span class="sig-name descname"><span class="pre">plot1D</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">true_boxes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">false_boxes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unknown_boxes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_bounds</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#funman.search.BoxSearch.plot1D" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="funman.search.BoxSearch.plot1DBox">
+<span class="sig-name descname"><span class="pre">plot1DBox</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">i</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#funman.search.Box" title="funman.search.Box"><span class="pre">Box</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">p1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Parameter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'g'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#funman.search.BoxSearch.plot1DBox" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="funman.search.BoxSearch.plot2D">
+<span class="sig-name descname"><span class="pre">plot2D</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">true_boxes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">false_boxes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unknown_boxes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_bounds</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#funman.search.BoxSearch.plot2D" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="funman.search.BoxSearch.plot2DBox">
+<span class="sig-name descname"><span class="pre">plot2DBox</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">i</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#funman.search.Box" title="funman.search.Box"><span class="pre">Box</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">p1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Parameter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p2</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Parameter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'g'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#funman.search.BoxSearch.plot2DBox" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="funman.search.BoxSearch.plotBox">
+<span class="sig-name descname"><span class="pre">plotBox</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">interval</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#funman.search.Interval" title="funman.search.Interval"><span class="pre">Interval</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">[-20,</span> <span class="pre">20]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#funman.search.BoxSearch.plotBox" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="funman.search.BoxSearch.search">
+<span class="sig-name descname"><span class="pre">search</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">initial_box</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#funman.search.Box" title="funman.search.Box"><span class="pre">Box</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">tolerance</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.1</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#funman.search.Box" title="funman.search.Box"><span class="pre">Box</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#funman.search.BoxSearch.search" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="funman.search.Interval">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">funman.search.</span></span><span class="sig-name descname"><span class="pre">Interval</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lb</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ub</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#funman.search.Interval" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="funman.search.Interval.contains">
+<span class="sig-name descname"><span class="pre">contains</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">other</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#funman.search.Interval" title="funman.search.Interval"><span class="pre">Interval</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#funman.search.Interval.contains" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="funman.search.Interval.midpoint">
+<span class="sig-name descname"><span class="pre">midpoint</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#funman.search.Interval.midpoint" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="funman.search.Interval.to_smt">
+<span class="sig-name descname"><span class="pre">to_smt</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Parameter</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#funman.search.Interval.to_smt" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="funman.search.Interval.width">
+<span class="sig-name descname"><span class="pre">width</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#funman.search.Interval.width" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="funman-simulator">
+<h2>funman.simulator<a class="headerlink" href="#funman-simulator" title="Permalink to this heading"></a></h2>
+<span class="target" id="module-funman.simulator"></span><dl class="py function">
+<dt class="sig sig-object py" id="funman.simulator.query_simulator">
+<span class="sig-prename descclassname"><span class="pre">funman.simulator.</span></span><span class="sig-name descname"><span class="pre">query_simulator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">run_sim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">query</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#funman.simulator.query_simulator" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-funman">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-funman" title="Permalink to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="packages.html" class="btn btn-neutral float-left" title="package diagram" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, SIFT.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
