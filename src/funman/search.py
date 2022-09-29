@@ -202,6 +202,11 @@ class SearchConfig(object):
     def __init__(self, *args, **kwargs) -> None:
         self.tolerance = kwargs["tolerance"] if "tolerance" in kwargs else 1e-1
         self.queue_timeout = kwargs["queue_timeout"] if "queue_timeout" in kwargs else 1
+        self.number_of_processes = (
+            kwargs["number_of_processes"]
+            if "number_of_processes" in kwargs
+            else cpu_count()
+        )
 
 
 class SearchEpisode(object):
@@ -510,9 +515,22 @@ class BoxSearch(object):
         episode.add_unknown([b1, b2])
         episode.statistics.iteration_operation.put("s")
 
+    def initialize(self, episode: BoxSearchEpisode):
+        initial_boxes = Queue()
+        initial_boxes.put(episode.initial_box())
+        num_boxes = 1
+        while num_boxes < episode.config.number_of_processes:
+            b1, b2 = initial_boxes.get().split()
+            initial_boxes.put(b1)
+            initial_boxes.put(b2)
+            num_boxes += 1
+        for i in range(num_boxes):
+            b = initial_boxes.get()
+            episode.add_unknown(b)
+
     def expand(self, rval: Queue, episode: BoxSearchEpisode):
         if episode.internal_process_id == 0:
-            episode.add_unknown(episode.initial_box())
+            self.initialize(episode)
 
         while True:
             try:
@@ -552,13 +570,12 @@ class BoxSearch(object):
         self.episodes.append(episode)
         episode.on_start()
 
-        number_of_processes = cpu_count()
         processes = []
 
         rval = Queue()
 
         # creating processes
-        for w in range(number_of_processes):
+        for w in range(episode.config.number_of_processes):
             p = Process(
                 target=self.expand,
                 args=(
