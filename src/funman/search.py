@@ -202,6 +202,11 @@ class SearchConfig(object):
     def __init__(self, *args, **kwargs) -> None:
         self.tolerance = kwargs["tolerance"] if "tolerance" in kwargs else 1e-1
         self.queue_timeout = kwargs["queue_timeout"] if "queue_timeout" in kwargs else 1
+        self.number_of_processes = (
+            kwargs["number_of_processes"]
+            if "number_of_processes" in kwargs
+            else cpu_count()
+        )
 
 
 class SearchEpisode(object):
@@ -370,14 +375,20 @@ class BoxSearchEpisode(SearchEpisode):
         false_boxes = false_boxes if false_boxes else self.false_boxes
         unknown_boxes = unknown_boxes if unknown_boxes else self.unknown_boxes
 
-        clear_output(wait=True)
-        for i in iter(true_boxes.get, None):
-            if plot_bounds.intersects(i) and i.finite():
-                self.plot1DBox(i, p1, color="g")
+        if self.closed:
+            t_boxes = self.t_boxes
+            f_boxes = self.f_boxes
+        else:
+            t_boxes = true_boxes
+            f_boxes = false_boxes
 
-        for i in iter(false_boxes.get, None):
-            if plot_bounds.intersects(i) and i.finite():
-                self.plot1DBox(i, p1, color="r")
+        for b in t_boxes:
+            if b and plot_bounds.intersects(b) and b.finite():
+                self.plot1DBox(b, p1, color="g")
+        for b in f_boxes:
+            if b and plot_bounds.intersects(b) and b.finite():
+                self.plot1DBox(b, p1, color="r")
+
         plt.xlabel(p1.name)
         plt.xlim([plot_bounds.bounds[p1].lb, plot_bounds.bounds[p1].ub])
 
@@ -419,13 +430,6 @@ class BoxSearchEpisode(SearchEpisode):
             t_boxes = self.t_boxes
             f_boxes = self.f_boxes
         else:
-            # with self.statistics.num_true.get_lock():
-            #     n_true = self.statistics.num_true.value
-            # t_boxes = self._get_box_queue(true_boxes, n_true)
-
-            # with self.statistics.num_false.get_lock():
-            #     n_false = self.statistics.num_false.value
-            # f_boxes = self._get_box_queue(false_boxes, n_false)
             t_boxes = true_boxes
             f_boxes = false_boxes
 
@@ -511,9 +515,22 @@ class BoxSearch(object):
         episode.add_unknown([b1, b2])
         episode.statistics.iteration_operation.put("s")
 
+    def initialize(self, episode: BoxSearchEpisode):
+        initial_boxes = Queue()
+        initial_boxes.put(episode.initial_box())
+        num_boxes = 1
+        while num_boxes < episode.config.number_of_processes:
+            b1, b2 = initial_boxes.get().split()
+            initial_boxes.put(b1)
+            initial_boxes.put(b2)
+            num_boxes += 1
+        for i in range(num_boxes):
+            b = initial_boxes.get()
+            episode.add_unknown(b)
+
     def expand(self, rval: Queue, episode: BoxSearchEpisode):
         if episode.internal_process_id == 0:
-            episode.add_unknown(episode.initial_box())
+            self.initialize(episode)
 
         while True:
             try:
@@ -553,13 +570,12 @@ class BoxSearch(object):
         self.episodes.append(episode)
         episode.on_start()
 
-        number_of_processes = cpu_count()
         processes = []
 
         rval = Queue()
 
         # creating processes
-        for w in range(number_of_processes):
+        for w in range(episode.config.number_of_processes):
             p = Process(
                 target=self.expand,
                 args=(
