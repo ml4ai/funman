@@ -37,7 +37,7 @@ init-pages:
 	git switch --orphan gh-pages
 	git commit --allow-empty -m "initial pages"
 	git push -u origin gh-pages
-	git checkout sphinx
+	git checkout main
 	git branch -D gh-pages
 
 deploy-pages: docs
@@ -50,5 +50,5 @@ deploy-pages: docs
 	git add -f docs
 	git commit -m "update pages" || true
 	git push
-	git checkout sphinx
+	git checkout main
 	git branch -D gh-pages
