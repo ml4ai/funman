@@ -29,6 +29,11 @@ from funman.model import Parameter, Model
 from funman.scenario import ParameterSynthesisScenario
 from funman.examples.chime import CHIME
 
+import logging
+
+l = logging.getLogger(__file__)
+l.setLevel(logging.ERROR)
+
 
 class TestCompilation(unittest.TestCase):
     def test_chime(self):
@@ -66,16 +71,19 @@ class TestCompilation(unittest.TestCase):
         params = And(
             [
                 # Equals(beta, Real(6.7857e-05)),
+                # LE(beta, Real(1e-4)),
+                # GE(beta, Real(1e-6)),
                 Equals(gamma, Real(0.071428571)),
             ]
         )
 
-        model = Model(And(params, init, dynamics, bounds, query))
+        model = Model(And(params, init, dynamics, bounds))
 
         scenario = ParameterSynthesisScenario(parameters, model)
         funman = Funman()
-        config = SearchConfig(tolerance=1e-1)
+        config = SearchConfig(tolerance=1e-1, queue_timeout=10)
         result = funman.solve(scenario, config=config)
+        l.info(f"True Boxes: {result.result.true_boxes}")
         assert result
 
 
