@@ -157,6 +157,7 @@ defined. All that remains is to have Funman solve the scenario using the defined
 configuration.
 
 .. code-block::
+    
     def test_parameter_synthesis_2d():
         # construct variables
         x = Symbol("x", REAL)
