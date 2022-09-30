@@ -1,6 +1,5 @@
-
-from funman.simulator import query_simulator
-
+from funman.simulator import Simulator, SimConfig
+from model2smtlib.gromet.translate import QueryableGromet
 from sim.CHIME.CHIME_SIR import main as run_CHIME_SIR
 
 import os
@@ -27,7 +26,9 @@ class Test_CHIME_SIR(unittest.TestCase):
             i = sim_results[2]
             return all(i_t <= infected_threshold for i_t in i)
 
-        q_sim = query_simulator(run_CHIME_SIR, does_not_cross_threshold)
+        q_sim = Simulator.query_simulator(
+            run_CHIME_SIR, does_not_cross_threshold, SimConfig()
+        )
 
         # query the gromet file
         gromet = QueryableGromet.from_gromet_file(GROMET_FILE)
