@@ -7,9 +7,11 @@ The funman package implements multiple simulator model analysis methods.  Curren
 """
 
 import funman.funman
+from funman._version import __version__
 
 def main():
     return funman.funman.Funman()
 
 if __name__ == "main":
     main()
+    

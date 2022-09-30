@@ -1,7 +1,11 @@
 from setuptools import setup, find_packages
+import os
+
+with open(os.path.join("src", "funman", '_version.py')) as version_file:
+    version = version_file.readlines()[-1].split()[-1].strip("\"'")
 
 setup(name='funman',
-      version='0.1',
+      version=version,
       description='Functional Model Analysis Tool',
       url='',
       author='Dan Bryce',
