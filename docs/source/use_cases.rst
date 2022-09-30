@@ -136,3 +136,48 @@ query.
     bilayer_file = "CHIME_SIR_dynamics_BiLayer.json"
     infected_threshold = 130
     assert compare_against_CHIME_bilayer(bilayer_file, infected_threshold)
+
+Parameter Synthesis
+-------------------
+
+The base set of types used during Parameter Synthesis:
+
+- a list of Parameters representing variables to be assigned
+- a Model containing some formula 
+- a Search instance representing the type of search to use during parameter synthesis
+- a Scenario container representing a set of parameters, model, and search value
+- a SearchConfig to configure search behavior
+- the Funman interface that runs analysis using scenarios and configuration data
+
+In the following example two parameters, x and y, are constructed. A model is 
+also constructed that says 0.0 < x < 5.0 and 10.0 < y < 12.0. These parameters
+and model are used to define a scenario that will use BoxSearch to synthesize
+the parameters. The Funman interface and a search configuration are also 
+defined. All that remains is to have Funman solve the scenario using the defined
+configuration.
+
+.. code-block::
+    def test_parameter_synthesis_2d():
+        # construct variables
+        x = Symbol("x", REAL)
+        y = Symbol("y", REAL)
+        parameters = [Parameter("x", x), Parameter("y", y)]
+
+        # construct model
+        # 0.0 < x < 5.0, 10.0 < y < 12.0
+        model = Model(
+            And(
+                LE(x, Real(5.0)), GE(x, Real(0.0)), LE(y, Real(12.0)), GE(y, Real(10.0))
+            )
+        )
+
+        # define scenario
+        scenario = ParameterSynthesisScenario(parameters, model, BoxSearch())
+
+        # create Funman instance and configuration
+        funman = Funman()
+        config = SearchConfig(tolerance=1e-1)
+
+        # ask Funman to solve the scenario
+        result = funman.solve(scenario, config=config)
+        assert result
