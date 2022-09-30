@@ -13,6 +13,7 @@ Welcome to funman's documentation!
    classes
    packages
    funman
+   use_cases
 
 Indices and tables
 ==================

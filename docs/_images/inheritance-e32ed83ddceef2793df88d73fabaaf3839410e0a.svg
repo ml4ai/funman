@@ -11,7 +11,7 @@
 <!-- Funman -->
 <g id="node1" class="node">
 <title>Funman</title>
-<g id="a_node1"><a xlink:href="../funman.html#funman.funman.Funman" xlink:title="Funman" target="_top">
+<g id="a_node1"><a xlink:href="../funman.html#funman.funman.Funman" xlink:title="The Funman FUNctional Model ANalysis class is the main entry point for" target="_top">
 <polygon fill="white" stroke="black" stroke-width="0.5" points="56,-19 0,-19 0,0 56,0 56,-19"/>
 <text text-anchor="middle" x="28" y="-7" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">Funman</text>
 </a>

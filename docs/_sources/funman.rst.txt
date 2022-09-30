@@ -1,8 +1,23 @@
 funman package
 ==============
 
+.. automodule:: funman
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 Submodules
 ----------
+
+funman.config
+-------------
+.. inheritance-diagram:: funman.config
+   :parts: 1
+
+.. automodule:: funman.config
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 funman.constants
 ----------------
@@ -64,20 +79,22 @@ funman.search
    :undoc-members:
    :show-inheritance:
 
+funman.search\_utils
+--------------------
+.. inheritance-diagram:: funman.search_utils
+   :parts: 1
+
+.. automodule:: funman.search_utils
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 funman.simulator
 ----------------
 .. inheritance-diagram:: funman.simulator
    :parts: 1
 
 .. automodule:: funman.simulator
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-Module contents
----------------
-
-.. automodule:: funman
    :members:
    :undoc-members:
    :show-inheritance:

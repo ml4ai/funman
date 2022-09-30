@@ -1,19 +1,29 @@
 digraph "classes" {
 rankdir=BT
 charset="utf-8"
-"funman.scenario.AnalysisScenario" [color="black", fontcolor="black", label="{AnalysisScenario|\l|}", shape="record", style="solid"];
-"funman.scenario.AnalysisScenarioResult" [color="black", fontcolor="black", label="{AnalysisScenarioResult|scenario\l|}", shape="record", style="solid"];
-"funman.search.Box" [color="black", fontcolor="black", label="{Box|bounds\l|contains(other): bool\lsplit()\lto_smt()\lwidth(): float\l}", shape="record", style="solid"];
-"funman.search.BoxSearch" [color="black", fontcolor="black", label="{BoxSearch|num_parameters\lproblem\l|initial_box(): Box\lplot(true_boxes, false_boxes, unknown_boxes, plot_bounds: Box)\lplot1D(true_boxes, false_boxes, unknown_boxes, plot_bounds)\lplot1DBox(i: Box, p1: Parameter, color)\lplot2D(true_boxes, false_boxes, unknown_boxes, plot_bounds)\lplot2DBox(i: Box, p1: Parameter, p2: Parameter, color)\lplotBox(interval: Interval)\lsearch(initial_box: Box, tolerance: float): Dict[str, List[Box]]\l}", shape="record", style="solid"];
-"funman.funman.Funman" [color="black", fontcolor="black", label="{Funman|scenario_handlers : dict\l|solve(problem: AnalysisScenario): AnalysisScenarioResult\lsynthesize_parameters(problem: ParameterSynthesisScenario, tolerance: float): ParameterSynthesisScenarioResult\l}", shape="record", style="solid"];
-"funman.search.Interval" [color="black", fontcolor="black", label="{Interval|lb : float\lub : float\l|contains(other): bool\lmidpoint()\lto_smt(p: Parameter)\lwidth()\l}", shape="record", style="solid"];
+"funman.scenario.AnalysisScenario" [color="black", fontcolor="black", label="{AnalysisScenario|\l|simulate()\lsolve(config: Config)\l}", shape="record", style="solid"];
+"funman.scenario.AnalysisScenarioResult" [color="black", fontcolor="black", label="{AnalysisScenarioResult|\l|}", shape="record", style="solid"];
+"funman.search_utils.Box" [color="black", fontcolor="black", label="{Box|bounds\lcached_width : NoneType\l|contains(other): bool\lfinite(): bool\lintersects(other): bool\lsplit()\lto_smt()\lwidth(): float\l}", shape="record", style="solid"];
+"funman.search.BoxSearch" [color="black", fontcolor="black", label="{BoxSearch|episodes : list\l|expand(rval: Queue, episode: BoxSearchEpisode): \linitialize(episode: BoxSearchEpisode)\lsearch(problem, config: SearchConfig): BoxSearchEpisode\lsplit(box: Box, episode: BoxSearchEpisode)\l}", shape="record", style="solid"];
+"funman.search.BoxSearchEpisode" [color="black", fontcolor="black", label="{BoxSearchEpisode|config\lfalse_boxes : list\linternal_process_id : int\literation : SynchronizedString, Synchronized, SynchronizedArray\lnum_parameters\lproblem\ltrue_boxes : list\lunknown_boxes : Queue\l|add_false(box: Box)\ladd_true(box: Box)\ladd_unknown(box: Union[Box, List[Box]])\lclose()\lget_unknown()\linitial_box(): Box\lon_iteration()\lon_start()\lplot(plot_bounds: Box, title)\lplot1D(true_boxes: Queue, false_boxes: Queue, plot_bounds: Box)\lplot1DBox(i: Box, p1: Parameter, color)\lplot2D(true_boxes: Queue, false_boxes: Queue, plot_bounds: Box)\lplot2DBox(i: Box, p1: Parameter, p2: Parameter, color)\lplotBox(interval: Interval)\l}", shape="record", style="solid"];
+"funman.config.Config" [color="black", fontcolor="black", label="{Config|\l|}", shape="record", style="solid"];
+"funman.funman.Funman" [color="black", fontcolor="black", label="{Funman|\l|solve(problem: AnalysisScenario, config: Config): AnalysisScenarioResult\l}", shape="record", style="solid"];
+"funman.search_utils.Interval" [color="black", fontcolor="black", label="{Interval|cached_width : NoneType, float\llb : float\lub : float\l|contains(other): bool\lfinite(): bool\lintersects(other): bool\lmidpoint()\lto_smt(p: Parameter)\lwidth()\l}", shape="record", style="solid"];
 "funman.model.Model" [color="black", fontcolor="black", label="{Model|formula\l|}", shape="record", style="solid"];
 "funman.model.Parameter" [color="black", fontcolor="black", label="{Parameter|name\lsymbol\l|}", shape="record", style="solid"];
-"funman.parameter_space.ParameterSpace" [color="black", fontcolor="black", label="{ParameterSpace|\l|compare(ps1, ps2): bool\lconstruct_all_equal(ps): \lintersect(ps1, ps2): \lproject(): \l}", shape="record", style="solid"];
-"funman.scenario.ParameterSynthesisScenario" [color="black", fontcolor="black", label="{ParameterSynthesisScenario|model\lparameters\l|}", shape="record", style="solid"];
+"funman.parameter_space.ParameterSpace" [color="black", fontcolor="black", label="{ParameterSpace|false_boxes\ltrue_boxes\l|compare(ps1, ps2): bool\lconstruct_all_equal(ps): \lintersect(ps1, ps2): \lproject(): \l}", shape="record", style="solid"];
+"funman.scenario.ParameterSynthesisScenario" [color="black", fontcolor="black", label="{ParameterSynthesisScenario|model\lparameters : List[Parameter]\lsearch\l|solve(config: SearchConfig): ParameterSpace\l}", shape="record", style="solid"];
 "funman.scenario.ParameterSynthesisScenarioResult" [color="black", fontcolor="black", label="{ParameterSynthesisScenarioResult|result : _SpecialForm\l|}", shape="record", style="solid"];
+"funman.search_utils.SearchConfig" [color="black", fontcolor="black", label="{SearchConfig|number_of_processes\lqueue_timeout : int\ltolerance : float\l|}", shape="record", style="solid"];
+"funman.search.SearchEpisode" [color="black", fontcolor="black", label="{SearchEpisode|statistics\l|}", shape="record", style="solid"];
+"funman.search_utils.SearchStatistics" [color="black", fontcolor="black", label="{SearchStatistics|current_residual : SynchronizedString, Synchronized, SynchronizedArray\literation_operation : Queue\literation_time : Queue\llast_time : SynchronizedString, Synchronized, SynchronizedArray\lnum_false : Synchronized, SynchronizedString, SynchronizedArray\lnum_true : Synchronized, SynchronizedArray, SynchronizedString\lnum_unknown : SynchronizedString, Synchronized, SynchronizedArray\lresiduals : Queue\l|close()\l}", shape="record", style="solid"];
+"funman.simulator.SimConfig" [color="black", fontcolor="black", label="{SimConfig|\l|}", shape="record", style="solid"];
+"funman.simulator.Simulator" [color="black", fontcolor="black", label="{Simulator|\l|query_simulator(run_sim, query: Config, config)\l}", shape="record", style="solid"];
 "funman.scenario.ParameterSynthesisScenario" -> "funman.scenario.AnalysisScenario" [arrowhead="empty", arrowtail="none"];
 "funman.scenario.ParameterSynthesisScenarioResult" -> "funman.scenario.AnalysisScenarioResult" [arrowhead="empty", arrowtail="none"];
-"funman.scenario.AnalysisScenario" -> "funman.scenario.AnalysisScenarioResult" [arrowhead="diamond", arrowtail="none", fontcolor="green", label="scenario", style="solid"];
-"funman.scenario.ParameterSynthesisScenario" -> "funman.search.BoxSearch" [arrowhead="diamond", arrowtail="none", fontcolor="green", label="problem", style="solid"];
+"funman.search.BoxSearchEpisode" -> "funman.search.SearchEpisode" [arrowhead="empty", arrowtail="none"];
+"funman.search_utils.SearchConfig" -> "funman.config.Config" [arrowhead="empty", arrowtail="none"];
+"funman.simulator.SimConfig" -> "funman.config.Config" [arrowhead="empty", arrowtail="none"];
+"funman.search_utils.SearchConfig" -> "funman.search.BoxSearchEpisode" [arrowhead="diamond", arrowtail="none", fontcolor="green", label="config", style="solid"];
+"funman.search_utils.SearchStatistics" -> "funman.search.SearchEpisode" [arrowhead="diamond", arrowtail="none", fontcolor="green", label="statistics", style="solid"];
 }

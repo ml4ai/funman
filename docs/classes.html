@@ -32,6 +32,9 @@
         <div class="wy-side-nav-search" >
             <a href="index.html" class="icon icon-home"> funman
           </a>
+              <div class="version">
+                1.0.0
+              </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" />
@@ -45,6 +48,7 @@
 <li class="toctree-l1 current"><a class="current reference internal" href="#">class diagram</a></li>
 <li class="toctree-l1"><a class="reference internal" href="packages.html">package diagram</a></li>
 <li class="toctree-l1"><a class="reference internal" href="funman.html">funman package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="use_cases.html">Use Cases</a></li>
 </ul>
 
         </div>
@@ -73,25 +77,35 @@
              
   <section id="class-diagram">
 <h1>class diagram<a class="headerlink" href="#class-diagram" title="Permalink to this heading"></a></h1>
-<div class="graphviz"><object data="_images/graphviz-afa610b35ec065e296e52eaa7226a9e08ef9b395.svg" type="image/svg+xml" class="graphviz">
+<div class="graphviz"><object data="_images/graphviz-87d87bb690a0d949e33db84df88b6be6507ddaaf.svg" type="image/svg+xml" class="graphviz">
 <p class="warning">digraph &quot;classes&quot; {
 rankdir=BT
 charset=&quot;utf-8&quot;
-&quot;funman.scenario.AnalysisScenario&quot; [color=&quot;black&quot;, fontcolor=&quot;black&quot;, label=&quot;{AnalysisScenario|\l|}&quot;, shape=&quot;record&quot;, style=&quot;solid&quot;];
-&quot;funman.scenario.AnalysisScenarioResult&quot; [color=&quot;black&quot;, fontcolor=&quot;black&quot;, label=&quot;{AnalysisScenarioResult|scenario\l|}&quot;, shape=&quot;record&quot;, style=&quot;solid&quot;];
-&quot;funman.search.Box&quot; [color=&quot;black&quot;, fontcolor=&quot;black&quot;, label=&quot;{Box|bounds\l|contains(other): bool\lsplit()\lto_smt()\lwidth(): float\l}&quot;, shape=&quot;record&quot;, style=&quot;solid&quot;];
-&quot;funman.search.BoxSearch&quot; [color=&quot;black&quot;, fontcolor=&quot;black&quot;, label=&quot;{BoxSearch|num_parameters\lproblem\l|initial_box(): Box\lplot(true_boxes, false_boxes, unknown_boxes, plot_bounds: Box)\lplot1D(true_boxes, false_boxes, unknown_boxes, plot_bounds)\lplot1DBox(i: Box, p1: Parameter, color)\lplot2D(true_boxes, false_boxes, unknown_boxes, plot_bounds)\lplot2DBox(i: Box, p1: Parameter, p2: Parameter, color)\lplotBox(interval: Interval)\lsearch(initial_box: Box, tolerance: float): Dict[str, List[Box]]\l}&quot;, shape=&quot;record&quot;, style=&quot;solid&quot;];
-&quot;funman.funman.Funman&quot; [color=&quot;black&quot;, fontcolor=&quot;black&quot;, label=&quot;{Funman|scenario_handlers : dict\l|solve(problem: AnalysisScenario): AnalysisScenarioResult\lsynthesize_parameters(problem: ParameterSynthesisScenario, tolerance: float): ParameterSynthesisScenarioResult\l}&quot;, shape=&quot;record&quot;, style=&quot;solid&quot;];
-&quot;funman.search.Interval&quot; [color=&quot;black&quot;, fontcolor=&quot;black&quot;, label=&quot;{Interval|lb : float\lub : float\l|contains(other): bool\lmidpoint()\lto_smt(p: Parameter)\lwidth()\l}&quot;, shape=&quot;record&quot;, style=&quot;solid&quot;];
+&quot;funman.scenario.AnalysisScenario&quot; [color=&quot;black&quot;, fontcolor=&quot;black&quot;, label=&quot;{AnalysisScenario|\l|simulate()\lsolve(config: Config)\l}&quot;, shape=&quot;record&quot;, style=&quot;solid&quot;];
+&quot;funman.scenario.AnalysisScenarioResult&quot; [color=&quot;black&quot;, fontcolor=&quot;black&quot;, label=&quot;{AnalysisScenarioResult|\l|}&quot;, shape=&quot;record&quot;, style=&quot;solid&quot;];
+&quot;funman.search_utils.Box&quot; [color=&quot;black&quot;, fontcolor=&quot;black&quot;, label=&quot;{Box|bounds\lcached_width : NoneType\l|contains(other): bool\lfinite(): bool\lintersects(other): bool\lsplit()\lto_smt()\lwidth(): float\l}&quot;, shape=&quot;record&quot;, style=&quot;solid&quot;];
+&quot;funman.search.BoxSearch&quot; [color=&quot;black&quot;, fontcolor=&quot;black&quot;, label=&quot;{BoxSearch|episodes : list\l|expand(rval: Queue, episode: BoxSearchEpisode): \linitialize(episode: BoxSearchEpisode)\lsearch(problem, config: SearchConfig): BoxSearchEpisode\lsplit(box: Box, episode: BoxSearchEpisode)\l}&quot;, shape=&quot;record&quot;, style=&quot;solid&quot;];
+&quot;funman.search.BoxSearchEpisode&quot; [color=&quot;black&quot;, fontcolor=&quot;black&quot;, label=&quot;{BoxSearchEpisode|config\lfalse_boxes : list\linternal_process_id : int\literation : SynchronizedString, Synchronized, SynchronizedArray\lnum_parameters\lproblem\ltrue_boxes : list\lunknown_boxes : Queue\l|add_false(box: Box)\ladd_true(box: Box)\ladd_unknown(box: Union[Box, List[Box]])\lclose()\lget_unknown()\linitial_box(): Box\lon_iteration()\lon_start()\lplot(plot_bounds: Box, title)\lplot1D(true_boxes: Queue, false_boxes: Queue, plot_bounds: Box)\lplot1DBox(i: Box, p1: Parameter, color)\lplot2D(true_boxes: Queue, false_boxes: Queue, plot_bounds: Box)\lplot2DBox(i: Box, p1: Parameter, p2: Parameter, color)\lplotBox(interval: Interval)\l}&quot;, shape=&quot;record&quot;, style=&quot;solid&quot;];
+&quot;funman.config.Config&quot; [color=&quot;black&quot;, fontcolor=&quot;black&quot;, label=&quot;{Config|\l|}&quot;, shape=&quot;record&quot;, style=&quot;solid&quot;];
+&quot;funman.funman.Funman&quot; [color=&quot;black&quot;, fontcolor=&quot;black&quot;, label=&quot;{Funman|\l|solve(problem: AnalysisScenario, config: Config): AnalysisScenarioResult\l}&quot;, shape=&quot;record&quot;, style=&quot;solid&quot;];
+&quot;funman.search_utils.Interval&quot; [color=&quot;black&quot;, fontcolor=&quot;black&quot;, label=&quot;{Interval|cached_width : NoneType, float\llb : float\lub : float\l|contains(other): bool\lfinite(): bool\lintersects(other): bool\lmidpoint()\lto_smt(p: Parameter)\lwidth()\l}&quot;, shape=&quot;record&quot;, style=&quot;solid&quot;];
 &quot;funman.model.Model&quot; [color=&quot;black&quot;, fontcolor=&quot;black&quot;, label=&quot;{Model|formula\l|}&quot;, shape=&quot;record&quot;, style=&quot;solid&quot;];
 &quot;funman.model.Parameter&quot; [color=&quot;black&quot;, fontcolor=&quot;black&quot;, label=&quot;{Parameter|name\lsymbol\l|}&quot;, shape=&quot;record&quot;, style=&quot;solid&quot;];
-&quot;funman.parameter_space.ParameterSpace&quot; [color=&quot;black&quot;, fontcolor=&quot;black&quot;, label=&quot;{ParameterSpace|\l|compare(ps1, ps2): bool\lconstruct_all_equal(ps): \lintersect(ps1, ps2): \lproject(): \l}&quot;, shape=&quot;record&quot;, style=&quot;solid&quot;];
-&quot;funman.scenario.ParameterSynthesisScenario&quot; [color=&quot;black&quot;, fontcolor=&quot;black&quot;, label=&quot;{ParameterSynthesisScenario|model\lparameters\l|}&quot;, shape=&quot;record&quot;, style=&quot;solid&quot;];
+&quot;funman.parameter_space.ParameterSpace&quot; [color=&quot;black&quot;, fontcolor=&quot;black&quot;, label=&quot;{ParameterSpace|false_boxes\ltrue_boxes\l|compare(ps1, ps2): bool\lconstruct_all_equal(ps): \lintersect(ps1, ps2): \lproject(): \l}&quot;, shape=&quot;record&quot;, style=&quot;solid&quot;];
+&quot;funman.scenario.ParameterSynthesisScenario&quot; [color=&quot;black&quot;, fontcolor=&quot;black&quot;, label=&quot;{ParameterSynthesisScenario|model\lparameters : List[Parameter]\lsearch\l|solve(config: SearchConfig): ParameterSpace\l}&quot;, shape=&quot;record&quot;, style=&quot;solid&quot;];
 &quot;funman.scenario.ParameterSynthesisScenarioResult&quot; [color=&quot;black&quot;, fontcolor=&quot;black&quot;, label=&quot;{ParameterSynthesisScenarioResult|result : _SpecialForm\l|}&quot;, shape=&quot;record&quot;, style=&quot;solid&quot;];
+&quot;funman.search_utils.SearchConfig&quot; [color=&quot;black&quot;, fontcolor=&quot;black&quot;, label=&quot;{SearchConfig|number_of_processes\lqueue_timeout : int\ltolerance : float\l|}&quot;, shape=&quot;record&quot;, style=&quot;solid&quot;];
+&quot;funman.search.SearchEpisode&quot; [color=&quot;black&quot;, fontcolor=&quot;black&quot;, label=&quot;{SearchEpisode|statistics\l|}&quot;, shape=&quot;record&quot;, style=&quot;solid&quot;];
+&quot;funman.search_utils.SearchStatistics&quot; [color=&quot;black&quot;, fontcolor=&quot;black&quot;, label=&quot;{SearchStatistics|current_residual : SynchronizedString, Synchronized, SynchronizedArray\literation_operation : Queue\literation_time : Queue\llast_time : SynchronizedString, Synchronized, SynchronizedArray\lnum_false : Synchronized, SynchronizedString, SynchronizedArray\lnum_true : Synchronized, SynchronizedArray, SynchronizedString\lnum_unknown : SynchronizedString, Synchronized, SynchronizedArray\lresiduals : Queue\l|close()\l}&quot;, shape=&quot;record&quot;, style=&quot;solid&quot;];
+&quot;funman.simulator.SimConfig&quot; [color=&quot;black&quot;, fontcolor=&quot;black&quot;, label=&quot;{SimConfig|\l|}&quot;, shape=&quot;record&quot;, style=&quot;solid&quot;];
+&quot;funman.simulator.Simulator&quot; [color=&quot;black&quot;, fontcolor=&quot;black&quot;, label=&quot;{Simulator|\l|query_simulator(run_sim, query: Config, config)\l}&quot;, shape=&quot;record&quot;, style=&quot;solid&quot;];
 &quot;funman.scenario.ParameterSynthesisScenario&quot; -&gt; &quot;funman.scenario.AnalysisScenario&quot; [arrowhead=&quot;empty&quot;, arrowtail=&quot;none&quot;];
 &quot;funman.scenario.ParameterSynthesisScenarioResult&quot; -&gt; &quot;funman.scenario.AnalysisScenarioResult&quot; [arrowhead=&quot;empty&quot;, arrowtail=&quot;none&quot;];
-&quot;funman.scenario.AnalysisScenario&quot; -&gt; &quot;funman.scenario.AnalysisScenarioResult&quot; [arrowhead=&quot;diamond&quot;, arrowtail=&quot;none&quot;, fontcolor=&quot;green&quot;, label=&quot;scenario&quot;, style=&quot;solid&quot;];
-&quot;funman.scenario.ParameterSynthesisScenario&quot; -&gt; &quot;funman.search.BoxSearch&quot; [arrowhead=&quot;diamond&quot;, arrowtail=&quot;none&quot;, fontcolor=&quot;green&quot;, label=&quot;problem&quot;, style=&quot;solid&quot;];
+&quot;funman.search.BoxSearchEpisode&quot; -&gt; &quot;funman.search.SearchEpisode&quot; [arrowhead=&quot;empty&quot;, arrowtail=&quot;none&quot;];
+&quot;funman.search_utils.SearchConfig&quot; -&gt; &quot;funman.config.Config&quot; [arrowhead=&quot;empty&quot;, arrowtail=&quot;none&quot;];
+&quot;funman.simulator.SimConfig&quot; -&gt; &quot;funman.config.Config&quot; [arrowhead=&quot;empty&quot;, arrowtail=&quot;none&quot;];
+&quot;funman.search_utils.SearchConfig&quot; -&gt; &quot;funman.search.BoxSearchEpisode&quot; [arrowhead=&quot;diamond&quot;, arrowtail=&quot;none&quot;, fontcolor=&quot;green&quot;, label=&quot;config&quot;, style=&quot;solid&quot;];
+&quot;funman.search_utils.SearchStatistics&quot; -&gt; &quot;funman.search.SearchEpisode&quot; [arrowhead=&quot;diamond&quot;, arrowtail=&quot;none&quot;, fontcolor=&quot;green&quot;, label=&quot;statistics&quot;, style=&quot;solid&quot;];
 }</p></object></div>
 </section>
 
