@@ -1,5 +1,5 @@
 import sys
-from funman.search import SearchConfig
+from funman.search import BoxSearch, SearchConfig
 from pysmt.shortcuts import (
     get_model,
     And,
@@ -38,7 +38,7 @@ class TestCompilation(unittest.TestCase):
         # 0.0 <= x <= 5
         model = Model(And(LE(x, Real(5.0)), GE(x, Real(0.0))))
 
-        scenario = ParameterSynthesisScenario(parameters, model)
+        scenario = ParameterSynthesisScenario(parameters, model, BoxSearch())
         funman = Funman()
         result = funman.solve(scenario)
 
@@ -55,7 +55,7 @@ class TestCompilation(unittest.TestCase):
             )
         )
 
-        scenario = ParameterSynthesisScenario(parameters, model)
+        scenario = ParameterSynthesisScenario(parameters, model, BoxSearch())
         funman = Funman()
         config = SearchConfig(tolerance=1e-1)
         result = funman.solve(scenario, config=config)

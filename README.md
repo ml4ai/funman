@@ -49,3 +49,17 @@ Suggest dealing with this by using `setup-CONDA-dev-env` [caps for emphasis] ins
 ---
 #### **Error during setup: "Could not find a version that matches"**
 Try updating pipenv: `pip install pipenv --upgrade`
+
+# Generating docs
+```bash
+pipenv run pip install sphinx sphinx_rtd_theme matplotlib
+
+# Needed only if the gh-pages branch is not at origin
+make init-pages 
+
+# Run sphinx and pyreverse on source, generate docs/
+make docs 
+
+# push docs/ to origin
+make deploy-pages 
+```

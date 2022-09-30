@@ -1,4 +1,5 @@
 PIPENV=PIPENV_VENV_IN_PROJECT=1 pipenv
+DOCS_REMOTE?=origin
 
 .PHONY: setup-dev-env destroy-dev-env docs
 setup-dev-env: setup-pipenv setup-pysmt
@@ -23,20 +24,20 @@ set-conda:
 	$(PIPENV) --python=$(shell conda run which python) --site-packages
 
 setup-conda-packages:
-	$(PIPENV) run conda install scipy pygraphviz scikit-learn igraph  python-igraph lxml Pillow coverage psutil
+	$(PIPENV) run conda install scipy pygraphviz scikit-learn lxml Pillow coverage psutil
 
 docs:
-	sphinx-apidoc -f -o ./docs/source ./src/funman -t ./docs/apidoc_templates --no-toc
+	sphinx-apidoc -f -o ./docs/source ./src/funman -t ./docs/apidoc_templates --no-toc --module-first
 	mkdir -p ./docs/source/_static
 	mkdir -p ./docs/source/_templates
 	pyreverse ./src/funman -d ./docs/source/_static
 	cd docs && make clean html
 
 init-pages:
-	@if [ -n "$$(git ls-remote --exit-code origin gh-pages)" ]; then echo "GitHub Pages already initialized"; exit 1; fi;
+	@if [ -n "$$(git ls-remote --exit-code $(DOCS_REMOTE) gh-pages)" ]; then echo "GitHub Pages already initialized"; exit 1; fi;
 	git switch --orphan gh-pages
 	git commit --allow-empty -m "initial pages"
-	git push -u origin gh-pages
+	git push -u $(DOCS_REMOTE) gh-pages
 	git checkout main
 	git branch -D gh-pages
 
@@ -49,6 +50,6 @@ deploy-pages: docs
 	mv www docs
 	git add -f docs
 	git commit -m "update pages" || true
-	git push
+	git push $(DOCS_REMOTE)
 	git checkout main
 	git branch -D gh-pages

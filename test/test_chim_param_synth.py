@@ -1,5 +1,5 @@
 import sys
-from funman.search import SearchConfig
+from funman.search import BoxSearch, SearchConfig
 from pysmt.shortcuts import (
     get_model,
     And,
@@ -79,7 +79,7 @@ class TestCompilation(unittest.TestCase):
 
         model = Model(And(params, init, dynamics, bounds))
 
-        scenario = ParameterSynthesisScenario(parameters, model)
+        scenario = ParameterSynthesisScenario(parameters, model, BoxSearch())
         funman = Funman()
         config = SearchConfig(tolerance=1e-1, queue_timeout=10)
         result = funman.solve(scenario, config=config)
