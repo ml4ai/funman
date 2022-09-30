@@ -44,7 +44,7 @@ init-pages:
 deploy-pages: docs
 	mv docs/build/html www
 	touch www/.nojekyll
-	rm www/.buildinfo
+	rm www/.buildinfo || true
 	git checkout gh-pages
 	rm -r docs || true
 	mv www docs
