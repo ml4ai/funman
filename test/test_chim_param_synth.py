@@ -82,9 +82,9 @@ class TestCompilation(unittest.TestCase):
         scenario = ParameterSynthesisScenario(parameters, model, BoxSearch())
         funman = Funman()
         config = SearchConfig(tolerance=1e-1, queue_timeout=10)
-        result = funman.solve(scenario, config=config)
-        l.info(f"True Boxes: {result.result.true_boxes}")
-        assert result
+        parameter_space = funman.solve(scenario, config=config)
+        l.info(f"True Boxes: {parameter_space.true_boxes}")
+        assert parameter_space
 
 
 if __name__ == "__main__":

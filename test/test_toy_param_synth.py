@@ -40,7 +40,8 @@ class TestCompilation(unittest.TestCase):
 
         scenario = ParameterSynthesisScenario(parameters, model, BoxSearch())
         funman = Funman()
-        result = funman.solve(scenario)
+        config = SearchConfig()
+        result = funman.solve(scenario, config)
 
     def test_toy_2d(self):
 
@@ -59,7 +60,8 @@ class TestCompilation(unittest.TestCase):
         funman = Funman()
         config = SearchConfig(tolerance=1e-1)
         result = funman.solve(scenario, config=config)
-        assert(result)
+        assert result
+
 
 if __name__ == "__main__":
     unittest.main()

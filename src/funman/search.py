@@ -22,9 +22,7 @@ class SearchEpisode(object):
 
 
 class BoxSearchEpisode(SearchEpisode):
-    def __init__(
-        self, config: SearchConfig, problem
-    ) -> None:
+    def __init__(self, config: SearchConfig, problem) -> None:
         super(BoxSearchEpisode, self).__init__()
         self.unknown_boxes = Queue()
         self.true_boxes = []
@@ -141,7 +139,6 @@ class BoxSearchEpisode(SearchEpisode):
 
         t_boxes = true_boxes if true_boxes else self.true_boxes
         f_boxes = false_boxes if false_boxes else self.false_boxes
-        unknown_boxes = unknown_boxes if unknown_boxes else self.unknown_boxes
 
         for b in t_boxes:
             if b and plot_bounds.intersects(b) and b.finite():
@@ -164,7 +161,7 @@ class BoxSearchEpisode(SearchEpisode):
 
         t_boxes = true_boxes if true_boxes else self.true_boxes
         f_boxes = false_boxes if false_boxes else self.false_boxes
-        
+
         for b in t_boxes:
             if b and plot_bounds.intersects(b) and b.finite():
                 self.plot2DBox(b, p1, p2, color="g")
@@ -180,7 +177,7 @@ class BoxSearchEpisode(SearchEpisode):
 
 class BoxSearch(object):
     def __init__(self) -> None:
-    
+
         self.episodes = []
 
     def split(self, box: Box, episode: BoxSearchEpisode):
@@ -203,9 +200,9 @@ class BoxSearch(object):
 
     def expand(self, rval: Queue, episode: BoxSearchEpisode) -> None:
         """
-        A single search process will evaluate and expand the boxes in the episode.unknown_boxes queue.  The processes exit when the queue is empty.  For each box, the algorithm checks whether the box contains a false (infeasible) point.  If it contains a false point, then it checks if the box contains a true point.  If a box contains both a false and true point, then the box is split into two boxes and both are added to the unknown_boxes queue.  If a box contains no false points, then it is a true_box (all points are feasible).  If a box contains no true points, then it is a false_box (all points are infeasible).  
-        
-        The return value is pushed onto the rval queue to end the process's work within the method.  The return value is a Dict[str, List[Box]] type that maps the "true_boxes" and "false_boxes" to a list of boxes in each set.  Each box in these sets is unique by design.  
+        A single search process will evaluate and expand the boxes in the episode.unknown_boxes queue.  The processes exit when the queue is empty.  For each box, the algorithm checks whether the box contains a false (infeasible) point.  If it contains a false point, then it checks if the box contains a true point.  If a box contains both a false and true point, then the box is split into two boxes and both are added to the unknown_boxes queue.  If a box contains no false points, then it is a true_box (all points are feasible).  If a box contains no true points, then it is a false_box (all points are infeasible).
+
+        The return value is pushed onto the rval queue to end the process's work within the method.  The return value is a Dict[str, List[Box]] type that maps the "true_boxes" and "false_boxes" to a list of boxes in each set.  Each box in these sets is unique by design.
 
         Parameters
         ----------
@@ -246,7 +243,6 @@ class BoxSearch(object):
         episode.close()
         rval.put({"true_boxes": episode.true_boxes, "false_boxes": episode.false_boxes})
 
-
     def search(
         self, problem, config: SearchConfig = SearchConfig()
     ) -> BoxSearchEpisode:
@@ -269,7 +265,7 @@ class BoxSearch(object):
         -------
         BoxSearchEpisode
             Final search results (parameter space) and statistics.
-        """    
+        """
 
         episode = BoxSearchEpisode(config, problem)
         self.episodes.append(episode)
@@ -304,6 +300,5 @@ class BoxSearch(object):
 
         episode.false_boxes = [b for r in results for b in r["false_boxes"]]
         episode.true_boxes = [b for r in results for b in r["true_boxes"]]
-
 
         return episode

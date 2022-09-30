@@ -1,5 +1,10 @@
 from funman.config import Config
 
+
+class SimConfig(Config):
+    pass
+
+
 class Simulator(object):
 
     # STUB for now this assumes:
