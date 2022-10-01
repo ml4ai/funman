@@ -1,0 +1,29 @@
+digraph "packages" {
+rankdir=BT
+charset="utf-8"
+"funman" [color="black", label="funman", shape="box", style="solid"];
+"funman._version" [color="black", label="funman._version", shape="box", style="solid"];
+"funman.config" [color="black", label="funman.config", shape="box", style="solid"];
+"funman.constants" [color="black", label="funman.constants", shape="box", style="solid"];
+"funman.funman" [color="black", label="funman.funman", shape="box", style="solid"];
+"funman.model" [color="black", label="funman.model", shape="box", style="solid"];
+"funman.parameter_space" [color="black", label="funman.parameter_space", shape="box", style="solid"];
+"funman.scenario" [color="black", label="funman.scenario", shape="box", style="solid"];
+"funman.search" [color="black", label="funman.search", shape="box", style="solid"];
+"funman.search_utils" [color="black", label="funman.search_utils", shape="box", style="solid"];
+"funman.simulator" [color="black", label="funman.simulator", shape="box", style="solid"];
+"funman" -> "funman._version" [arrowhead="open", arrowtail="none"];
+"funman.funman" -> "funman.config" [arrowhead="open", arrowtail="none"];
+"funman.funman" -> "funman.scenario" [arrowhead="open", arrowtail="none"];
+"funman.parameter_space" -> "funman.search" [arrowhead="open", arrowtail="none"];
+"funman.scenario" -> "funman.config" [arrowhead="open", arrowtail="none"];
+"funman.scenario" -> "funman.model" [arrowhead="open", arrowtail="none"];
+"funman.scenario" -> "funman.parameter_space" [arrowhead="open", arrowtail="none"];
+"funman.scenario" -> "funman.search" [arrowhead="open", arrowtail="none"];
+"funman.search" -> "funman.model" [arrowhead="open", arrowtail="none"];
+"funman.search" -> "funman.search_utils" [arrowhead="open", arrowtail="none"];
+"funman.search_utils" -> "funman.config" [arrowhead="open", arrowtail="none"];
+"funman.search_utils" -> "funman.constants" [arrowhead="open", arrowtail="none"];
+"funman.search_utils" -> "funman.model" [arrowhead="open", arrowtail="none"];
+"funman.simulator" -> "funman.config" [arrowhead="open", arrowtail="none"];
+}
