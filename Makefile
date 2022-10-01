@@ -45,7 +45,7 @@ deploy-pages: docs
 	mv docs/build/html www
 	touch www/.nojekyll
 	rm www/.buildinfo || true
-	git checkout gh-pages
+	git checkout --track $(DOCS_REMOTE)/gh-pages
 	rm -r docs || true
 	mv www docs
 	git add -f docs

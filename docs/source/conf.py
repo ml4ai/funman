@@ -10,6 +10,8 @@ project = 'funman'
 copyright = '2022, SIFT'
 author = 'SIFT'
 
+from funman import __version__
+
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
@@ -31,6 +33,8 @@ graphviz_dot_args = [
     '-Ecolor=#6ab0de;',
     '-Epenwidth=3;',
 ]
+
+version = __version__
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
@@ -56,3 +60,9 @@ napoleon_attr_annotations = True
 
 # Options for templates
 modulefirst = True
+
+rst_epilog = """
+.. |FunmanVersion| replace:: {version_num}
+""".format(
+version_num = version,
+)
