@@ -203,16 +203,16 @@ make setup-dev-env
 
 ```bash
 # install python 3.9
-brew install python3.9 python3.9-dev
+brew install python@3.9 
 # install dev dependencies
 brew install make
-pip install --user pipenv
+pip3 install --user pipenv
 # install pygraphviz dependencies
 brew install graphviz pkg-config
 # install z3
 brew install z3
 # install miniconda
-brew install miniconda
+brew install miniforge
 # Initialize development environment
 make setup-conda-dev-env
 ```

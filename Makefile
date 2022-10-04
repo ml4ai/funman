@@ -24,7 +24,7 @@ set-conda:
 	$(PIPENV) --python=$(shell conda run which python) --site-packages
 
 setup-conda-packages:
-	$(PIPENV) run conda install scipy pygraphviz scikit-learn lxml Pillow coverage psutil
+	$(PIPENV) run conda install scipy pygraphviz scikit-learn lxml Pillow coverage psutil igraph
 
 docs:
 	sphinx-apidoc -f -o ./docs/source ./src/funman -t ./docs/apidoc_templates --no-toc --module-first
