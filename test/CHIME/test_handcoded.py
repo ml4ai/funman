@@ -14,6 +14,8 @@ from pysmt.shortcuts import (
     LT,
     LE,
     GE,
+    is_sat,
+    write_smtlib,
 )
 from pysmt.typing import INT, REAL, BOOL
 
@@ -31,7 +33,7 @@ class TestHandcoded(unittest.TestCase):
         print(model)
 
     def test_simple_chime_firstorder(self):
-        num_timepoints = 10
+        num_timepoints = 12
         # timepoints = [Symbol(t, INT) for t in range(num_timepoints)]
 
         # Function Definition for Time indexed symbols
@@ -95,7 +97,7 @@ class TestHandcoded(unittest.TestCase):
         print(model)
 
     def test_simple_chime_propositional(self):
-        num_timepoints = 10
+        num_timepoints = 12
         (
             susceptible,
             infected,
@@ -106,6 +108,7 @@ class TestHandcoded(unittest.TestCase):
             scale,
             beta,
             gamma,
+            delta,
             n,
         ) = CHIME.make_chime_variables(num_timepoints)
         parameters, init, dynamics, bounds = CHIME.make_chime_model(
@@ -118,36 +121,40 @@ class TestHandcoded(unittest.TestCase):
             scale,
             beta,
             gamma,
+            delta,
             n,
             num_timepoints,
         )
         query = CHIME.make_chime_query(infected, num_timepoints)
 
         # Check that dynamics (minus query) is consistent
-        phi = And(parameters, init, dynamics, bounds).simplify()
-        model = get_model(phi)
+        phi1 = And(parameters, init, dynamics)
+        phi2 = And(parameters, init, dynamics, query)
+        write_smtlib(phi2, f"chime_{num_timepoints}.smt2")
+        # res = is_sat(phi)
+        model = get_model(phi1)
 
         infected_values = [float(model.get_py_value(i)) for i in infected]
         print(f"infected = {infected_values}")
         #  [1.0, 0.9964285714285714, 0.9928653098123178, 0.989310235435031, 0.9857633681757312, 0.9822247275110826, 0.9786943325178128, 0.9751722018751358, 0.9716583538671775, 0.9681528063854044]
         if model:
             print("Model is consistent")
-            print("*" * 80)
-            print(model)
-            print("*" * 80)
+            # print("*" * 80)
+            # print(model)
+            # print("*" * 80)
             # phi = init & dynamics & query
-            phi = And(parameters, init, dynamics, bounds, query).simplify()
+            # phi = And(parameters, init, dynamics, bounds, query).simplify()
 
             # Solve phi
-            model = get_model(phi)
+            model = get_model(phi2)
             if model:
                 print("Model & Query is consistent")
-                print("*" * 80)
-                print(model)
-                print("*" * 80)
+                # print("*" * 80)
+                # print(model)
+                # print("*" * 80)
 
-                infected_values = [model.get_py_value(i) for i in infected]
-                print(f"infected = {infected_values}")
+                # infected_values = [model.get_py_value(i) for i in infected]
+                # print(f"infected = {infected_values}")
             else:
                 print("Model & Query is inconsistent")
         else:
