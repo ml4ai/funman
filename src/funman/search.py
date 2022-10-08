@@ -1,11 +1,10 @@
 from typing import Dict, List, Union
-from datetime import datetime
-from funman.search_utils import Box, Interval, SearchConfig, SearchStatistics
+from funman.plotting import BoxPlotter
+from funman.search_episode import BoxSearchEpisode
+from funman.search_utils import Box, SearchConfig
 from pysmt.shortcuts import get_model, And, Not
-import matplotlib.pyplot as plt
-from matplotlib.lines import Line2D
-import numpy as np
-from IPython.display import clear_output
+
+
 from multiprocessing import Queue, Process, Value
 from queue import Empty
 import logging
@@ -14,165 +13,6 @@ from funman.model import Parameter
 
 l = logging.getLogger(__file__)
 l.setLevel(logging.ERROR)
-
-
-class SearchEpisode(object):
-    def __init__(self) -> None:
-        self.statistics = SearchStatistics()
-
-
-class BoxSearchEpisode(SearchEpisode):
-    def __init__(self, config: SearchConfig, problem) -> None:
-        super(BoxSearchEpisode, self).__init__()
-        self.unknown_boxes = Queue()
-        self.true_boxes = []
-        self.false_boxes = []
-
-        self.config = config
-        self.problem = problem
-        self.num_parameters = len(self.problem.parameters)
-        self.iteration = Value("i", 0)
-        self.internal_process_id = 0
-
-    def initial_box(self) -> Box:
-        return Box(self.problem.parameters)
-
-    def on_start(self):
-        self.statistics.last_time.value = str(datetime.now())
-
-    def close(self):
-        self.unknown_boxes.close()
-        self.statistics.close()
-
-    def on_iteration(self):
-        if self.internal_process_id == 1 and self.iteration.value % 10 == 0:
-            self.plot(
-                title=f"Residual = {self.statistics.current_residual}, |boxes|={self.statistics.num_unknown}",
-            )
-            pass
-        self.iteration.value = self.iteration.value + 1
-
-    def add_unknown(self, box: Union[Box, List[Box]]):
-        if isinstance(box, list):
-            for b in box:
-                if b.width() > self.config.tolerance:
-                    self.unknown_boxes.put(b, timeout=self.config.queue_timeout)
-                    self.statistics.num_unknown.value += 1
-        else:
-            if box.width() > self.config.tolerance:
-                self.unknown_boxes.put(box)
-                with self.statistics.num_unknown.get_lock():
-                    self.statistics.num_unknown.value += 1
-
-    def add_false(self, box: Box):
-        self.false_boxes.append(box)
-        with self.statistics.num_false.get_lock():
-            self.statistics.num_false.value += 1
-        self.statistics.iteration_operation.put("f")
-
-    def add_true(self, box: Box):
-        self.true_boxes.append(box)
-        with self.statistics.num_true.get_lock():
-            self.statistics.num_true.value += 1
-        self.statistics.iteration_operation.put("t")
-
-    def get_unknown(self):
-        box = self.unknown_boxes.get(timeout=self.config.queue_timeout)
-        self.statistics.num_unknown.value = self.statistics.num_unknown.value - 1
-        self.statistics.current_residual.value = box.width()
-        self.statistics.residuals.put(box.width())
-        this_time = datetime.now()
-        # FIXME self.statistics.iteration_time.put(this_time - self.statistics.last_time.value)
-        # FIXME self.statistics.last_time[:] = str(this_time)
-        return box
-
-    def plotBox(self, interval: Interval = Interval(-20, 20)):
-        box = Box(self.problem.parameters)
-        for p, _ in box.bounds.items():
-            box.bounds[p] = interval
-        return box
-
-    def plot(
-        self,
-        plot_bounds: Box = None,
-        title="Feasible Regions",
-    ):
-        if not plot_bounds:
-            plot_bounds = self.plotBox()
-
-        clear_output(wait=True)
-
-        if self.num_parameters == 1:
-            self.plot1D(plot_bounds=plot_bounds)
-        elif self.num_parameters == 2:
-            self.plot2D(plot_bounds=plot_bounds)
-        else:
-            raise Exception(
-                f"Plotting for {self.num_parameters} >= 2 is not supported."
-            )
-
-        custom_lines = [
-            Line2D([0], [0], color="g", lw=4),
-            Line2D([0], [0], color="r", lw=4),
-        ]
-        plt.title(title)
-        plt.legend(custom_lines, ["true", "false"])
-        plt.show(block=False)
-
-    def plot1DBox(self, i: Box, p1: Parameter, color="g"):
-        x_values = [i.bounds[p1].lb, i.bounds[p1].ub]
-        plt.plot(x_values, np.zeros(len(x_values)), color, linestyle="-")
-
-    def plot2DBox(self, i: Box, p1: Parameter, p2: Parameter, color="g"):
-        x_limits = i.bounds[p1]
-        y_limits = i.bounds[p2]
-        x = np.linspace(x_limits.lb, x_limits.ub, 1000)
-        plt.fill_between(x, y_limits.lb, y_limits.ub, color=color)
-
-    def plot1D(
-        self,
-        true_boxes: Queue = None,
-        false_boxes: Queue = None,
-        plot_bounds: Box = None,
-    ):
-        p1 = self.problem.parameters[0]
-
-        t_boxes = true_boxes if true_boxes else self.true_boxes
-        f_boxes = false_boxes if false_boxes else self.false_boxes
-
-        for b in t_boxes:
-            if b and plot_bounds.intersects(b) and b.finite():
-                self.plot1DBox(b, p1, color="g")
-        for b in f_boxes:
-            if b and plot_bounds.intersects(b) and b.finite():
-                self.plot1DBox(b, p1, color="r")
-
-        plt.xlabel(p1.name)
-        plt.xlim([plot_bounds.bounds[p1].lb, plot_bounds.bounds[p1].ub])
-
-    def plot2D(
-        self,
-        true_boxes: Queue = None,
-        false_boxes: Queue = None,
-        plot_bounds: Box = None,
-    ):
-        p1 = self.problem.parameters[0]
-        p2 = self.problem.parameters[1]
-
-        t_boxes = true_boxes if true_boxes else self.true_boxes
-        f_boxes = false_boxes if false_boxes else self.false_boxes
-
-        for b in t_boxes:
-            if b and plot_bounds.intersects(b) and b.finite():
-                self.plot2DBox(b, p1, p2, color="g")
-        for b in f_boxes:
-            if b and plot_bounds.intersects(b) and b.finite():
-                self.plot2DBox(b, p1, p2, color="r")
-
-        plt.xlabel(p1.name)
-        plt.ylabel(p2.name)
-        plt.xlim([plot_bounds.bounds[p1].lb, plot_bounds.bounds[p1].ub])
-        plt.ylim([plot_bounds.bounds[p2].lb, plot_bounds.bounds[p2].ub])
 
 
 class BoxSearch(object):
@@ -275,8 +115,20 @@ class BoxSearch(object):
 
         rval = Queue()
 
+        # create a plotting process
+        plotter = BoxPlotter(problem.parameters)
+        p = Process(
+            target=plotter.run,
+            args=(
+                rval,
+                episode,
+            ),
+        )
+        processes.append(p)
+        p.start()
+
         # creating processes
-        for w in range(episode.config.number_of_processes):
+        for w in range(episode.config.number_of_processes - 1):
             p = Process(
                 target=self.expand,
                 args=(
@@ -286,7 +138,7 @@ class BoxSearch(object):
             )
             processes.append(p)
             p.start()
-            episode.internal_process_id += 1
+            episode.internal_process_id = w
 
         results = [rval.get() for p in processes]
         rval.close()
