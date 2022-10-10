@@ -1,10 +1,13 @@
+from typing import List
+from funman.plotting import BoxPlotter
 from funman.search_episode import SearchEpisode
+from funman.search_utils import Box
 
 
 class ParameterSpace(object):
-    def __init__(self, episode: SearchEpisode) -> None:
-        self.true_boxes = episode.true_boxes
-        self.false_boxes = episode.false_boxes
+    def __init__(self, true_boxes: List[Box], false_boxes: List[Box]) -> None:
+        self.true_boxes = true_boxes
+        self.false_boxes = false_boxes
 
     # STUB project parameter space onto a parameter
     @staticmethod
@@ -15,6 +18,14 @@ class ParameterSpace(object):
     # STUB intersect parameters spaces
     @staticmethod
     def intersect(ps1, ps2) -> "ParameterSpace":
+        # FIXME Drisana
+        raise NotImplementedError()
+        return ParameterSpace()
+
+    # STUB symmetric_difference of parameter spaces
+    @staticmethod
+    def symmetric_difference(ps1, ps2) -> "ParameterSpace":
+        # FIXME Drisana
         raise NotImplementedError()
         return ParameterSpace()
 
@@ -29,3 +40,9 @@ class ParameterSpace(object):
     def compare(ps1, ps2) -> bool:
         raise NotImplementedError()
         raise NotImplementedError()
+
+    def plot():
+        # FIXME Drisana
+        box_plotter = BoxPlotter([], [])
+        box_plotter.new_plot_fn()
+        pass

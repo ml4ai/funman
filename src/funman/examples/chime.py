@@ -92,14 +92,22 @@ class CHIME(object):
                     # s_n = (-beta * s * i) + s  # Update to the amount of individuals that are susceptible ## sir_s_n_exp
                     Equals(
                         susceptible_n[t],
-                        (-beta * susceptible[t] * infected[t]) + susceptible[t],
+                        (-beta * infected[t]) + susceptible[t],
                     ),
+                    # Equals(
+                    #     susceptible_n[t],
+                    #     (-beta * susceptible[t] * infected[t]) + susceptible[t],
+                    # ),
                     # i_n = (beta * s * i - gamma * i) + i  # Update to the amount of individuals that are infectious ## sir_i_n_exp
                     Equals(
                         infected_n[t],
-                        (beta * susceptible[t] * infected[t] - gamma * infected[t])
-                        + infected[t],
+                        (beta * infected[t] - gamma * infected[t]) + infected[t],
                     ),
+                    # Equals(
+                    #     infected_n[t],
+                    #     (beta * susceptible[t] * infected[t] - gamma * infected[t])
+                    #     + infected[t],
+                    # ),
                     # scale = n / (s_n + i_n + r_n)  # A scaling factor to compute updated disease variables ## sir_scale_exp
                     Equals(
                         scale[t],

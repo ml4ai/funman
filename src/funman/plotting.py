@@ -96,6 +96,9 @@ class BoxPlotter(object):
         plot_bounds: Box = None,
         title="Feasible Regions",
     ):
+        raise DeprecationWarning(
+            "This has been superseded by the run() function, do not use!"
+        )
         if not plot_bounds:
             plot_bounds = self.plotBox()
 

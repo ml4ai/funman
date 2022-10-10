@@ -143,10 +143,10 @@ class TestHandcoded(unittest.TestCase):
     def test_simple_chime_propositional(self):
 
         min_num_timepoints = 1
-        max_num_timepoints = 15
+        max_num_timepoints = 40
 
         solver_options = {
-            "nlsat.check_lemmas": True,
+            # "nlsat.check_lemmas": True,
             # "dot_proof_file": "z3_proof.dot"
             # "add_bound_upper": 1010,
             # "add_bound_lower": 0,
