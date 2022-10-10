@@ -5,10 +5,12 @@ from funman.parameter_space import ParameterSpace
 from funman.search import SearchConfig
 from funman.model import Parameter
 
+
 class AnalysisScenario(object):
     """
     Abstract class for Analysis Scenarios.
     """
+
     @abstractclassmethod
     def simulate():
         pass
@@ -16,6 +18,7 @@ class AnalysisScenario(object):
     @abstractclassmethod
     def solve(self, config: Config):
         pass
+
 
 class ParameterSynthesisScenario(AnalysisScenario):
     """
@@ -43,11 +46,6 @@ class ParameterSynthesisScenario(AnalysisScenario):
             The parameter space.
         """
         result = self.search.search(self, config=config)
-
-        result.plot(
-            title=f"Residual = {result.statistics.current_residual}, |boxes|={result.statistics.num_unknown}",
-        )
-
         parameter_space = ParameterSpace(result)
 
         return parameter_space
@@ -57,7 +55,9 @@ class AnalysisScenarioResult(object):
     """
     Abstract class for AnalysisScenario result data.
     """
+
     pass
+
 
 class ParameterSynthesisScenarioResult(AnalysisScenarioResult):
     """
@@ -68,5 +68,3 @@ class ParameterSynthesisScenarioResult(AnalysisScenarioResult):
     def __init__(self, result: Any) -> None:
         super().__init__()
         self.result = result
-
-
