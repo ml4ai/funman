@@ -75,4 +75,4 @@ class BoxSearchEpisode(SearchEpisode):
         return box
 
     def get_box_to_plot(self):
-        return self.boxes_to_plot.get(timeout=10)
+        return self.boxes_to_plot.get()

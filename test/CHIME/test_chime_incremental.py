@@ -43,12 +43,6 @@ def reset_env():
 
 
 class TestHandcoded(unittest.TestCase):
-    def encode_time_horizon(self, parameters, init, dynamics, horizon):
-        dynamics_t = (
-            And([d_t for d_t in dynamics[0:horizon]]) if horizon > 0 else TRUE()
-        )
-        return And(parameters, init, dynamics_t)
-
     def run_assumption_solver(
         self, formulas, solver_name=None, logic=None, solver_options=None
     ):
@@ -161,14 +155,18 @@ class TestHandcoded(unittest.TestCase):
 
         # query = CHIME.make_chime_query(infected, num_timepoints)
         print(f"steps\torig\tinc")
+        chime = CHIME()
+        vars, (parameters, init, dynamics, query) = chime.make_model()
         for num_timepoints in range(min_num_timepoints, max_num_timepoints):
-            vars = CHIME.make_chime_variables(num_timepoints)
-            parameters, init, dynamics, bounds = CHIME.make_chime_model(
-                *vars,
-                num_timepoints,
+
+            phi = chime.encode_time_horizon(
+                parameters, init, dynamics, query, num_timepoints
             )
-            phi = self.encode_time_horizon(parameters, init, dynamics, num_timepoints)
-            phi_stratified = [And(init, parameters), *dynamics[0:num_timepoints]]
+            
+            phi_stratified = chime.encode_time_horizon_layered(
+                parameters, init, dynamics, query, num_timepoints
+            )
+            
             reset_env()
             model, elapsed = self.run_get_model(
                 phi, solver_name="z3", logic=QF_UFLIRA, solver_options=solver_options

@@ -42,21 +42,21 @@ class BoxPlotter(object):
         plt.title(self.title)
         plt.legend(self.custom_lines, ["true", "false"])
 
-        plt.xlabel(self.px)
-        plt.xlim(
-            [
-                self.plot_bounds.bounds[self.px].lb,
-                self.plot_bounds.bounds[self.px].ub,
-            ]
-        )
+        plt.xlabel(self.px.name)
+        # plt.xlim(
+        #     [
+        #         self.plot_bounds.bounds[self.px].lb,
+        #         self.plot_bounds.bounds[self.px].ub,
+        #     ]
+        # )
         if len(self.parameters) > 1:
             plt.ylabel(self.py.name)
-            plt.ylim(
-                [
-                    self.plot_bounds.bounds[self.py].lb,
-                    self.plot_bounds.bounds[self.py].ub,
-                ]
-            )
+            # plt.ylim(
+            #     [
+            #         self.plot_bounds.bounds[self.py].lb,
+            #         self.plot_bounds.bounds[self.py].ub,
+            #     ]
+            # )
 
         plt.show(block=False)
 
@@ -68,7 +68,8 @@ class BoxPlotter(object):
                 break
             else:
                 try:
-                    if self.plot_bounds.intersects(box["box"]) and box["box"].finite():
+                    # if self.plot_bounds.intersects(box["box"]) and box["box"].finite():
+                    if box["box"].finite():
                         self.plot_add_box(box, color=self.color_map[box["label"]])
                 except Exception as e:
                     pass
@@ -85,7 +86,7 @@ class BoxPlotter(object):
         self.fig.canvas.draw()
         self.fig.canvas.flush_events()
 
-    def plotBox(self, interval: Interval = Interval(-20, 20)):
+    def plotBox(self, interval: Interval = Interval(-2000, 2000)):
         box = Box(self.parameters)
         for p, _ in box.bounds.items():
             box.bounds[p] = interval

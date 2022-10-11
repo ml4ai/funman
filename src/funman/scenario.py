@@ -1,9 +1,13 @@
 from abc import abstractclassmethod
-from typing import Any, List
+from typing import Any, List, Union
 from funman.config import Config
+from funman.examples.chime import CHIME
 from funman.parameter_space import ParameterSpace
 from funman.search import BoxSearch, SearchConfig
-from funman.model import Parameter
+from funman.model import Model, Parameter
+
+from pysmt.fnode import FNode
+from pysmt.shortcuts import get_free_variables, And
 
 
 class AnalysisScenario(object):
@@ -25,11 +29,59 @@ class ParameterSynthesisScenario(AnalysisScenario):
     Parameter synthesis problem description that identifies the parameters to synthesize for a particular model.  The general problem is to identify multi-dimensional (one dimension per parameter) regions where either all points in the region are valid (true) parameters for the model or invalid (false) parameters.
     """
 
-    def __init__(self, parameters: List[Parameter], model, search=BoxSearch()) -> None:
+    def __init__(
+        self, parameters: List[Parameter], model: Union[str, FNode], search=BoxSearch()
+    ) -> None:
         super().__init__()
         self.parameters = parameters
-        self.model = model
+
         self.search = search
+
+        if isinstance(model, str):
+            if model == "chime1":
+                self.chime = CHIME()
+                vars, model = self.chime.make_model()
+                self.vars = vars
+                self.model = model
+        else:
+            self.model = model
+            self.vars = model.get_free_variables()
+
+        # Associate parameters with symbols in the model
+        symbol_map = {
+            s.symbol_name(): s for p in self.model[0] for s in get_free_variables(p)
+        }
+        for p in self.parameters:
+            if not p.symbol:
+                p.symbol = symbol_map[p.name]
+
+        param_symbols = set({p.name for p in self.parameters})
+        assigned_parameters = [
+            p
+            for p in self.model[0]
+            if len(
+                set({q.symbol_name() for q in get_free_variables(p)}).intersection(
+                    param_symbols
+                )
+            )
+            == 0
+        ]
+        self.model = Model(
+            And(
+                And(assigned_parameters),
+                self.model[1],
+                (
+                    And([And(layer) for step in self.model[2] for layer in step])
+                    if isinstance(self.model[2], list)
+                    else self.model[2]
+                ),
+                (
+                    And(self.model[3])
+                    if isinstance(self.model[3], list)
+                    else self.model[3]
+                ),
+            )
+        )
 
     def solve(self, config: SearchConfig = None) -> "ParameterSynthesisScenarioResult":
         """

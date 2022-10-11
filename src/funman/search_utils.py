@@ -184,11 +184,12 @@ class SearchStatistics(object):
         self.iteration_operation.close()
 
 
-
 class SearchConfig(Config):
     def __init__(self, *args, **kwargs) -> None:
-        self.tolerance = kwargs["tolerance"] if "tolerance" in kwargs else 1e-1
-        self.queue_timeout = kwargs["queue_timeout"] if "queue_timeout" in kwargs else 1
+        self.tolerance = kwargs["tolerance"] if "tolerance" in kwargs else 1e0
+        self.queue_timeout = (
+            kwargs["queue_timeout"] if "queue_timeout" in kwargs else 10
+        )
         self.number_of_processes = (
             kwargs["number_of_processes"]
             if "number_of_processes" in kwargs
