@@ -66,10 +66,18 @@ class BoxSearch(object):
                 if res:
                     # box intersects f (false region)
 
+                    # Record the false point
+                    point = episode.extract_point(res)
+                    episode.add_false_point(point)
+
                     # Check whether box intersects t (true region)
                     phi1 = And(box.to_smt(), episode.problem.model.formula)
                     res1 = get_model(phi1)
                     if res1:
+                        # Record the true point
+                        point = episode.extract_point(res1)
+                        episode.add_true_point(point)
+
                         # box intersects both t and f, so it must be split
                         self.split(box, episode)
                     else:

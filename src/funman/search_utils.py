@@ -89,6 +89,11 @@ class Interval(object):
         ).simplify()
 
 
+class Point(object):
+    def __init__(self, parameters) -> None:
+        self.values = {p: 0.0 for p in parameters}
+
+
 @total_ordering
 class Box(object):
     def __init__(self, parameters) -> None:

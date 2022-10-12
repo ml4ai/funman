@@ -2,7 +2,7 @@ from typing import List, Union
 from datetime import datetime
 from multiprocessing import Queue, Value
 
-from funman.search_utils import Box, SearchConfig, SearchStatistics
+from funman.search_utils import Box, Point, SearchConfig, SearchStatistics
 
 
 class SearchEpisode(object):
@@ -44,11 +44,13 @@ class BoxSearchEpisode(SearchEpisode):
                 if b.width() > self.config.tolerance:
                     self.unknown_boxes.put(b, timeout=self.config.queue_timeout)
                     self.statistics.num_unknown.value += 1
+                self.boxes_to_plot.put({"box": b, "label": "unknown"})
         else:
             if box.width() > self.config.tolerance:
                 self.unknown_boxes.put(box)
                 with self.statistics.num_unknown.get_lock():
                     self.statistics.num_unknown.value += 1
+                self.boxes_to_plot.put({"box": box, "label": "unknown"})
 
     def add_false(self, box: Box):
         self.false_boxes.append(box)
@@ -57,12 +59,18 @@ class BoxSearchEpisode(SearchEpisode):
         self.statistics.iteration_operation.put("f")
         self.boxes_to_plot.put({"box": box, "label": "false"})
 
+    def add_false_point(self, point: Point):
+        self.boxes_to_plot.put({"point": point, "label": "false"})
+
     def add_true(self, box: Box):
         self.true_boxes.append(box)
         with self.statistics.num_true.get_lock():
             self.statistics.num_true.value += 1
         self.statistics.iteration_operation.put("t")
         self.boxes_to_plot.put({"box": box, "label": "true"})
+
+    def add_true_point(self, point: Point):
+        self.boxes_to_plot.put({"point": point, "label": "true"})
 
     def get_unknown(self):
         box = self.unknown_boxes.get(timeout=self.config.queue_timeout)
@@ -76,3 +84,9 @@ class BoxSearchEpisode(SearchEpisode):
 
     def get_box_to_plot(self):
         return self.boxes_to_plot.get()
+
+    def extract_point(self, model):
+        point = Point(self.problem.parameters)
+        for p in self.problem.parameters:
+            point.values[p] = float(model[p.symbol].constant_value())
+        return point
