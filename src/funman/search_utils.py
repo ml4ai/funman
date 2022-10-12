@@ -92,6 +92,19 @@ class Interval(object):
             (LT(p.symbol, Real(self.ub)) if self.ub != POS_INFINITY else TRUE()),
         ).simplify()
 
+    def to_dict(self):
+        return {
+            "lb": self.lb,
+            "ub": self.ub,
+            # "cached_width": self.cached_width
+        }
+
+    @staticmethod
+    def from_dict(data):
+        res = Interval(data["lb"], data["ub"])
+        # res.cached_width = data["cached_width"]
+        return res
+
 
 class Point(object):
     def __init__(self, parameters) -> None:
@@ -99,6 +112,17 @@ class Point(object):
 
     def __str__(self):
         return f"{self.values.values()}"
+
+    def to_dict(self):
+        return {
+            "values": {k.name: v for k,v in self.values.items()}
+        }
+
+    @staticmethod
+    def from_dict(data):
+        res = Point([])
+        res.values = {Parameter(k) : v for k, v in data["values"].items()}
+        return res
 
 
 @total_ordering
@@ -109,6 +133,19 @@ class Box(object):
 
     def to_smt(self):
         return And([interval.to_smt(p) for p, interval in self.bounds.items()])
+
+    def to_dict(self):
+        return {
+            "bounds": {k.name: v.to_dict() for k,v in self.bounds.items()},
+            # "cached_width": self.cached_width
+        }
+
+    @staticmethod
+    def from_dict(data):
+        res = Box([])
+        res.bounds = {Parameter(k) : Interval.from_dict(v) for k,v in data["bounds"].items()}
+        # res.cached_width = data["cached_width"]
+        return res
 
     def _copy(self):
         c = Box(list(self.bounds.keys()))

@@ -18,6 +18,12 @@ class Parameter(object):
             # don't attempt to compare against unrelated types
             return NotImplemented
 
+        if self.symbol is None:
+            return other.symbol is None
+
+        if other.symbol is None:
+            return self.symbol is None
+
         return self.symbol.symbol_name() == other.symbol.symbol_name()
 
     def __hash__(self):
