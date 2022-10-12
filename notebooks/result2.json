@@ -1,0 +1,79 @@
+{"label": "unknown", "type": "box", "value": {"bounds": {"beta_0": {"lb": 0.25, "ub": 0.375}, "beta_1": {"lb": 0.375, "ub": 0.5}}}}
+{"label": "unknown", "type": "box", "value": {"bounds": {"beta_0": {"lb": 0.25, "ub": 0.375}, "beta_1": {"lb": 0.25, "ub": 0.375}}}}
+{"label": "unknown", "type": "box", "value": {"bounds": {"beta_0": {"lb": 0.375, "ub": 0.5}, "beta_1": {"lb": 0.125, "ub": 0.25}}}}
+{"label": "unknown", "type": "box", "value": {"bounds": {"beta_0": {"lb": 0.375, "ub": 0.5}, "beta_1": {"lb": 0.0, "ub": 0.125}}}}
+{"label": "unknown", "type": "box", "value": {"bounds": {"beta_0": {"lb": 0.25, "ub": 0.375}, "beta_1": {"lb": 0.125, "ub": 0.25}}}}
+{"label": "unknown", "type": "box", "value": {"bounds": {"beta_0": {"lb": 0.25, "ub": 0.375}, "beta_1": {"lb": 0.0, "ub": 0.125}}}}
+{"label": "unknown", "type": "box", "value": {"bounds": {"beta_0": {"lb": 0.125, "ub": 0.25}, "beta_1": {"lb": 0.375, "ub": 0.5}}}}
+{"label": "unknown", "type": "box", "value": {"bounds": {"beta_0": {"lb": 0.125, "ub": 0.25}, "beta_1": {"lb": 0.25, "ub": 0.375}}}}
+{"label": "unknown", "type": "box", "value": {"bounds": {"beta_0": {"lb": 0.0, "ub": 0.125}, "beta_1": {"lb": 0.375, "ub": 0.5}}}}
+{"label": "unknown", "type": "box", "value": {"bounds": {"beta_0": {"lb": 0.0, "ub": 0.125}, "beta_1": {"lb": 0.25, "ub": 0.375}}}}
+{"label": "unknown", "type": "box", "value": {"bounds": {"beta_0": {"lb": 0.125, "ub": 0.25}, "beta_1": {"lb": 0.125, "ub": 0.25}}}}
+{"label": "unknown", "type": "box", "value": {"bounds": {"beta_0": {"lb": 0.125, "ub": 0.25}, "beta_1": {"lb": 0.0, "ub": 0.125}}}}
+{"label": "unknown", "type": "box", "value": {"bounds": {"beta_0": {"lb": 0.0, "ub": 0.125}, "beta_1": {"lb": 0.125, "ub": 0.25}}}}
+{"label": "unknown", "type": "box", "value": {"bounds": {"beta_0": {"lb": 0.0, "ub": 0.125}, "beta_1": {"lb": 0.0, "ub": 0.125}}}}
+{"label": "unknown", "type": "box", "value": {"bounds": {"beta_0": {"lb": 0.4375, "ub": 0.5}, "beta_1": {"lb": 0.375, "ub": 0.5}}}}
+{"label": "unknown", "type": "box", "value": {"bounds": {"beta_0": {"lb": 0.375, "ub": 0.4375}, "beta_1": {"lb": 0.375, "ub": 0.5}}}}
+{"label": "unknown", "type": "box", "value": {"bounds": {"beta_0": {"lb": 0.4375, "ub": 0.5}, "beta_1": {"lb": 0.25, "ub": 0.375}}}}
+{"label": "unknown", "type": "box", "value": {"bounds": {"beta_0": {"lb": 0.375, "ub": 0.4375}, "beta_1": {"lb": 0.25, "ub": 0.375}}}}
+{"label": "true", "type": "box", "value": {"bounds": {"beta_0": {"lb": 0.375, "ub": 0.5}, "beta_1": {"lb": 0.0, "ub": 0.125}}}}
+{"label": "true", "type": "box", "value": {"bounds": {"beta_0": {"lb": 0.25, "ub": 0.375}, "beta_1": {"lb": 0.0, "ub": 0.125}}}}
+{"label": "true", "type": "box", "value": {"bounds": {"beta_0": {"lb": 0.25, "ub": 0.375}, "beta_1": {"lb": 0.25, "ub": 0.375}}}}
+{"label": "true", "type": "box", "value": {"bounds": {"beta_0": {"lb": 0.25, "ub": 0.375}, "beta_1": {"lb": 0.125, "ub": 0.25}}}}
+{"label": "false", "type": "point", "value": {"values": {"beta_0": 0.359375, "beta_1": 0.4921875}}}
+{"label": "true", "type": "box", "value": {"bounds": {"beta_0": {"lb": 0.125, "ub": 0.25}, "beta_1": {"lb": 0.375, "ub": 0.5}}}}
+{"label": "true", "type": "box", "value": {"bounds": {"beta_0": {"lb": 0.0, "ub": 0.125}, "beta_1": {"lb": 0.375, "ub": 0.5}}}}
+{"label": "false", "type": "point", "value": {"values": {"beta_0": 0.4921875, "beta_1": 0.2421875}}}
+{"label": "true", "type": "box", "value": {"bounds": {"beta_0": {"lb": 0.125, "ub": 0.25}, "beta_1": {"lb": 0.25, "ub": 0.375}}}}
+{"label": "true", "type": "point", "value": {"values": {"beta_0": 0.3125, "beta_1": 0.4375}}}
+{"label": "unknown", "type": "box", "value": {"bounds": {"beta_0": {"lb": 0.3125, "ub": 0.375}, "beta_1": {"lb": 0.375, "ub": 0.5}}}}
+{"label": "unknown", "type": "box", "value": {"bounds": {"beta_0": {"lb": 0.25, "ub": 0.3125}, "beta_1": {"lb": 0.375, "ub": 0.5}}}}
+{"label": "false", "type": "point", "value": {"values": {"beta_0": 0.46875, "beta_1": 0.4375}}}
+{"label": "true", "type": "point", "value": {"values": {"beta_0": 0.4375, "beta_1": 0.1875}}}
+{"label": "unknown", "type": "box", "value": {"bounds": {"beta_0": {"lb": 0.4375, "ub": 0.5}, "beta_1": {"lb": 0.125, "ub": 0.25}}}}
+{"label": "unknown", "type": "box", "value": {"bounds": {"beta_0": {"lb": 0.375, "ub": 0.4375}, "beta_1": {"lb": 0.125, "ub": 0.25}}}}
+{"label": "false", "type": "point", "value": {"values": {"beta_0": 0.40625, "beta_1": 0.4375}}}
+{"label": "false", "type": "point", "value": {"values": {"beta_0": 0.46875, "beta_1": 0.3125}}}
+{"label": "true", "type": "point", "value": {"values": {"beta_0": 0.40625, "beta_1": 0.390625}}}
+{"label": "unknown", "type": "box", "value": {"bounds": {"beta_0": {"lb": 0.375, "ub": 0.4375}, "beta_1": {"lb": 0.4375, "ub": 0.5}}}}
+{"label": "unknown", "type": "box", "value": {"bounds": {"beta_0": {"lb": 0.375, "ub": 0.4375}, "beta_1": {"lb": 0.375, "ub": 0.4375}}}}
+{"label": "true", "type": "point", "value": {"values": {"beta_0": 0.46875, "beta_1": 0.265625}}}
+{"label": "unknown", "type": "box", "value": {"bounds": {"beta_0": {"lb": 0.4375, "ub": 0.5}, "beta_1": {"lb": 0.3125, "ub": 0.375}}}}
+{"label": "unknown", "type": "box", "value": {"bounds": {"beta_0": {"lb": 0.4375, "ub": 0.5}, "beta_1": {"lb": 0.25, "ub": 0.3125}}}}
+{"label": "false", "type": "box", "value": {"bounds": {"beta_0": {"lb": 0.4375, "ub": 0.5}, "beta_1": {"lb": 0.375, "ub": 0.5}}}}
+{"label": "true", "type": "box", "value": {"bounds": {"beta_0": {"lb": 0.0, "ub": 0.125}, "beta_1": {"lb": 0.25, "ub": 0.375}}}}
+{"label": "true", "type": "box", "value": {"bounds": {"beta_0": {"lb": 0.125, "ub": 0.25}, "beta_1": {"lb": 0.125, "ub": 0.25}}}}
+{"label": "true", "type": "box", "value": {"bounds": {"beta_0": {"lb": 0.125, "ub": 0.25}, "beta_1": {"lb": 0.0, "ub": 0.125}}}}
+{"label": "true", "type": "box", "value": {"bounds": {"beta_0": {"lb": 0.0, "ub": 0.125}, "beta_1": {"lb": 0.0, "ub": 0.125}}}}
+{"label": "true", "type": "box", "value": {"bounds": {"beta_0": {"lb": 0.0, "ub": 0.125}, "beta_1": {"lb": 0.125, "ub": 0.25}}}}
+{"label": "false", "type": "point", "value": {"values": {"beta_0": 0.40625, "beta_1": 0.46875}}}
+{"label": "false", "type": "point", "value": {"values": {"beta_0": 0.40625, "beta_1": 0.40625}}}
+{"label": "false", "type": "point", "value": {"values": {"beta_0": 0.46875, "beta_1": 0.34375}}}
+{"label": "false", "type": "point", "value": {"values": {"beta_0": 0.421875, "beta_1": 0.3671875}}}
+{"label": "false", "type": "point", "value": {"values": {"beta_0": 0.46875, "beta_1": 0.28125}}}
+{"label": "true", "type": "point", "value": {"values": {"beta_0": 0.40625, "beta_1": 0.390625}}}
+{"label": "unknown", "type": "box", "value": {"bounds": {"beta_0": {"lb": 0.40625, "ub": 0.4375}, "beta_1": {"lb": 0.375, "ub": 0.4375}}}}
+{"label": "unknown", "type": "box", "value": {"bounds": {"beta_0": {"lb": 0.375, "ub": 0.40625}, "beta_1": {"lb": 0.375, "ub": 0.4375}}}}
+{"label": "unknown", "type": "box", "value": {"bounds": {"beta_0": {"lb": 0.40625, "ub": 0.4375}, "beta_1": {"lb": 0.40625, "ub": 0.4375}}}}
+{"label": "unknown", "type": "box", "value": {"bounds": {"beta_0": {"lb": 0.40625, "ub": 0.4375}, "beta_1": {"lb": 0.375, "ub": 0.40625}}}}
+{"label": "unknown", "type": "box", "value": {"bounds": {"beta_0": {"lb": 0.375, "ub": 0.40625}, "beta_1": {"lb": 0.40625, "ub": 0.4375}}}}
+{"label": "unknown", "type": "box", "value": {"bounds": {"beta_0": {"lb": 0.375, "ub": 0.40625}, "beta_1": {"lb": 0.375, "ub": 0.40625}}}}
+{"label": "true", "type": "point", "value": {"values": {"beta_0": 0.40625, "beta_1": 0.3125}}}
+{"label": "unknown", "type": "box", "value": {"bounds": {"beta_0": {"lb": 0.375, "ub": 0.4375}, "beta_1": {"lb": 0.3125, "ub": 0.375}}}}
+{"label": "unknown", "type": "box", "value": {"bounds": {"beta_0": {"lb": 0.375, "ub": 0.4375}, "beta_1": {"lb": 0.25, "ub": 0.3125}}}}
+{"label": "true", "type": "point", "value": {"values": {"beta_0": 0.46875, "beta_1": 0.265625}}}
+{"label": "unknown", "type": "box", "value": {"bounds": {"beta_0": {"lb": 0.46875, "ub": 0.5}, "beta_1": {"lb": 0.25, "ub": 0.3125}}}}
+{"label": "unknown", "type": "box", "value": {"bounds": {"beta_0": {"lb": 0.4375, "ub": 0.46875}, "beta_1": {"lb": 0.25, "ub": 0.3125}}}}
+{"label": "false", "type": "point", "value": {"values": {"beta_0": 0.359375, "beta_1": 0.4921875}}}
+{"label": "false", "type": "point", "value": {"values": {"beta_0": 0.421875, "beta_1": 0.390625}}}
+{"label": "true", "type": "box", "value": {"bounds": {"beta_0": {"lb": 0.25, "ub": 0.3125}, "beta_1": {"lb": 0.375, "ub": 0.5}}}}
+{"label": "false", "type": "point", "value": {"values": {"beta_0": 0.390625, "beta_1": 0.4296875}}}
+{"label": "true", "type": "point", "value": {"values": {"beta_0": 0.34375, "beta_1": 0.4375}}}
+{"label": "unknown", "type": "box", "value": {"bounds": {"beta_0": {"lb": 0.3125, "ub": 0.375}, "beta_1": {"lb": 0.4375, "ub": 0.5}}}}
+{"label": "unknown", "type": "box", "value": {"bounds": {"beta_0": {"lb": 0.3125, "ub": 0.375}, "beta_1": {"lb": 0.375, "ub": 0.4375}}}}
+{"label": "true", "type": "point", "value": {"values": {"beta_0": 0.390625, "beta_1": 0.421875}}}
+{"label": "unknown", "type": "box", "value": {"bounds": {"beta_0": {"lb": 0.390625, "ub": 0.40625}, "beta_1": {"lb": 0.40625, "ub": 0.4375}}}}
+{"label": "unknown", "type": "box", "value": {"bounds": {"beta_0": {"lb": 0.375, "ub": 0.390625}, "beta_1": {"lb": 0.40625, "ub": 0.4375}}}}
+{"label": "true", "type": "point", "value": {"values": {"beta_0": 0.4140625, "beta_1": 0.376953125}}}
+{"label": "unknown", "type": "box", "value": {"bounds": {"beta_0": {"lb": 0.421875, "ub": 0.4375}, "beta_1": {"lb": 0.375, "ub": 0.40625}}}}
+{"label": "unknown", "type": "box", "value": {"bounds": {"beta_0": {"lb": 0.40625, "ub": 0.421875}, "beta_1": {"lb": 0.375, "ub": 0.40625}}}}
