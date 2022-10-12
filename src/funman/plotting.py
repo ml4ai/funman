@@ -76,6 +76,20 @@ class BoxPlotter(object):
 
         episode.close()
         rval.put({"true_boxes": [], "false_boxes": []})
+    
+    def plot_list_of_boxes(self): ## added DMM 10/10/22
+        while True:
+            try:
+                box = episode.get_box_to_plot()
+            except Empty:
+                break
+            else:
+                try:
+                    if self.plot_bounds.intersects(box["box"]) and box["box"].finite():
+                        self.plot_add_box(box, color=self.color_map[box["label"]])
+                except Exception as e:
+                    pass
+                pass
 
     def plot_add_box(self, box: Box, color="r"):
         if self.py:
@@ -130,6 +144,14 @@ class BoxPlotter(object):
         y_limits = i.bounds[p2]
         x = np.linspace(x_limits.lb, x_limits.ub, 1000)
         plt.fill_between(x, y_limits.lb, y_limits.ub, color=color)
+    
+    def plot2DBoxList(b, color="g", alpha=0.2): 
+        box = list(b.bounds.values())
+        x_limits = box[0]
+        y_limits = box[1]
+        if abs(float(x_limits.lb)) < 100 and abs(float(x_limits.ub)) < 100:
+            x = np.linspace(float(x_limits.lb), float(x_limits.ub), 1000)
+            plt.fill_between(x, y_limits.lb, y_limits.ub, color=color, alpha=alpha)
 
     def plot1D(
         self,
