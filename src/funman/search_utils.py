@@ -125,18 +125,6 @@ class Point(object):
     def __str__(self):
         return f"{self.values.values()}"
 
-    def __hash__(self):
-        return int(sum([v for _, v in self.values.items()]))
-
-    def __eq__(self, other):
-        if isinstance(other, Point):
-            return all([self.values[p] == other.values[p] for p in self.values.keys()])
-        else:
-            return False
-
-    def to_smt(self):
-        return And([Equals(p.symbol, Real(value)) for p, value in self.values.items()])
-        
     def to_dict(self):
         return {
             "values": {k.name: v for k,v in self.values.items()}
@@ -148,6 +136,17 @@ class Point(object):
         res.values = {Parameter(k) : v for k, v in data["values"].items()}
         return res
 
+    def __hash__(self):
+        return int(sum([v for _, v in self.values.items()]))
+
+    def __eq__(self, other):
+        if isinstance(other, Point):
+            return all([self.values[p] == other.values[p] for p in self.values.keys()])
+        else:
+            return False
+
+    def to_smt(self):
+        return And([Equals(p.symbol, Real(value)) for p, value in self.values.items()])
 
 @total_ordering
 class Box(object):
