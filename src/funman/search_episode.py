@@ -36,7 +36,7 @@ class BoxSearchEpisode(SearchEpisode):
         initial_boxes = Queue()
         initial_boxes.put(self.initial_box())
         num_boxes = 1
-        while num_boxes < 3 * (self.config.number_of_processes - 1):
+        while num_boxes < 2 * (self.config.number_of_processes - 1):
             b1, b2 = initial_boxes.get().split()
             initial_boxes.put(b1)
             initial_boxes.put(b2)
