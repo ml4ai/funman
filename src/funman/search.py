@@ -143,6 +143,8 @@ class BoxSearch(object):
     def _load_from_cache(self, cache_path, episode: BoxSearchEpisode):
         with open(cache_path) as f:
             for line in f.readlines():
+                if len(line) == 0:
+                    continue
                 region = json.loads(line)
                 if region["type"] == "box":
                     box = Box.from_dict(region["value"])
