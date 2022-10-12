@@ -2,11 +2,12 @@ from multiprocessing import Queue
 from typing import Dict, List
 from funman.model import Parameter
 from funman.search_episode import BoxSearchEpisode
-from funman.search_utils import Box, Interval
+from funman.search_utils import Box, Interval, Point
 
 
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
+import matplotlib.patches as patches
 from IPython.display import clear_output
 import numpy as np
 from queue import Empty
@@ -18,7 +19,7 @@ class BoxPlotter(object):
         parameters: List[Parameter],
         plot_bounds: Box = None,
         title: str = "Feasible Regions",
-        color_map: Dict[str, str] = {"true": "g", "false": "r"},
+        color_map: Dict[str, str] = {"true": "g", "false": "r", "unknown": "b"},
     ) -> None:
         self.parameters = parameters
         # assert (
@@ -63,14 +64,26 @@ class BoxPlotter(object):
     def run(self, rval: Queue, episode: BoxSearchEpisode):
         while True:
             try:
-                box = episode.get_box_to_plot()
+                region = episode.get_box_to_plot()
             except Empty:
                 break
             else:
                 try:
                     # if self.plot_bounds.intersects(box["box"]) and box["box"].finite():
-                    if box["box"].finite():
-                        self.plot_add_box(box, color=self.color_map[box["label"]])
+
+                    if "box" in region and region["box"].finite():
+                        if region["label"] == "unknown":
+                            self.plot_add_patch(
+                                region["box"], color=self.color_map[region["label"]]
+                            )
+                        else:
+                            self.plot_add_box(
+                                region, color=self.color_map[region["label"]]
+                            )
+                    elif "point" in region:
+                        self.plot_add_point(
+                            region["point"], color=self.color_map[region["label"]]
+                        )
                 except Exception as e:
                     pass
                 pass
@@ -83,6 +96,29 @@ class BoxPlotter(object):
             self.plot2DBox(box["box"], self.px, self.py, color=color)
         else:
             self.plot1DBox(box["box"], self.px, color=color)
+        self.fig.canvas.draw()
+        self.fig.canvas.flush_events()
+
+    def plot_add_patch(self, box: Box, color="r"):
+        rect = patches.Rectangle(
+            (box.bounds[self.px].lb, box.bounds[self.py].ub),
+            box.bounds[self.px].width(),
+            box.bounds[self.py].width(),
+            linewidth=1,
+            edgecolor=color,
+            facecolor="none",
+        )
+
+        # Add the patch to the Axes
+        self.ax.add_patch(rect)
+
+        self.fig.canvas.draw()
+        self.fig.canvas.flush_events()
+
+    def plot_add_point(self, point: Point, color="r"):
+        plt.scatter(
+            point.values[self.px], point.values[self.py], s=10, alpha=0.5, color=color
+        )
         self.fig.canvas.draw()
         self.fig.canvas.flush_events()
 
