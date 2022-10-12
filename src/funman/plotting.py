@@ -1,3 +1,5 @@
+import json
+import time
 from multiprocessing import Queue
 from typing import Dict, List
 from funman.model import Parameter
@@ -25,8 +27,12 @@ class BoxPlotter(object):
         title: str = "Feasible Regions",
         color_map: Dict[str, str] = {"true": "g", "false": "r", "unknown": "b"},
         shape_map: Dict[str, str] = {"true": "x", "false": "o"},
+        real_time_plotting = True,
+        write_region_to_cache = None,
     ) -> None:
         self.parameters = parameters
+        self.real_time_plotting = real_time_plotting
+        self.write_region_to_cache = write_region_to_cache
         # assert (
         #     len(self.parameters) <= 2 and len(self.parameters) > 0,
         #     f"Plotting {len(self.parameters)} parameteres is not supported, must be 1 or 2",
@@ -43,63 +49,71 @@ class BoxPlotter(object):
             Line2D([0], [0], color="r", lw=4),
         ]
         # plt.ion()
-        self.fig = plt.figure()
-        self.ax = self.fig.add_subplot(111)
-        (self.data,) = self.ax.plot([], [])
-        plt.title(self.title)
-        plt.legend(self.custom_lines, ["true", "false"])
+        if self.real_time_plotting:
+            self.fig = plt.figure()
+            self.ax = self.fig.add_subplot(111)
+            (self.data,) = self.ax.plot([], [])
+            plt.title(self.title)
+            plt.legend(self.custom_lines, ["true", "false"])
 
-        plt.xlabel(self.px.name)
-        # plt.xlim(
-        #     [
-        #         self.plot_bounds.bounds[self.px].lb,
-        #         self.plot_bounds.bounds[self.px].ub,
-        #     ]
-        # )
-        if len(self.parameters) > 1:
-            plt.ylabel(self.py.name)
-            # plt.ylim(
+            plt.xlabel(self.px.name)
+            # plt.xlim(
             #     [
-            #         self.plot_bounds.bounds[self.py].lb,
-            #         self.plot_bounds.bounds[self.py].ub,
+            #         self.plot_bounds.bounds[self.px].lb,
+            #         self.plot_bounds.bounds[self.px].ub,
             #     ]
             # )
+            if len(self.parameters) > 1:
+                plt.ylabel(self.py.name)
+                # plt.ylim(
+                #     [
+                #         self.plot_bounds.bounds[self.py].lb,
+                #         self.plot_bounds.bounds[self.py].ub,
+                #     ]
+                # )
 
-        # plt.show(block=False)
-        # plt.pause(0.1)
+            # plt.show(block=False)
+            # plt.pause(0.1)
 
     def run(self, rval: Queue, episode: BoxSearchEpisode):
-        while True:
-            try:
-                region = episode.get_box_to_plot()
-            except Empty:
-                break
-            else:
+        try:
+            while True:
                 try:
-                    # if self.plot_bounds.intersects(box["box"]) and box["box"].finite():
+                    # if self.real_time_plotting and self.write_region_to_cache is not None:
+                    #     time.sleep(0.1)
+                    region = episode.get_box_to_plot()
+                except Empty:
+                    break
+                else:
+                    try:
+                        # if self.plot_bounds.intersects(box["box"]) and box["box"].finite():
+                        if self.write_region_to_cache is not None:
+                            self.write_region_to_cache(region)
 
-                    if "box" in region and region["box"].finite():
-                        if region["label"] == "unknown":
-                            self.plot_add_patch(
-                                region["box"], color=self.color_map[region["label"]]
-                            )
-                        else:
-                            self.plot_add_box(
-                                region, color=self.color_map[region["label"]]
-                            )
-                            # TODO Jack
-                            # self.write_to_file()
-                    elif "point" in region:
-                        l.debug(f"{region['label']}: {region['point']}")
-                        self.plot_add_point(
-                            region["point"], color=self.color_map[region["label"]], shape=self.shape_map[region["label"]]
-                        )
-                except Exception as e:
+                        if "box" in region and region["box"].finite():
+                            if region["label"] == "unknown":
+                                if self.real_time_plotting:
+                                    self.plot_add_patch(
+                                        region["box"], color=self.color_map[region["label"]]
+                                    )
+                            else:
+                                if self.real_time_plotting:
+                                    self.plot_add_box(
+                                        region, color=self.color_map[region["label"]]
+                                    )
+                        elif "point" in region:
+                            l.debug(f"{region['label']}: {region['point']}")
+                            if self.real_time_plotting:
+                                self.plot_add_point(
+                                    region["point"], color=self.color_map[region["label"]], shape=self.shape_map[region["label"]]
+                                )
+                    except Exception as e:
+                        print(e)
+                        pass
                     pass
-                pass
-
-        episode.close()
-        rval.put({"true_boxes": [], "false_boxes": []})
+        finally:
+            episode.close()
+            rval.put({"true_boxes": [], "false_boxes": []})
 
     def plot_add_box(self, box: Box, color="r"):
         if self.py:

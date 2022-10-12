@@ -1,13 +1,14 @@
 from typing import Dict, List, Union
 from funman.plotting import BoxPlotter
 from funman.search_episode import BoxSearchEpisode
-from funman.search_utils import Box, SearchConfig
+from funman.search_utils import Box, Point, SearchConfig
 from pysmt.shortcuts import get_model, And, Not
 
 
 from multiprocessing import Queue, Process, Value
 from queue import Empty
 import logging
+import json
 
 from funman.model import Parameter
 
@@ -18,6 +19,9 @@ l.setLevel(logging.INFO)
 class BoxSearch(object):
     def __init__(self) -> None:
         self.episodes = []
+        self.real_time_plotting = True
+        self.write_cache_parameter_space = None,
+        self.read_cache_parameter_space = None
 
     def split(self, box: Box, episode: BoxSearchEpisode):
         b1, b2 = box.split()
@@ -89,6 +93,79 @@ class BoxSearch(object):
         episode.close()
         rval.put({"true_boxes": episode.true_boxes, "false_boxes": episode.false_boxes})
 
+    def _write_to_cache(self, cache, region):
+        if "box" in region:
+            box = region['box']
+            if region["label"] == "true":
+                cache.write(json.dumps({
+                    "label": "true",
+                    "type": "box",
+                    "value": box.to_dict(),
+                }))
+                cache.write("\n")
+            elif region["label"] == "false":
+                cache.write(json.dumps({
+                    "label": "false",
+                    "type": "box",
+                    "value": box.to_dict(),
+                }))
+                cache.write("\n")
+            elif region["label"] == "unknown":
+                cache.write(json.dumps({
+                    "label": "unknown",
+                    "type": "box",
+                    "value": box.to_dict(),
+                }))
+                cache.write("\n")
+            else:
+                raise Exception("Invalid label")
+        elif "point" in region:
+            point = region['point']
+            if region["label"] == "true":
+                cache.write(json.dumps({
+                    "label": "true",
+                    "type": "point",
+                    "value": point.to_dict(),
+                }))
+                cache.write("\n")
+            elif region["label"] == "false":
+                cache.write(json.dumps({
+                    "label": "false",
+                    "type": "point",
+                    "value": point.to_dict(),
+                }))
+                cache.write("\n")
+            else:
+                raise Exception("Invalid label")
+        else:
+            raise Exception("Unknown type")
+
+    def _load_from_cache(self, cache_path, episode: BoxSearchEpisode):
+        with open(cache_path) as f:
+            for line in f.readlines():
+                region = json.loads(line)
+                if region["type"] == "box":
+                    box = Box.from_dict(region["value"])
+                    if region["label"] == "true":
+                        episode.add_true(box)
+                    elif region["label"] == "false":
+                        episode.add_false(box)
+                    elif region["label"] == "unknown":
+                        episode.add_unknown(box)
+                    else:
+                        raise Exception("Invalid label")
+                elif region["type"] == "point":
+                    point = Point.from_dict(region["value"])
+                    if region["label"] == "true":
+                        episode.add_true_point(point)
+                    elif region["label"] == "false":
+                        episode.add_false_point(point)
+                    else:
+                        raise Exception("Invalid label")
+                else:
+                    raise Exception("Unknown type")
+
+
     def search(
         self, problem, config: SearchConfig = SearchConfig()
     ) -> BoxSearchEpisode:
@@ -121,8 +198,19 @@ class BoxSearch(object):
 
         rval = Queue()
 
+        if self.read_cache_parameter_space is not None:
+            self._load_from_cache(self.read_cache_parameter_space, episode)
+
+        write_region_to_cache = None
+        out_cache = None
+        if self.write_cache_parameter_space is not None:
+            out_cache = open(self.write_cache_parameter_space, 'w')
+            write_region_to_cache = lambda x: self._write_to_cache(out_cache, x)
+
         # create a plotting process
-        plotter = BoxPlotter(problem.parameters)
+        plotter = BoxPlotter(problem.parameters,
+            real_time_plotting=self.real_time_plotting,
+            write_region_to_cache=write_region_to_cache)
         p = Process(
             target=plotter.run,
             args=(
@@ -132,6 +220,14 @@ class BoxSearch(object):
         )
         processes.append(p)
         p.start()
+
+        # short circuit since reading from cache
+        if self.read_cache_parameter_space is not None:
+            rval.close()
+            p.terminate()
+            p.join()
+            # results = {"true_boxes": episode.true_boxes, "false_boxes": episode.false_boxes}
+            return episode
 
         # creating processes
         for w in range(episode.config.number_of_processes - 1):
@@ -162,5 +258,8 @@ class BoxSearch(object):
 
         episode.false_boxes = [b for r in results for b in r["false_boxes"]]
         episode.true_boxes = [b for r in results for b in r["true_boxes"]]
+
+        if out_cache is not None:
+            out_cache.close()
 
         return episode

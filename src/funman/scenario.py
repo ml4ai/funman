@@ -33,13 +33,19 @@ class ParameterSynthesisScenario(AnalysisScenario):
         self,
         parameters: List[Parameter],
         model: Union[str, FNode],
-        search=BoxSearch(),
+        search = None,
         config: Dict = None,
     ) -> None:
         super().__init__()
         self.parameters = parameters
 
+        if search is None:
+            search = BoxSearch()
         self.search = search
+
+        self.search.real_time_plotting = config.get("real_time_plotting", True)
+        self.search.write_cache_parameter_space = config.get("write_cache_parameter_space", None)
+        self.search.read_cache_parameter_space = config.get("read_cache_parameter_space", None)
 
         if isinstance(model, str):
             self.chime = CHIME()
