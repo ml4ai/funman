@@ -1,7 +1,6 @@
 from typing import List, Union
 from datetime import datetime
 from multiprocessing import Queue, Value
-from boto import config
 
 from funman.search_utils import Box, Point, SearchConfig, SearchStatistics
 
