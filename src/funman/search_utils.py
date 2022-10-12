@@ -7,7 +7,7 @@ import time
 from typing import Dict, List, Union
 from funman.config import Config
 from funman.model import Parameter
-from pysmt.shortcuts import Real, GE, LT, And, TRUE
+from pysmt.shortcuts import Real, GE, LT, And, TRUE, Equals
 from funman.constants import NEG_INFINITY, POS_INFINITY, BIG_NUMBER
 
 
@@ -71,6 +71,20 @@ class Interval(object):
             else other.ub <= self.ub
         )
         return lhs or rhs
+    
+    def intersection(self, other: "Interval") -> "Interval":
+        """Given 2 intervals with a = [a0,a1] and b=[b0,b1], check whether they intersect.  If they do, return interval with their intersection."""
+        if a[0] <= b[0]:
+            minArray = a
+            maxArray = b
+        else:
+            minArray = b
+            maxArray = a
+        if minArray[1] > maxArray[0]: ## has nonempty intersection. return intersection
+            return [maxArray[0], minArray[1]]
+        else: ## no intersection.
+            return []
+        
 
     def intersection(self, other: "Interval") -> bool:
         # FIXME Drisana
@@ -85,6 +99,16 @@ class Interval(object):
             return self.lb + BIG_NUMBER
         else:
             return ((self.ub - self.lb) / 2) + self.lb
+
+    def contains_value(self, value: float) -> bool:
+        lhs = (
+            self.lb == NEG_INFINITY or self.lb <= value
+        )
+        rhs = (
+            self.ub == POS_INFINITY or value <= self.ub
+        )
+        return lhs and rhs
+        
 
     def to_smt(self, p: Parameter):
         return And(
@@ -124,11 +148,22 @@ class Point(object):
         res.values = {Parameter(k) : v for k, v in data["values"].items()}
         return res
 
+    def __hash__(self):
+        return int(sum([v for _, v in self.values.items()]))
+
+    def __eq__(self, other):
+        if isinstance(other, Point):
+            return all([self.values[p] == other.values[p] for p in self.values.keys()])
+        else:
+            return False
+
+    def to_smt(self):
+        return And([Equals(p.symbol, Real(value)) for p, value in self.values.items()])
 
 @total_ordering
 class Box(object):
     def __init__(self, parameters) -> None:
-        self.bounds = {p: Interval(NEG_INFINITY, POS_INFINITY) for p in parameters}
+        self.bounds = {p: Interval(p.lb, p.ub) for p in parameters}
         self.cached_width = None
 
     def to_smt(self):
@@ -169,7 +204,7 @@ class Box(object):
         return f"{self.bounds}"
 
     def __str__(self):
-        return self.__repr__()
+        return f"{self.bounds.values()}"
 
     def finite(self) -> bool:
         return all([i.finite() for _, i in self.bounds.items()])
@@ -178,6 +213,9 @@ class Box(object):
         return all(
             [interval.contains(other.bounds[p]) for p, interval in self.bounds.items()]
         )
+
+    def contains_point(self, point: Point) -> bool:
+        return all([interval.contains_value(point.values[p]) for p, interval in self.bounds.items()])
 
     def intersects(self, other: "Box") -> bool:
         return all(
@@ -217,8 +255,20 @@ class Box(object):
         # b2 is upper half
         b2.bounds[p] = Interval(mid, b2.bounds[p].ub)
 
-        return [b1, b2]
+        return [b2, b1]
 
+    def intersect_two_boxes(self, other) -> "Box":
+        a = self.bounds
+        b = other.bounds
+        result = []
+        d = len(a.values()) ## dimension
+        for i in range(d):
+            subresult = intersection(a[i],b[i])
+            if subresult == []:
+                return None
+            else:
+                result.append(subresult)
+        return result
 
 class SearchStatistics(object):
     def __init__(self):
@@ -241,7 +291,7 @@ class SearchConfig(Config):
     def __init__(self, *args, **kwargs) -> None:
         self.tolerance = kwargs["tolerance"] if "tolerance" in kwargs else 1e-2
         self.queue_timeout = (
-            kwargs["queue_timeout"] if "queue_timeout" in kwargs else 10
+            kwargs["queue_timeout"] if "queue_timeout" in kwargs else 1200
         )
         self.number_of_processes = (
             kwargs["number_of_processes"]

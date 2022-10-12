@@ -13,20 +13,21 @@ from pysmt.shortcuts import (
     LT,
     LE,
     GE,
+    Times
 )
 from pysmt.typing import REAL
 
 
 class CHIME(object):
     def make_model(
-        self, epochs=[(0, 20), (21, 60)], population_size=1002, infectious_days=14.0
+        self, epochs=[(0, 20), (21, 60)], population_size=1002, infectious_days=14.0, infected_threshold=0.1
     ):
         num_timepoints = epochs[-1][-1]  # Last timepoint of last epoch
         vars = self.make_chime_variables(num_timepoints, epochs)
         parameters, init, dynamics = self.make_chime_model(
             *vars, num_timepoints, epochs, population_size, infectious_days
         )
-        query = self.make_chime_query(vars[1], num_timepoints)
+        query = self.make_chime_query(vars[1], vars[9], num_timepoints, infected_threshold)
         return vars, (parameters, init, dynamics, query)
 
     def make_chime_variables(self, num_timepoints, epochs):
@@ -223,11 +224,11 @@ class CHIME(object):
 
         return parameters, init, dynamics
 
-    def make_chime_query(self, infected, num_timepoints):
-        threshold = 100
+    def make_chime_query(self, infected, n, num_timepoints, threshold):
+        
 
-        # I_t <= 100
-        query = [LT(infected[t], Real(threshold)) for t in range(num_timepoints)]
+        # I_t <= n * threshold, threshold is proportion (0, 1]
+        query = [LT(infected[t], Times(n, Real(threshold))) for t in range(num_timepoints+1)]
         return query
 
     def encode_time_horizon(self, parameters, init, dynamics, query, horizon):

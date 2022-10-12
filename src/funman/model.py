@@ -1,14 +1,22 @@
+from typing import Tuple, Union
 from unicodedata import name
 
+from funman.constants import NEG_INFINITY, POS_INFINITY
 
 class Model(object):
     def __init__(self, formula) -> None:
         self.formula = formula
 
 
+class Query(object):
+    def __init__(self, formula) -> None:
+        self.formula = formula
+
 class Parameter(object):
-    def __init__(self, name, symbol=None) -> None:
+    def __init__(self, name, lb: Union[float, str] = NEG_INFINITY, ub: Union[float, str] = POS_INFINITY, symbol=None) -> None:
         self.name = name
+        self.lb = lb
+        self.ub = ub
 
         # if the symbol is None, then need to get the symbol from a solver
         self.symbol = symbol

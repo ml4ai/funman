@@ -1,9 +1,13 @@
 from typing import List, Union
 from datetime import datetime
 from multiprocessing import Queue, Value
+from boto import config
 
 from funman.search_utils import Box, Point, SearchConfig, SearchStatistics
 
+import logging
+l = logging.getLogger(__file__)
+l.setLevel(logging.INFO)
 
 class SearchEpisode(object):
     def __init__(self) -> None:
@@ -17,12 +21,31 @@ class BoxSearchEpisode(SearchEpisode):
         self.boxes_to_plot = Queue()
         self.true_boxes = []
         self.false_boxes = []
+        self.true_points = set({})
+        self.false_points = set({})
 
         self.config = config
         self.problem = problem
         self.num_parameters = len(self.problem.parameters)
         self.iteration = Value("i", 0)
         self.internal_process_id = 0
+        self.initialize_boxes()
+
+
+    def initialize_boxes(self):
+        initial_boxes = Queue()
+        initial_boxes.put(self.initial_box())
+        num_boxes = 1
+        while num_boxes < 2 * (self.config.number_of_processes - 1):
+            b1, b2 = initial_boxes.get().split()
+            initial_boxes.put(b1)
+            initial_boxes.put(b2)
+            num_boxes += 1
+        for i in range(num_boxes):
+            b = initial_boxes.get()
+            self.add_unknown(b)
+            l.debug(f"Initial box: {b}")
+        initial_boxes.close()
 
     def initial_box(self) -> Box:
         return Box(self.problem.parameters)
@@ -60,6 +83,9 @@ class BoxSearchEpisode(SearchEpisode):
         self.boxes_to_plot.put({"box": box, "label": "false"})
 
     def add_false_point(self, point: Point):
+        if point in self.true_points:
+            l.error(f"Point: {point} is marked false, but already marked true.")
+        self.false_points.add(point)
         self.boxes_to_plot.put({"point": point, "label": "false"})
 
     def add_true(self, box: Box):
@@ -70,6 +96,9 @@ class BoxSearchEpisode(SearchEpisode):
         self.boxes_to_plot.put({"box": box, "label": "true"})
 
     def add_true_point(self, point: Point):
+        if point in self.false_points:
+            l.error(f"Point: {point} is marked true, but already marked false.")
+        self.true_points.add(point)
         self.boxes_to_plot.put({"point": point, "label": "true"})
 
     def get_unknown(self):
@@ -83,7 +112,7 @@ class BoxSearchEpisode(SearchEpisode):
         return box
 
     def get_box_to_plot(self):
-        return self.boxes_to_plot.get()
+        return self.boxes_to_plot.get(timeout=self.config.queue_timeout)
 
     def extract_point(self, model):
         point = Point(self.problem.parameters)
