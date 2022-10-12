@@ -51,7 +51,7 @@ class BoxSearch(object):
                     false_point = next(fp for fp in episode.false_points if box.contains_point(fp))
                 except StopIteration:
                     # If no cached point, then attempt to generate one
-                    phi = And(box.to_smt(), Not(episode.problem.model.formula))
+                    phi = And(box.to_smt(), episode.problem.model.formula, Not(episode.problem.query.formula))
                     res = get_model(phi)
                     # Record the false point
                     if res:
@@ -68,7 +68,7 @@ class BoxSearch(object):
                         true_point = next(tp for tp in episode.true_points if box.contains_point(tp))
                     except StopIteration:
                         # If no cached point, then attempt to generate one
-                        phi1 = And(box.to_smt(), episode.problem.model.formula)
+                        phi1 = And(box.to_smt(), episode.problem.model.formula, episode.problem.query.formula)
                         res1 = get_model(phi1)
                         # Record the true point
                         if res1:

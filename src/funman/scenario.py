@@ -4,7 +4,7 @@ from funman.config import Config
 from funman.examples.chime import CHIME
 from funman.parameter_space import ParameterSpace
 from funman.search import BoxSearch, SearchConfig
-from funman.model import Model, Parameter
+from funman.model import Model, Parameter, Query
 
 from pysmt.fnode import FNode
 from pysmt.shortcuts import get_free_variables, And
@@ -57,11 +57,11 @@ class ParameterSynthesisScenario(AnalysisScenario):
         else:
             self.vars = model.get_free_variables()
 
-        self.model = model
+        # self.model = model
 
         # Associate parameters with symbols in the model
         symbol_map = {
-            s.symbol_name(): s for p in self.model[0] for s in get_free_variables(p)
+            s.symbol_name(): s for p in model[0] for s in get_free_variables(p)
         }
         for p in self.parameters:
             if not p.symbol:
@@ -70,7 +70,7 @@ class ParameterSynthesisScenario(AnalysisScenario):
         param_symbols = set({p.name for p in self.parameters})
         assigned_parameters = [
             p
-            for p in self.model[0]
+            for p in model[0]
             if len(
                 set({q.symbol_name() for q in get_free_variables(p)}).intersection(
                     param_symbols
@@ -78,22 +78,25 @@ class ParameterSynthesisScenario(AnalysisScenario):
             )
             == 0
         ]
+        self.query = Query(
+                    And(model[3])
+                    if isinstance(model[3], list)
+                    else model[3]
+                )
+
         self.model = Model(
             And(
                 And(assigned_parameters),
-                self.model[1],
+                model[1],
                 (
-                    And([And(layer) for step in self.model[2] for layer in step])
-                    if isinstance(self.model[2], list)
-                    else self.model[2]
+                    And([And(layer) for step in model[2] for layer in step])
+                    if isinstance(model[2], list)
+                    else model[2]
                 ),
-                (
-                    And(self.model[3])
-                    if isinstance(self.model[3], list)
-                    else self.model[3]
-                ),
+                
             )
         )
+        
 
     def solve(self, config: SearchConfig = None) -> "ParameterSynthesisScenarioResult":
         """

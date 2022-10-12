@@ -7,7 +7,7 @@ import time
 from typing import Dict, List, Union
 from funman.config import Config
 from funman.model import Parameter
-from pysmt.shortcuts import Real, GE, LT, And, TRUE
+from pysmt.shortcuts import Real, GE, LT, And, TRUE, Equals
 from funman.constants import NEG_INFINITY, POS_INFINITY, BIG_NUMBER
 
 
@@ -133,6 +133,8 @@ class Point(object):
         else:
             return False
 
+    def to_smt(self):
+        return And([Equals(p.symbol, Real(value)) for p, value in self.values.items()])
 
 @total_ordering
 class Box(object):
@@ -252,7 +254,7 @@ class SearchConfig(Config):
     def __init__(self, *args, **kwargs) -> None:
         self.tolerance = kwargs["tolerance"] if "tolerance" in kwargs else 1e-3
         self.queue_timeout = (
-            kwargs["queue_timeout"] if "queue_timeout" in kwargs else 60
+            kwargs["queue_timeout"] if "queue_timeout" in kwargs else 120
         )
         self.number_of_processes = (
             kwargs["number_of_processes"]

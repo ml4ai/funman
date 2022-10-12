@@ -228,7 +228,7 @@ class CHIME(object):
         
 
         # I_t <= n * threshold, threshold is proportion (0, 1]
-        query = [LT(infected[t], Times(n, Real(threshold))) for t in range(num_timepoints)]
+        query = [LT(infected[t], Times(n, Real(threshold))) for t in range(num_timepoints+1)]
         return query
 
     def encode_time_horizon(self, parameters, init, dynamics, query, horizon):

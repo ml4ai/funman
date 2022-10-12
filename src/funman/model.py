@@ -8,6 +8,10 @@ class Model(object):
         self.formula = formula
 
 
+class Query(object):
+    def __init__(self, formula) -> None:
+        self.formula = formula
+
 class Parameter(object):
     def __init__(self, name, lb: Union[float, str] = NEG_INFINITY, ub: Union[float, str] = POS_INFINITY, symbol=None) -> None:
         self.name = name
