@@ -12,6 +12,10 @@ from IPython.display import clear_output
 import numpy as np
 from queue import Empty
 
+import logging
+l = logging.getLogger(__file__)
+l.setLevel(logging.DEBUG)
+
 
 class BoxPlotter(object):
     def __init__(
@@ -20,6 +24,7 @@ class BoxPlotter(object):
         plot_bounds: Box = None,
         title: str = "Feasible Regions",
         color_map: Dict[str, str] = {"true": "g", "false": "r", "unknown": "b"},
+        shape_map: Dict[str, str] = {"true": "x", "false": "o"},
     ) -> None:
         self.parameters = parameters
         # assert (
@@ -31,6 +36,7 @@ class BoxPlotter(object):
         self.plot_bounds = plot_bounds if plot_bounds else self.plotBox()
         self.title = title
         self.color_map = color_map
+        self.shape_map = shape_map
         clear_output(wait=True)
         self.custom_lines = [
             Line2D([0], [0], color="g", lw=4),
@@ -60,6 +66,7 @@ class BoxPlotter(object):
             # )
 
         plt.show(block=False)
+        # plt.pause(0.1)
 
     def run(self, rval: Queue, episode: BoxSearchEpisode):
         while True:
@@ -81,8 +88,9 @@ class BoxPlotter(object):
                                 region, color=self.color_map[region["label"]]
                             )
                     elif "point" in region:
+                        l.debug(f"{region['label']}: {region['point']}")
                         self.plot_add_point(
-                            region["point"], color=self.color_map[region["label"]]
+                            region["point"], color=self.color_map[region["label"]], shape=self.shape_map[region["label"]]
                         )
                 except Exception as e:
                     pass
@@ -98,6 +106,7 @@ class BoxPlotter(object):
             self.plot1DBox(box["box"], self.px, color=color)
         self.fig.canvas.draw()
         self.fig.canvas.flush_events()
+        plt.show(block=False)
 
     def plot_add_patch(self, box: Box, color="r"):
         rect = patches.Rectangle(
@@ -114,13 +123,15 @@ class BoxPlotter(object):
 
         self.fig.canvas.draw()
         self.fig.canvas.flush_events()
+        plt.show(block=False)
 
-    def plot_add_point(self, point: Point, color="r"):
+    def plot_add_point(self, point: Point, color="r", shape='x'):
         plt.scatter(
-            point.values[self.px], point.values[self.py], s=10, alpha=0.5, color=color
+            point.values[self.px], point.values[self.py], color=color, marker=shape
         )
         self.fig.canvas.draw()
         self.fig.canvas.flush_events()
+        plt.show(block=False)
 
     def plotBox(self, interval: Interval = Interval(-2000, 2000)):
         box = Box(self.parameters)

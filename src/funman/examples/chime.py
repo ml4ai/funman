@@ -18,11 +18,15 @@ from pysmt.typing import REAL
 
 
 class CHIME(object):
-    def make_model(self):
-        epochs = [(0, 20), (21, 60)]
-        vars = self.make_chime_variables(60, epochs)
-        parameters, init, dynamics = self.make_chime_model(*vars, 60, epochs)
-        query = self.make_chime_query(vars[1], 60)
+    def make_model(
+        self, epochs=[(0, 20), (21, 60)], population_size=1002, infectious_days=14.0
+    ):
+        num_timepoints = epochs[-1][-1]  # Last timepoint of last epoch
+        vars = self.make_chime_variables(num_timepoints, epochs)
+        parameters, init, dynamics = self.make_chime_model(
+            *vars, num_timepoints, epochs, population_size, infectious_days
+        )
+        query = self.make_chime_query(vars[1], num_timepoints)
         return vars, (parameters, init, dynamics, query)
 
     def make_chime_variables(self, num_timepoints, epochs):
@@ -70,6 +74,8 @@ class CHIME(object):
             delta,
             num_timepoints,
             epochs,
+            population_size,
+            infectious_days,
             epoch_idx,
             t,
         ) = vars
@@ -113,6 +119,8 @@ class CHIME(object):
             delta,
             num_timepoints,
             epochs,
+            population_size,
+            infectious_days,
             epoch_idx,
             t,
         ) = vars
@@ -146,6 +154,8 @@ class CHIME(object):
             delta,
             num_timepoints,
             epochs,
+            population_size,
+            infectious_days,
             epoch_idx,
             t,
         ) = vars
@@ -179,10 +189,12 @@ class CHIME(object):
             delta,
             num_timepoints,
             epochs,
+            population_size,
+            infectious_days,
         ) = vars
         # Params
         parameters = [
-            Equals(gamma, Real(0.07)),
+            Equals(gamma, Real(1.0 / infectious_days)),
             Equals(delta, Real(0.0)),
         ] + [Equals(b, Real(6.7e-05)) for b in betas]
 
@@ -192,7 +204,7 @@ class CHIME(object):
         # r_n = 1  ## main_r_n_exp
         init = And(
             [
-                Equals(susceptible[0], Real(1000.0)),
+                Equals(susceptible[0], Real(population_size - 2)),
                 Equals(infected[0], Real(1.0)),
                 Equals(recovered[0], Real(1.0)),
                 Equals(n, susceptible[0] + infected[0] + recovered[0]),

@@ -93,6 +93,9 @@ class Point(object):
     def __init__(self, parameters) -> None:
         self.values = {p: 0.0 for p in parameters}
 
+    def __str__(self):
+        return f"{self.values.values()}"
+
 
 @total_ordering
 class Box(object):
@@ -191,7 +194,7 @@ class SearchStatistics(object):
 
 class SearchConfig(Config):
     def __init__(self, *args, **kwargs) -> None:
-        self.tolerance = kwargs["tolerance"] if "tolerance" in kwargs else 1e0
+        self.tolerance = kwargs["tolerance"] if "tolerance" in kwargs else 1e-2
         self.queue_timeout = (
             kwargs["queue_timeout"] if "queue_timeout" in kwargs else 10
         )

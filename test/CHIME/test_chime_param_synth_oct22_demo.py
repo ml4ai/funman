@@ -11,7 +11,13 @@ class TestChimeSynth(unittest.TestCase):
         gromet_file1 = "chime1"
         result1: ParameterSynthesisScenarioResult = Funman().solve(
             ParameterSynthesisScenario(
-                [Parameter("beta_0"), Parameter("beta_1")], gromet_file1
+                [Parameter("beta_0"), Parameter("beta_1")],
+                gromet_file1,
+                config={
+                    "epochs": [(0, 1), (1, 2)],
+                    "population_size": 1002,
+                    "infectious_days": 14.0,
+                },
             )
         )
 

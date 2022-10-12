@@ -1,5 +1,5 @@
 from abc import abstractclassmethod
-from typing import Any, List, Union
+from typing import Any, Dict, List, Union
 from funman.config import Config
 from funman.examples.chime import CHIME
 from funman.parameter_space import ParameterSpace
@@ -30,7 +30,11 @@ class ParameterSynthesisScenario(AnalysisScenario):
     """
 
     def __init__(
-        self, parameters: List[Parameter], model: Union[str, FNode], search=BoxSearch()
+        self,
+        parameters: List[Parameter],
+        model: Union[str, FNode],
+        search=BoxSearch(),
+        config: Dict = None,
     ) -> None:
         super().__init__()
         self.parameters = parameters
@@ -38,14 +42,20 @@ class ParameterSynthesisScenario(AnalysisScenario):
         self.search = search
 
         if isinstance(model, str):
-            if model == "chime1":
-                self.chime = CHIME()
-                vars, model = self.chime.make_model()
-                self.vars = vars
-                self.model = model
+            self.chime = CHIME()
+            epochs = config["epochs"]
+            population_size = config["population_size"]
+            infectious_days = config["infectious_days"]
+            vars, model = self.chime.make_model(
+                epochs=epochs,
+                population_size=population_size,
+                infectious_days=infectious_days,
+            )
+            self.vars = vars
         else:
-            self.model = model
             self.vars = model.get_free_variables()
+
+        self.model = model
 
         # Associate parameters with symbols in the model
         symbol_map = {
