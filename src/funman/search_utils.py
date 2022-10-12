@@ -72,18 +72,6 @@ class Interval(object):
         )
         return lhs or rhs
     
-    def intersection(self, other: "Interval") -> "Interval":
-        """Given 2 intervals with a = [a0,a1] and b=[b0,b1], check whether they intersect.  If they do, return interval with their intersection."""
-        if a[0] <= b[0]:
-            minArray = a
-            maxArray = b
-        else:
-            minArray = b
-            maxArray = a
-        if minArray[1] > maxArray[0]: ## has nonempty intersection. return intersection
-            return [maxArray[0], minArray[1]]
-        else: ## no intersection.
-            return []
         
 
     def intersection(self, other: "Interval") -> bool:
@@ -258,17 +246,61 @@ class Box(object):
 
         return [b2, b1]
 
-    def intersect_two_boxes(self, other) -> "Box":
-        a = self.bounds
-        b = other.bounds
+    def intersection(a,b):
+        """Given 2 intervals with a = [a0,a1] and b=[b0,b1], check whether they intersect.  If they do, return interval with their intersection."""
+        if float(a.lb) <= float(b.lb):
+            minArray = a
+            maxArray = b
+        else:
+            minArray = b
+            maxArray = a
+        if minArray.ub > maxArray.lb: ## has nonempty intersection. return intersection
+            return [float(maxArray.lb), float(minArray.ub)]
+        else: ## no intersection.
+            return []
+
+    def intersect_two_boxes(b1,b2):
+        a = list(b1.bounds.values())
+        b = list(b2.bounds.values())
         result = []
-        d = len(a.values()) ## dimension
+        d = len(a) ## dimension
         for i in range(d):
-            subresult = intersection(a[i],b[i])
+            subresult = Box.intersection(a[i],b[i])
             if subresult == []:
                 return None
             else:
                 result.append(subresult)
+        return result
+
+    def subtract_two_1d_boxes(a,b):
+        """Given 2 intervals a = [a0,a1] and b=[b0,b1], return the part of a that does not intersect with b."""
+        if intersect_two_1d_boxes(a,b) == None:
+            return a
+        else:
+            if a[0] < b[0]:
+                return [a[0],b[0]]
+            elif a[0] > b[0]:
+                return [b[1],a[1]]
+    
+    def symmetric_difference_two_boxes(a,b): ### WIP - just for 2 dimensions at this point.
+        result = []
+        if a == b:
+            result = None 
+        elif Box.intersect_two_boxes(a,b) == None: ## no intersection so they are disjoint - return both original boxes
+            result = [a,b]
+        else:
+            xbounds = Box.subtract_two_1d_boxes(a[0],b[0])
+            if xbounds != None:
+                result.append([xbounds,a[1]])
+            xbounds = Box.subtract_two_1d_boxes(b[0],a[0])
+            if xbounds != None:
+                result.append([xbounds,b[1]])
+            ybounds = Box.subtract_two_1d_boxes(a[1],b[1])
+            if ybounds != None:
+                result.append([a[0],ybounds]) 
+            ybounds = Box.subtract_two_1d_boxes(b[1],a[1])
+            if ybounds != None:
+                result.append([b[0],ybounds])         
         return result
 
 class SearchStatistics(object):
