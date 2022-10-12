@@ -14,7 +14,7 @@ from queue import Empty
 
 import logging
 l = logging.getLogger(__file__)
-l.setLevel(logging.DEBUG)
+l.setLevel(logging.INFO)
 
 
 class BoxPlotter(object):
@@ -112,7 +112,7 @@ class BoxPlotter(object):
 
     def plot_add_patch(self, box: Box, color="r"):
         rect = patches.Rectangle(
-            (box.bounds[self.px].lb, box.bounds[self.py].ub),
+            (box.bounds[self.px].lb, box.bounds[self.py].lb),
             box.bounds[self.px].width(),
             box.bounds[self.py].width(),
             linewidth=1,

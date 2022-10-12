@@ -46,10 +46,12 @@ class ParameterSynthesisScenario(AnalysisScenario):
             epochs = config["epochs"]
             population_size = config["population_size"]
             infectious_days = config["infectious_days"]
+            # infected_threshold = config["infected_threhold"]
             vars, model = self.chime.make_model(
                 epochs=epochs,
                 population_size=population_size,
                 infectious_days=infectious_days,
+                infected_threshold=0.25
             )
             self.vars = vars
         else:

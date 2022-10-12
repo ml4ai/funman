@@ -12,31 +12,17 @@ import logging
 from funman.model import Parameter
 
 l = logging.getLogger(__file__)
-l.setLevel(logging.ERROR)
+l.setLevel(logging.INFO)
 
 
 class BoxSearch(object):
     def __init__(self) -> None:
-
         self.episodes = []
 
     def split(self, box: Box, episode: BoxSearchEpisode):
         b1, b2 = box.split()
         episode.add_unknown([b1, b2])
         episode.statistics.iteration_operation.put("s")
-
-    def initialize(self, episode: BoxSearchEpisode):
-        initial_boxes = Queue()
-        initial_boxes.put(episode.initial_box())
-        num_boxes = 1
-        while num_boxes < 2 * (episode.config.number_of_processes - 1):
-            b1, b2 = initial_boxes.get().split()
-            initial_boxes.put(b1)
-            initial_boxes.put(b2)
-            num_boxes += 1
-        for i in range(num_boxes):
-            b = initial_boxes.get()
-            episode.add_unknown(b)
 
     def expand(self, rval: Queue, episode: BoxSearchEpisode) -> None:
         """
@@ -51,8 +37,6 @@ class BoxSearch(object):
         episode : BoxSearchEpisode
             Shared search data and statistics.
         """
-        if episode.internal_process_id == 0:
-            self.initialize(episode)
 
         while True:
             try:
@@ -61,23 +45,37 @@ class BoxSearch(object):
                 break
             else:
                 # Check whether box intersects f (false region)
-                phi = And(box.to_smt(), Not(episode.problem.model.formula))
-                res = get_model(phi)
-                if res:
-                    # box intersects f (false region)
-
+                false_point = None
+                try:
+                    # First see if a cached false point exists in the box
+                    false_point = next(fp for fp in episode.false_points if box.contains_point(fp))
+                except StopIteration:
+                    # If no cached point, then attempt to generate one
+                    phi = And(box.to_smt(), Not(episode.problem.model.formula))
+                    res = get_model(phi)
                     # Record the false point
-                    point = episode.extract_point(res)
-                    episode.add_false_point(point)
+                    if res:
+                        false_point = episode.extract_point(res)
+                        episode.add_false_point(false_point)
+
+                if false_point:
+                    # box intersects f (false region)                   
 
                     # Check whether box intersects t (true region)
-                    phi1 = And(box.to_smt(), episode.problem.model.formula)
-                    res1 = get_model(phi1)
-                    if res1:
+                    true_point = None
+                    try:
+                        # First see if a cached false point exists in the box
+                        true_point = next(tp for tp in episode.true_points if box.contains_point(tp))
+                    except StopIteration:
+                        # If no cached point, then attempt to generate one
+                        phi1 = And(box.to_smt(), episode.problem.model.formula)
+                        res1 = get_model(phi1)
                         # Record the true point
-                        point = episode.extract_point(res1)
-                        episode.add_true_point(point)
-
+                        if res1:
+                            true_point = episode.extract_point(res1)
+                            episode.add_true_point(true_point)                   
+                
+                    if true_point:
                         # box intersects both t and f, so it must be split
                         self.split(box, episode)
                     else:
@@ -148,8 +146,12 @@ class BoxSearch(object):
             p.start()
             episode.internal_process_id = w
 
+        episode.close() # Main process needs to close queues used to initialize
+
         results = [rval.get() for p in processes]
         rval.close()
+
+        
 
         for p in processes:
             p.terminate()

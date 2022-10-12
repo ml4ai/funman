@@ -86,6 +86,16 @@ class Interval(object):
         else:
             return ((self.ub - self.lb) / 2) + self.lb
 
+    def contains_value(self, value: float) -> bool:
+        lhs = (
+            self.lb == NEG_INFINITY or self.lb <= value
+        )
+        rhs = (
+            self.ub == POS_INFINITY or value <= self.ub
+        )
+        return lhs and rhs
+        
+
     def to_smt(self, p: Parameter):
         return And(
             (GE(p.symbol, Real(self.lb)) if self.lb != NEG_INFINITY else TRUE()),
@@ -100,11 +110,20 @@ class Point(object):
     def __str__(self):
         return f"{self.values.values()}"
 
+    def __hash__(self):
+        return int(sum([v for _, v in self.values.items()]))
+
+    def __eq__(self, other):
+        if isinstance(other, Point):
+            return all([self.values[p] == other.values[p] for p in self.values.keys()])
+        else:
+            return False
+
 
 @total_ordering
 class Box(object):
     def __init__(self, parameters) -> None:
-        self.bounds = {p: Interval(NEG_INFINITY, POS_INFINITY) for p in parameters}
+        self.bounds = {p: Interval(p.lb, p.ub) for p in parameters}
         self.cached_width = None
 
     def to_smt(self):
@@ -132,7 +151,7 @@ class Box(object):
         return f"{self.bounds}"
 
     def __str__(self):
-        return self.__repr__()
+        return f"{self.bounds.values()}"
 
     def finite(self) -> bool:
         return all([i.finite() for _, i in self.bounds.items()])
@@ -141,6 +160,9 @@ class Box(object):
         return all(
             [interval.contains(other.bounds[p]) for p, interval in self.bounds.items()]
         )
+
+    def contains_point(self, point: Point) -> bool:
+        return all([interval.contains_value(point.values[p]) for p, interval in self.bounds.items()])
 
     def intersects(self, other: "Box") -> bool:
         return all(
@@ -202,9 +224,9 @@ class SearchStatistics(object):
 
 class SearchConfig(Config):
     def __init__(self, *args, **kwargs) -> None:
-        self.tolerance = kwargs["tolerance"] if "tolerance" in kwargs else 1e-2
+        self.tolerance = kwargs["tolerance"] if "tolerance" in kwargs else 1e-3
         self.queue_timeout = (
-            kwargs["queue_timeout"] if "queue_timeout" in kwargs else 10
+            kwargs["queue_timeout"] if "queue_timeout" in kwargs else 60
         )
         self.number_of_processes = (
             kwargs["number_of_processes"]
