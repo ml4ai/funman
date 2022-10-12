@@ -16,19 +16,34 @@ class ParameterSpace(object):
         raise NotImplementedError()
         return ParameterSpace()
 
-#    # STUB intersect parameters spaces
     @staticmethod
-    def intersect(ps1, ps2):
+    def _intersect_boxes(b1s, b2s):
         results_list = []
-        for box1 in ps1:
-            for box2 in ps2:
+        for box1 in b1s:
+            for box2 in b2s:
                 subresult = Box.intersect_two_boxes(box1, box2)
                 if subresult != None:
                     results_list.append(subresult)
         return results_list
 
+    # STUB intersect parameters spaces
+    @staticmethod
+    def intersect(ps1, ps2):
+        return ParameterSpace(
+            ParameterSpace._intersect_boxes(ps1.true_boxes, ps2.true_boxes), 
+            ParameterSpace._intersect_boxes(ps1.false_boxes, ps2.false_boxes) 
+        )
+
+    
     @staticmethod
     def symmetric_difference(ps1, ps2):
+        return ParameterSpace(
+            ParameterSpace._symmetric_difference(ps1.true_boxes, ps2.true_boxes), 
+            ParameterSpace._symmetric_difference(ps1.false_boxes, ps2.false_boxes) 
+        )
+
+    @staticmethod
+    def _symmetric_difference(ps1, ps2):
         results_list = []
         for box2 in ps2:
             box2_results = []
@@ -69,14 +84,17 @@ class ParameterSpace(object):
         raise NotImplementedError()
         raise NotImplementedError()
 
-    @staticmethod
-    def plot(ps1, color="b",alpha=0.2):
+    
+    def plot(self, color="b",alpha=0.2):
         custom_lines = [
-            Line2D([0], [0], color=color, lw=4,alpha=alpha),
+            Line2D([0], [0], color='g', lw=4,alpha=alpha),
+            Line2D([0], [0], color='r', lw=4,alpha=alpha),
         ]
         
-        plt.legend(custom_lines, ["ps1"])
-        for b1 in ps1:
-            BoxPlotter.plot2DBoxList(b1, color=color)      
+        plt.legend(custom_lines, ["true", "false"])
+        for b1 in self.true_boxes:
+            BoxPlotter.plot2DBoxList(b1, color='g')    
+        for b1 in self.false_boxes:
+            BoxPlotter.plot2DBoxList(b1, color='r')      
         plt.show(block=True) 
         pass

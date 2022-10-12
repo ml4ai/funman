@@ -247,16 +247,45 @@ class Box(object):
 
     def intersection(a,b):
         """Given 2 intervals with a = [a0,a1] and b=[b0,b1], check whether they intersect.  If they do, return interval with their intersection."""
-        if float(a.lb) <= float(b.lb):
-            minArray = a
-            maxArray = b
+        lhs = None
+        if a.lb == NEG_INFINITY and b.lb == NEG_INFINITY:
+            lhs = NEG_INFINITY
+        elif a.lb == NEG_INFINITY:
+            lhs = b.lb
+        elif b.lb == NEG_INFINITY:
+            lhs = a.lb
         else:
-            minArray = b
-            maxArray = a
-        if minArray.ub > maxArray.lb: ## has nonempty intersection. return intersection
-            return [float(maxArray.lb), float(minArray.ub)]
-        else: ## no intersection.
+            lhs = max(a.lb, b.lb)
+
+        rhs = None
+        if a.ub == POS_INFINITY and b.ub == POS_INFINITY:
+            rhs = POS_INFINITY
+        elif a.ub == POS_INFINITY:
+            rhs = b.ub
+        elif b.ub == POS_INFINITY:
+            rhs = a.ub
+        else:
+            rhs = min(a.ub, b.ub)
+
+        if lhs == NEG_INFINITY:
+            return [lhs, rhs]
+        if rhs == POS_INFINITY:
+            return [lhs, rhs]
+        if lhs > rhs:
             return []
+         
+        return [lhs, rhs]
+
+        # if float(a.lb) <= float(b.lb):
+        #     minArray = a
+        #     maxArray = b
+        # else:
+        #     minArray = b
+        #     maxArray = a
+        # if minArray.ub > maxArray.lb: ## has nonempty intersection. return intersection
+        #     return [float(maxArray.lb), float(minArray.ub)]
+        # else: ## no intersection.
+        #     return []
 
     def intersect_two_boxes(b1,b2):
         a = list(b1.bounds.values())
@@ -282,25 +311,55 @@ class Box(object):
                 return [b[1],a[1]]
     
     def symmetric_difference_two_boxes(a,b): ### WIP - just for 2 dimensions at this point.
-        result = []
-        if a == b:
-            result = None 
-        elif Box.intersect_two_boxes(a,b) == None: ## no intersection so they are disjoint - return both original boxes
-            result = [a,b]
+        lhs = None
+        if a.lb == NEG_INFINITY and b.lb == NEG_INFINITY:
+            lhs = NEG_INFINITY
+        elif a.lb == NEG_INFINITY:
+            lhs = b.lb
+        elif b.lb == NEG_INFINITY:
+            lhs = a.lb
         else:
-            xbounds = Box.subtract_two_1d_boxes(a[0],b[0])
-            if xbounds != None:
-                result.append([xbounds,a[1]])
-            xbounds = Box.subtract_two_1d_boxes(b[0],a[0])
-            if xbounds != None:
-                result.append([xbounds,b[1]])
-            ybounds = Box.subtract_two_1d_boxes(a[1],b[1])
-            if ybounds != None:
-                result.append([a[0],ybounds]) 
-            ybounds = Box.subtract_two_1d_boxes(b[1],a[1])
-            if ybounds != None:
-                result.append([b[0],ybounds])         
-        return result
+            lhs = max(a.lb, b.lb)
+
+        rhs = None
+        if a.ub == POS_INFINITY and b.ub == POS_INFINITY:
+            rhs = POS_INFINITY
+        elif a.ub == POS_INFINITY:
+            rhs = b.ub
+        elif b.ub == POS_INFINITY:
+            rhs = a.ub
+        else:
+            rhs = min(a.ub, b.ub)
+
+        if lhs == NEG_INFINITY:
+            return [lhs, rhs]
+        if rhs == POS_INFINITY:
+            return [lhs, rhs]
+        if lhs > rhs:
+            return []
+         
+        return [lhs, rhs]
+
+
+        # result = []
+        # if a == b:
+        #     result = None 
+        # elif Box.intersect_two_boxes(a,b) == None: ## no intersection so they are disjoint - return both original boxes
+        #     result = [a,b]
+        # else:
+        #     xbounds = Box.subtract_two_1d_boxes(a[0],b[0])
+        #     if xbounds != None:
+        #         result.append([xbounds,a[1]])
+        #     xbounds = Box.subtract_two_1d_boxes(b[0],a[0])
+        #     if xbounds != None:
+        #         result.append([xbounds,b[1]])
+        #     ybounds = Box.subtract_two_1d_boxes(a[1],b[1])
+        #     if ybounds != None:
+        #         result.append([a[0],ybounds]) 
+        #     ybounds = Box.subtract_two_1d_boxes(b[1],a[1])
+        #     if ybounds != None:
+        #         result.append([b[0],ybounds])         
+        # return result
 
 class SearchStatistics(object):
     def __init__(self):
