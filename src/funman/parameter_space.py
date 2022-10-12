@@ -36,40 +36,42 @@ class ParameterSpace(object):
 
     
     @staticmethod
-    def symmetric_difference(ps1, ps2):
+    def symmetric_difference(ps1: "ParameterSpace", ps2: "ParameterSpace"):
         return ParameterSpace(
             ParameterSpace._symmetric_difference(ps1.true_boxes, ps2.true_boxes), 
             ParameterSpace._symmetric_difference(ps1.false_boxes, ps2.false_boxes) 
         )
 
     @staticmethod
-    def _symmetric_difference(ps1, ps2):
+    def _symmetric_difference(ps1: List[Box], ps2: List[Box]) -> List[Box]:
         results_list = []
+
         for box2 in ps2:
             box2_results = []
+            should_extend = True
             for box1 in ps1:
                 subresult = Box.symmetric_difference_two_boxes(box2, box1)
                 if subresult != None:
-                    box2_results.append(subresult[0])
-                elif subresult == None:
-                    box2_results.append(subresult)
-    #         print(box1_results)
-            if None in box2_results:
-                pass
-            else:
-                results_list.append(box2_results[0])
+                    box2_results.extend(subresult)
+                else:
+                    should_extend = False
+                    break
+            if should_extend:
+                results_list.extend(box2_results)
+
         for box1 in ps1:
             box1_results = []
+            should_extend = True
             for box2 in ps2:
                 subresult = Box.symmetric_difference_two_boxes(box1, box2)
                 if subresult != None:
-                    box1_results.append(subresult[0])
-                elif subresult == None:
-                    box1_results.append(subresult)
-            if None in box1_results:
-                pass
-            else:
-                results_list.append(box1_results[0])
+                    box1_results.extend(subresult)
+                else:
+                    should_extend = False
+                    break
+            if should_extend:
+                results_list.extend(box1_results)
+
         return results_list
     
     # STUB construct space where all parameters are equal

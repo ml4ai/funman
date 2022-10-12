@@ -9,6 +9,7 @@ from funman.config import Config
 from funman.model import Parameter
 from pysmt.shortcuts import Real, GE, LT, And, TRUE, Equals
 from funman.constants import NEG_INFINITY, POS_INFINITY, BIG_NUMBER
+import funman.math_utils as math_utils
 
 
 class Interval(object):
@@ -151,7 +152,7 @@ class Point(object):
 @total_ordering
 class Box(object):
     def __init__(self, parameters) -> None:
-        self.bounds = {p: Interval(p.lb, p.ub) for p in parameters}
+        self.bounds : Dict[Parameter, Interval] = {p: Interval(p.lb, p.ub) for p in parameters}
         self.cached_width = None
 
     def to_smt(self):
@@ -287,7 +288,7 @@ class Box(object):
         # else: ## no intersection.
         #     return []
 
-    def intersect_two_boxes(b1,b2):
+    def intersect_two_boxes(b1: "Box", b2: "Box"):
         a = list(b1.bounds.values())
         b = list(b2.bounds.values())
         result = []
@@ -300,66 +301,57 @@ class Box(object):
                 result.append(subresult)
         return result
 
-    def subtract_two_1d_boxes(a,b):
+    def subtract_two_1d_intervals(a: Interval, b: Interval):
         """Given 2 intervals a = [a0,a1] and b=[b0,b1], return the part of a that does not intersect with b."""
-        if intersect_two_1d_boxes(a,b) == None:
-            return a
-        else:
-            if a[0] < b[0]:
-                return [a[0],b[0]]
-            elif a[0] > b[0]:
-                return [b[1],a[1]]
-    
-    def symmetric_difference_two_boxes(a,b): ### WIP - just for 2 dimensions at this point.
-        lhs = None
-        if a.lb == NEG_INFINITY and b.lb == NEG_INFINITY:
-            lhs = NEG_INFINITY
-        elif a.lb == NEG_INFINITY:
-            lhs = b.lb
-        elif b.lb == NEG_INFINITY:
-            lhs = a.lb
-        else:
-            lhs = max(a.lb, b.lb)
 
-        rhs = None
-        if a.ub == POS_INFINITY and b.ub == POS_INFINITY:
-            rhs = POS_INFINITY
-        elif a.ub == POS_INFINITY:
-            rhs = b.ub
-        elif b.ub == POS_INFINITY:
-            rhs = a.ub
-        else:
-            rhs = min(a.ub, b.ub)
+        if math_utils.lt(a.lb, b.lb):
+            return Interval(a.lb, b.lb)
 
-        if lhs == NEG_INFINITY:
-            return [lhs, rhs]
-        if rhs == POS_INFINITY:
-            return [lhs, rhs]
-        if lhs > rhs:
-            return []
-         
-        return [lhs, rhs]
+        if math_utils.gt(a.lb, b.lb):
+            return Interval(b.ub, a.ub)
 
+        return None
 
-        # result = []
-        # if a == b:
-        #     result = None 
-        # elif Box.intersect_two_boxes(a,b) == None: ## no intersection so they are disjoint - return both original boxes
-        #     result = [a,b]
+        # if intersect_two_1d_boxes(a,b) == None:
+        #     return a
         # else:
-        #     xbounds = Box.subtract_two_1d_boxes(a[0],b[0])
-        #     if xbounds != None:
-        #         result.append([xbounds,a[1]])
-        #     xbounds = Box.subtract_two_1d_boxes(b[0],a[0])
-        #     if xbounds != None:
-        #         result.append([xbounds,b[1]])
-        #     ybounds = Box.subtract_two_1d_boxes(a[1],b[1])
-        #     if ybounds != None:
-        #         result.append([a[0],ybounds]) 
-        #     ybounds = Box.subtract_two_1d_boxes(b[1],a[1])
-        #     if ybounds != None:
-        #         result.append([b[0],ybounds])         
-        # return result
+        #     if a[0] < b[0]:
+        #         return [a[0],b[0]]
+        #     elif a[0] > b[0]:
+        #         return [b[1],a[1]]
+
+    ### WIP - just for 2 dimensions at this point.
+    @staticmethod
+    def symmetric_difference_two_boxes(a: "Box", b: "Box") -> List["Box"]:
+        result : List["Box"] = []
+        # if the same box then no symmetric difference
+        if a == b:
+            return result
+
+        ## no intersection so they are disjoint - return both original boxes
+        if Box.intersect_two_boxes(a,b) == None:
+            return [a,b]
+
+        # There must be some symmetric difference below here
+        a_params = list(a.bounds.keys())
+        b_params = list(b.bounds.keys())
+
+        # b = Box([])
+
+        xbounds = Box.subtract_two_1d_intervals(a.bounds[a_params[0]], b.bounds[b_params[0]])
+        if xbounds != None:
+            result.append([xbounds, a.bounds[a_params[1]]])
+        xbounds = Box.subtract_two_1d_intervals(b.bounds[b_params[0]], a.bounds[a_params[0]])
+        if xbounds != None:
+            result.append([xbounds, b.bounds[b_params[1]]])
+        ybounds = Box.subtract_two_1d_intervals(a.bounds[a_params[1]], b.bounds[b_params[1]])
+        if ybounds != None:
+            result.append([a.bounds[a_params[0]], ybounds]) 
+        ybounds = Box.subtract_two_1d_intervals(b.bounds[b_params[1]], a.bounds[a_params[1]])
+        if ybounds != None:
+            result.append([b.bounds[b_params[0]], ybounds])
+
+        return result
 
 class SearchStatistics(object):
     def __init__(self):
