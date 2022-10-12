@@ -87,6 +87,8 @@ class BoxPlotter(object):
                             self.plot_add_box(
                                 region, color=self.color_map[region["label"]]
                             )
+                            # TODO Jack
+                            # self.write_to_file()
                     elif "point" in region:
                         l.debug(f"{region['label']}: {region['point']}")
                         self.plot_add_point(
