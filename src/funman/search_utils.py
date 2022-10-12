@@ -72,6 +72,10 @@ class Interval(object):
         )
         return lhs or rhs
 
+    def intersection(self, other: "Interval") -> bool:
+        # FIXME Drisana
+        pass
+
     def midpoint(self):
         if self.lb == NEG_INFINITY and self.ub == POS_INFINITY:
             return 0
@@ -145,6 +149,10 @@ class Box(object):
                 for p, interval in self.bounds.items()
             ]
         )
+
+    def intersection(self, other: "Box") -> "Box":
+        # FIXME Drisana
+        pass
 
     def _get_max_width_parameter(self):
         widths = [bounds.width() for _, bounds in self.bounds.items()]

@@ -42,7 +42,7 @@ class BoxPlotter(object):
             Line2D([0], [0], color="g", lw=4),
             Line2D([0], [0], color="r", lw=4),
         ]
-        plt.ion()
+        # plt.ion()
         self.fig = plt.figure()
         self.ax = self.fig.add_subplot(111)
         (self.data,) = self.ax.plot([], [])
@@ -65,7 +65,7 @@ class BoxPlotter(object):
             #     ]
             # )
 
-        plt.show(block=False)
+        # plt.show(block=False)
         # plt.pause(0.1)
 
     def run(self, rval: Queue, episode: BoxSearchEpisode):
