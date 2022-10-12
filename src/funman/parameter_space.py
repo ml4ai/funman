@@ -98,5 +98,5 @@ class ParameterSpace(object):
             BoxPlotter.plot2DBoxList(b1, color='g')    
         for b1 in self.false_boxes:
             BoxPlotter.plot2DBoxList(b1, color='r')      
-        plt.show(block=True) 
+        # plt.show(block=True) 
         pass
