@@ -80,3 +80,15 @@ class ParameterSpace(object):
             BoxPlotter.plot2DBoxList(b1, color=color)      
         plt.show(block=True) 
         pass
+    def plot_two_spaces(ps1,ps2,color1="g",color2="r",alpha=0.2):
+        custom_lines = [
+            Line2D([0], [0], color=color1, lw=4,alpha=alpha),
+            Line2D([0], [0], color=color2, lw=4,alpha=alpha)
+        ]
+        
+        plt.legend(custom_lines, ["ps1","ps2"])
+        for b1 in ps1:
+            BoxPlotter.plot2DBoxList(b1, color=color1)      
+        for b2 in ps2:
+            BoxPlotter.plot2DBoxList(b2, color=color2)      
+        plt.show(block=True) 
