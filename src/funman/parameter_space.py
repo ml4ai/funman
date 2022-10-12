@@ -56,25 +56,6 @@ class ParameterSpace(object):
             else:
                 results_list.append(box1_results[0])
         return results_list
-#
-#    @staticmethod
-#    def symmetric_difference_two_1d_boxes(a,b):
-#        """Given 2 intervals a = [a0,a1] and b=[b0,b1], return their symmetric difference (points not in their intersection)."""
-#        if a == b: ## no symmetric difference
-#            return None
-#        else:
-#            if a[0] <= b[0]:
-#                minArray = a
-#                maxArray = b
-#            else:
-#                minArray = b
-#                maxArray = a
-#            if minArray[1] > maxArray[0]: ## has nonempty intersection. form symmetric differences and return them
-#                return [[minArray[0], maxArray[0]],[minArray[1], maxArray[1]]]
-#            else: ## no intersection. symmetric difference is the entirety of the 2 arrays
-#                return [minArray, maxArray]
-#
-#            
     
     # STUB construct space where all parameters are equal
     @staticmethod
@@ -96,6 +77,6 @@ class ParameterSpace(object):
         
         plt.legend(custom_lines, ["ps1"])
         for b1 in ps1:
-            BoxPlotter.plot2DBoxList(b1, color='b')         
-        plt.show() 
+            BoxPlotter.plot2DBoxList(b1, color=color)      
+        plt.show(block=True) 
         pass
