@@ -7,7 +7,7 @@ from funman.search_utils import Box, Point, SearchConfig, SearchStatistics
 
 import logging
 l = logging.getLogger(__file__)
-l.setLevel(logging.WARN)
+l.setLevel(logging.INFO)
 
 class SearchEpisode(object):
     def __init__(self) -> None:
@@ -44,7 +44,7 @@ class BoxSearchEpisode(SearchEpisode):
         for i in range(num_boxes):
             b = initial_boxes.get()
             self.add_unknown(b)
-            l.warning(f"Initial box: {b}")
+            l.debug(f"Initial box: {b}")
         initial_boxes.close()
 
     def initial_box(self) -> Box:

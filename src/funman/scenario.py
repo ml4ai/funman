@@ -51,7 +51,7 @@ class ParameterSynthesisScenario(AnalysisScenario):
                 epochs=epochs,
                 population_size=population_size,
                 infectious_days=infectious_days,
-                infected_threshold=0.25
+                infected_threshold=0.1
             )
             self.vars = vars
         else:

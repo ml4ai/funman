@@ -218,7 +218,7 @@ class Box(object):
         # b2 is upper half
         b2.bounds[p] = Interval(mid, b2.bounds[p].ub)
 
-        return [b1, b2]
+        return [b2, b1]
 
     def intersect_two_boxes(self, other) -> "Box":
         a = self.bounds
@@ -252,9 +252,9 @@ class SearchStatistics(object):
 
 class SearchConfig(Config):
     def __init__(self, *args, **kwargs) -> None:
-        self.tolerance = kwargs["tolerance"] if "tolerance" in kwargs else 1e-3
+        self.tolerance = kwargs["tolerance"] if "tolerance" in kwargs else 1e-2
         self.queue_timeout = (
-            kwargs["queue_timeout"] if "queue_timeout" in kwargs else 120
+            kwargs["queue_timeout"] if "queue_timeout" in kwargs else 1200
         )
         self.number_of_processes = (
             kwargs["number_of_processes"]
