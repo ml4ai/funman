@@ -1,6 +1,7 @@
 import json
 import time
 from multiprocessing import Queue
+from queue import Queue as SQueue
 from typing import Dict, List
 from funman.model import Parameter
 from funman.search_episode import BoxSearchEpisode, SearchEpisode
@@ -31,7 +32,9 @@ class BoxPlotter(object):
         real_time_plotting = True,
         write_region_to_cache = None,
         read_region_to_cache = None,
+        multiprocessing=True
     ) -> None:
+        self.multiprocessing = multiprocessing
         self.parameters = parameters
         self.episode = episode
         self.real_time_plotting = real_time_plotting

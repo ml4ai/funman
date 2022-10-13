@@ -1,3 +1,4 @@
+import multiprocessing
 from typing import Dict, List, Union
 from funman.plotting import BoxPlotter
 from funman.search_episode import BoxSearchEpisode
@@ -120,13 +121,16 @@ class BoxSearch(object):
             Final search results (parameter space) and statistics.
         """
 
-        episode = BoxSearchEpisode(config, problem)
+        if self.read_cache_parameter_space is not None:
+            multiprocessing = False
+
+        episode = BoxSearchEpisode(config, problem, multiprocessing=False)
         self.episodes.append(episode)
         episode.on_start()
 
         processes = []
 
-        rval = Queue()
+        
 
  
        # short circuit since reading from cache
@@ -137,17 +141,17 @@ class BoxSearch(object):
                 episode,
                 real_time_plotting=self.real_time_plotting,
                 write_region_to_cache=self.write_cache_parameter_space,
-                read_region_to_cache=self.read_cache_parameter_space)
+                read_region_to_cache=self.read_cache_parameter_space,
+                multiprocessing=False)
 
-            rval.close()
             episode.close()
             # p.terminate()
             # p.join()
             # results = {"true_boxes": episode.true_boxes, "false_boxes": episode.false_boxes}
             return episode
 
-
-       # create a plotting process
+        rval = Queue()
+        # create a plotting process
         plotter = BoxPlotter(
             problem.parameters,
             None,

@@ -1,6 +1,7 @@
 from typing import List, Union
 from datetime import datetime
 from multiprocessing import Queue, Value
+from queue import Queue as SQueue
 
 from funman.search_utils import Box, Point, SearchConfig, SearchStatistics
 
@@ -14,10 +15,11 @@ class SearchEpisode(object):
 
 
 class BoxSearchEpisode(SearchEpisode):
-    def __init__(self, config: SearchConfig, problem) -> None:
+    def __init__(self, config: SearchConfig, problem, multiprocessing=True) -> None:
         super(BoxSearchEpisode, self).__init__()
-        self.unknown_boxes = Queue()
-        self.boxes_to_plot = Queue()
+        self.multiprocessing = multiprocessing
+        self.unknown_boxes = Queue() if self.multiprocessing else SQueue()
+        self.boxes_to_plot = Queue() if self.multiprocessing else SQueue()
         self.true_boxes = []
         self.false_boxes = []
         self.true_points = set({})
@@ -32,7 +34,7 @@ class BoxSearchEpisode(SearchEpisode):
 
 
     def initialize_boxes(self):
-        initial_boxes = Queue()
+        initial_boxes = Queue() if self.multiprocessing else SQueue()
         initial_boxes.put(self.initial_box())
         num_boxes = 1
         while num_boxes < 2 * (self.config.number_of_processes - 1):
@@ -44,7 +46,8 @@ class BoxSearchEpisode(SearchEpisode):
             b = initial_boxes.get()
             self.add_unknown(b)
             l.debug(f"Initial box: {b}")
-        initial_boxes.close()
+        if self.multiprocessing:
+            initial_boxes.close()
 
     def initial_box(self) -> Box:
         return Box(self.problem.parameters)
@@ -53,9 +56,10 @@ class BoxSearchEpisode(SearchEpisode):
         self.statistics.last_time.value = str(datetime.now())
 
     def close(self):
-        self.unknown_boxes.close()
-        self.statistics.close()
-        self.boxes_to_plot.close()
+        if self.multiprocessing:
+            self.unknown_boxes.close()
+            self.statistics.close()
+            self.boxes_to_plot.close()
 
     def on_iteration(self):
         self.iteration.value = self.iteration.value + 1
@@ -76,9 +80,9 @@ class BoxSearchEpisode(SearchEpisode):
 
     def add_false(self, box: Box):
         self.false_boxes.append(box)
-        with self.statistics.num_false.get_lock():
-            self.statistics.num_false.value += 1
-        self.statistics.iteration_operation.put("f")
+        # with self.statistics.num_false.get_lock():
+        #     self.statistics.num_false.value += 1
+        # self.statistics.iteration_operation.put("f")
         self.boxes_to_plot.put({"box": box, "label": "false"})
 
     def add_false_point(self, point: Point):
@@ -89,9 +93,9 @@ class BoxSearchEpisode(SearchEpisode):
 
     def add_true(self, box: Box):
         self.true_boxes.append(box)
-        with self.statistics.num_true.get_lock():
-            self.statistics.num_true.value += 1
-        self.statistics.iteration_operation.put("t")
+        # with self.statistics.num_true.get_lock():
+        #     self.statistics.num_true.value += 1
+        # self.statistics.iteration_operation.put("t")
         self.boxes_to_plot.put({"box": box, "label": "true"})
 
     def add_true_point(self, point: Point):

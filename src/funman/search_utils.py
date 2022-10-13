@@ -2,6 +2,7 @@ import ctypes
 from curses.ascii import EM
 from functools import total_ordering
 from multiprocessing import Array, Queue, Value, cpu_count
+from queue import Queue as SQueue
 import os
 import time
 from typing import Dict, List, Union
@@ -370,20 +371,22 @@ class Box(object):
         # return result
 
 class SearchStatistics(object):
-    def __init__(self):
-        self.num_true = Value("i", 0)
-        self.num_false = Value("i", 0)
-        self.num_unknown = Value("i", 0)
-        self.residuals = Queue()
-        self.current_residual = Value("d", 0.0)
-        self.last_time = Array(ctypes.c_wchar, "")
-        self.iteration_time = Queue()
-        self.iteration_operation = Queue()
+    def __init__(self, multiprocessing=True):
+        self.multiprocessing = multiprocessing
+        self.num_true = Value("i", 0) if self.multiprocessing else 0
+        self.num_false = Value("i", 0) if self.multiprocessing else 0
+        self.num_unknown = Value("i", 0) if self.multiprocessing else 0
+        self.residuals = Queue() if self.multiprocessing else SQueue()
+        self.current_residual = Value("d", 0.0) if self.multiprocessing else 0.0
+        self.last_time = Array(ctypes.c_wchar, "") if self.multiprocessing else []
+        self.iteration_time = Queue() if self.multiprocessing else SQueue()
+        self.iteration_operation = Queue() if self.multiprocessing else SQueue()
 
     def close(self):
-        self.residuals.close()
-        self.iteration_time.close()
-        self.iteration_operation.close()
+        if self.multiprocessing:
+            self.residuals.close()
+            self.iteration_time.close()
+            self.iteration_operation.close()
 
 
 class SearchConfig(Config):

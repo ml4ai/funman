@@ -90,7 +90,9 @@ class ParameterSpace(object):
             Line2D([0], [0], color='g', lw=4,alpha=alpha),
             Line2D([0], [0], color='r', lw=4,alpha=alpha),
         ]
-        
+        plt.title("Parameter Space")
+        plt.xlabel("beta_0")
+        plt.ylabel("beta_1")
         plt.legend(custom_lines, ["true", "false"])
         for b1 in self.true_boxes:
             BoxPlotter.plot2DBoxList(b1, color='g')    
