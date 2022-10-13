@@ -246,7 +246,7 @@ class Box(object):
 
         return [b2, b1]
 
-    def intersection(a,b):
+    def intersection(a: Interval,b: Interval) -> Interval:
         """Given 2 intervals with a = [a0,a1] and b=[b0,b1], check whether they intersect.  If they do, return interval with their intersection."""
         lhs = None
         if a.lb == NEG_INFINITY and b.lb == NEG_INFINITY:
@@ -288,20 +288,41 @@ class Box(object):
         # else: ## no intersection.
         #     return []
 
-    def intersect_two_boxes(b1: "Box", b2: "Box"):
-        a = list(b1.bounds.values())
-        b = list(b2.bounds.values())
-        result = []
-        d = len(a) ## dimension
-        for i in range(d):
-            subresult = Box.intersection(a[i],b[i])
-            if subresult == []:
-                return None
-            else:
-                result.append(subresult)
-        return result
+    def intersect_two_boxes(a: "Box", b: "Box"):
+        a_params = list(a.bounds.keys())
+        b_params = list(b.bounds.keys())
 
-    def subtract_two_1d_intervals(a: Interval, b: Interval):
+        beta_0_a = a.bounds[a_params[0]]
+        beta_1_a = a.bounds[a_params[1]]
+        beta_0_b = b.bounds[b_params[0]]
+        beta_1_b = b.bounds[b_params[1]]
+
+        beta_0 = Box.intersection(beta_0_a, beta_0_b)
+        if len(beta_0) < 1:
+            return None
+        beta_1 = Box.intersection(beta_1_a, beta_1_b)
+        if len(beta_1) < 1:
+            return None
+
+        return Box([
+                Parameter(a_params[0], lb=beta_0[0], ub=beta_0[1]),
+                Parameter(a_params[1], lb=beta_1[0], ub=beta_1[1]),
+            ])
+
+        # a = list(b1.bounds.values())
+        # b = list(b2.bounds.values())
+
+        # result = []
+        # d = len(a) ## dimension
+        # for i in range(d):
+        #     subresult = Box.intersection(a[i],b[i])
+        #     if subresult == []:
+        #         return None
+        #     else:
+        #         result.append(subresult)
+        # return result
+
+    def subtract_two_1d_intervals(a: Interval, b: Interval) -> Interval:
         """Given 2 intervals a = [a0,a1] and b=[b0,b1], return the part of a that does not intersect with b."""
 
         if math_utils.lt(a.lb, b.lb):
@@ -336,20 +357,33 @@ class Box(object):
         a_params = list(a.bounds.keys())
         b_params = list(b.bounds.keys())
 
-        # b = Box([])
+        beta_0_a = a.bounds[a_params[0]]
+        beta_1_a = a.bounds[a_params[1]]
+        beta_0_b = b.bounds[b_params[0]]
+        beta_1_b = b.bounds[b_params[1]]
 
-        xbounds = Box.subtract_two_1d_intervals(a.bounds[a_params[0]], b.bounds[b_params[0]])
+        # TODO assumes 2 dimensions and aligned parameter names
+        def make_box_2d(p_bounds):
+            b0_bounds = p_bounds[0]
+            b1_bounds = p_bounds[1]
+            b = Box([
+                Parameter(a_params[0], lb=b0_bounds.lb, ub=b0_bounds.ub),
+                Parameter(a_params[1], lb=b1_bounds.lb, ub=b1_bounds.ub),
+            ])
+            return b
+
+        xbounds = Box.subtract_two_1d_intervals(beta_0_a, beta_0_b)
         if xbounds != None:
-            result.append([xbounds, a.bounds[a_params[1]]])
-        xbounds = Box.subtract_two_1d_intervals(b.bounds[b_params[0]], a.bounds[a_params[0]])
+            result.append(make_box_2d([xbounds, beta_1_a]))
+        xbounds = Box.subtract_two_1d_intervals(beta_0_b, beta_0_a)
         if xbounds != None:
-            result.append([xbounds, b.bounds[b_params[1]]])
-        ybounds = Box.subtract_two_1d_intervals(a.bounds[a_params[1]], b.bounds[b_params[1]])
+            result.append(make_box_2d([xbounds, beta_1_b]))
+        ybounds = Box.subtract_two_1d_intervals(beta_1_a, beta_1_b)
         if ybounds != None:
-            result.append([a.bounds[a_params[0]], ybounds]) 
-        ybounds = Box.subtract_two_1d_intervals(b.bounds[b_params[1]], a.bounds[a_params[1]])
+            result.append(make_box_2d([beta_0_a, ybounds])) 
+        ybounds = Box.subtract_two_1d_intervals(beta_1_b, beta_1_a)
         if ybounds != None:
-            result.append([b.bounds[b_params[0]], ybounds])
+            result.append(make_box_2d([beta_0_b, ybounds]))
 
         return result
 
