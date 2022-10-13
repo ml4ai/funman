@@ -18,8 +18,8 @@ class TestChimeSynth(unittest.TestCase):
                 gromet_file1,
                 config={
                     "epochs": [(0, 20), (20, 30)],
-                    "population_size": 10020,
-                    "infectious_days": 7.0,
+                    "population_size": 1002,
+                    "infectious_days": 14.0,
                     # "read_cache_parameter_space" : os.path.join(CACHED, "parameter_space_2.json"),
                     # "read_cache_parameter_space" : os.path.join(CACHED, "result1.json"),
                     "write_cache_parameter_space" : os.path.join(CACHED, "result2.json"),

@@ -7,6 +7,7 @@ import time
 from typing import Dict, List, Union
 from funman.config import Config
 from funman.model import Parameter
+from numpy import average
 from pysmt.shortcuts import Real, GE, LT, And, TRUE, Equals
 from funman.constants import NEG_INFINITY, POS_INFINITY, BIG_NUMBER
 
@@ -78,7 +79,11 @@ class Interval(object):
         # FIXME Drisana
         pass
 
-    def midpoint(self):
+    def midpoint(self, points=None):
+        if points:
+            # Get value that is the average of points (i.e., midpoint between points)
+            return float(average(points))
+
         if self.lb == NEG_INFINITY and self.ub == POS_INFINITY:
             return 0
         elif self.lb == NEG_INFINITY:
@@ -230,9 +235,12 @@ class Box(object):
 
         return self.cached_width
 
-    def split(self):
+    def split(self, points=None):
         p, _ = self._get_max_width_parameter()
-        mid = self.bounds[p].midpoint()
+        if points:
+            mid = self.bounds[p].midpoint(points=[pt.values[p] for pt in points])
+        else:
+            mid = self.bounds[p].midpoint()
 
         b1 = self._copy()
         b2 = self._copy()

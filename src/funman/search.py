@@ -23,8 +23,8 @@ class BoxSearch(object):
         self.write_cache_parameter_space = None,
         self.read_cache_parameter_space = None
 
-    def split(self, box: Box, episode: BoxSearchEpisode):
-        b1, b2 = box.split()
+    def split(self, box: Box, episode: BoxSearchEpisode, points=None):
+        b1, b2 = box.split(points=points)
         episode.add_unknown([b1, b2])
         episode.statistics.iteration_operation.put("s")
 
@@ -81,7 +81,8 @@ class BoxSearch(object):
                 
                     if true_point:
                         # box intersects both t and f, so it must be split
-                        self.split(box, episode)
+                        # use the true and false points to compute a midpoint
+                        self.split(box, episode, points=[true_point, false_point])
                     else:
                         # box is a subset of f (intersects f but not t)
                         episode.add_false(box)  # TODO consider merging lists of boxes
