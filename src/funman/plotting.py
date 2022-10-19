@@ -309,7 +309,7 @@ class BoxPlotter(object):
         x = np.linspace(x_limits.lb, x_limits.ub, 1000)
         plt.fill_between(x, y_limits.lb, y_limits.ub, color=color)
     
-    def plot2DBoxList(b, color="g", alpha=0.2): 
+    def plot2DBoxList(b: Box, color="g", alpha=0.2):
         box = list(b.bounds.values())
         x_limits = box[0]
         y_limits = box[1]
