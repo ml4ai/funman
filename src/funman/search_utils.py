@@ -2,13 +2,16 @@ import ctypes
 from curses.ascii import EM
 from functools import total_ordering
 from multiprocessing import Array, Queue, Value, cpu_count
+from queue import Queue as SQueue
 import os
 import time
 from typing import Dict, List, Union
 from funman.config import Config
 from funman.model import Parameter
-from pysmt.shortcuts import Real, GE, LT, And, TRUE
+from numpy import average
+from pysmt.shortcuts import Real, GE, LT, And, TRUE, Equals
 from funman.constants import NEG_INFINITY, POS_INFINITY, BIG_NUMBER
+import funman.math_utils as math_utils
 
 
 class Interval(object):
@@ -71,8 +74,18 @@ class Interval(object):
             else other.ub <= self.ub
         )
         return lhs or rhs
+    
+        
 
-    def midpoint(self):
+    def intersection(self, other: "Interval") -> bool:
+        # FIXME Drisana
+        pass
+
+    def midpoint(self, points=None):
+        if points:
+            # Get value that is the average of points (i.e., midpoint between points)
+            return float(average(points))
+
         if self.lb == NEG_INFINITY and self.ub == POS_INFINITY:
             return 0
         elif self.lb == NEG_INFINITY:
@@ -82,21 +95,87 @@ class Interval(object):
         else:
             return ((self.ub - self.lb) / 2) + self.lb
 
+    def contains_value(self, value: float) -> bool:
+        lhs = (
+            self.lb == NEG_INFINITY or self.lb <= value
+        )
+        rhs = (
+            self.ub == POS_INFINITY or value <= self.ub
+        )
+        return lhs and rhs
+        
+
     def to_smt(self, p: Parameter):
         return And(
             (GE(p.symbol, Real(self.lb)) if self.lb != NEG_INFINITY else TRUE()),
             (LT(p.symbol, Real(self.ub)) if self.ub != POS_INFINITY else TRUE()),
         ).simplify()
 
+    def to_dict(self):
+        return {
+            "lb": self.lb,
+            "ub": self.ub,
+            # "cached_width": self.cached_width
+        }
+
+    @staticmethod
+    def from_dict(data):
+        res = Interval(data["lb"], data["ub"])
+        # res.cached_width = data["cached_width"]
+        return res
+
+
+class Point(object):
+    def __init__(self, parameters) -> None:
+        self.values = {p: 0.0 for p in parameters}
+
+    def __str__(self):
+        return f"{self.values.values()}"
+
+    def to_dict(self):
+        return {
+            "values": {k.name: v for k,v in self.values.items()}
+        }
+
+    @staticmethod
+    def from_dict(data):
+        res = Point([])
+        res.values = {Parameter(k) : v for k, v in data["values"].items()}
+        return res
+
+    def __hash__(self):
+        return int(sum([v for _, v in self.values.items()]))
+
+    def __eq__(self, other):
+        if isinstance(other, Point):
+            return all([self.values[p] == other.values[p] for p in self.values.keys()])
+        else:
+            return False
+
+    def to_smt(self):
+        return And([Equals(p.symbol, Real(value)) for p, value in self.values.items()])
 
 @total_ordering
 class Box(object):
     def __init__(self, parameters) -> None:
-        self.bounds = {p: Interval(NEG_INFINITY, POS_INFINITY) for p in parameters}
+        self.bounds : Dict[Parameter, Interval] = {p: Interval(p.lb, p.ub) for p in parameters}
         self.cached_width = None
 
     def to_smt(self):
         return And([interval.to_smt(p) for p, interval in self.bounds.items()])
+
+    def to_dict(self):
+        return {
+            "bounds": {k.name: v.to_dict() for k,v in self.bounds.items()},
+            # "cached_width": self.cached_width
+        }
+
+    @staticmethod
+    def from_dict(data):
+        res = Box([])
+        res.bounds = {Parameter(k) : Interval.from_dict(v) for k,v in data["bounds"].items()}
+        # res.cached_width = data["cached_width"]
+        return res
 
     def _copy(self):
         c = Box(list(self.bounds.keys()))
@@ -120,7 +199,7 @@ class Box(object):
         return f"{self.bounds}"
 
     def __str__(self):
-        return self.__repr__()
+        return f"{self.bounds.values()}"
 
     def finite(self) -> bool:
         return all([i.finite() for _, i in self.bounds.items()])
@@ -130,6 +209,9 @@ class Box(object):
             [interval.contains(other.bounds[p]) for p, interval in self.bounds.items()]
         )
 
+    def contains_point(self, point: Point) -> bool:
+        return all([interval.contains_value(point.values[p]) for p, interval in self.bounds.items()])
+
     def intersects(self, other: "Box") -> bool:
         return all(
             [
@@ -137,6 +219,10 @@ class Box(object):
                 for p, interval in self.bounds.items()
             ]
         )
+
+    def intersection(self, other: "Box") -> "Box":
+        # FIXME Drisana
+        pass
 
     def _get_max_width_parameter(self):
         widths = [bounds.width() for _, bounds in self.bounds.items()]
@@ -151,9 +237,12 @@ class Box(object):
 
         return self.cached_width
 
-    def split(self):
+    def split(self, points=None):
         p, _ = self._get_max_width_parameter()
-        mid = self.bounds[p].midpoint()
+        if points:
+            mid = self.bounds[p].midpoint(points=[pt.values[p] for pt in points])
+        else:
+            mid = self.bounds[p].midpoint()
 
         b1 = self._copy()
         b2 = self._copy()
@@ -164,31 +253,174 @@ class Box(object):
         # b2 is upper half
         b2.bounds[p] = Interval(mid, b2.bounds[p].ub)
 
-        return [b1, b2]
+        return [b2, b1]
 
+    def intersection(a: Interval,b: Interval) -> Interval:
+        """Given 2 intervals with a = [a0,a1] and b=[b0,b1], check whether they intersect.  If they do, return interval with their intersection."""
+        lhs = None
+        if a.lb == NEG_INFINITY and b.lb == NEG_INFINITY:
+            lhs = NEG_INFINITY
+        elif a.lb == NEG_INFINITY:
+            lhs = b.lb
+        elif b.lb == NEG_INFINITY:
+            lhs = a.lb
+        else:
+            lhs = max(a.lb, b.lb)
+
+        rhs = None
+        if a.ub == POS_INFINITY and b.ub == POS_INFINITY:
+            rhs = POS_INFINITY
+        elif a.ub == POS_INFINITY:
+            rhs = b.ub
+        elif b.ub == POS_INFINITY:
+            rhs = a.ub
+        else:
+            rhs = min(a.ub, b.ub)
+
+        if lhs == NEG_INFINITY:
+            return [lhs, rhs]
+        if rhs == POS_INFINITY:
+            return [lhs, rhs]
+        if lhs > rhs:
+            return []
+         
+        return [lhs, rhs]
+
+        # if float(a.lb) <= float(b.lb):
+        #     minArray = a
+        #     maxArray = b
+        # else:
+        #     minArray = b
+        #     maxArray = a
+        # if minArray.ub > maxArray.lb: ## has nonempty intersection. return intersection
+        #     return [float(maxArray.lb), float(minArray.ub)]
+        # else: ## no intersection.
+        #     return []
+
+    def intersect_two_boxes(a: "Box", b: "Box"):
+        a_params = list(a.bounds.keys())
+        b_params = list(b.bounds.keys())
+
+        beta_0_a = a.bounds[a_params[0]]
+        beta_1_a = a.bounds[a_params[1]]
+        beta_0_b = b.bounds[b_params[0]]
+        beta_1_b = b.bounds[b_params[1]]
+
+        beta_0 = Box.intersection(beta_0_a, beta_0_b)
+        if len(beta_0) < 1:
+            return None
+        beta_1 = Box.intersection(beta_1_a, beta_1_b)
+        if len(beta_1) < 1:
+            return None
+
+        return Box([
+                Parameter(a_params[0], lb=beta_0[0], ub=beta_0[1]),
+                Parameter(a_params[1], lb=beta_1[0], ub=beta_1[1]),
+            ])
+
+        # a = list(b1.bounds.values())
+        # b = list(b2.bounds.values())
+
+        # result = []
+        # d = len(a) ## dimension
+        # for i in range(d):
+        #     subresult = Box.intersection(a[i],b[i])
+        #     if subresult == []:
+        #         return None
+        #     else:
+        #         result.append(subresult)
+        # return result
+
+    def subtract_two_1d_intervals(a: Interval, b: Interval) -> Interval:
+        """Given 2 intervals a = [a0,a1] and b=[b0,b1], return the part of a that does not intersect with b."""
+
+        if math_utils.lt(a.lb, b.lb):
+            return Interval(a.lb, b.lb)
+
+        if math_utils.gt(a.lb, b.lb):
+            return Interval(b.ub, a.ub)
+
+        return None
+
+        # if intersect_two_1d_boxes(a,b) == None:
+        #     return a
+        # else:
+        #     if a[0] < b[0]:
+        #         return [a[0],b[0]]
+        #     elif a[0] > b[0]:
+        #         return [b[1],a[1]]
+
+    ### WIP - just for 2 dimensions at this point.
+    @staticmethod
+    def symmetric_difference_two_boxes(a: "Box", b: "Box") -> List["Box"]:
+        result : List["Box"] = []
+        # if the same box then no symmetric difference
+        if a == b:
+            return result
+
+        ## no intersection so they are disjoint - return both original boxes
+        if Box.intersect_two_boxes(a,b) == None:
+            return [a,b]
+
+        # There must be some symmetric difference below here
+        a_params = list(a.bounds.keys())
+        b_params = list(b.bounds.keys())
+
+        beta_0_a = a.bounds[a_params[0]]
+        beta_1_a = a.bounds[a_params[1]]
+        beta_0_b = b.bounds[b_params[0]]
+        beta_1_b = b.bounds[b_params[1]]
+
+        # TODO assumes 2 dimensions and aligned parameter names
+        def make_box_2d(p_bounds):
+            b0_bounds = p_bounds[0]
+            b1_bounds = p_bounds[1]
+            b = Box([
+                Parameter(a_params[0], lb=b0_bounds.lb, ub=b0_bounds.ub),
+                Parameter(a_params[1], lb=b1_bounds.lb, ub=b1_bounds.ub),
+            ])
+            return b
+
+        xbounds = Box.subtract_two_1d_intervals(beta_0_a, beta_0_b)
+        if xbounds != None:
+            result.append(make_box_2d([xbounds, beta_1_a]))
+        xbounds = Box.subtract_two_1d_intervals(beta_0_b, beta_0_a)
+        if xbounds != None:
+            result.append(make_box_2d([xbounds, beta_1_b]))
+        ybounds = Box.subtract_two_1d_intervals(beta_1_a, beta_1_b)
+        if ybounds != None:
+            result.append(make_box_2d([beta_0_a, ybounds])) 
+        ybounds = Box.subtract_two_1d_intervals(beta_1_b, beta_1_a)
+        if ybounds != None:
+            result.append(make_box_2d([beta_0_b, ybounds]))
+
+        return result
 
 class SearchStatistics(object):
-    def __init__(self):
-        self.num_true = Value("i", 0)
-        self.num_false = Value("i", 0)
-        self.num_unknown = Value("i", 0)
-        self.residuals = Queue()
-        self.current_residual = Value("d", 0.0)
-        self.last_time = Array(ctypes.c_wchar, "")
-        self.iteration_time = Queue()
-        self.iteration_operation = Queue()
+    def __init__(self, multiprocessing=True):
+        self.multiprocessing = multiprocessing
+        self.num_true = Value("i", 0) if self.multiprocessing else 0
+        self.num_false = Value("i", 0) if self.multiprocessing else 0
+        self.num_unknown = Value("i", 0) if self.multiprocessing else 0
+        self.residuals = Queue() if self.multiprocessing else SQueue()
+        self.current_residual = Value("d", 0.0) if self.multiprocessing else 0.0
+        self.last_time = Array(ctypes.c_wchar, "") if self.multiprocessing else []
+        self.iteration_time = Queue() if self.multiprocessing else SQueue()
+        self.iteration_operation = Queue() if self.multiprocessing else SQueue()
 
     def close(self):
-        self.residuals.close()
-        self.iteration_time.close()
-        self.iteration_operation.close()
-
+        if self.multiprocessing:
+            self.residuals.close()
+            self.iteration_time.close()
+            self.iteration_operation.close()
 
 
 class SearchConfig(Config):
     def __init__(self, *args, **kwargs) -> None:
-        self.tolerance = kwargs["tolerance"] if "tolerance" in kwargs else 1e-1
-        self.queue_timeout = kwargs["queue_timeout"] if "queue_timeout" in kwargs else 1
+        self.tolerance = kwargs["tolerance"] if "tolerance" in kwargs else 1e-2
+        self.queue_timeout = (
+            kwargs["queue_timeout"] if "queue_timeout" in kwargs else 1200
+        )
         self.number_of_processes = (
             kwargs["number_of_processes"]
             if "number_of_processes" in kwargs

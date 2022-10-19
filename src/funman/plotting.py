@@ -1,26 +1,52 @@
+import json
+import time
 from multiprocessing import Queue
+from queue import Queue as SQueue
 from typing import Dict, List
 from funman.model import Parameter
-from funman.search_episode import BoxSearchEpisode
-from funman.search_utils import Box, Interval
+from funman.search_episode import BoxSearchEpisode, SearchEpisode
+from funman.search_utils import Box, Interval, Point
 
 
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
+import matplotlib.patches as patches
 from IPython.display import clear_output
 import numpy as np
 from queue import Empty
+
+import logging
+l = logging.getLogger(__file__)
+l.setLevel(logging.INFO)
 
 
 class BoxPlotter(object):
     def __init__(
         self,
         parameters: List[Parameter],
+        episode: SearchEpisode,
         plot_bounds: Box = None,
         title: str = "Feasible Regions",
-        color_map: Dict[str, str] = {"true": "g", "false": "r"},
+        color_map: Dict[str, str] = {"true": "g", "false": "r", "unknown": "b"},
+        shape_map: Dict[str, str] = {"true": "x", "false": "o"},
+        real_time_plotting = True,
+        write_region_to_cache = None,
+        read_region_to_cache = None,
+        multiprocessing=True
     ) -> None:
+        self.multiprocessing = multiprocessing
         self.parameters = parameters
+        self.episode = episode
+        self.real_time_plotting = real_time_plotting
+                
+        self.out_cache = None
+        self.write_region_to_cache = write_region_to_cache
+
+        self.read_region_to_cache = read_region_to_cache
+        if read_region_to_cache is not None:
+            self._load_from_cache(read_region_to_cache, self.episode)
+
+
         # assert (
         #     len(self.parameters) <= 2 and len(self.parameters) > 0,
         #     f"Plotting {len(self.parameters)} parameteres is not supported, must be 1 or 2",
@@ -30,40 +56,169 @@ class BoxPlotter(object):
         self.plot_bounds = plot_bounds if plot_bounds else self.plotBox()
         self.title = title
         self.color_map = color_map
+        self.shape_map = shape_map
         clear_output(wait=True)
         self.custom_lines = [
             Line2D([0], [0], color="g", lw=4),
             Line2D([0], [0], color="r", lw=4),
         ]
-        plt.ion()
-        self.fig = plt.figure()
-        self.ax = self.fig.add_subplot(111)
-        (self.data,) = self.ax.plot([], [])
-        plt.title(self.title)
-        plt.legend(self.custom_lines, ["true", "false"])
+        # plt.ion()
+        if self.real_time_plotting:
+            self.fig = plt.figure()
+            self.ax = self.fig.add_subplot(111)
+            (self.data,) = self.ax.plot([], [])
+            plt.title(self.title)
+            plt.legend(self.custom_lines, ["true", "false"])
 
-        plt.xlabel(self.px)
-        plt.xlim(
-            [
-                self.plot_bounds.bounds[self.px].lb,
-                self.plot_bounds.bounds[self.px].ub,
-            ]
-        )
-        if len(self.parameters) > 1:
-            plt.ylabel(self.py.name)
-            plt.ylim(
-                [
-                    self.plot_bounds.bounds[self.py].lb,
-                    self.plot_bounds.bounds[self.py].ub,
-                ]
-            )
+            plt.xlabel(self.px.name)
+            # plt.xlim(
+            #     [
+            #         self.plot_bounds.bounds[self.px].lb,
+            #         self.plot_bounds.bounds[self.px].ub,
+            #     ]
+            # )
+            if len(self.parameters) > 1:
+                plt.ylabel(self.py.name)
+                # plt.ylim(
+                #     [
+                #         self.plot_bounds.bounds[self.py].lb,
+                #         self.plot_bounds.bounds[self.py].ub,
+                #     ]
+                # )
 
-        plt.show(block=False)
+            # plt.show(block=False)
+            # plt.pause(0.1)
 
-    def run(self, rval: Queue, episode: BoxSearchEpisode):
+    def _write_to_cache(self, cache, region):
+        if "box" in region:
+            box = region['box']
+            if region["label"] == "true":
+                cache.write(json.dumps({
+                    "label": "true",
+                    "type": "box",
+                    "value": box.to_dict(),
+                }))
+                cache.write("\n")
+            elif region["label"] == "false":
+                cache.write(json.dumps({
+                    "label": "false",
+                    "type": "box",
+                    "value": box.to_dict(),
+                }))
+                cache.write("\n")
+            elif region["label"] == "unknown":
+                cache.write(json.dumps({
+                    "label": "unknown",
+                    "type": "box",
+                    "value": box.to_dict(),
+                }))
+                cache.write("\n")
+            else:
+                raise Exception("Invalid label")
+        elif "point" in region:
+            point = region['point']
+            if region["label"] == "true":
+                cache.write(json.dumps({
+                    "label": "true",
+                    "type": "point",
+                    "value": point.to_dict(),
+                }))
+                cache.write("\n")
+            elif region["label"] == "false":
+                cache.write(json.dumps({
+                    "label": "false",
+                    "type": "point",
+                    "value": point.to_dict(),
+                }))
+                cache.write("\n")
+            else:
+                raise Exception("Invalid label")
+        else:
+            raise Exception("Unknown type")
+        cache.flush()
+
+    def _load_from_cache(self, cache_path, episode: BoxSearchEpisode):
+        with open(cache_path) as f:
+            for line in f.readlines():
+                if len(line) == 0:
+                    continue
+                region = json.loads(line)
+                if region["type"] == "box":
+                    box = Box.from_dict(region["value"])
+                    if region["label"] == "true":
+                        episode.add_true(box)
+                    elif region["label"] == "false":
+                        episode.add_false(box)
+                    elif region["label"] == "unknown":
+                        # episode.add_unknown(box)
+                        pass
+                    else:
+                        raise Exception("Invalid label")
+                elif region["type"] == "point":
+                    point = Point.from_dict(region["value"])
+                    if region["label"] == "true":
+                        episode.add_true_point(point)
+                    elif region["label"] == "false":
+                        episode.add_false_point(point)
+                    else:
+                        raise Exception("Invalid label")
+                else:
+                    raise Exception("Unknown type")
+
+
+    def run(self, rval: Queue, episode: SearchEpisode):
+        if not episode:
+            episode = self.episode
+        if self.write_region_to_cache is not None:
+            self.out_cache = open(self.write_region_to_cache, 'w')
+            self.write_region_to_cache = lambda x: self._write_to_cache(self.out_cache, x)
+
+        try:
+            while True:
+                try:
+                    # if self.real_time_plotting and self.write_region_to_cache is not None:
+                    #     time.sleep(0.1)                    
+                        region = episode.get_box_to_plot()
+                except Empty:
+                    break
+                else:
+                    try:
+                        # if self.plot_bounds.intersects(box["box"]) and box["box"].finite():
+                        if self.write_region_to_cache is not None:
+                            self.write_region_to_cache(region)
+
+                        if "box" in region and region["box"].finite():
+                            if region["label"] == "unknown":
+                                if self.real_time_plotting:
+                                    self.plot_add_patch(
+                                        region["box"], color=self.color_map[region["label"]]
+                                    )
+                            else:
+                                if self.real_time_plotting:
+                                    self.plot_add_box(
+                                        region, color=self.color_map[region["label"]]
+                                    )
+                        elif "point" in region:
+                            l.debug(f"{region['label']}: {region['point']}")
+                            if self.real_time_plotting:
+                                self.plot_add_point(
+                                    region["point"], color=self.color_map[region["label"]], shape=self.shape_map[region["label"]]
+                                )
+                    except Exception as e:
+                        print(e)
+                        pass
+                    pass
+        finally:
+            episode.close()
+            if self.out_cache is not None:
+                self.out_cache.close()
+            rval.put({"true_boxes": [], "false_boxes": []})
+                
+    
+    def plot_list_of_boxes(self): ## added DMM 10/10/22
         while True:
             try:
-                box = episode.get_box_to_plot()
+                box = self.episode.get_box_to_plot()
             except Empty:
                 break
             else:
@@ -74,9 +229,6 @@ class BoxPlotter(object):
                     pass
                 pass
 
-        episode.close()
-        rval.put({"true_boxes": [], "false_boxes": []})
-
     def plot_add_box(self, box: Box, color="r"):
         if self.py:
             self.plot2DBox(box["box"], self.px, self.py, color=color)
@@ -84,8 +236,34 @@ class BoxPlotter(object):
             self.plot1DBox(box["box"], self.px, color=color)
         self.fig.canvas.draw()
         self.fig.canvas.flush_events()
+        plt.show(block=False)
 
-    def plotBox(self, interval: Interval = Interval(-20, 20)):
+    def plot_add_patch(self, box: Box, color="r"):
+        rect = patches.Rectangle(
+            (box.bounds[self.px].lb, box.bounds[self.py].lb),
+            box.bounds[self.px].width(),
+            box.bounds[self.py].width(),
+            linewidth=1,
+            edgecolor=color,
+            facecolor="none",
+        )
+
+        # Add the patch to the Axes
+        self.ax.add_patch(rect)
+
+        self.fig.canvas.draw()
+        self.fig.canvas.flush_events()
+        plt.show(block=False)
+
+    def plot_add_point(self, point: Point, color="r", shape='x'):
+        plt.scatter(
+            point.values[self.px], point.values[self.py], color=color, marker=shape
+        )
+        self.fig.canvas.draw()
+        self.fig.canvas.flush_events()
+        plt.show(block=False)
+
+    def plotBox(self, interval: Interval = Interval(-2000, 2000)):
         box = Box(self.parameters)
         for p, _ in box.bounds.items():
             box.bounds[p] = interval
@@ -130,6 +308,14 @@ class BoxPlotter(object):
         y_limits = i.bounds[p2]
         x = np.linspace(x_limits.lb, x_limits.ub, 1000)
         plt.fill_between(x, y_limits.lb, y_limits.ub, color=color)
+    
+    def plot2DBoxList(b: Box, color="g", alpha=0.2):
+        box = list(b.bounds.values())
+        x_limits = box[0]
+        y_limits = box[1]
+        # if abs(float(x_limits.lb)) < 100 and abs(float(x_limits.ub)) < 100:
+        x = np.linspace(float(x_limits.lb), float(x_limits.ub), 1000)
+        plt.fill_between(x, y_limits.lb, y_limits.ub, color=color, alpha=alpha)
 
     def plot1D(
         self,

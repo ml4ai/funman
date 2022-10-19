@@ -1,0 +1,34 @@
+{"label": "unknown", "type": "box", "value": {"bounds": {"beta_0": {"lb": 0.25, "ub": 0.375}, "beta_1": {"lb": 0.375, "ub": 0.5}}}}
+{"label": "unknown", "type": "box", "value": {"bounds": {"beta_0": {"lb": 0.25, "ub": 0.375}, "beta_1": {"lb": 0.25, "ub": 0.375}}}}
+{"label": "unknown", "type": "box", "value": {"bounds": {"beta_0": {"lb": 0.375, "ub": 0.5}, "beta_1": {"lb": 0.125, "ub": 0.25}}}}
+{"label": "unknown", "type": "box", "value": {"bounds": {"beta_0": {"lb": 0.375, "ub": 0.5}, "beta_1": {"lb": 0.0, "ub": 0.125}}}}
+{"label": "unknown", "type": "box", "value": {"bounds": {"beta_0": {"lb": 0.25, "ub": 0.375}, "beta_1": {"lb": 0.125, "ub": 0.25}}}}
+{"label": "unknown", "type": "box", "value": {"bounds": {"beta_0": {"lb": 0.25, "ub": 0.375}, "beta_1": {"lb": 0.0, "ub": 0.125}}}}
+{"label": "unknown", "type": "box", "value": {"bounds": {"beta_0": {"lb": 0.125, "ub": 0.25}, "beta_1": {"lb": 0.375, "ub": 0.5}}}}
+{"label": "unknown", "type": "box", "value": {"bounds": {"beta_0": {"lb": 0.125, "ub": 0.25}, "beta_1": {"lb": 0.25, "ub": 0.375}}}}
+{"label": "unknown", "type": "box", "value": {"bounds": {"beta_0": {"lb": 0.0, "ub": 0.125}, "beta_1": {"lb": 0.375, "ub": 0.5}}}}
+{"label": "unknown", "type": "box", "value": {"bounds": {"beta_0": {"lb": 0.0, "ub": 0.125}, "beta_1": {"lb": 0.25, "ub": 0.375}}}}
+{"label": "unknown", "type": "box", "value": {"bounds": {"beta_0": {"lb": 0.125, "ub": 0.25}, "beta_1": {"lb": 0.125, "ub": 0.25}}}}
+{"label": "unknown", "type": "box", "value": {"bounds": {"beta_0": {"lb": 0.125, "ub": 0.25}, "beta_1": {"lb": 0.0, "ub": 0.125}}}}
+{"label": "unknown", "type": "box", "value": {"bounds": {"beta_0": {"lb": 0.0, "ub": 0.125}, "beta_1": {"lb": 0.125, "ub": 0.25}}}}
+{"label": "unknown", "type": "box", "value": {"bounds": {"beta_0": {"lb": 0.0, "ub": 0.125}, "beta_1": {"lb": 0.0, "ub": 0.125}}}}
+{"label": "unknown", "type": "box", "value": {"bounds": {"beta_0": {"lb": 0.4375, "ub": 0.5}, "beta_1": {"lb": 0.375, "ub": 0.5}}}}
+{"label": "unknown", "type": "box", "value": {"bounds": {"beta_0": {"lb": 0.375, "ub": 0.4375}, "beta_1": {"lb": 0.375, "ub": 0.5}}}}
+{"label": "unknown", "type": "box", "value": {"bounds": {"beta_0": {"lb": 0.4375, "ub": 0.5}, "beta_1": {"lb": 0.25, "ub": 0.375}}}}
+{"label": "unknown", "type": "box", "value": {"bounds": {"beta_0": {"lb": 0.375, "ub": 0.4375}, "beta_1": {"lb": 0.25, "ub": 0.375}}}}
+{"label": "false", "type": "point", "value": {"values": {"beta_0": 0.3125, "beta_1": 0.3125}}}
+{"label": "false", "type": "point", "value": {"values": {"beta_0": 0.4375, "beta_1": 0.0625}}}
+{"label": "false", "type": "point", "value": {"values": {"beta_0": 0.3125, "beta_1": 0.1875}}}
+{"label": "false", "type": "point", "value": {"values": {"beta_0": 0.3125, "beta_1": 0.12109375}}}
+{"label": "false", "type": "point", "value": {"values": {"beta_0": 0.1875, "beta_1": 0.4375}}}
+{"label": "false", "type": "point", "value": {"values": {"beta_0": 0.1875, "beta_1": 0.359375}}}
+{"label": "false", "type": "box", "value": {"bounds": {"beta_0": {"lb": 0.375, "ub": 0.5}, "beta_1": {"lb": 0.0, "ub": 0.125}}}}
+{"label": "true", "type": "point", "value": {"values": {"beta_0": 0.3125, "beta_1": 0.0625}}}
+{"label": "unknown", "type": "box", "value": {"bounds": {"beta_0": {"lb": 0.3125, "ub": 0.375}, "beta_1": {"lb": 0.0, "ub": 0.125}}}}
+{"label": "unknown", "type": "box", "value": {"bounds": {"beta_0": {"lb": 0.25, "ub": 0.3125}, "beta_1": {"lb": 0.0, "ub": 0.125}}}}
+{"label": "true", "type": "point", "value": {"values": {"beta_0": 0.1875, "beta_1": 0.3125}}}
+{"label": "unknown", "type": "box", "value": {"bounds": {"beta_0": {"lb": 0.1875, "ub": 0.25}, "beta_1": {"lb": 0.25, "ub": 0.375}}}}
+{"label": "unknown", "type": "box", "value": {"bounds": {"beta_0": {"lb": 0.125, "ub": 0.1875}, "beta_1": {"lb": 0.25, "ub": 0.375}}}}
+{"label": "true", "type": "point", "value": {"values": {"beta_0": 0.28125, "beta_1": 0.140625}}}
+{"label": "unknown", "type": "box", "value": {"bounds": {"beta_0": {"lb": 0.3125, "ub": 0.375}, "beta_1": {"lb": 0.125, "ub": 0.25}}}}
+{"label": "unknown", "type": "box", "value": {"bounds": {"beta_0": {"lb": 0.25, "ub": 0.3125}, "beta_1": {"lb": 0.125, "ub": 0.25}}}}
