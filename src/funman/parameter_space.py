@@ -1,9 +1,6 @@
 from typing import List
-from funman.plotting import BoxPlotter
 from funman.search_episode import SearchEpisode
 from funman.search_utils import Box
-import matplotlib.pyplot as plt
-from matplotlib.lines import Line2D
 
 class ParameterSpace(object):
     def __init__(self, true_boxes: List[Box], false_boxes: List[Box]) -> None:
@@ -85,20 +82,3 @@ class ParameterSpace(object):
     def compare(ps1, ps2) -> bool:
         raise NotImplementedError()
         raise NotImplementedError()
-
-    
-    def plot(self, color="b",alpha=0.2):
-        custom_lines = [
-            Line2D([0], [0], color='g', lw=4,alpha=alpha),
-            Line2D([0], [0], color='r', lw=4,alpha=alpha),
-        ]
-        plt.title("Parameter Space")
-        plt.xlabel("beta_0")
-        plt.ylabel("beta_1")
-        plt.legend(custom_lines, ["true", "false"])
-        for b1 in self.true_boxes:
-            BoxPlotter.plot2DBoxList(b1, color='g')    
-        for b1 in self.false_boxes:
-            BoxPlotter.plot2DBoxList(b1, color='r')      
-        # plt.show(block=True) 
-        pass

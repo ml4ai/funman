@@ -31,4 +31,4 @@ class Parameter(object):
 
     def __hash__(self):
         # necessary for instances to behave sanely in dicts and sets.
-        return hash(self.symbol)
+        return hash(self.name)

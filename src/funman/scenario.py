@@ -43,10 +43,6 @@ class ParameterSynthesisScenario(AnalysisScenario):
             search = BoxSearch()
         self.search = search
 
-        self.search.real_time_plotting = config.get("real_time_plotting", True)
-        self.search.write_cache_parameter_space = config.get("write_cache_parameter_space", None)
-        self.search.read_cache_parameter_space = config.get("read_cache_parameter_space", None)
-
         if isinstance(model, str):
             self.chime = CHIME()
             epochs = config["epochs"]
