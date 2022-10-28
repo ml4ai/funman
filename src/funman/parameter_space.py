@@ -1,6 +1,5 @@
 from typing import List
 from funman.plotting import BoxPlotter
-from funman.search_episode import SearchEpisode
 from funman.search_utils import Box
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
