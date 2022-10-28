@@ -1,10 +1,7 @@
-import ctypes
-from curses.ascii import EM
+from abc import ABC, abstractmethod
 from functools import total_ordering
-from multiprocessing import Array, Queue, Value, cpu_count
 from queue import Queue as SQueue
-import os
-import time
+import traceback
 from typing import Dict, List, Union
 from funman.config import Config
 from funman.model import Parameter
@@ -13,6 +10,12 @@ from pysmt.shortcuts import Real, GE, LT, And, TRUE, Equals
 from funman.constants import NEG_INFINITY, POS_INFINITY, BIG_NUMBER
 import funman.math_utils as math_utils
 
+import multiprocessing as mp
+from multiprocessing.managers import SyncManager
+
+import logging
+l = logging.getLogger(__file__)
+l.setLevel(logging.INFO)
 
 class Interval(object):
     def __init__(self, lb: float, ub: float) -> None:
@@ -397,32 +400,144 @@ class Box(object):
         return result
 
 class SearchStatistics(object):
-    def __init__(self, multiprocessing=True):
-        self.multiprocessing = multiprocessing
-        self.num_true = Value("i", 0) if self.multiprocessing else 0
-        self.num_false = Value("i", 0) if self.multiprocessing else 0
-        self.num_unknown = Value("i", 0) if self.multiprocessing else 0
-        self.residuals = Queue() if self.multiprocessing else SQueue()
-        self.current_residual = Value("d", 0.0) if self.multiprocessing else 0.0
-        self.last_time = Array(ctypes.c_wchar, "") if self.multiprocessing else []
-        self.iteration_time = Queue() if self.multiprocessing else SQueue()
-        self.iteration_operation = Queue() if self.multiprocessing else SQueue()
+    def __init__(self, manager: SyncManager):
+        self.multiprocessing = manager is not None
+        self.num_true = manager.Value("i", 0) if self.multiprocessing else 0
+        self.num_false = manager.Value("i", 0) if self.multiprocessing else 0
+        self.num_unknown = manager.Value("i", 0) if self.multiprocessing else 0
+        self.residuals = manager.Queue() if self.multiprocessing else SQueue()
+        self.current_residual = manager.Value("d", 0.0) if self.multiprocessing else 0.0
+        self.last_time = manager.Array("u", "") if self.multiprocessing else []
+        self.iteration_time = manager.Queue() if self.multiprocessing else SQueue()
+        self.iteration_operation = manager.Queue() if self.multiprocessing else SQueue()
 
-    def close(self):
-        if self.multiprocessing:
-            self.residuals.close()
-            self.iteration_time.close()
-            self.iteration_operation.close()
+    # def close(self):
+    #     self.residuals.close()
+    #     self.iteration_time.close()
+    #     self.iteration_operation.close()
 
+class WaitAction(ABC):
+    def __init__(self) -> None:
+        pass
+
+    @abstractmethod
+    def run(self) -> None:
+        pass
+
+class ResultHandler(ABC):
+    def __init__(self) -> None:
+        pass
+
+    def __enter__(self) -> 'ResultHandler':
+        self.open()
+        return self
+
+    def __exit__(self) -> None:
+        self.close()
+
+    @abstractmethod
+    def open(self) -> None:
+        pass
+
+    @abstractmethod
+    def process(self, result: dict) -> None:
+        pass
+
+    @abstractmethod
+    def close(self) -> None:
+        pass
+
+class ResultCombinedHandler(ResultHandler):
+    def __init__(self, handlers: List[ResultHandler]) -> None:
+        self.handlers = handlers if handlers is not None else []
+
+    def open(self) -> None:
+        for h in self.handlers:
+            try:
+                h.open()
+            except Exception as e:
+                l.error(traceback.format_exc())
+
+    def process(self, result: dict) -> None:
+        for h in self.handlers:
+            try:
+                h.process(result)
+            except Exception as e:
+                l.error(traceback.format_exc())
+
+    def close(self) -> None:
+        for h in self.handlers:
+            try:
+                h.close()
+            except Exception as e:
+                l.error(traceback.format_exc())
 
 class SearchConfig(Config):
-    def __init__(self, *args, **kwargs) -> None:
-        self.tolerance = kwargs["tolerance"] if "tolerance" in kwargs else 1e-2
-        self.queue_timeout = (
-            kwargs["queue_timeout"] if "queue_timeout" in kwargs else 1200
-        )
-        self.number_of_processes = (
-            kwargs["number_of_processes"]
-            if "number_of_processes" in kwargs
-            else cpu_count()
-        )
+    def __init__(self,
+                *, # non-positional keywords
+                tolerance = 1e-2,
+                queue_timeout = 1,
+                number_of_processes = mp.cpu_count(),
+                handler: ResultHandler = None,
+                wait_timeout = None,
+                wait_action = None,
+                wait_action_timeout = 0.05,
+                read_cache = None,
+                ) -> None:
+        self.tolerance = tolerance
+        self.queue_timeout = queue_timeout
+        self.number_of_processes = number_of_processes
+        self.handler : ResultHandler = handler
+        self.wait_timeout = wait_timeout
+        self.wait_action = wait_action
+        self.wait_action_timeout = wait_action_timeout
+        self.read_cache = read_cache
+
+def _encode_labeled_box(box: Box, label: str):
+    return {
+        "label": label,
+        "type": "box",
+        "value": box.to_dict()
+    }
+
+def encode_true_box(box: Box):
+    return _encode_labeled_box(box, 'true')
+
+def encode_false_box(box: Box):
+    return _encode_labeled_box(box, 'false')
+
+def encode_unknown_box(box: Box):
+    return _encode_labeled_box(box, 'unkown')
+
+def decode_labeled_box(box: dict):
+    if box['type'] != "box":
+        return None
+    return (Box.from_dict(box['value']), box['label'])
+    
+def _encode_labeled_point(point: Point, label: str):
+    return {
+        "label": label,
+        "type": "point",
+        "value": point.to_dict()
+    }
+
+def encode_true_point(point: Point):
+    return _encode_labeled_point(point, 'true')
+    
+def encode_false_point(point: Point):
+    return _encode_labeled_point(point, 'false')
+
+def encode_unknown_point(point: Point):
+    return _encode_labeled_point(point, 'unkown')
+
+def decode_labeled_point(point: dict):
+    if point['type'] != "point":
+        return None
+    return (Point.from_dict(point['value']), point['label'])
+
+def decode_labeled_object(obj: dict):
+    if obj['type'] == 'point':
+        return (decode_labeled_point(obj), Point)
+    if obj['type'] == 'box':
+        return (decode_labeled_box(obj), Box)
+    return None
