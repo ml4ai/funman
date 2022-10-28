@@ -279,7 +279,7 @@ class CHIME(object):
                 And(dynamics[t][1]),
                 And(dynamics[t][2]),
             ]
-            for t in range(num_timepoints)
+            for t in range(num_timepoints - 1)
         ]
         tmp.append([query[num_timepoints]])
         layered = []
