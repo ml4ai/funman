@@ -171,7 +171,7 @@ class TestHandcoded(unittest.TestCase):
                     past_assignments.update(model_assertions)
                     model = None
         elapsed = elapsed()
-        solver.exit()
+        # solver.exit()
         return model, elapsed
 
     def run_incremental_solver(
@@ -214,19 +214,17 @@ class TestHandcoded(unittest.TestCase):
 
     def test_simple_chime_propositional(self):
 
-        min_num_timepoints = 1
-        max_num_timepoints = 60
+        min_num_timepoints = 60
+        max_num_timepoints = 61
 
-        solver_idx = 0
+        solver_idx = 1
         solver_names = ["msat", "z3", "cvc"]
         solver_options = {
             "z3": {
                 "nlsat.check_lemmas": True,
                 # "precision": 10,
-                "pp.decimal": True,
                 "push_to_real": True,
                 "elim_to_real": True,
-                "rational_to_decimal": True,
                 "algebraic_number_evaluator": False
                 # "dot_proof_file": "z3_proof.dot"
                 # "add_bound_upper": 1010,
@@ -249,16 +247,16 @@ class TestHandcoded(unittest.TestCase):
         vars, (parameters, init, dynamics, query) = chime.make_model()
         for num_timepoints in range(min_num_timepoints, max_num_timepoints):
 
-            # reset_env()
-            # phi = chime.encode_time_horizon(
-            #     parameters, init, dynamics, query, num_timepoints
-            # )
-            # model, elapsed = self.run_get_model(
-            #     phi,
-            #     solver_name="z3",
-            #     logic=QF_UFLIRA,
-            #     solver_options=solver_options,
-            # )
+            reset_env()
+            phi = chime.encode_time_horizon(
+                parameters, init, dynamics, query, num_timepoints
+            )
+            model, elapsed = self.run_get_model(
+                phi,
+                solver_name="z3",
+                logic=QF_UFLIRA,
+                solver_options=solver_options,
+            )
             elapsed = 0
             # reset_env()
             # asm_model, asm_elapsed = self.run_assumption_solver(
@@ -278,13 +276,13 @@ class TestHandcoded(unittest.TestCase):
                 logic=QF_UFLIRA,
                 solver_options=solver_options[solver_names[solver_idx]],
             )
-            # reset_env()
-            # inc_model, inc_elapsed = self.run_incremental_solver(
-            #     phi_stratified,
-            #     solver_name="z3",
-            #     logic=QF_UFLIRA,
-            #     solver_options=solver_options,
-            # )
+            reset_env()
+            inc_model, inc_elapsed = self.run_incremental_solver(
+                phi_stratified,
+                solver_name=solver_names[solver_idx],
+                logic=QF_UFLIRA,
+                solver_options=solver_options[solver_names[solver_idx]],
+            )
             inc_elapsed = 0
             print(
                 f"{num_timepoints}\t{float('{:.2f}'.format(elapsed))}\t{float('{:.2f}'.format(inc_elapsed))}\t{float('{:.2f}'.format(asm_elapsed))}"
