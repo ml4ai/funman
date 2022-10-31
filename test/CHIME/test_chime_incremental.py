@@ -247,16 +247,16 @@ class TestHandcoded(unittest.TestCase):
         vars, (parameters, init, dynamics, query) = chime.make_model()
         for num_timepoints in range(min_num_timepoints, max_num_timepoints):
 
-            reset_env()
-            phi = chime.encode_time_horizon(
-                parameters, init, dynamics, query, num_timepoints
-            )
-            model, elapsed = self.run_get_model(
-                phi,
-                solver_name="z3",
-                logic=QF_UFLIRA,
-                solver_options=solver_options,
-            )
+            # reset_env()
+            # phi = chime.encode_time_horizon(
+            #     parameters, init, dynamics, query, num_timepoints
+            # )
+            # model, elapsed = self.run_get_model(
+            #     phi,
+            #     solver_name="z3",
+            #     logic=QF_UFLIRA,
+            #     solver_options=solver_options,
+            # )
             elapsed = 0
             # reset_env()
             # asm_model, asm_elapsed = self.run_assumption_solver(
@@ -266,16 +266,17 @@ class TestHandcoded(unittest.TestCase):
             #     solver_options=solver_options,
             # )
 
-            reset_env()
+            # reset_env()
             phi_stratified = chime.encode_time_horizon_layered(
                 parameters, init, dynamics, query, num_timepoints
             )
-            asm_model, asm_elapsed = self.run_decomposed_solver(
-                phi_stratified,
-                solver_name=solver_names[solver_idx],
-                logic=QF_UFLIRA,
-                solver_options=solver_options[solver_names[solver_idx]],
-            )
+            # asm_model, asm_elapsed = self.run_decomposed_solver(
+            #     phi_stratified,
+            #     solver_name=solver_names[solver_idx],
+            #     logic=QF_UFLIRA,
+            #     solver_options=solver_options[solver_names[solver_idx]],
+            # )
+            asm_elapsed=0
             reset_env()
             inc_model, inc_elapsed = self.run_incremental_solver(
                 phi_stratified,
