@@ -30,7 +30,7 @@
             <a href="index.html" class="icon icon-home"> funman
           </a>
               <div class="version">
-                1.0.0
+                1.1.0
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
@@ -78,14 +78,17 @@
  <a href="#A"><strong>A</strong></a>
  | <a href="#B"><strong>B</strong></a>
  | <a href="#C"><strong>C</strong></a>
+ | <a href="#D"><strong>D</strong></a>
  | <a href="#E"><strong>E</strong></a>
  | <a href="#F"><strong>F</strong></a>
  | <a href="#G"><strong>G</strong></a>
  | <a href="#I"><strong>I</strong></a>
+ | <a href="#L"><strong>L</strong></a>
  | <a href="#M"><strong>M</strong></a>
  | <a href="#O"><strong>O</strong></a>
  | <a href="#P"><strong>P</strong></a>
  | <a href="#Q"><strong>Q</strong></a>
+ | <a href="#R"><strong>R</strong></a>
  | <a href="#S"><strong>S</strong></a>
  | <a href="#T"><strong>T</strong></a>
  | <a href="#W"><strong>W</strong></a>
@@ -94,17 +97,21 @@
 <h2 id="A">A</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="funman.html#funman.search.BoxSearchEpisode.add_false">add_false() (funman.search.BoxSearchEpisode method)</a>
+      <li><a href="funman.html#funman.search_episode.BoxSearchEpisode.add_false">add_false() (funman.search_episode.BoxSearchEpisode method)</a>
 </li>
-      <li><a href="funman.html#funman.search.BoxSearchEpisode.add_true">add_true() (funman.search.BoxSearchEpisode method)</a>
+      <li><a href="funman.html#funman.search_episode.BoxSearchEpisode.add_false_point">add_false_point() (funman.search_episode.BoxSearchEpisode method)</a>
+</li>
+      <li><a href="funman.html#funman.search_episode.BoxSearchEpisode.add_true">add_true() (funman.search_episode.BoxSearchEpisode method)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="funman.html#funman.search.BoxSearchEpisode.add_unknown">add_unknown() (funman.search.BoxSearchEpisode method)</a>
+      <li><a href="funman.html#funman.search_episode.BoxSearchEpisode.add_true_point">add_true_point() (funman.search_episode.BoxSearchEpisode method)</a>
 </li>
-      <li><a href="funman.html#funman.scenario.AnalysisScenario">AnalysisScenario (class in funman.scenario)</a>
+      <li><a href="funman.html#funman.search_episode.BoxSearchEpisode.add_unknown">add_unknown() (funman.search_episode.BoxSearchEpisode method)</a>
 </li>
-      <li><a href="funman.html#funman.scenario.AnalysisScenarioResult">AnalysisScenarioResult (class in funman.scenario)</a>
+      <li><a href="funman.scenario.html#funman.scenario.AnalysisScenario">AnalysisScenario (class in funman.scenario)</a>
+</li>
+      <li><a href="funman.scenario.html#funman.scenario.AnalysisScenarioResult">AnalysisScenarioResult (class in funman.scenario)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -118,7 +125,7 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="funman.html#funman.search.BoxSearch">BoxSearch (class in funman.search)</a>
 </li>
-      <li><a href="funman.html#funman.search.BoxSearchEpisode">BoxSearchEpisode (class in funman.search)</a>
+      <li><a href="funman.html#funman.search_episode.BoxSearchEpisode">BoxSearchEpisode (class in funman.search_episode)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -126,18 +133,20 @@
 <h2 id="C">C</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="funman.html#funman.search.BoxSearchEpisode.close">close() (funman.search.BoxSearchEpisode method)</a>
+      <li><a href="funman.examples.html#funman.examples.chime.CHIME">CHIME (class in funman.examples.chime)</a>
+</li>
+      <li><a href="funman.html#funman.search_utils.ResultCombinedHandler.close">close() (funman.search_utils.ResultCombinedHandler method)</a>
 
       <ul>
-        <li><a href="funman.html#funman.search_utils.SearchStatistics.close">(funman.search_utils.SearchStatistics method)</a>
+        <li><a href="funman.html#funman.search_utils.ResultHandler.close">(funman.search_utils.ResultHandler method)</a>
 </li>
       </ul></li>
       <li><a href="funman.html#funman.parameter_space.ParameterSpace.compare">compare() (funman.parameter_space.ParameterSpace static method)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="funman.html#funman.config.Config">Config (class in funman.config)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="funman.html#funman.parameter_space.ParameterSpace.construct_all_equal">construct_all_equal() (funman.parameter_space.ParameterSpace static method)</a>
 </li>
       <li><a href="funman.html#funman.search_utils.Box.contains">contains() (funman.search_utils.Box method)</a>
@@ -146,13 +155,51 @@
         <li><a href="funman.html#funman.search_utils.Interval.contains">(funman.search_utils.Interval method)</a>
 </li>
       </ul></li>
+      <li><a href="funman.html#funman.search_utils.Box.contains_point">contains_point() (funman.search_utils.Box method)</a>
+</li>
+      <li><a href="funman.html#funman.search_utils.Interval.contains_value">contains_value() (funman.search_utils.Interval method)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="D">D</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="funman.html#funman.search_utils.decode_labeled_box">decode_labeled_box() (in module funman.search_utils)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="funman.html#funman.search_utils.decode_labeled_object">decode_labeled_object() (in module funman.search_utils)</a>
+</li>
+      <li><a href="funman.html#funman.search_utils.decode_labeled_point">decode_labeled_point() (in module funman.search_utils)</a>
+</li>
   </ul></td>
 </tr></table>
 
 <h2 id="E">E</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="funman.html#funman.search_utils.encode_false_box">encode_false_box() (in module funman.search_utils)</a>
+</li>
+      <li><a href="funman.html#funman.search_utils.encode_false_point">encode_false_point() (in module funman.search_utils)</a>
+</li>
+      <li><a href="funman.examples.html#funman.examples.chime.CHIME.encode_time_horizon">encode_time_horizon() (funman.examples.chime.CHIME method)</a>
+</li>
+      <li><a href="funman.examples.html#funman.examples.chime.CHIME.encode_time_horizon_layered">encode_time_horizon_layered() (funman.examples.chime.CHIME method)</a>
+</li>
+      <li><a href="funman.html#funman.search_utils.encode_true_box">encode_true_box() (in module funman.search_utils)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="funman.html#funman.search_utils.encode_true_point">encode_true_point() (in module funman.search_utils)</a>
+</li>
+      <li><a href="funman.html#funman.search_utils.encode_unknown_box">encode_unknown_box() (in module funman.search_utils)</a>
+</li>
+      <li><a href="funman.html#funman.search_utils.encode_unknown_point">encode_unknown_point() (in module funman.search_utils)</a>
+</li>
       <li><a href="funman.html#funman.search.BoxSearch.expand">expand() (funman.search.BoxSearch method)</a>
+</li>
+      <li><a href="funman.html#funman.search_episode.BoxSearchEpisode.extract_point">extract_point() (funman.search_episode.BoxSearchEpisode method)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -166,6 +213,14 @@
         <li><a href="funman.html#funman.search_utils.Interval.finite">(funman.search_utils.Interval method)</a>
 </li>
       </ul></li>
+      <li><a href="funman.html#funman.search_utils.Box.from_dict">from_dict() (funman.search_utils.Box static method)</a>
+
+      <ul>
+        <li><a href="funman.html#funman.search_utils.Interval.from_dict">(funman.search_utils.Interval static method)</a>
+</li>
+        <li><a href="funman.html#funman.search_utils.Point.from_dict">(funman.search_utils.Point static method)</a>
+</li>
+      </ul></li>
       <li>
     funman
 
@@ -173,7 +228,7 @@
         <li><a href="funman.html#module-funman">module</a>
 </li>
       </ul></li>
-      <li><a href="funman.html#funman.funman.Funman">Funman (class in funman.funman)</a>
+      <li><a href="funman.html#funman.Funman">Funman (class in funman)</a>
 </li>
       <li>
     funman.config
@@ -190,14 +245,28 @@
 </li>
       </ul></li>
       <li>
-    funman.funman
+    funman.examples
 
       <ul>
-        <li><a href="funman.html#module-funman.funman">module</a>
+        <li><a href="funman.examples.html#module-funman.examples">module</a>
+</li>
+      </ul></li>
+      <li>
+    funman.examples.chime
+
+      <ul>
+        <li><a href="funman.examples.html#module-funman.examples.chime">module</a>
 </li>
       </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li>
+    funman.math_utils
+
+      <ul>
+        <li><a href="funman.html#module-funman.math_utils">module</a>
+</li>
+      </ul></li>
       <li>
     funman.model
 
@@ -216,7 +285,14 @@
     funman.scenario
 
       <ul>
-        <li><a href="funman.html#module-funman.scenario">module</a>
+        <li><a href="funman.scenario.html#module-funman.scenario">module</a>
+</li>
+      </ul></li>
+      <li>
+    funman.scenario.parameter_synthesis
+
+      <ul>
+        <li><a href="funman.scenario.html#module-funman.scenario.parameter_synthesis">module</a>
 </li>
       </ul></li>
       <li>
@@ -227,17 +303,17 @@
 </li>
       </ul></li>
       <li>
+    funman.search_episode
+
+      <ul>
+        <li><a href="funman.html#module-funman.search_episode">module</a>
+</li>
+      </ul></li>
+      <li>
     funman.search_utils
 
       <ul>
         <li><a href="funman.html#module-funman.search_utils">module</a>
-</li>
-      </ul></li>
-      <li>
-    funman.simulator
-
-      <ul>
-        <li><a href="funman.html#module-funman.simulator">module</a>
 </li>
       </ul></li>
   </ul></td>
@@ -246,7 +322,15 @@
 <h2 id="G">G</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="funman.html#funman.search.BoxSearchEpisode.get_unknown">get_unknown() (funman.search.BoxSearchEpisode method)</a>
+      <li><a href="funman.html#funman.search_episode.BoxSearchEpisode.get_box_to_plot">get_box_to_plot() (funman.search_episode.BoxSearchEpisode method)</a>
+</li>
+      <li><a href="funman.html#funman.search_episode.BoxSearchEpisode.get_unknown">get_unknown() (funman.search_episode.BoxSearchEpisode method)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="funman.html#funman.math_utils.gt">gt() (in module funman.math_utils)</a>
+</li>
+      <li><a href="funman.html#funman.math_utils.gte">gte() (in module funman.math_utils)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -254,14 +338,22 @@
 <h2 id="I">I</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="funman.html#funman.search.BoxSearchEpisode.initial_box">initial_box() (funman.search.BoxSearchEpisode method)</a>
+      <li><a href="funman.html#funman.search_episode.BoxSearchEpisode.initial_box">initial_box() (funman.search_episode.BoxSearchEpisode method)</a>
 </li>
-      <li><a href="funman.html#funman.search.BoxSearch.initialize">initialize() (funman.search.BoxSearch method)</a>
+      <li><a href="funman.html#funman.search_episode.BoxSearchEpisode.initialize_boxes">initialize_boxes() (funman.search_episode.BoxSearchEpisode method)</a>
 </li>
       <li><a href="funman.html#funman.parameter_space.ParameterSpace.intersect">intersect() (funman.parameter_space.ParameterSpace static method)</a>
 </li>
+      <li><a href="funman.html#funman.search_utils.Box.intersect_two_boxes">intersect_two_boxes() (funman.search_utils.Box method)</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="funman.html#funman.search_utils.Box.intersection">intersection() (funman.search_utils.Box method)</a>
+
+      <ul>
+        <li><a href="funman.html#funman.search_utils.Interval.intersection">(funman.search_utils.Interval method)</a>
+</li>
+      </ul></li>
       <li><a href="funman.html#funman.search_utils.Box.intersects">intersects() (funman.search_utils.Box method)</a>
 
       <ul>
@@ -273,10 +365,36 @@
   </ul></td>
 </tr></table>
 
+<h2 id="L">L</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="funman.html#funman.math_utils.lt">lt() (in module funman.math_utils)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="funman.html#funman.math_utils.lte">lte() (in module funman.math_utils)</a>
+</li>
+  </ul></td>
+</tr></table>
+
 <h2 id="M">M</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="funman.html#funman.main">main() (in module funman)</a>
+</li>
+      <li><a href="funman.examples.html#funman.examples.chime.CHIME.make_chime_model">make_chime_model() (funman.examples.chime.CHIME method)</a>
+</li>
+      <li><a href="funman.examples.html#funman.examples.chime.CHIME.make_chime_query">make_chime_query() (funman.examples.chime.CHIME method)</a>
+</li>
+      <li><a href="funman.examples.html#funman.examples.chime.CHIME.make_chime_variables">make_chime_variables() (funman.examples.chime.CHIME method)</a>
+</li>
+      <li><a href="funman.examples.html#funman.examples.chime.CHIME.make_dynamics_s1">make_dynamics_s1() (funman.examples.chime.CHIME method)</a>
+</li>
+      <li><a href="funman.examples.html#funman.examples.chime.CHIME.make_dynamics_s2">make_dynamics_s2() (funman.examples.chime.CHIME method)</a>
+</li>
+      <li><a href="funman.examples.html#funman.examples.chime.CHIME.make_dynamics_s3">make_dynamics_s3() (funman.examples.chime.CHIME method)</a>
+</li>
+      <li><a href="funman.examples.html#funman.examples.chime.CHIME.make_model">make_model() (funman.examples.chime.CHIME method)</a>
 </li>
       <li><a href="funman.html#funman.search_utils.Interval.midpoint">midpoint() (funman.search_utils.Interval method)</a>
 </li>
@@ -292,19 +410,25 @@
 </li>
         <li><a href="funman.html#module-funman.constants">funman.constants</a>
 </li>
-        <li><a href="funman.html#module-funman.funman">funman.funman</a>
+        <li><a href="funman.examples.html#module-funman.examples">funman.examples</a>
+</li>
+        <li><a href="funman.examples.html#module-funman.examples.chime">funman.examples.chime</a>
+</li>
+        <li><a href="funman.html#module-funman.math_utils">funman.math_utils</a>
 </li>
         <li><a href="funman.html#module-funman.model">funman.model</a>
 </li>
         <li><a href="funman.html#module-funman.parameter_space">funman.parameter_space</a>
 </li>
-        <li><a href="funman.html#module-funman.scenario">funman.scenario</a>
+        <li><a href="funman.scenario.html#module-funman.scenario">funman.scenario</a>
+</li>
+        <li><a href="funman.scenario.html#module-funman.scenario.parameter_synthesis">funman.scenario.parameter_synthesis</a>
 </li>
         <li><a href="funman.html#module-funman.search">funman.search</a>
 </li>
-        <li><a href="funman.html#module-funman.search_utils">funman.search_utils</a>
+        <li><a href="funman.html#module-funman.search_episode">funman.search_episode</a>
 </li>
-        <li><a href="funman.html#module-funman.simulator">funman.simulator</a>
+        <li><a href="funman.html#module-funman.search_utils">funman.search_utils</a>
 </li>
       </ul></li>
   </ul></td>
@@ -313,12 +437,18 @@
 <h2 id="O">O</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="funman.html#funman.search.BoxSearchEpisode.on_iteration">on_iteration() (funman.search.BoxSearchEpisode method)</a>
+      <li><a href="funman.html#funman.search_episode.BoxSearchEpisode.on_iteration">on_iteration() (funman.search_episode.BoxSearchEpisode method)</a>
+</li>
+      <li><a href="funman.html#funman.search_episode.BoxSearchEpisode.on_start">on_start() (funman.search_episode.BoxSearchEpisode method)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="funman.html#funman.search.BoxSearchEpisode.on_start">on_start() (funman.search.BoxSearchEpisode method)</a>
+      <li><a href="funman.html#funman.search_utils.ResultCombinedHandler.open">open() (funman.search_utils.ResultCombinedHandler method)</a>
+
+      <ul>
+        <li><a href="funman.html#funman.search_utils.ResultHandler.open">(funman.search_utils.ResultHandler method)</a>
 </li>
+      </ul></li>
   </ul></td>
 </tr></table>
 
@@ -329,24 +459,22 @@
 </li>
       <li><a href="funman.html#funman.parameter_space.ParameterSpace">ParameterSpace (class in funman.parameter_space)</a>
 </li>
-      <li><a href="funman.html#funman.scenario.ParameterSynthesisScenario">ParameterSynthesisScenario (class in funman.scenario)</a>
+      <li><a href="funman.scenario.html#funman.scenario.parameter_synthesis.ParameterSynthesisScenario">ParameterSynthesisScenario (class in funman.scenario.parameter_synthesis)</a>
 </li>
-      <li><a href="funman.html#funman.scenario.ParameterSynthesisScenarioResult">ParameterSynthesisScenarioResult (class in funman.scenario)</a>
-</li>
-      <li><a href="funman.html#funman.search.BoxSearchEpisode.plot">plot() (funman.search.BoxSearchEpisode method)</a>
+      <li><a href="funman.scenario.html#funman.scenario.parameter_synthesis.ParameterSynthesisScenarioResult">ParameterSynthesisScenarioResult (class in funman.scenario.parameter_synthesis)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="funman.html#funman.search.BoxSearchEpisode.plot1D">plot1D() (funman.search.BoxSearchEpisode method)</a>
+      <li><a href="funman.scenario.html#funman.scenario.AnalysisScenarioResult.plot">plot() (funman.scenario.AnalysisScenarioResult class method)</a>
 </li>
-      <li><a href="funman.html#funman.search.BoxSearchEpisode.plot1DBox">plot1DBox() (funman.search.BoxSearchEpisode method)</a>
+      <li><a href="funman.html#funman.search_utils.Point">Point (class in funman.search_utils)</a>
 </li>
-      <li><a href="funman.html#funman.search.BoxSearchEpisode.plot2D">plot2D() (funman.search.BoxSearchEpisode method)</a>
+      <li><a href="funman.html#funman.search_utils.ResultCombinedHandler.process">process() (funman.search_utils.ResultCombinedHandler method)</a>
+
+      <ul>
+        <li><a href="funman.html#funman.search_utils.ResultHandler.process">(funman.search_utils.ResultHandler method)</a>
 </li>
-      <li><a href="funman.html#funman.search.BoxSearchEpisode.plot2DBox">plot2DBox() (funman.search.BoxSearchEpisode method)</a>
-</li>
-      <li><a href="funman.html#funman.search.BoxSearchEpisode.plotBox">plotBox() (funman.search.BoxSearchEpisode method)</a>
-</li>
+      </ul></li>
       <li><a href="funman.html#funman.parameter_space.ParameterSpace.project">project() (funman.parameter_space.ParameterSpace static method)</a>
 </li>
   </ul></td>
@@ -355,7 +483,21 @@
 <h2 id="Q">Q</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="funman.html#funman.simulator.Simulator.query_simulator">query_simulator() (funman.simulator.Simulator method)</a>
+      <li><a href="funman.html#funman.model.Query">Query (class in funman.model)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="R">R</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="funman.html#funman.search_utils.ResultCombinedHandler">ResultCombinedHandler (class in funman.search_utils)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="funman.html#funman.search_utils.ResultHandler">ResultHandler (class in funman.search_utils)</a>
+</li>
+      <li><a href="funman.html#funman.search_utils.WaitAction.run">run() (funman.search_utils.WaitAction method)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -367,42 +509,56 @@
 </li>
       <li><a href="funman.html#funman.search_utils.SearchConfig">SearchConfig (class in funman.search_utils)</a>
 </li>
-      <li><a href="funman.html#funman.search.SearchEpisode">SearchEpisode (class in funman.search)</a>
+      <li><a href="funman.html#funman.search_episode.SearchEpisode">SearchEpisode (class in funman.search_episode)</a>
 </li>
       <li><a href="funman.html#funman.search_utils.SearchStatistics">SearchStatistics (class in funman.search_utils)</a>
 </li>
-      <li><a href="funman.html#funman.simulator.SimConfig">SimConfig (class in funman.simulator)</a>
+      <li><a href="funman.scenario.html#funman.scenario.AnalysisScenario.simulate">simulate() (funman.scenario.AnalysisScenario class method)</a>
 </li>
-      <li><a href="funman.html#funman.scenario.AnalysisScenario.simulate">simulate() (funman.scenario.AnalysisScenario class method)</a>
-</li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="funman.html#funman.simulator.Simulator">Simulator (class in funman.simulator)</a>
-</li>
-      <li><a href="funman.html#funman.funman.Funman.solve">solve() (funman.funman.Funman method)</a>
+      <li><a href="funman.html#funman.Funman.solve">solve() (funman.Funman method)</a>
 
       <ul>
-        <li><a href="funman.html#funman.scenario.AnalysisScenario.solve">(funman.scenario.AnalysisScenario class method)</a>
+        <li><a href="funman.scenario.html#funman.scenario.AnalysisScenario.solve">(funman.scenario.AnalysisScenario class method)</a>
 </li>
-        <li><a href="funman.html#funman.scenario.ParameterSynthesisScenario.solve">(funman.scenario.ParameterSynthesisScenario method)</a>
+        <li><a href="funman.scenario.html#funman.scenario.parameter_synthesis.ParameterSynthesisScenario.solve">(funman.scenario.parameter_synthesis.ParameterSynthesisScenario method)</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="funman.html#funman.search.BoxSearch.split">split() (funman.search.BoxSearch method)</a>
 
       <ul>
         <li><a href="funman.html#funman.search_utils.Box.split">(funman.search_utils.Box method)</a>
 </li>
       </ul></li>
+      <li><a href="funman.html#funman.search_utils.Box.subtract_two_1d_intervals">subtract_two_1d_intervals() (funman.search_utils.Box method)</a>
+</li>
+      <li><a href="funman.html#funman.parameter_space.ParameterSpace.symmetric_difference">symmetric_difference() (funman.parameter_space.ParameterSpace static method)</a>
+</li>
+      <li><a href="funman.html#funman.search_utils.Box.symmetric_difference_two_boxes">symmetric_difference_two_boxes() (funman.search_utils.Box static method)</a>
+</li>
   </ul></td>
 </tr></table>
 
 <h2 id="T">T</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="funman.html#funman.search_utils.Box.to_dict">to_dict() (funman.search_utils.Box method)</a>
+
+      <ul>
+        <li><a href="funman.html#funman.search_utils.Interval.to_dict">(funman.search_utils.Interval method)</a>
+</li>
+        <li><a href="funman.html#funman.search_utils.Point.to_dict">(funman.search_utils.Point method)</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="funman.html#funman.search_utils.Box.to_smt">to_smt() (funman.search_utils.Box method)</a>
 
       <ul>
         <li><a href="funman.html#funman.search_utils.Interval.to_smt">(funman.search_utils.Interval method)</a>
+</li>
+        <li><a href="funman.html#funman.search_utils.Point.to_smt">(funman.search_utils.Point method)</a>
 </li>
       </ul></li>
   </ul></td>
@@ -410,6 +566,10 @@
 
 <h2 id="W">W</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="funman.html#funman.search_utils.WaitAction">WaitAction (class in funman.search_utils)</a>
+</li>
+  </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="funman.html#funman.search_utils.Box.width">width() (funman.search_utils.Box method)</a>
 

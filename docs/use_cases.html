@@ -33,7 +33,7 @@
             <a href="index.html" class="icon icon-home"> funman
           </a>
               <div class="version">
-                1.0.0
+                1.1.0
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
@@ -104,7 +104,7 @@ query.</p>
     <span class="k">def</span> <span class="nf">does_not_cross_threshold</span><span class="p">(</span><span class="n">sim_results</span><span class="p">):</span>
         <span class="n">i</span> <span class="o">=</span> <span class="n">sim_results</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
         <span class="k">return</span> <span class="nb">all</span><span class="p">(</span><span class="n">i_t</span> <span class="o">&lt;=</span> <span class="n">infected_threshold</span> <span class="k">for</span> <span class="n">i_t</span> <span class="ow">in</span> <span class="n">i</span><span class="p">)</span>
-    <span class="n">q_sim</span> <span class="o">=</span> <span class="n">query_simulator</span><span class="p">(</span><span class="n">run_CHIME_SIR</span><span class="p">,</span> <span class="n">does_not_cross_threshold</span><span class="p">)</span>
+    <span class="n">q_sim</span> <span class="o">=</span> <span class="n">does_not_cross_threshold</span><span class="p">(</span><span class="n">run_CHIME_SIR</span><span class="p">())</span>
 
     <span class="c1"># query the gromet file</span>
     <span class="n">gromet</span> <span class="o">=</span> <span class="n">QueryableGromet</span><span class="o">.</span><span class="n">from_gromet_file</span><span class="p">(</span><span class="n">gromet_path</span><span class="p">)</span>
@@ -190,7 +190,7 @@ query.</p>
     <span class="k">def</span> <span class="nf">does_not_cross_threshold</span><span class="p">(</span><span class="n">sim_results</span><span class="p">):</span>
         <span class="n">i</span> <span class="o">=</span> <span class="n">sim_results</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
         <span class="k">return</span> <span class="p">(</span><span class="n">i</span> <span class="o">&lt;=</span> <span class="n">infected_threshold</span><span class="p">)</span>
-    <span class="n">q_sim</span> <span class="o">=</span> <span class="n">query_simulator</span><span class="p">(</span><span class="n">run_CHIME_SIR_BL</span><span class="p">,</span> <span class="n">does_not_cross_threshold</span><span class="p">)</span>
+    <span class="n">q_sim</span> <span class="o">=</span> <span class="n">does_not_cross_threshold</span><span class="p">(</span><span class="n">run_CHIME_SIR_BL</span><span class="p">())</span>
     <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;q_sim&quot;</span><span class="p">,</span> <span class="n">q_sim</span><span class="p">)</span>
 
     <span class="c1"># query the bilayer file</span>

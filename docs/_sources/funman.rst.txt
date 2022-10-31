@@ -6,6 +6,15 @@ funman package
    :undoc-members:
    :show-inheritance:
 
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   funman.examples
+   funman.scenario
+
 Submodules
 ----------
 
@@ -29,12 +38,12 @@ funman.constants
    :undoc-members:
    :show-inheritance:
 
-funman.funman
--------------
-.. inheritance-diagram:: funman.funman
+funman.math\_utils
+------------------
+.. inheritance-diagram:: funman.math_utils
    :parts: 1
 
-.. automodule:: funman.funman
+.. automodule:: funman.math_utils
    :members:
    :undoc-members:
    :show-inheritance:
@@ -59,16 +68,6 @@ funman.parameter\_space
    :undoc-members:
    :show-inheritance:
 
-funman.scenario
----------------
-.. inheritance-diagram:: funman.scenario
-   :parts: 1
-
-.. automodule:: funman.scenario
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 funman.search
 -------------
 .. inheritance-diagram:: funman.search
@@ -79,22 +78,22 @@ funman.search
    :undoc-members:
    :show-inheritance:
 
+funman.search\_episode
+----------------------
+.. inheritance-diagram:: funman.search_episode
+   :parts: 1
+
+.. automodule:: funman.search_episode
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 funman.search\_utils
 --------------------
 .. inheritance-diagram:: funman.search_utils
    :parts: 1
 
 .. automodule:: funman.search_utils
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-funman.simulator
-----------------
-.. inheritance-diagram:: funman.simulator
-   :parts: 1
-
-.. automodule:: funman.simulator
    :members:
    :undoc-members:
    :show-inheritance:
