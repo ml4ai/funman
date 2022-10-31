@@ -1,3 +1,7 @@
+"""
+This submodule contains definitions for the behaviors used
+during the configuration and execution of a search.
+"""
 from abc import ABC, abstractmethod
 from functools import total_ordering
 from queue import Queue as SQueue

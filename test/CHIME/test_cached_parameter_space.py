@@ -1,10 +1,10 @@
 import os
 import unittest
 
-from funman.funman import Funman
+from funman import Funman
 from funman.model import Parameter
-from funman.scenario import ParameterSynthesisScenario
-from funman.scenario import ParameterSynthesisScenarioResult
+from funman.scenario.parameter_synthesis import ParameterSynthesisScenario
+from funman.scenario.parameter_synthesis import ParameterSynthesisScenarioResult
 from funman.search_utils import ResultCombinedHandler, SearchConfig
 
 from funman_demo.handlers import ResultCacheWriter, RealtimeResultPlotter

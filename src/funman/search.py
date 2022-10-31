@@ -1,3 +1,6 @@
+"""
+This submodule contains the search algorithms used to run FUNMAN.
+"""
 import traceback
 from typing import List
 from funman.search_episode import BoxSearchEpisode, SearchEpisode
@@ -30,9 +33,20 @@ class BoxSearch(object):
 
     def expand(self, rval: mp.Queue, episode: BoxSearchEpisode, id: int, more_work: Condition, idle_mutex: Lock, idle_flags: List[Event]):
         """
-        A single search process will evaluate and expand the boxes in the episode.unknown_boxes queue.  The processes exit when the queue is empty.  For each box, the algorithm checks whether the box contains a false (infeasible) point.  If it contains a false point, then it checks if the box contains a true point.  If a box contains both a false and true point, then the box is split into two boxes and both are added to the unknown_boxes queue.  If a box contains no false points, then it is a true_box (all points are feasible).  If a box contains no true points, then it is a false_box (all points are infeasible).
-
-        The return value is pushed onto the rval queue to end the process's work within the method.  The return value is a Dict[str, List[Box]] type that maps the "true_boxes" and "false_boxes" to a list of boxes in each set.  Each box in these sets is unique by design.
+        A single search process will evaluate and expand the boxes in the
+        episode.unknown_boxes queue.  The processes exit when the queue is
+        empty.  For each box, the algorithm checks whether the box contains a
+        false (infeasible) point.  If it contains a false point, then it checks
+        if the box contains a true point.  If a box contains both a false and
+        true point, then the box is split into two boxes and both are added to
+        the unknown_boxes queue.  If a box contains no false points, then it is
+        a true_box (all points are feasible).  If a box contains no true points,
+        then it is a false_box (all points are infeasible).
+        
+        The return value is pushed onto the rval queue to end the process's work
+        within the method.  The return value is a Dict[str, List[Box]] type that
+        maps the "true_boxes" and "false_boxes" to a list of boxes in each set.
+        Each box in these sets is unique by design.
 
         Parameters
         ----------

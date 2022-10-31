@@ -13,31 +13,45 @@ from pysmt.shortcuts import (
     LT,
     LE,
     GE,
-    Times
+    Times,
 )
 from pysmt.typing import REAL
 
 
 class CHIME(object):
     def make_model(
-        self, epochs=[(0, 20), (21, 60)], population_size=1002, infectious_days=14.0, infected_threshold=0.1
+        self,
+        epochs=[(0, 20), (21, 60)],
+        population_size=1002,
+        infectious_days=14.0,
+        infected_threshold=0.1,
+        linearize=False
     ):
         num_timepoints = epochs[-1][-1]  # Last timepoint of last epoch
         vars = self.make_chime_variables(num_timepoints, epochs)
+        self.linearize = linearize
         parameters, init, dynamics = self.make_chime_model(
             *vars, num_timepoints, epochs, population_size, infectious_days
         )
-        query = self.make_chime_query(vars[1], vars[9], num_timepoints, infected_threshold)
+        query = self.make_chime_query(
+            vars[1], vars[9], num_timepoints, infected_threshold
+        )
         return vars, (parameters, init, dynamics, query)
 
     def make_chime_variables(self, num_timepoints, epochs):
-        susceptible = [Symbol(f"s_{t}", REAL) for t in range(num_timepoints + 1)]
+        susceptible = [
+            Symbol(f"s_{t}", REAL) for t in range(num_timepoints + 1)
+        ]
         infected = [Symbol(f"i_{t}", REAL) for t in range(num_timepoints + 1)]
         recovered = [Symbol(f"r_{t}", REAL) for t in range(num_timepoints + 1)]
 
-        susceptible_n = [Symbol(f"s_n_{t+1}", REAL) for t in range(num_timepoints)]
+        susceptible_n = [
+            Symbol(f"s_n_{t+1}", REAL) for t in range(num_timepoints)
+        ]
         infected_n = [Symbol(f"i_n_{t+1}", REAL) for t in range(num_timepoints)]
-        recovered_n = [Symbol(f"r_n_{t+1}", REAL) for t in range(num_timepoints)]
+        recovered_n = [
+            Symbol(f"r_n_{t+1}", REAL) for t in range(num_timepoints)
+        ]
 
         scale = [Symbol(f"scale_{t+1}", REAL) for t in range(num_timepoints)]
 
@@ -84,19 +98,30 @@ class CHIME(object):
             # r_n = gamma * i + r  # Update to the amount of individuals that are recovered ## sir_r_n_exp
             Equals(recovered_n[t], gamma * infected[t] + recovered[t]),
             # s_n = (-beta * s * i) + s  # Update to the amount of individuals that are susceptible ## sir_s_n_exp
-            Equals(
-                susceptible_n[t],
-                (-betas[epoch_idx] * infected[t]) + susceptible[t],
-            ),
-            # Equals(
-            #     susceptible_n[t],
-            #     (-beta * susceptible[t] * infected[t]) + susceptible[t],
-            # ),
+            (
+                Equals(
+                    susceptible_n[t],
+                    (-betas[epoch_idx] * infected[t]) + susceptible[t],
+                )
+                if self.linearize 
+                else
+                    Equals(
+                        susceptible_n[t],
+                        (-betas[epoch_idx] * susceptible[t] * infected[t]) + susceptible[t],
+                    )),
             # i_n = (beta * s * i - gamma * i) + i  # Update to the amount of individuals that are infectious ## sir_i_n_exp
-            Equals(
-                infected_n[t],
-                (betas[epoch_idx] * infected[t] - gamma * infected[t]) + infected[t],
-            ),
+            (
+                Equals(
+                    infected_n[t],
+                    (betas[epoch_idx] * infected[t] - gamma * infected[t])
+                    + infected[t],
+                )
+                if self.linearize else
+                    Equals(
+                        infected_n[t],
+                        (betas[epoch_idx] *  susceptible[t] * infected[t] - gamma * infected[t])
+                        + infected[t],
+                    )),
             LE(recovered_n[t], n),
             GE(recovered_n[t], Real(0.0)),
             LE(susceptible_n[t], n),
@@ -225,10 +250,12 @@ class CHIME(object):
         return parameters, init, dynamics
 
     def make_chime_query(self, infected, n, num_timepoints, threshold):
-        
 
         # I_t <= n * threshold, threshold is proportion (0, 1]
-        query = [LT(infected[t], Times(n, Real(threshold))) for t in range(num_timepoints+1)]
+        query = [
+            LT(infected[t], Times(n, Real(threshold)))
+            for t in range(num_timepoints + 1)
+        ]
         return query
 
     def encode_time_horizon(self, parameters, init, dynamics, query, horizon):
@@ -237,7 +264,9 @@ class CHIME(object):
             if horizon > 0
             else TRUE()
         )
-        query_t = And([q_t for q_t in query[0:horizon]]) if horizon > 0 else TRUE()
+        query_t = (
+            And([q_t for q_t in query[0:horizon]]) if horizon > 0 else TRUE()
+        )
         return And(And(parameters), init, dynamics_t, query_t)
 
     def encode_time_horizon_layered(
@@ -245,13 +274,14 @@ class CHIME(object):
     ):
         tmp = [
             [
+                query[t],
                 And(dynamics[t][0]),
                 And(dynamics[t][1]),
                 And(dynamics[t][2]),
-                query[t],
             ]
-            for t in range(num_timepoints + 1)
+            for t in range(num_timepoints - 1)
         ]
+        tmp.append([query[num_timepoints]])
         layered = []
         for t in tmp:
             for s in t:

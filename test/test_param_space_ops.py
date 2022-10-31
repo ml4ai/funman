@@ -24,9 +24,9 @@ from pysmt.shortcuts import (
 from pysmt.typing import INT, REAL, BOOL
 import unittest
 import os
-from funman.funman import Funman
+from funman import Funman
 from funman.model import Parameter, Model
-from funman.scenario import ParameterSynthesisScenario
+from funman.scenario.parameter_synthesis import ParameterSynthesisScenario
 
 
 class TestCompilation(unittest.TestCase):

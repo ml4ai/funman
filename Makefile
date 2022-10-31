@@ -30,7 +30,10 @@ docs:
 	sphinx-apidoc -f -o ./docs/source ./src/funman -t ./docs/apidoc_templates --no-toc --module-first
 	mkdir -p ./docs/source/_static
 	mkdir -p ./docs/source/_templates
-	pyreverse ./src/funman -d ./docs/source/_static
+	pyreverse \
+		-k \
+		-d ./docs/source/_static \
+		./src/funman
 	cd docs && make clean html
 
 init-pages:
