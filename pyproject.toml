@@ -10,4 +10,3 @@ addopts = [
     "--import-mode=importlib",
 ]
 testpaths = ["test"]
-pythonpath = ["resources/utils"]

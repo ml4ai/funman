@@ -1,7 +1,28 @@
+"""
+This submodule contains helper functions for math operations used in FUNMAN
+"""
+from typing import Literal, Union
 from funman.constants import NEG_INFINITY, POS_INFINITY
 
+Number = Union[int, float, Literal["-inf", "inf"]]
+
 # lhs < rhs
-def lt(lhs, rhs):
+def lt(lhs: Number, rhs: Number) -> bool:
+    """
+    Less than comparison
+
+    Parameters
+    ----------
+    lhs : Number
+        The left hand side
+    rhs : Number
+        The right hand side
+
+    Returns
+    -------
+    bool
+        lhs < rhs
+    """
     # inf < ?
     if lhs == POS_INFINITY:
         return False
@@ -29,7 +50,22 @@ def lt(lhs, rhs):
     return lhs < rhs
 
 # lhs > rhs
-def gt(lhs, rhs):
+def gt(lhs: Number, rhs: Number) -> bool:
+    """
+    Greater than comparison
+
+    Parameters
+    ----------
+    lhs : Number
+        The left hand side
+    rhs : Number
+        The right hand side
+
+    Returns
+    -------
+    bool
+        lhs > rhs
+    """
     # ? > inf
     if rhs == POS_INFINITY:
         return False
@@ -57,9 +93,39 @@ def gt(lhs, rhs):
     return lhs > rhs
 
 # lhs >= rhs
-def gte(lhs, rhs):
+def gte(lhs: Number, rhs: Number) -> bool:
+    """
+    Greater than or equal comparison
+
+    Parameters
+    ----------
+    lhs : Number
+        The left hand side
+    rhs : Number
+        The right hand side
+
+    Returns
+    -------
+    bool
+        lhs >= rhs
+    """
     return not lt(lhs, rhs)
 
 # lhs <= rhs
-def lte(lhs, rhs):
+def lte(lhs: Number, rhs: Number) -> bool:
+    """
+    Less than or equal comparison
+
+    Parameters
+    ----------
+    lhs : Number
+        The left hand side
+    rhs : Number
+        The right hand side
+
+    Returns
+    -------
+    bool
+        lhs <= rhs
+    """
     return not gt(lhs, rhs)

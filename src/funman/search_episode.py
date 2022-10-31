@@ -1,3 +1,7 @@
+"""
+This submodule defines the representations for episodes (single executions) of
+one of the search algorithms supported by FUNMAN.
+"""
 from abc import ABC
 from typing import List, Union
 from datetime import datetime

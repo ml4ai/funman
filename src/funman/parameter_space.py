@@ -1,5 +1,11 @@
+
+"""
+This submodule defines the representation of the parameter space that can be 
+returned by the parameter synthesis feature of FUNMAN. These parameter spaces
+are represented as a collection of boxes that are either known to be true or
+known to be false.
+"""
 from typing import List
-from funman.search_episode import SearchEpisode
 from funman.search_utils import Box
 
 class ParameterSpace(object):

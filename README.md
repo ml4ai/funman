@@ -32,7 +32,7 @@ def compare_against_CHIME_FN(gromet_path, infected_threshold):
     def does_not_cross_threshold(sim_results):
         i = sim_results[2]
         return all(i_t <= infected_threshold for i_t in i)
-    q_sim = query_simulator(run_CHIME_SIR, does_not_cross_threshold)
+    q_sim = does_not_cross_threshold(run_CHIME_SIR())
 
     # query the gromet file
     gromet = QueryableGromet.from_gromet_file(gromet_path)
@@ -121,7 +121,7 @@ def compare_against_CHIME_bilayer(bilayer_file, infected_threshold):
     def does_not_cross_threshold(sim_results):
         i = sim_results[1]
         return (i <= infected_threshold)
-    q_sim = query_simulator(run_CHIME_SIR_BL, does_not_cross_threshold)
+    q_sim = does_not_cross_threshold(run_CHIME_SIR_BL())
     print("q_sim", q_sim)
 
     # query the bilayer file

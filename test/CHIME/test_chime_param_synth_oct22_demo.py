@@ -1,10 +1,10 @@
 import os
 import unittest
 
-from funman.funman import Funman
+from funman import Funman
 from funman.model import Parameter, Model
-from funman.scenario import ParameterSynthesisScenario
-from funman.scenario import ParameterSynthesisScenarioResult
+from funman.scenario.parameter_synthesis import ParameterSynthesisScenario
+from funman.scenario.parameter_synthesis import ParameterSynthesisScenarioResult
 
 RESOURCES = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "resources")
 CACHED = os.path.join(RESOURCES, "cached")
