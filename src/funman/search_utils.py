@@ -508,28 +508,32 @@ class Interval(object):
             return ((self.ub - self.lb) / 2) + self.lb
     
     def union(self, other: "Interval") -> List["Interval"]:
-        if self == other:
+        if self == other: ## intervals are equal, so return original interval
             ans = [self]
-            return ans
-        elif self.lb == other.lb:
-            if math_utils.lt(self.ub, other.lb):
-                minInterval = self 
+            total_height = [Interval.width(self)]
+            return ans, total_height
+        else: ## intervals are not the same. start by identifying the lower and higher intervals.
+            if self.lb == other.lb:
+                if math_utils.lt(self.ub, other.lb):
+                    minInterval = self 
+                    maxInterval = other
+                else: ## other.ub > self.ub
+                    minInterval = other 
+                    maxInterval = self
+            elif math_utils.lt(self.lb, other.lb):
+                minInterval = self
                 maxInterval = other
             else:
-                minInterval = other 
+                minInterval = other
                 maxInterval = self
-        elif math_utils.lt(self.lb, other.lb):
-            minInterval = self
-            maxInterval = other
-        else:
-            minInterval = other
-            maxInterval = self
         if math_utils.gte(minInterval.ub,maxInterval.lb): ## intervals intersect. 
-            ans = [[minInterval.lb, maxInterval.ub]] 
-            return ans
+            ans = Interval.make_interval([minInterval.lb, maxInterval.ub])
+            total_height = Interval.width(ans) 
+            return ans, total_height
         elif math_utils.lt(minInterval.ub, maxInterval.lb): ## intervals are disjoint.
             ans = [minInterval, maxInterval]
-            return ans
+            total_height = [math_utils.plus(Interval.width(minInterval), Interval.width(maxInterval))]
+            return ans, total_height
             
     def subtract_two_1d_intervals(a: "Interval", b: "Interval") -> "Interval": ## TODO Drisana - fix
         """Given 2 intervals a = [a0,a1] and b=[b0,b1], return the part of a that does not intersect with b."""
@@ -651,7 +655,8 @@ class Box(object):
             print("todo")
     
     def split_bounds(a: "Box", b: "Box"):
-        ans = []
+        interval_list = []
+        height_list = []
         a_params = list(a.bounds.keys())
         b_params = list(b.bounds.keys())
         beta_0_a = a.bounds[a_params[0]] # first box, first parameter
@@ -663,10 +668,37 @@ class Box(object):
         beta_0_b_new = Interval.subtract_two_1d_intervals(beta_0_b, Interval.make_interval(beta_0_intersection))
         beta_0_a_new_2 = Interval.subtract_two_1d_intervals(Interval.make_interval(beta_0_intersection), beta_0_a)
         beta_0_b_new_2 = Interval.subtract_two_1d_intervals(Interval.make_interval(beta_0_intersection), beta_0_b)
-        for interval in [beta_0_a_new, beta_0_b_new, beta_0_a_new_2, beta_0_b_new_2, beta_0_intersection]: ## todo return all that are not None.
-            if interval != None and interval not in ans:
-                ans.append(interval)
-        return ans
+        if beta_0_intersection != None:
+            interval = beta_0_intersection
+            height = Interval.union(beta_1_a, beta_1_b)[1]
+            if interval not in interval_list:
+                interval_list.append(interval)
+                height_list.append(height)
+        if beta_0_a_new != None:
+            interval = beta_0_a_new
+            height = Interval.width(beta_1_a)
+            if interval not in interval_list:
+                interval_list.append(interval)
+                height_list.append(height)
+        if beta_0_a_new_2 != None:
+            interval = beta_0_a_new_2
+            height = Interval.width(beta_1_a)
+            if interval not in interval_list:
+                interval_list.append(interval)
+                height_list.append(height)
+        if beta_0_b_new != None:
+            interval = beta_0_b_new
+            height = Interval.width(beta_1_b)
+            if interval not in interval_list:
+                interval_list.append(interval)
+                height_list.append(height)
+        if beta_0_b_new_2 != None:
+            interval = beta_0_b_new_2
+            height = Interval.width(beta_1_b)
+            if interval not in interval_list:
+                interval_list.append(interval)
+                height_list.append(height)
+        return interval_list, height_list
                 
         
     def check_bounds_disjoint_equal_bool(a: "Box", b: "Box"):
@@ -696,14 +728,22 @@ class Box(object):
         beta_1_a = a.bounds[a_params[1]] # first box, second parameter
         beta_0_b = b.bounds[b_params[0]] # second box, first parameter
         beta_1_b = b.bounds[b_params[1]] # second box, second parameter
+        print('beta_0_a:',beta_0_a)
+        print('beta_0_b:',beta_0_b)
+        print('beta_1_a:',beta_1_a)
+        print('beta_1_b:',beta_1_b)
         if beta_0_a == beta_0_b: ## bounds are equal: done
             print("done: beta_0 bounds are equal")
-            return True, [beta_0_a], Interval.union(beta_1_a, beta_1_b)
+            ## calculate width of union
+            beta_1_union = Interval.union(beta_1_a, beta_1_b)
+            beta_1_union_interval = beta_1_union[0]
+            beta_1_union_height = beta_1_union[1]
+            return True, [beta_0_a], beta_1_union_interval, beta_1_union_height
         else:
             beta_0_intersection = Box.intersection(beta_0_a, beta_0_b) # intersection of the first parameter for first box and second box
             if beta_0_intersection == []: ## disjoint: done
-#                print("done: beta_0 bounds are disjoint")
-                return True, [beta_0_a, beta_0_b], Interval.union(beta_1_a, beta_1_b)
+                print("done: beta_0 bounds are disjoint")
+                return True, [beta_0_a, beta_0_b], [beta_1_a, beta_1_b], [Interval.width(beta_1_a), Interval.width(beta_1_b)]
             else: ## there is both some intersection and some symmetric difference. split accordingly.
 #                print("in progress: splitting")
                 return False, Box.split_bounds(a,b), Interval.union(beta_1_a, beta_1_b)
