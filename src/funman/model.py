@@ -1,6 +1,8 @@
-from typing import Tuple, Union
-from unicodedata import name
-
+"""
+This submodule contains class definitions used to represent and interact with
+models in FUNMAN.
+"""
+from typing import Union
 from funman.constants import NEG_INFINITY, POS_INFINITY
 
 class Model(object):
@@ -31,4 +33,4 @@ class Parameter(object):
 
     def __hash__(self):
         # necessary for instances to behave sanely in dicts and sets.
-        return hash(self.symbol)
+        return hash(self.name)

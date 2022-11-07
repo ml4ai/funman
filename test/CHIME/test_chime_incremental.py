@@ -318,6 +318,25 @@ class TestHandcoded(unittest.TestCase):
             #     logic=QF_UFLIRA,
             #     solver_options=solver_options[solver_names[solver_idx]],
             # )
+
+            # reset_env()
+            phi_stratified = chime.encode_time_horizon_layered(
+                parameters, init, dynamics, query, num_timepoints
+            )
+            # asm_model, asm_elapsed = self.run_decomposed_solver(
+            #     phi_stratified,
+            #     solver_name=solver_names[solver_idx],
+            #     logic=QF_UFLIRA,
+            #     solver_options=solver_options[solver_names[solver_idx]],
+            # )
+            asm_elapsed=0
+            reset_env()
+            inc_model, inc_elapsed = self.run_incremental_solver(
+                phi_stratified,
+                solver_name=solver_names[solver_idx],
+                logic=QF_UFLIRA,
+                solver_options=solver_options[solver_names[solver_idx]],
+            )
             inc_elapsed = 0
             print(
                 f"{num_timepoints}\t{float('{:.2f}'.format(elapsed))}\t{float('{:.2f}'.format(inc_elapsed))}\t{float('{:.2f}'.format(asm_elapsed))}"

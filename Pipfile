@@ -4,14 +4,17 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-funman = {editable = true, path = "."}
-model2smtlib = {editable = true, path = "./../model2smtlib"}
 automates = {editable = true, ref = "e5fb635757aa57007615a75371f55dd4a24851e0", git = "https://github.com/danbryce/automates.git"}
+model2smtlib = {editable = true, path = "./../model2smtlib"}
+funman = {editable = true, path = "."}
+funman_demo = {editable = true, path = "./auxiliary_packages/funman_demo"}
 
 [dev-packages]
 pytest = "==7.1.2"
 sphinx = "==5.2.2"
 sphinx-rtd-theme = "==1.0.0"
+twine = "*"
+build = "*"
 
 [requires]
 python_version = "3.10"

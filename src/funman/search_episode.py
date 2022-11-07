@@ -1,53 +1,55 @@
+"""
+This submodule defines the representations for episodes (single executions) of
+one of the search algorithms supported by FUNMAN.
+"""
+from abc import ABC
 from typing import List, Union
 from datetime import datetime
-from multiprocessing import Queue, Value
 from queue import Queue as SQueue
 
 from funman.search_utils import Box, Point, SearchConfig, SearchStatistics
+
+import multiprocessing as mp
+from multiprocessing.managers import SyncManager
 
 import logging
 l = logging.getLogger(__file__)
 l.setLevel(logging.INFO)
 
-class SearchEpisode(object):
-    def __init__(self) -> None:
-        self.statistics = SearchStatistics()
+class SearchEpisode(ABC):
+    def __init__(self, config: SearchConfig, problem, manager : SyncManager) -> None:
+        self.config : SearchConfig = config
+        self.problem  = problem
+        self.num_parameters : int = len(self.problem.parameters)
+        self.statistics = SearchStatistics(manager)
 
 
 class BoxSearchEpisode(SearchEpisode):
-    def __init__(self, config: SearchConfig, problem, multiprocessing=True) -> None:
-        super(BoxSearchEpisode, self).__init__()
-        self.multiprocessing = multiprocessing
-        self.unknown_boxes = Queue() if self.multiprocessing else SQueue()
-        self.boxes_to_plot = Queue() if self.multiprocessing else SQueue()
+    def __init__(self, config: SearchConfig, problem, manager : SyncManager) -> None:
+        super(BoxSearchEpisode, self).__init__(config, problem, manager)
+        self.unknown_boxes = manager.Queue()
         self.true_boxes = []
         self.false_boxes = []
         self.true_points = set({})
         self.false_points = set({})
 
-        self.config = config
-        self.problem = problem
-        self.num_parameters = len(self.problem.parameters)
-        self.iteration = Value("i", 0)
-        self.internal_process_id = 0
-        self.initialize_boxes()
+        self.iteration = manager.Value("i", 0)
 
 
-    def initialize_boxes(self):
-        initial_boxes = Queue() if self.multiprocessing else SQueue()
-        initial_boxes.put(self.initial_box())
-        num_boxes = 1
-        while num_boxes < 2 * (self.config.number_of_processes - 1):
-            b1, b2 = initial_boxes.get().split()
-            initial_boxes.put(b1)
-            initial_boxes.put(b2)
-            num_boxes += 1
-        for i in range(num_boxes):
-            b = initial_boxes.get()
-            self.add_unknown(b)
-            l.debug(f"Initial box: {b}")
-        if self.multiprocessing:
-            initial_boxes.close()
+    def initialize_boxes(self, expander_count):
+        self.add_unknown(self.initial_box())
+        # initial_boxes = []
+        # initial_boxes.append(self.initial_box())
+        # num_boxes = 1
+        # while num_boxes < 2 * (self.config.number_of_processes - 1):
+        #     b1, b2 = initial_boxes.get().split()
+        #     initial_boxes.put(b1)
+        #     initial_boxes.put(b2)
+        #     num_boxes += 1
+        # for i in range(num_boxes):
+        #     b = initial_boxes.get()
+        #     self.add_unknown(b)
+        #     l.debug(f"Initial box: {b}")
 
     def initial_box(self) -> Box:
         return Box(self.problem.parameters)
@@ -55,54 +57,52 @@ class BoxSearchEpisode(SearchEpisode):
     def on_start(self):
         self.statistics.last_time.value = str(datetime.now())
 
-    def close(self):
-        if self.multiprocessing:
-            self.unknown_boxes.close()
-            self.statistics.close()
-            self.boxes_to_plot.close()
+    # def close(self):
+    #     if self.multiprocessing:
+    #         self.unknown_boxes.close()
+    #         self.statistics.close()
+    #         self.boxes_to_plot.close()
 
     def on_iteration(self):
         self.iteration.value = self.iteration.value + 1
 
+    def _add_unknown_box(self, box: Box) -> bool:
+        if box.width() > self.config.tolerance:
+            self.unknown_boxes.put(box)
+            self.statistics.num_unknown.value += 1
+            return True
+        return False
+
     def add_unknown(self, box: Union[Box, List[Box]]):
+        did_add = False
         if isinstance(box, list):
             for b in box:
-                if b.width() > self.config.tolerance:
-                    self.unknown_boxes.put(b, timeout=self.config.queue_timeout)
-                    self.statistics.num_unknown.value += 1
-                self.boxes_to_plot.put({"box": b, "label": "unknown"})
+                did_add |= self._add_unknown_box(b)
         else:
-            if box.width() > self.config.tolerance:
-                self.unknown_boxes.put(box)
-                with self.statistics.num_unknown.get_lock():
-                    self.statistics.num_unknown.value += 1
-                self.boxes_to_plot.put({"box": box, "label": "unknown"})
+            did_add = self._add_unknown_box(box)
+        return did_add
 
     def add_false(self, box: Box):
         self.false_boxes.append(box)
         # with self.statistics.num_false.get_lock():
         #     self.statistics.num_false.value += 1
         # self.statistics.iteration_operation.put("f")
-        self.boxes_to_plot.put({"box": box, "label": "false"})
 
     def add_false_point(self, point: Point):
         if point in self.true_points:
             l.error(f"Point: {point} is marked false, but already marked true.")
         self.false_points.add(point)
-        self.boxes_to_plot.put({"point": point, "label": "false"})
 
     def add_true(self, box: Box):
         self.true_boxes.append(box)
         # with self.statistics.num_true.get_lock():
         #     self.statistics.num_true.value += 1
         # self.statistics.iteration_operation.put("t")
-        self.boxes_to_plot.put({"box": box, "label": "true"})
 
     def add_true_point(self, point: Point):
         if point in self.false_points:
             l.error(f"Point: {point} is marked true, but already marked false.")
         self.true_points.add(point)
-        self.boxes_to_plot.put({"point": point, "label": "true"})
 
     def get_unknown(self):
         box = self.unknown_boxes.get(timeout=self.config.queue_timeout)

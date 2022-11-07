@@ -1,32 +1,22 @@
-from abc import abstractclassmethod
-from typing import Any, Dict, List, Union
-from funman.config import Config
+"""
+This submodule defined the Parameter Synthesis scenario.
+"""
+from . import AnalysisScenario, AnalysisScenarioResult
 from funman.examples.chime import CHIME
+from funman.model import Model, Parameter, Query
 from funman.parameter_space import ParameterSpace
 from funman.search import BoxSearch, SearchConfig
-from funman.model import Model, Parameter, Query
-
 from pysmt.fnode import FNode
 from pysmt.shortcuts import get_free_variables, And
-
-
-class AnalysisScenario(object):
-    """
-    Abstract class for Analysis Scenarios.
-    """
-
-    @abstractclassmethod
-    def simulate():
-        pass
-
-    @abstractclassmethod
-    def solve(self, config: Config):
-        pass
-
+from typing import Any, Dict, List, Union
 
 class ParameterSynthesisScenario(AnalysisScenario):
     """
-    Parameter synthesis problem description that identifies the parameters to synthesize for a particular model.  The general problem is to identify multi-dimensional (one dimension per parameter) regions where either all points in the region are valid (true) parameters for the model or invalid (false) parameters.
+    Parameter synthesis problem description that identifies the parameters to
+    synthesize for a particular model.  The general problem is to identify
+    multi-dimensional (one dimension per parameter) regions where either all
+    points in the region are valid (true) parameters for the model or invalid
+    (false) parameters. 
     """
 
     def __init__(
@@ -43,10 +33,6 @@ class ParameterSynthesisScenario(AnalysisScenario):
             search = BoxSearch()
         self.search = search
 
-        self.search.real_time_plotting = config.get("real_time_plotting", True)
-        self.search.write_cache_parameter_space = config.get("write_cache_parameter_space", None)
-        self.search.read_cache_parameter_space = config.get("read_cache_parameter_space", None)
-
         if isinstance(model, str):
             self.chime = CHIME()
             epochs = config["epochs"]
@@ -57,7 +43,8 @@ class ParameterSynthesisScenario(AnalysisScenario):
                 epochs=epochs,
                 population_size=population_size,
                 infectious_days=infectious_days,
-                infected_threshold=0.1
+                infected_threshold=0.1,
+                linearize = config.get("linearize", False)
             )
             self.vars = vars
         else:
@@ -106,8 +93,10 @@ class ParameterSynthesisScenario(AnalysisScenario):
 
     def solve(self, config: SearchConfig = None) -> "ParameterSynthesisScenarioResult":
         """
-        Synthesize parameters for a model.  Use the BoxSearch algorithm to decompose the parameter space and identify the feasible and infeasible parameter values.
-
+        Synthesize parameters for a model.  Use the BoxSearch algorithm to
+        decompose the parameter space and identify the feasible and infeasible
+        parameter values.
+        
         Parameters
         ----------
         config : SearchConfig
@@ -127,18 +116,6 @@ class ParameterSynthesisScenario(AnalysisScenario):
         return ParameterSynthesisScenarioResult(parameter_space)
 
 
-class AnalysisScenarioResult(object):
-    """
-    Abstract class for AnalysisScenario result data.
-    """
-
-    @abstractclassmethod
-    def plot():
-        pass
-
-    pass
-
-
 class ParameterSynthesisScenarioResult(AnalysisScenarioResult):
     """
     ParameterSynthesisScenario result, which includes the parameter space and
@@ -148,6 +125,3 @@ class ParameterSynthesisScenarioResult(AnalysisScenarioResult):
     def __init__(self, result: Any) -> None:
         super().__init__()
         self.parameter_space = result
-
-    def plot():
-        return "foo"
