@@ -25,11 +25,13 @@ class CHIME(object):
         population_size=1002,
         infectious_days=14.0,
         infected_threshold=0.1,
-        linearize=False
+        linearize=False,
+        assign_betas=True,
     ):
         num_timepoints = epochs[-1][-1]  # Last timepoint of last epoch
         vars = self.make_chime_variables(num_timepoints, epochs)
         self.linearize = linearize
+        self.assign_betas = assign_betas
         parameters, init, dynamics = self.make_chime_model(
             *vars, num_timepoints, epochs, population_size, infectious_days
         )
@@ -103,12 +105,13 @@ class CHIME(object):
                     susceptible_n[t],
                     (-betas[epoch_idx] * infected[t]) + susceptible[t],
                 )
-                if self.linearize 
-                else
-                    Equals(
-                        susceptible_n[t],
-                        (-betas[epoch_idx] * susceptible[t] * infected[t]) + susceptible[t],
-                    )),
+                if self.linearize
+                else Equals(
+                    susceptible_n[t],
+                    (-betas[epoch_idx] * susceptible[t] * infected[t])
+                    + susceptible[t],
+                )
+            ),
             # i_n = (beta * s * i - gamma * i) + i  # Update to the amount of individuals that are infectious ## sir_i_n_exp
             (
                 Equals(
@@ -116,12 +119,16 @@ class CHIME(object):
                     (betas[epoch_idx] * infected[t] - gamma * infected[t])
                     + infected[t],
                 )
-                if self.linearize else
-                    Equals(
-                        infected_n[t],
-                        (betas[epoch_idx] *  susceptible[t] * infected[t] - gamma * infected[t])
-                        + infected[t],
-                    )),
+                if self.linearize
+                else Equals(
+                    infected_n[t],
+                    (
+                        betas[epoch_idx] * susceptible[t] * infected[t]
+                        - gamma * infected[t]
+                    )
+                    + infected[t],
+                )
+            ),
             LE(recovered_n[t], n),
             GE(recovered_n[t], Real(0.0)),
             LE(susceptible_n[t], n),
@@ -222,7 +229,9 @@ class CHIME(object):
         parameters = [
             Equals(gamma, Real(1.0 / infectious_days)),
             Equals(delta, Real(0.0)),
-        ] + [Equals(b, Real(6.7e-05)) for b in betas]
+        ]
+        if self.assign_betas:
+            parameters += [Equals(b, Real(6.7e-05)) for b in betas]
 
         # initial population
         # s_n = 1000  ## main_s_n_exp
@@ -237,15 +246,21 @@ class CHIME(object):
             ]
         )
 
-        dynamics = [
-            (
-                self.make_dynamics_s1(*vars, epoch_idx, t),
-                self.make_dynamics_s2(*vars, epoch_idx, t),
-                self.make_dynamics_s3(*vars, epoch_idx, t),
-            )
-            for epoch_idx, epoch in enumerate(epochs)
-            for t in range(*epoch)
-        ]
+        dynamics = []
+        for epoch_idx, epoch in enumerate(epochs):
+            (lb, ub) = epoch
+            if epoch_idx < len(epochs) - 1:
+                epoch_range = range(lb, ub + 1)
+            else:  # last epoch
+                epoch_range = range(lb, ub)
+            for t in epoch_range:
+                dynamics.append(
+                    (
+                        self.make_dynamics_s1(*vars, epoch_idx, t),
+                        self.make_dynamics_s2(*vars, epoch_idx, t),
+                        self.make_dynamics_s3(*vars, epoch_idx, t),
+                    )
+                )
 
         return parameters, init, dynamics
 
