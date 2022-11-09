@@ -244,8 +244,8 @@ class TestHandcoded(unittest.TestCase):
 
     def test_simple_chime_propositional(self):
 
-        min_num_timepoints = 60
-        max_num_timepoints = 60
+        min_num_timepoints = 30
+        max_num_timepoints = 30
 
         solver_idx = 1
         solver_names = ["msat", "z3", "cvc"]
@@ -283,6 +283,7 @@ class TestHandcoded(unittest.TestCase):
             phi = chime.encode_time_horizon(
                 parameters, init, dynamics, query, num_timepoints
             )
+            write_smtlib(And(phi), f"chime_flat_{num_timepoints}.smt2")
             model, elapsed = self.run_get_model(
                 phi,
                 solver_name=solver_names[solver_idx],
@@ -329,7 +330,7 @@ class TestHandcoded(unittest.TestCase):
             #     logic=QF_UFLIRA,
             #     solver_options=solver_options[solver_names[solver_idx]],
             # )
-            asm_elapsed=0
+            asm_elapsed = 0
             reset_env()
             inc_model, inc_elapsed = self.run_incremental_solver(
                 phi_stratified,
