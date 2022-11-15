@@ -24,7 +24,7 @@ class CHIME(object):
         epochs=[(0, 20), (21, 60)],
         population_size=1002,
         infectious_days=14.0,
-        infected_threshold=0.1,
+        infected_threshold=0.01,
         linearize=False,
         assign_betas=True,
     ):
@@ -280,7 +280,9 @@ class CHIME(object):
             else TRUE()
         )
         query_t = (
-            And([q_t for q_t in query[0:horizon]]) if horizon > 0 else TRUE()
+            And([q_t for q_t in query[0 : horizon + 1]])
+            if horizon > 0
+            else TRUE()
         )
         return And(And(parameters), init, dynamics_t, query_t)
 
@@ -294,7 +296,7 @@ class CHIME(object):
                 And(dynamics[t][1]),
                 And(dynamics[t][2]),
             ]
-            for t in range(num_timepoints - 1)
+            for t in range(num_timepoints)
         ]
         tmp.append([query[num_timepoints]])
         layered = []

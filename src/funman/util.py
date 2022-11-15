@@ -3,6 +3,7 @@ from pysmt.smtlib.printers import (
     SmtDagPrinter,
     write_annotations_dag,
     SmtPrinter,
+    write_annotations,
 )
 
 import warnings
@@ -31,8 +32,8 @@ class FUNMANSmtLibScript(SmtLibScript):
 
 
 class FUNMANSmtPrinter(SmtPrinter):
-    @write_annotations_dag
-    def walk_real_constant(self, formula, **kwargs):
+    @write_annotations
+    def walk_real_constant(self, formula):
         if formula.constant_value() < 0:
             template = "(- %s)"
         else:
@@ -43,9 +44,11 @@ class FUNMANSmtPrinter(SmtPrinter):
             formula.constant_value().denominator,
         )
         if d != 1:
-            return template % str(n / d)
+            res = template % str(n / d)
         else:
-            return template % (str(n) + ".0")
+            res = template % (str(n) + ".0")
+
+        self.write(res)
 
 
 class FUNMANSmtDagPrinter(SmtDagPrinter):
@@ -111,16 +114,17 @@ def smtlibscript_from_formula_list(formulas, logic=None):
     for type_ in types:
         script.add(name=smtcmd.DECLARE_SORT, args=[type_.decl])
 
-    deps = set(
-        [d for formula in formulas for d in formula.get_free_variables()]
-    )
-    # Declare all variables
-    for symbol in deps:
-        assert symbol.is_symbol()
-        script.add(name=smtcmd.DECLARE_FUN, args=[symbol])
-
+    prev_deps = set([])
     # Assert formula
     for i, formula in enumerate(formulas):
+        deps = set(
+            [d for d in formula.get_free_variables() if d not in prev_deps]
+        )
+        # Declare all variables
+        for symbol in deps:
+            prev_deps.add(symbol)
+            assert symbol.is_symbol()
+            script.add(name=smtcmd.DECLARE_FUN, args=[symbol])
         script.add_command(SmtLibCommand(name=smtcmd.ASSERT, args=[formula]))
         script.add_command(SmtLibCommand(name=smtcmd.PUSH, args=[1]))
 

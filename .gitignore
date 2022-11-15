@@ -187,3 +187,4 @@ cython_debug/
 **/*.fls
 **/*.synctex.gz
 **/*.smt2.stdout
+test/smtlib/out
