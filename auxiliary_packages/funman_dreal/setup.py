@@ -21,7 +21,7 @@ setup(
     license="MIT",
     packages=find_packages("src"),
     package_dir={"": "src"},
-    install_requires=["funman", "docker"],
+    install_requires=["funman", "docker", "dreal"],
     tests_require=["unittest"],
     zip_safe=False,
 )

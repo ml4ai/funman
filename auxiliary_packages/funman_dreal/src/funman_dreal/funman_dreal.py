@@ -35,8 +35,8 @@ def run_dreal(
     client = docker.from_env()
     container = client.containers.run(
         "dreal/dreal4",
-        # command=f"dreal /smt2/{smt2_filename} {solver_opts}",
-        command="/bin/bash",
+        command=f"dreal /smt2/{smt2_filename} {solver_opts}",
+        # command="/bin/bash",
         volumes=volumes,
         detach=True,
     )

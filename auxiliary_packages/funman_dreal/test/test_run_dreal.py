@@ -59,11 +59,11 @@ class TestRunDreal(unittest.TestCase):
             smtlibscript_from_formula_list(phis).serialize(f, daggify=False)
 
         # print(smt2_file)
-        # result = run_dreal(
-        #     smt2_flat_file,
-        #     out_dir=out_dir,
-        #     solver_opts="",
-        # )
+        result = run_dreal(
+            smt2_flat_file,
+            out_dir=out_dir,
+            solver_opts="",
+        )
         # docker run --rm -it -v `pwd`/code/funman/auxiliary_packages/funman_dreal/resources/smt2:/smt2  dreal/dreal4
         # assert result
 
