@@ -187,3 +187,5 @@ doc/encoding_examples/GroMEtFN/encodings.fdb_latexmk
 doc/encoding_examples/GroMEtFN/encodings.fls
 doc/encoding_examples/GroMEtFN/encodings.synctex.gz
 .vscode-back/settings.json
+test/smtlib/out
+auxiliary_packages/funman_dreal/test/out
