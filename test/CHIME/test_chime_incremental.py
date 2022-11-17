@@ -3,6 +3,7 @@ from contextlib import contextmanager
 from dis import dis
 from pysmt.simplifier import BddSimplifier
 from pysmt.shortcuts import (
+    Real,
     get_model,
     And,
     Solver,
@@ -17,10 +18,11 @@ from pysmt.shortcuts import (
     substitute,
     get_env,
     TRUE,
+    write_smtlib,
 )
 from pysmt.typing import INT, REAL, BOOL
 from pysmt.logics import QF_NRA, QF_LRA, QF_UFLIRA, QF_UFNRA
-
+import math
 
 import unittest
 import os
@@ -63,8 +65,6 @@ class TestHandcoded(unittest.TestCase):
                     for (assumption, formula) in zip(assumptions, formulas)
                 ]
 
-                # solver.add_assertion(phi)
-
                 past_assumptions = []
                 for step in range(len(assumptions)):
                     # print(f"Step: {step}/{len(assumptions)-1}")
@@ -76,27 +76,18 @@ class TestHandcoded(unittest.TestCase):
                     step_assumptions = (
                         current_step_assumption + past_step_assumptions
                     )
-                    # enabled_steps = [a for a in assumptions[: step + 1]]
-                    # disabled_steps = [Not(a) for a in assumptions[step + 1 :]]
-                    # step_assumptions = enabled_steps  # + disabled_steps
                     if not solver.solve(assumptions=step_assumptions):
                         raise Exception("unsat")
-                    model = solver.get_model()
-                    # solver.add_assertion(assumptions[step])
-                    model_assertions = [
-                        (Equals(v, model[v]))
-                        for v in assumption_steps[step].get_free_variables()
-                        if not model[v].is_bool_constant()
-                    ]
-                    for a in model_assertions:
-                        if a:
-                            solver.add_assertion(a)
-                            # past_assumptions.append(a)
-                    # print(elapsed())
-                    pass
-                # if not solver.solve():
-                #     raise Exception("unsat")
-                # model = solver.get_model()
+                    # model = solver.get_model()
+                    # model_assertions = [
+                    #     (Equals(v, model[v]))
+                    #     for v in assumption_steps[step].get_free_variables()
+                    #     if not model[v].is_bool_constant()
+                    # ]
+                    # for a in model_assertions:
+                    #     if a:
+                    #         solver.add_assertion(a)
+
                 model = None
                 elapsed = elapsed()
                 solver.exit()
@@ -117,6 +108,7 @@ class TestHandcoded(unittest.TestCase):
                 # with Solver(
                 #     name=solver_name, logic=logic, solver_options=solver_options
                 # ) as solver:
+                print(f"{step}/{len(formulas)}")
                 relevant_vars = set(
                     map(
                         lambda x: env.formula_manager.normalize(x),
@@ -160,7 +152,13 @@ class TestHandcoded(unittest.TestCase):
                     model_assertions = {
                         env.formula_manager.normalize(
                             var
-                        ): env.formula_manager.normalize(model.get_value(var))
+                        ): env.formula_manager.normalize(
+                            Real(
+                                self.approx_rational_helper(
+                                    model.get_value(var)
+                                )
+                            )
+                        )
                         # env.formula_manager.normalize(var): env.formula_manager.normalize(val)
                         # for var, val in model
                         for var in step_formula.get_free_variables()
@@ -173,6 +171,38 @@ class TestHandcoded(unittest.TestCase):
         elapsed = elapsed()
         # solver.exit()
         return model, elapsed
+
+    def approx_rational_helper(self, x, max_denominator=1e6):
+        float_value = float(x.constant_value())
+        lhs = math.floor(float_value)
+        rhs = float_value - lhs
+        (numerator, denominator) = self.approx_rational(
+            rhs, max_denominator=max_denominator
+        )
+        numerator = numerator + (denominator * lhs)
+        return (numerator, denominator)
+
+    def approx_rational(self, x, max_denominator=1e6):
+        a, b = 0, 1
+        c, d = 1, 1
+        while b <= max_denominator and d <= max_denominator:
+            mediant = float(a + c) / (b + d)
+            if x == mediant:
+                if b + d <= max_denominator:
+                    return a + c, b + d
+                elif d > b:
+                    return c, d
+                else:
+                    return a, b
+            elif x > mediant:
+                a, b = a + c, b + d
+            else:
+                c, d = a + c, b + d
+
+        if b > max_denominator:
+            return c, d
+        else:
+            return a, b
 
     def run_incremental_solver(
         self, formulas, solver_name=None, logic=None, solver_options=None
@@ -187,15 +217,15 @@ class TestHandcoded(unittest.TestCase):
                         solver.push()
                     solver.add_assertion(phi)
 
-                    # if not solver.solve():
-                    #     raise Exception("unsat")
+                    if not solver.solve():
+                        raise Exception("unsat")
 
                 if not solver.solve():
                     raise Exception("unsat")
                 # model = solver.get_model()
                 model = None
-                elapsed = elapsed()
                 solver.exit()
+            elapsed = elapsed()
         return model, elapsed
 
     def run_get_model(
@@ -214,8 +244,8 @@ class TestHandcoded(unittest.TestCase):
 
     def test_simple_chime_propositional(self):
 
-        min_num_timepoints = 60
-        max_num_timepoints = 61
+        min_num_timepoints = 30
+        max_num_timepoints = 30
 
         solver_idx = 1
         solver_names = ["msat", "z3", "cvc"]
@@ -223,9 +253,9 @@ class TestHandcoded(unittest.TestCase):
             "z3": {
                 "nlsat.check_lemmas": True,
                 # "precision": 10,
-                "push_to_real": True,
-                "elim_to_real": True,
-                "algebraic_number_evaluator": False
+                # "push_to_real": True,
+                # "elim_to_real": True,
+                # "algebraic_number_evaluator": False
                 # "dot_proof_file": "z3_proof.dot"
                 # "add_bound_upper": 1010,
                 # "add_bound_lower": 0,
@@ -244,26 +274,50 @@ class TestHandcoded(unittest.TestCase):
         # query = CHIME.make_chime_query(infected, num_timepoints)
         print(f"steps\torig\tinc")
         chime = CHIME()
-        vars, (parameters, init, dynamics, query) = chime.make_model()
-        for num_timepoints in range(min_num_timepoints, max_num_timepoints):
+        vars, (parameters, init, dynamics, query) = chime.make_model(
+            assign_betas=False
+        )
+        for num_timepoints in range(min_num_timepoints, max_num_timepoints + 1):
+
+            reset_env()
+            phi = chime.encode_time_horizon(
+                parameters, init, dynamics, query, num_timepoints
+            )
+            write_smtlib(And(phi), f"chime_flat_{num_timepoints}.smt2")
+            model, elapsed = self.run_get_model(
+                phi,
+                solver_name=solver_names[solver_idx],
+                logic=QF_UFLIRA,
+                solver_options=solver_options[solver_names[solver_idx]],
+            )
+            elapsed = 0
+
+            phi_stratified = chime.encode_time_horizon_layered(
+                parameters, init, dynamics, query, num_timepoints
+            )
+
+            reset_env()
+            asm_model, asm_elapsed = self.run_assumption_solver(
+                phi_stratified,
+                solver_name=solver_names[solver_idx],
+                logic=QF_UFLIRA,
+                solver_options=solver_options[solver_names[solver_idx]],
+            )
 
             # reset_env()
-            # phi = chime.encode_time_horizon(
-            #     parameters, init, dynamics, query, num_timepoints
-            # )
-            # model, elapsed = self.run_get_model(
-            #     phi,
-            #     solver_name="z3",
-            #     logic=QF_UFLIRA,
-            #     solver_options=solver_options,
-            # )
-            elapsed = 0
-            # reset_env()
-            # asm_model, asm_elapsed = self.run_assumption_solver(
+            # asm_model, asm_elapsed = self.run_decomposed_solver(
             #     phi_stratified,
-            #     solver_name="z3",
+            #     solver_name=solver_names[solver_idx],
             #     logic=QF_UFLIRA,
-            #     solver_options=solver_options,
+            #     solver_options=solver_options[solver_names[solver_idx]],
+            # )
+            asm_elapsed = 0
+            # reset_env()
+            # inc_model, inc_elapsed = self.run_incremental_solver(
+            #     phi_stratified,
+            #     solver_name=solver_names[solver_idx],
+            #     logic=QF_UFLIRA,
+            #     solver_options=solver_options[solver_names[solver_idx]],
             # )
 
             # reset_env()
@@ -276,7 +330,7 @@ class TestHandcoded(unittest.TestCase):
             #     logic=QF_UFLIRA,
             #     solver_options=solver_options[solver_names[solver_idx]],
             # )
-            asm_elapsed=0
+            asm_elapsed = 0
             reset_env()
             inc_model, inc_elapsed = self.run_incremental_solver(
                 phi_stratified,
