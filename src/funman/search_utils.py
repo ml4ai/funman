@@ -18,8 +18,10 @@ import multiprocessing as mp
 from multiprocessing.managers import SyncManager
 
 import logging
+
 l = logging.getLogger(__file__)
 l.setLevel(logging.INFO)
+
 
 class Interval(object):
     def __init__(self, lb: float, ub: float) -> None:
@@ -39,7 +41,9 @@ class Interval(object):
         if isinstance(other, Interval):
             return self.width() < other.width()
         else:
-            raise Exception(f"Cannot compare __lt__() Interval to {type(other)}")
+            raise Exception(
+                f"Cannot compare __lt__() Interval to {type(other)}"
+            )
 
     def __eq__(self, other):
         if isinstance(other, Interval):
@@ -81,8 +85,6 @@ class Interval(object):
             else other.ub <= self.ub
         )
         return lhs or rhs
-    
-        
 
     def intersection(self, other: "Interval") -> bool:
         # FIXME Drisana
@@ -103,19 +105,22 @@ class Interval(object):
             return ((self.ub - self.lb) / 2) + self.lb
 
     def contains_value(self, value: float) -> bool:
-        lhs = (
-            self.lb == NEG_INFINITY or self.lb <= value
-        )
-        rhs = (
-            self.ub == POS_INFINITY or value <= self.ub
-        )
+        lhs = self.lb == NEG_INFINITY or self.lb <= value
+        rhs = self.ub == POS_INFINITY or value <= self.ub
         return lhs and rhs
-        
 
     def to_smt(self, p: Parameter):
         return And(
-            (GE(p.symbol, Real(self.lb)) if self.lb != NEG_INFINITY else TRUE()),
-            (LT(p.symbol, Real(self.ub)) if self.ub != POS_INFINITY else TRUE()),
+            (
+                GE(p.symbol(), Real(self.lb))
+                if self.lb != NEG_INFINITY
+                else TRUE()
+            ),
+            (
+                LT(p.symbol(), Real(self.ub))
+                if self.ub != POS_INFINITY
+                else TRUE()
+            ),
         ).simplify()
 
     def to_dict(self):
@@ -140,14 +145,12 @@ class Point(object):
         return f"{self.values.values()}"
 
     def to_dict(self):
-        return {
-            "values": {k.name: v for k,v in self.values.items()}
-        }
+        return {"values": {k.name: v for k, v in self.values.items()}}
 
     @staticmethod
     def from_dict(data):
         res = Point([])
-        res.values = {Parameter(k) : v for k, v in data["values"].items()}
+        res.values = {Parameter(k): v for k, v in data["values"].items()}
         return res
 
     def __hash__(self):
@@ -155,17 +158,24 @@ class Point(object):
 
     def __eq__(self, other):
         if isinstance(other, Point):
-            return all([self.values[p] == other.values[p] for p in self.values.keys()])
+            return all(
+                [self.values[p] == other.values[p] for p in self.values.keys()]
+            )
         else:
             return False
 
     def to_smt(self):
-        return And([Equals(p.symbol, Real(value)) for p, value in self.values.items()])
+        return And(
+            [Equals(p.symbol, Real(value)) for p, value in self.values.items()]
+        )
+
 
 @total_ordering
 class Box(object):
     def __init__(self, parameters) -> None:
-        self.bounds : Dict[Parameter, Interval] = {p: Interval(p.lb, p.ub) for p in parameters}
+        self.bounds: Dict[Parameter, Interval] = {
+            p: Interval(p.lb, p.ub) for p in parameters
+        }
         self.cached_width = None
 
     def to_smt(self):
@@ -173,14 +183,17 @@ class Box(object):
 
     def to_dict(self):
         return {
-            "bounds": {k.name: v.to_dict() for k,v in self.bounds.items()},
+            "bounds": {k.name: v.to_dict() for k, v in self.bounds.items()},
             # "cached_width": self.cached_width
         }
 
     @staticmethod
     def from_dict(data):
         res = Box([])
-        res.bounds = {Parameter(k) : Interval.from_dict(v) for k,v in data["bounds"].items()}
+        res.bounds = {
+            Parameter(k): Interval.from_dict(v)
+            for k, v in data["bounds"].items()
+        }
         # res.cached_width = data["cached_width"]
         return res
 
@@ -198,7 +211,9 @@ class Box(object):
 
     def __eq__(self, other):
         if isinstance(other, Box):
-            return all([self.bounds[p] == other.bounds[p] for p in self.bounds.keys()])
+            return all(
+                [self.bounds[p] == other.bounds[p] for p in self.bounds.keys()]
+            )
         else:
             return False
 
@@ -213,11 +228,19 @@ class Box(object):
 
     def contains(self, other: "Box") -> bool:
         return all(
-            [interval.contains(other.bounds[p]) for p, interval in self.bounds.items()]
+            [
+                interval.contains(other.bounds[p])
+                for p, interval in self.bounds.items()
+            ]
         )
 
     def contains_point(self, point: Point) -> bool:
-        return all([interval.contains_value(point.values[p]) for p, interval in self.bounds.items()])
+        return all(
+            [
+                interval.contains_value(point.values[p])
+                for p, interval in self.bounds.items()
+            ]
+        )
 
     def intersects(self, other: "Box") -> bool:
         return all(
@@ -247,7 +270,9 @@ class Box(object):
     def split(self, points=None):
         p, _ = self._get_max_width_parameter()
         if points:
-            mid = self.bounds[p].midpoint(points=[pt.values[p] for pt in points])
+            mid = self.bounds[p].midpoint(
+                points=[pt.values[p] for pt in points]
+            )
         else:
             mid = self.bounds[p].midpoint()
 
@@ -262,7 +287,7 @@ class Box(object):
 
         return [b2, b1]
 
-    def intersection(a: Interval,b: Interval) -> Interval:
+    def intersection(a: Interval, b: Interval) -> Interval:
         """Given 2 intervals with a = [a0,a1] and b=[b0,b1], check whether they intersect.  If they do, return interval with their intersection."""
         lhs = None
         if a.lb == NEG_INFINITY and b.lb == NEG_INFINITY:
@@ -290,7 +315,7 @@ class Box(object):
             return [lhs, rhs]
         if lhs > rhs:
             return []
-         
+
         return [lhs, rhs]
 
         # if float(a.lb) <= float(b.lb):
@@ -320,10 +345,12 @@ class Box(object):
         if len(beta_1) < 1:
             return None
 
-        return Box([
+        return Box(
+            [
                 Parameter(a_params[0], lb=beta_0[0], ub=beta_0[1]),
                 Parameter(a_params[1], lb=beta_1[0], ub=beta_1[1]),
-            ])
+            ]
+        )
 
         # a = list(b1.bounds.values())
         # b = list(b2.bounds.values())
@@ -360,14 +387,14 @@ class Box(object):
     ### WIP - just for 2 dimensions at this point.
     @staticmethod
     def symmetric_difference_two_boxes(a: "Box", b: "Box") -> List["Box"]:
-        result : List["Box"] = []
+        result: List["Box"] = []
         # if the same box then no symmetric difference
         if a == b:
             return result
 
         ## no intersection so they are disjoint - return both original boxes
-        if Box.intersect_two_boxes(a,b) == None:
-            return [a,b]
+        if Box.intersect_two_boxes(a, b) == None:
+            return [a, b]
 
         # There must be some symmetric difference below here
         a_params = list(a.bounds.keys())
@@ -382,10 +409,12 @@ class Box(object):
         def make_box_2d(p_bounds):
             b0_bounds = p_bounds[0]
             b1_bounds = p_bounds[1]
-            b = Box([
-                Parameter(a_params[0], lb=b0_bounds.lb, ub=b0_bounds.ub),
-                Parameter(a_params[1], lb=b1_bounds.lb, ub=b1_bounds.ub),
-            ])
+            b = Box(
+                [
+                    Parameter(a_params[0], lb=b0_bounds.lb, ub=b0_bounds.ub),
+                    Parameter(a_params[1], lb=b1_bounds.lb, ub=b1_bounds.ub),
+                ]
+            )
             return b
 
         xbounds = Box.subtract_two_1d_intervals(beta_0_a, beta_0_b)
@@ -396,12 +425,13 @@ class Box(object):
             result.append(make_box_2d([xbounds, beta_1_b]))
         ybounds = Box.subtract_two_1d_intervals(beta_1_a, beta_1_b)
         if ybounds != None:
-            result.append(make_box_2d([beta_0_a, ybounds])) 
+            result.append(make_box_2d([beta_0_a, ybounds]))
         ybounds = Box.subtract_two_1d_intervals(beta_1_b, beta_1_a)
         if ybounds != None:
             result.append(make_box_2d([beta_0_b, ybounds]))
 
         return result
+
 
 class SearchStatistics(object):
     def __init__(self, manager: SyncManager):
@@ -410,15 +440,22 @@ class SearchStatistics(object):
         self.num_false = manager.Value("i", 0) if self.multiprocessing else 0
         self.num_unknown = manager.Value("i", 0) if self.multiprocessing else 0
         self.residuals = manager.Queue() if self.multiprocessing else SQueue()
-        self.current_residual = manager.Value("d", 0.0) if self.multiprocessing else 0.0
+        self.current_residual = (
+            manager.Value("d", 0.0) if self.multiprocessing else 0.0
+        )
         self.last_time = manager.Array("u", "") if self.multiprocessing else []
-        self.iteration_time = manager.Queue() if self.multiprocessing else SQueue()
-        self.iteration_operation = manager.Queue() if self.multiprocessing else SQueue()
+        self.iteration_time = (
+            manager.Queue() if self.multiprocessing else SQueue()
+        )
+        self.iteration_operation = (
+            manager.Queue() if self.multiprocessing else SQueue()
+        )
 
     # def close(self):
     #     self.residuals.close()
     #     self.iteration_time.close()
     #     self.iteration_operation.close()
+
 
 class WaitAction(ABC):
     def __init__(self) -> None:
@@ -428,11 +465,12 @@ class WaitAction(ABC):
     def run(self) -> None:
         pass
 
+
 class ResultHandler(ABC):
     def __init__(self) -> None:
         pass
 
-    def __enter__(self) -> 'ResultHandler':
+    def __enter__(self) -> "ResultHandler":
         self.open()
         return self
 
@@ -450,6 +488,7 @@ class ResultHandler(ABC):
     @abstractmethod
     def close(self) -> None:
         pass
+
 
 class ResultCombinedHandler(ResultHandler):
     def __init__(self, handlers: List[ResultHandler]) -> None:
@@ -476,72 +515,77 @@ class ResultCombinedHandler(ResultHandler):
             except Exception as e:
                 l.error(traceback.format_exc())
 
+
 class SearchConfig(Config):
-    def __init__(self,
-                *, # non-positional keywords
-                tolerance = 1e-2,
-                queue_timeout = 1,
-                number_of_processes = mp.cpu_count(),
-                handler: ResultHandler = None,
-                wait_timeout = None,
-                wait_action = None,
-                wait_action_timeout = 0.05,
-                read_cache = None,
-                ) -> None:
+    def __init__(
+        self,
+        *,  # non-positional keywords
+        tolerance=1e-2,
+        queue_timeout=1,
+        number_of_processes=mp.cpu_count(),
+        handler: ResultHandler = None,
+        wait_timeout=None,
+        wait_action=None,
+        wait_action_timeout=0.05,
+        read_cache=None,
+    ) -> None:
         self.tolerance = tolerance
         self.queue_timeout = queue_timeout
         self.number_of_processes = number_of_processes
-        self.handler : ResultHandler = handler
+        self.handler: ResultHandler = handler
         self.wait_timeout = wait_timeout
         self.wait_action = wait_action
         self.wait_action_timeout = wait_action_timeout
         self.read_cache = read_cache
 
+
 def _encode_labeled_box(box: Box, label: str):
-    return {
-        "label": label,
-        "type": "box",
-        "value": box.to_dict()
-    }
+    return {"label": label, "type": "box", "value": box.to_dict()}
+
 
 def encode_true_box(box: Box):
-    return _encode_labeled_box(box, 'true')
+    return _encode_labeled_box(box, "true")
+
 
 def encode_false_box(box: Box):
-    return _encode_labeled_box(box, 'false')
+    return _encode_labeled_box(box, "false")
+
 
 def encode_unknown_box(box: Box):
-    return _encode_labeled_box(box, 'unkown')
+    return _encode_labeled_box(box, "unkown")
+
 
 def decode_labeled_box(box: dict):
-    if box['type'] != "box":
+    if box["type"] != "box":
         return None
-    return (Box.from_dict(box['value']), box['label'])
-    
+    return (Box.from_dict(box["value"]), box["label"])
+
+
 def _encode_labeled_point(point: Point, label: str):
-    return {
-        "label": label,
-        "type": "point",
-        "value": point.to_dict()
-    }
+    return {"label": label, "type": "point", "value": point.to_dict()}
+
 
 def encode_true_point(point: Point):
-    return _encode_labeled_point(point, 'true')
-    
+    return _encode_labeled_point(point, "true")
+
+
 def encode_false_point(point: Point):
-    return _encode_labeled_point(point, 'false')
+    return _encode_labeled_point(point, "false")
+
 
 def encode_unknown_point(point: Point):
-    return _encode_labeled_point(point, 'unkown')
+    return _encode_labeled_point(point, "unkown")
+
 
 def decode_labeled_point(point: dict):
-    if point['type'] != "point":
+    if point["type"] != "point":
         return None
-    return (Point.from_dict(point['value']), point['label'])
+    return (Point.from_dict(point["value"]), point["label"])
+
 
 def decode_labeled_object(obj: dict):
-    if obj['type'] == 'point':
+    if obj["type"] == "point":
         return (decode_labeled_point(obj), Point)
-    if obj['type'] == 'box':
+    if obj["type"] == "box":
         return (decode_labeled_box(obj), Box)
     return None
