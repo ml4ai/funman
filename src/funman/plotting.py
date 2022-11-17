@@ -146,19 +146,46 @@ class BoxPlotter(object):
         plt.show(block=False)
     
     def plot2DBox_temp(a, color="g",alpha=0.2): ## temp DMI 11/2/22 - clean up later
+        plt.ion()
         a_params = list(a.bounds.keys())
         x_limits = a.bounds[a_params[0]] # first box, first parameter
         y_limits = a.bounds[a_params[1]] # first box, second parameter
         if abs(float(x_limits.lb)) < 100 and abs(float(x_limits.ub)) < 100:
             x = np.linspace(float(x_limits.lb), float(x_limits.ub), 1000)
             plt.fill_between(x, y_limits.lb, y_limits.ub, color=color, alpha=alpha)
-        plt.show(block=False)
+            plt.pause(1)
+        plt.show()
     
     def plot2DBoxByHeight_temp(x_limits, height, color="g",alpha=0.2): ## temp DMI 11/2/22 - clean up later
+        plt.ion()
         if abs(float(x_limits[0])) < 100 and abs(float(x_limits[1])) < 100:
             x = np.linspace(float(x_limits[0]), float(x_limits[1]), 1000)
             plt.fill_between(x, 0, height, color=color, alpha=alpha)
-        plt.show(block=False)
+            plt.pause(1)
+        plt.show()
+
+    def plot2DBoxes_temp(list_of_boxes, color="g",alpha=0.2): ## temp DMI 11/2/22 - clean up later
+        for a in list_of_boxes:
+            a_params = list(a.bounds.keys())
+            x_limits = a.bounds[a_params[0]] # first box, first parameter
+            y_limits = a.bounds[a_params[1]] # first box, second parameter
+            if abs(float(x_limits.lb)) < 100 and abs(float(x_limits.ub)) < 100:
+                x = np.linspace(float(x_limits.lb), float(x_limits.ub), 1000)
+                plt.fill_between(x, y_limits.lb, y_limits.ub, color=color, alpha=alpha)
+        plt.show()
+        plt.pause(5)
+        plt.close()
+    
+    def plot2DBoxesByHeight_temp(list_of_x_limits, heights, color="g",alpha=0.2): ## temp DMI 11/2/22 - clean up later
+        for i in range(len(list_of_x_limits)):
+            x_limits = list_of_x_limits[i]
+            height = heights[i]
+            if abs(float(x_limits[0])) < 100 and abs(float(x_limits[1])) < 100:
+                x = np.linspace(float(x_limits[0]), float(x_limits[1]), 1000)
+                plt.fill_between(x, 0, height, color=color, alpha=alpha)
+        plt.show()
+        plt.pause(5)
+        plt.close()
 
     def plot2DBoxList(b, color="g", alpha=0.2): 
         box = list(b.bounds.values())

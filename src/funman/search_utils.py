@@ -243,6 +243,7 @@ class Box(object):
     def split_bounds(a: "Box", b: "Box"):
         interval_list = []
         height_list = []
+        ybounds_list = []
         a_params = list(a.bounds.keys())
         b_params = list(b.bounds.keys())
         beta_0_a = a.bounds[a_params[0]] # first box, first parameter
@@ -256,35 +257,45 @@ class Box(object):
         beta_0_b_new_2 = Interval.subtract_two_1d_intervals(Interval.make_interval(beta_0_intersection), beta_0_b)
         if beta_0_intersection != None:
             interval = beta_0_intersection
+            ybounds = Interval.union(beta_1_a, beta_1_b)[0]
             height = Interval.union(beta_1_a, beta_1_b)[1]
             if interval not in interval_list:
                 interval_list.append(interval)
                 height_list.append(height)
+                ybounds_list.append(ybounds)
         if beta_0_a_new != None:
             interval = beta_0_a_new
+            ybounds = beta_1_a
             height = Interval.width(beta_1_a)
             if interval not in interval_list:
                 interval_list.append([interval.lb, interval.ub])
                 height_list.append(height)
+                ybounds_list.append(ybounds)
         if beta_0_a_new_2 != None:
             interval = beta_0_a_new_2
+            ybounds = beta_1_a
             height = Interval.width(beta_1_a)
             if interval not in interval_list:
                 interval_list.append([interval.lb, interval.ub])
                 height_list.append(height)
+                ybounds_list.append(ybounds)
         if beta_0_b_new != None:
             interval = beta_0_b_new
+            ybounds = beta_1_b
             height = Interval.width(beta_1_b)
             if interval not in interval_list: 
                 interval_list.append([interval.lb, interval.ub])
                 height_list.append(height)
+                ybounds_list.append(ybounds)
         if beta_0_b_new_2 != None:
             interval = beta_0_b_new_2
+            ybounds = beta_1_b
             height = Interval.width(beta_1_b)
             if interval not in interval_list:
                 interval_list.append([interval.lb, interval.ub])
                 height_list.append(height)
-        return interval_list, height_list
+                ybounds_list.append(ybounds)
+        return interval_list, height_list, ybounds_list
                 
         
     def check_bounds_disjoint_equal_bool(a: "Box", b: "Box"):
