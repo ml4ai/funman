@@ -4,12 +4,18 @@ This submodule contains the search algorithms used to run FUNMAN.
 import traceback
 from typing import List
 from funman.search_episode import BoxSearchEpisode, SearchEpisode
-from funman.search_utils import Box, Point, SearchConfig, ResultHandler, \
-    decode_labeled_object, \
-    encode_true_box, \
-    encode_false_box, \
-    encode_true_point, \
-    encode_false_point
+from funman.search_utils import (
+    Box,
+    Point,
+    SearchConfig,
+    ResultHandler,
+    decode_labeled_object,
+    encode_true_box,
+    encode_false_box,
+    encode_true_point,
+    encode_false_point,
+)
+from pyparsing import abstractmethod
 
 from pysmt.shortcuts import get_model, And, Not
 
@@ -22,16 +28,36 @@ import os
 
 LOG_LEVEL = logging.WARN
 
-class BoxSearch(object):
+
+class Search(object):
     def __init__(self) -> None:
         self.episodes = []
 
+    @abstractmethod
+    def search(self, problem, config: SearchConfig = None) -> SearchEpisode:
+        pass
+
+
+class SMTCheck(Search):
+    def search(self, problem, config: SearchConfig = None) -> SearchEpisode:
+        return get_model(problem.model.formula)
+
+
+class BoxSearch(Search):
     def split(self, box: Box, episode: BoxSearchEpisode, points=None):
         b1, b2 = box.split(points=points)
         episode.statistics.iteration_operation.put("s")
         return episode.add_unknown([b1, b2])
 
-    def expand(self, rval: mp.Queue, episode: BoxSearchEpisode, id: int, more_work: Condition, idle_mutex: Lock, idle_flags: List[Event]):
+    def expand(
+        self,
+        rval: mp.Queue,
+        episode: BoxSearchEpisode,
+        id: int,
+        more_work: Condition,
+        idle_mutex: Lock,
+        idle_flags: List[Event],
+    ):
         """
         A single search process will evaluate and expand the boxes in the
         episode.unknown_boxes queue.  The processes exit when the queue is
@@ -42,7 +68,7 @@ class BoxSearch(object):
         the unknown_boxes queue.  If a box contains no false points, then it is
         a true_box (all points are feasible).  If a box contains no true points,
         then it is a false_box (all points are infeasible).
-        
+
         The return value is pushed onto the rval queue to end the process's work
         within the method.  The return value is a Dict[str, List[Box]] type that
         maps the "true_boxes" and "false_boxes" to a list of boxes in each set.
@@ -59,7 +85,7 @@ class BoxSearch(object):
         l = mp.log_to_stderr()
         l.name = process_name
         l.setLevel(LOG_LEVEL)
-        
+
         try:
             l.info(f"{process_name} entering process loop")
             while True:
@@ -78,7 +104,9 @@ class BoxSearch(object):
                         # one last check to see if there is work to be done
                         # which would be an error at this point in the code
                         if episode.unknown_boxes.qsize() != 0:
-                            l.error(f"{process_name} found more work while preparing to exit")
+                            l.error(
+                                f"{process_name} found more work while preparing to exit"
+                            )
                             continue
                         l.info(f"{process_name} is exiting")
                         # tell other worker processing to check again with the expectation
@@ -103,10 +131,18 @@ class BoxSearch(object):
                     false_point = None
                     try:
                         # First see if a cached false point exists in the box
-                        false_point = next(fp for fp in episode.false_points if box.contains_point(fp))
+                        false_point = next(
+                            fp
+                            for fp in episode.false_points
+                            if box.contains_point(fp)
+                        )
                     except StopIteration:
                         # If no cached point, then attempt to generate one
-                        phi = And(box.to_smt(), episode.problem.model.formula, Not(episode.problem.query.formula))
+                        phi = And(
+                            box.to_smt(),
+                            episode.problem.model.formula,
+                            Not(episode.problem.query.formula),
+                        )
                         res = get_model(phi)
                         # Record the false point
                         if res:
@@ -115,33 +151,45 @@ class BoxSearch(object):
                             rval.put(encode_false_point(false_point))
 
                     if false_point:
-                        # box intersects f (false region)                   
+                        # box intersects f (false region)
 
                         # Check whether box intersects t (true region)
                         true_point = None
                         try:
                             # First see if a cached false point exists in the box
-                            true_point = next(tp for tp in episode.true_points if box.contains_point(tp))
+                            true_point = next(
+                                tp
+                                for tp in episode.true_points
+                                if box.contains_point(tp)
+                            )
                         except StopIteration:
                             # If no cached point, then attempt to generate one
-                            phi1 = And(box.to_smt(), episode.problem.model.formula, episode.problem.query.formula)
+                            phi1 = And(
+                                box.to_smt(),
+                                episode.problem.model.formula,
+                                episode.problem.query.formula,
+                            )
                             res1 = get_model(phi1)
                             # Record the true point
                             if res1:
                                 true_point = episode.extract_point(res1)
                                 episode.add_true_point(true_point)
                                 rval.put(encode_true_point(true_point))
-                    
+
                         if true_point:
                             # box intersects both t and f, so it must be split
                             # use the true and false points to compute a midpoint
-                            if self.split(box, episode, points=[true_point, false_point]):
+                            if self.split(
+                                box, episode, points=[true_point, false_point]
+                            ):
                                 l.info(f"{process_name} produced work")
                             with more_work:
                                 more_work.notify_all()
                         else:
                             # box is a subset of f (intersects f but not t)
-                            episode.add_false(box)  # TODO consider merging lists of boxes
+                            episode.add_false(
+                                box
+                            )  # TODO consider merging lists of boxes
                             rval.put(encode_false_box(box))
 
                     else:
@@ -216,12 +264,10 @@ class BoxSearch(object):
             "true_boxes": true_boxes,
             "false_boxes": false_boxes,
             "true_points": true_points,
-            "false_points": false_points 
+            "false_points": false_points,
         }
 
-    def search(
-        self, problem, config: SearchConfig = None
-    ) -> SearchEpisode:
+    def search(self, problem, config: SearchConfig = None) -> SearchEpisode:
         """
         The BoxSearch.search() creates a BoxSearchEpisode object that stores the
         search progress.  This method is the entry point to the search that
@@ -252,7 +298,7 @@ class BoxSearch(object):
         with mp.Manager() as manager:
             rval = manager.Queue()
             episode = BoxSearchEpisode(config, problem, manager)
-            
+
             expand_count = processes - 1
             episode.initialize_boxes(expand_count)
             idle_mutex = manager.Lock()
@@ -263,10 +309,25 @@ class BoxSearch(object):
 
                 # start the result handler process
                 l.info("Starting result handler process")
-                rval_handler_process = pool.apply_async(self._run_handler, args=(rval, config))
+                rval_handler_process = pool.apply_async(
+                    self._run_handler, args=(rval, config)
+                )
                 # blocking exec of the expansion processes
                 l.info(f"Starting {expand_count} expand processes")
-                starmap_result = pool.starmap_async(self.expand, [(rval, episode, id, more_work_condition, idle_mutex, idle_flags) for id in range(expand_count)])
+                starmap_result = pool.starmap_async(
+                    self.expand,
+                    [
+                        (
+                            rval,
+                            episode,
+                            id,
+                            more_work_condition,
+                            idle_mutex,
+                            idle_flags,
+                        )
+                        for id in range(expand_count)
+                    ],
+                )
 
                 # tell the result handler process we are done with the expansion processes
                 try:
@@ -291,4 +352,3 @@ class BoxSearch(object):
                 episode.true_points = all_results.get("true_points")
                 episode.false_points = all_results.get("false_points")
                 return episode
- 
