@@ -16,14 +16,14 @@ class ParameterSynthesisScenario(AnalysisScenario):
     synthesize for a particular model.  The general problem is to identify
     multi-dimensional (one dimension per parameter) regions where either all
     points in the region are valid (true) parameters for the model or invalid
-    (false) parameters. 
+    (false) parameters.
     """
 
     def __init__(
         self,
         parameters: List[Parameter],
         model: Union[str, FNode],
-        search = None,
+        search=None,
         config: Dict = None,
     ) -> None:
         super().__init__()
@@ -44,7 +44,7 @@ class ParameterSynthesisScenario(AnalysisScenario):
                 population_size=population_size,
                 infectious_days=infectious_days,
                 infected_threshold=0.1,
-                linearize = config.get("linearize", False)
+                linearize=config.get("linearize", False),
             )
             self.vars = vars
         else:
@@ -57,25 +57,23 @@ class ParameterSynthesisScenario(AnalysisScenario):
             s.symbol_name(): s for p in model[0] for s in get_free_variables(p)
         }
         for p in self.parameters:
-            if not p.symbol:
-                p.symbol = symbol_map[p.name]
+            if not p._symbol:
+                p._symbol = symbol_map[p.name]
 
         param_symbols = set({p.name for p in self.parameters})
         assigned_parameters = [
             p
             for p in model[0]
             if len(
-                set({q.symbol_name() for q in get_free_variables(p)}).intersection(
-                    param_symbols
-                )
+                set(
+                    {q.symbol_name() for q in get_free_variables(p)}
+                ).intersection(param_symbols)
             )
             == 0
         ]
         self.query = Query(
-                    And(model[3])
-                    if isinstance(model[3], list)
-                    else model[3]
-                )
+            And(model[3]) if isinstance(model[3], list) else model[3]
+        )
 
         self.model = Model(
             And(
@@ -86,17 +84,17 @@ class ParameterSynthesisScenario(AnalysisScenario):
                     if isinstance(model[2], list)
                     else model[2]
                 ),
-                
             )
         )
-        
 
-    def solve(self, config: SearchConfig = None) -> "ParameterSynthesisScenarioResult":
+    def solve(
+        self, config: SearchConfig = None
+    ) -> "ParameterSynthesisScenarioResult":
         """
         Synthesize parameters for a model.  Use the BoxSearch algorithm to
         decompose the parameter space and identify the feasible and infeasible
         parameter values.
-        
+
         Parameters
         ----------
         config : SearchConfig
