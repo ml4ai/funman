@@ -1,4 +1,3 @@
-
 """
 This submodule defines the representation of the parameter space that can be 
 returned by the parameter synthesis feature of FUNMAN. These parameter spaces
@@ -7,6 +6,7 @@ known to be false.
 """
 from typing import List
 from funman.search_utils import Box
+
 
 class ParameterSpace(object):
     def __init__(self, true_boxes: List[Box], false_boxes: List[Box]) -> None:
@@ -18,6 +18,15 @@ class ParameterSpace(object):
     def project() -> "ParameterSpace":
         raise NotImplementedError()
         return ParameterSpace()
+
+    @staticmethod
+    def _union_boxes(b1s):
+        results_list = []
+        for i1 in range(len(b1s)):
+            for i2 in range(i1 + 1, len(b1s)):
+                ans = Box.check_bounds_disjoint_equal(b1s[i1], b1s[i2])
+                print(ans)
+        return results_list
 
     @staticmethod
     def _intersect_boxes(b1s, b2s):
@@ -33,16 +42,19 @@ class ParameterSpace(object):
     @staticmethod
     def intersect(ps1, ps2):
         return ParameterSpace(
-            ParameterSpace._intersect_boxes(ps1.true_boxes, ps2.true_boxes), 
-            ParameterSpace._intersect_boxes(ps1.false_boxes, ps2.false_boxes) 
+            ParameterSpace._intersect_boxes(ps1.true_boxes, ps2.true_boxes),
+            ParameterSpace._intersect_boxes(ps1.false_boxes, ps2.false_boxes),
         )
 
-    
     @staticmethod
     def symmetric_difference(ps1: "ParameterSpace", ps2: "ParameterSpace"):
         return ParameterSpace(
-            ParameterSpace._symmetric_difference(ps1.true_boxes, ps2.true_boxes), 
-            ParameterSpace._symmetric_difference(ps1.false_boxes, ps2.false_boxes) 
+            ParameterSpace._symmetric_difference(
+                ps1.true_boxes, ps2.true_boxes
+            ),
+            ParameterSpace._symmetric_difference(
+                ps1.false_boxes, ps2.false_boxes
+            ),
         )
 
     @staticmethod
@@ -76,7 +88,7 @@ class ParameterSpace(object):
                 results_list.extend(box1_results)
 
         return results_list
-    
+
     # STUB construct space where all parameters are equal
     @staticmethod
     def construct_all_equal(ps) -> "ParameterSpace":
@@ -88,3 +100,19 @@ class ParameterSpace(object):
     def compare(ps1, ps2) -> bool:
         raise NotImplementedError()
         raise NotImplementedError()
+
+    def plot(self, color="b", alpha=0.2):
+        custom_lines = [
+            Line2D([0], [0], color="g", lw=4, alpha=alpha),
+            Line2D([0], [0], color="r", lw=4, alpha=alpha),
+        ]
+        plt.title("Parameter Space")
+        plt.xlabel("beta_0")
+        plt.ylabel("beta_1")
+        plt.legend(custom_lines, ["true", "false"])
+        for b1 in self.true_boxes:
+            BoxPlotter.plot2DBoxList(b1, color="g")
+        for b1 in self.false_boxes:
+            BoxPlotter.plot2DBoxList(b1, color="r")
+        # plt.show(block=True)
+        pass
