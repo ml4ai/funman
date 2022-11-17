@@ -34,19 +34,20 @@ class FUNMANSmtLibScript(SmtLibScript):
 class FUNMANSmtPrinter(SmtPrinter):
     @write_annotations
     def walk_real_constant(self, formula):
-        if formula.constant_value() < 0:
-            template = "(- %s)"
-        else:
-            template = "%s"
-
         (n, d) = (
             abs(formula.constant_value().numerator),
             formula.constant_value().denominator,
         )
-        if d != 1:
-            res = template % str(n / d)
+        if formula.constant_value() < 0:
+            if d != 1:
+                res = f"(- {(n / d):20f})"
+            else:
+                res = f"(- {n})"
         else:
-            res = template % (str(n) + ".0")
+            if d != 1:
+                res = f"{(n / d):20f}"
+            else:
+                res = f"{n}"
 
         self.write(res)
 

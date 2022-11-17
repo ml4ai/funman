@@ -10,7 +10,7 @@ from typing import Dict, List, Union
 from funman.config import Config
 from funman.model import Parameter
 from numpy import average
-from pysmt.shortcuts import Real, GE, LT, And, TRUE, Equals
+from pysmt.shortcuts import Real, GE, LT, LE, And, TRUE, Equals
 from funman.constants import NEG_INFINITY, POS_INFINITY, BIG_NUMBER
 import funman.math_utils as math_utils
 
@@ -109,18 +109,19 @@ class Interval(object):
         rhs = self.ub == POS_INFINITY or value <= self.ub
         return lhs and rhs
 
-    def to_smt(self, p: Parameter):
+    def to_smt(self, p: Parameter, closed_upper_bound=False):
+        lower = (
+            GE(p.symbol(), Real(self.lb)) if self.lb != NEG_INFINITY else TRUE()
+        )
+        upper_ineq = LE if closed_upper_bound else LT
+        upper = (
+            upper_ineq(p.symbol(), Real(self.ub))
+            if self.ub != POS_INFINITY
+            else TRUE()
+        )
         return And(
-            (
-                GE(p.symbol(), Real(self.lb))
-                if self.lb != NEG_INFINITY
-                else TRUE()
-            ),
-            (
-                LT(p.symbol(), Real(self.ub))
-                if self.ub != POS_INFINITY
-                else TRUE()
-            ),
+            lower,
+            upper,
         ).simplify()
 
     def to_dict(self):
@@ -178,8 +179,13 @@ class Box(object):
         }
         self.cached_width = None
 
-    def to_smt(self):
-        return And([interval.to_smt(p) for p, interval in self.bounds.items()])
+    def to_smt(self, closed_upper_bound=False):
+        return And(
+            [
+                interval.to_smt(p, closed_upper_bound=closed_upper_bound)
+                for p, interval in self.bounds.items()
+            ]
+        )
 
     def to_dict(self):
         return {
