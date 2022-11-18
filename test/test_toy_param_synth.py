@@ -1,5 +1,7 @@
 import sys
+sys.path.append('/Users/dmosaphir/SIFT/Projects/ASKEM/code/funman/src')
 from funman.search import BoxSearch, SearchConfig
+from funman.constants import NEG_INFINITY, POS_INFINITY
 from pysmt.shortcuts import (
     get_model,
     And,
@@ -26,8 +28,10 @@ import unittest
 import os
 from funman import Funman
 from funman.model import Parameter, Model
-from funman.scenario.parameter_synthesis import ParameterSynthesisScenario
-
+from funman.scenario import ParameterSynthesisScenario
+from funman.math_utils import lt
+from funman.search_utils import Interval,Box
+from funman.parameter_space import ParameterSpace
 
 class TestCompilation(unittest.TestCase):
     def test_toy(self):
