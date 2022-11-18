@@ -153,7 +153,9 @@ class Interval(object):
 @total_ordering
 class Box(object):
     def __init__(self, parameters) -> None:
-        self.bounds = {p: Interval(NEG_INFINITY, POS_INFINITY) for p in parameters}
+        self.bounds: Dict[Parameter, Interval] = {
+            p: Interval(p.lb, p.ub) for p in parameters
+        }
         self.cached_width = None
 
     def to_smt(self):

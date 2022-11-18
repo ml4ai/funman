@@ -172,10 +172,21 @@ class BoxPlotter(object):
             if abs(float(x_limits.lb)) < 100 and abs(float(x_limits.ub)) < 100:
                 x = np.linspace(float(x_limits.lb), float(x_limits.ub), 1000)
                 plt.fill_between(x, y_limits.lb, y_limits.ub, color=color, alpha=alpha)
-        plt.show()
-        plt.pause(5)
-        plt.close()
+#        plt.show()
+#        plt.pause(5)
+#        plt.close()
     
+    def plot2DBoxesByBounds_temp(list_of_x_limits, list_of_y_limits, color="purple",alpha=0.2): ## temp DMI 11/2/22 - clean up later
+        for i in range(len(list_of_x_limits)):
+            x_limits = list_of_x_limits[i]
+            y_limits = list_of_y_limits[i]
+            if abs(float(x_limits[0])) < 100 and abs(float(x_limits[1])) < 100:
+                x = np.linspace(float(x_limits[0]), float(x_limits[1]), 1000)
+                plt.fill_between(x, y_limits.lb, y_limits.ub, color=color, alpha=alpha)
+#        plt.show()
+#        plt.pause(5)
+#        plt.close()
+
     def plot2DBoxesByHeight_temp(list_of_x_limits, heights, color="g",alpha=0.2): ## temp DMI 11/2/22 - clean up later
         for i in range(len(list_of_x_limits)):
             x_limits = list_of_x_limits[i]
@@ -183,6 +194,15 @@ class BoxPlotter(object):
             if abs(float(x_limits[0])) < 100 and abs(float(x_limits[1])) < 100:
                 x = np.linspace(float(x_limits[0]), float(x_limits[1]), 1000)
                 plt.fill_between(x, 0, height, color=color, alpha=alpha)
+#        plt.show()
+#        plt.pause(5)
+#        plt.close()
+
+
+    def plot2DBoxesCombined_temp(list_of_boxes, list_of_x_limits, list_of_y_limits, heights, color="g",alpha=0.2): ## temp DMI 11/2/22 - clean up later
+        BoxPlotter.plot2DBoxesByHeight_temp(list_of_x_limits, heights)
+        BoxPlotter.plot2DBoxesByBounds_temp(list_of_x_limits, list_of_y_limits,color='b')
+        BoxPlotter.plot2DBoxes_temp(list_of_boxes,color='r')
         plt.show()
         plt.pause(5)
         plt.close()
