@@ -13,31 +13,41 @@ import multiprocessing as mp
 from multiprocessing.managers import SyncManager
 
 import logging
+
 l = logging.getLogger(__file__)
 l.setLevel(logging.INFO)
 
+
 class SearchEpisode(ABC):
-    def __init__(self, config: SearchConfig, problem, manager : SyncManager) -> None:
-        self.config : SearchConfig = config
-        self.problem  = problem
-        self.num_parameters : int = len(self.problem.parameters)
+    def __init__(
+        self, config: SearchConfig, problem, manager: SyncManager
+    ) -> None:
+        self.config: SearchConfig = config
+        self.problem = problem
+        self.num_parameters: int = len(self.problem.parameters)
         self.statistics = SearchStatistics(manager)
+        self.manager = manager
 
 
 class BoxSearchEpisode(SearchEpisode):
-    def __init__(self, config: SearchConfig, problem, manager : SyncManager) -> None:
+    def __init__(
+        self, config: SearchConfig, problem, manager: SyncManager
+    ) -> None:
         super(BoxSearchEpisode, self).__init__(config, problem, manager)
-        self.unknown_boxes = manager.Queue()
+        self.unknown_boxes = manager.Queue() if manager else SQueue()
         self.true_boxes = []
         self.false_boxes = []
         self.true_points = set({})
         self.false_points = set({})
 
-        self.iteration = manager.Value("i", 0)
-
+        self.iteration = manager.Value("i", 0) if manager else 0
 
     def initialize_boxes(self, expander_count):
-        self.add_unknown(self.initial_box())
+        initial_box = self.initial_box()
+        if not self.add_unknown(initial_box):
+            l.exception(
+                f"Did not add an initial box (of width {initial_box.width()}), try reducing config.tolerance, currently {self.config.tolerance}"
+            )
         # initial_boxes = []
         # initial_boxes.append(self.initial_box())
         # num_boxes = 1
@@ -55,7 +65,10 @@ class BoxSearchEpisode(SearchEpisode):
         return Box(self.problem.parameters)
 
     def on_start(self):
-        self.statistics.last_time.value = str(datetime.now())
+        if self.manager:
+            self.statistics.last_time.value = str(datetime.now())
+        else:
+            self.statistics.last_time = str(datetime.now())
 
     # def close(self):
     #     if self.multiprocessing:
@@ -64,12 +77,18 @@ class BoxSearchEpisode(SearchEpisode):
     #         self.boxes_to_plot.close()
 
     def on_iteration(self):
-        self.iteration.value = self.iteration.value + 1
+        if self.manager:
+            self.iteration.value = self.iteration.value + 1
+        else:
+            self.iteration = self.iteration + 1
 
     def _add_unknown_box(self, box: Box) -> bool:
         if box.width() > self.config.tolerance:
             self.unknown_boxes.put(box)
-            self.statistics.num_unknown.value += 1
+            if self.manager:
+                self.statistics.num_unknown.value += 1
+            else:
+                self.statistics.num_unknown += 1
             return True
         return False
 
@@ -106,8 +125,14 @@ class BoxSearchEpisode(SearchEpisode):
 
     def get_unknown(self):
         box = self.unknown_boxes.get(timeout=self.config.queue_timeout)
-        self.statistics.num_unknown.value = self.statistics.num_unknown.value - 1
-        self.statistics.current_residual.value = box.width()
+        if self.manager:
+            self.statistics.num_unknown.value = (
+                self.statistics.num_unknown.value - 1
+            )
+            self.statistics.current_residual.value = box.width()
+        else:
+            self.statistics.num_unknown += 1
+            self.statistics.current_residual = box.width()
         self.statistics.residuals.put(box.width())
         this_time = datetime.now()
         # FIXME self.statistics.iteration_time.put(this_time - self.statistics.last_time.value)
@@ -120,5 +145,5 @@ class BoxSearchEpisode(SearchEpisode):
     def extract_point(self, model):
         point = Point(self.problem.parameters)
         for p in self.problem.parameters:
-            point.values[p] = float(model[p.symbol].constant_value())
+            point.values[p] = float(model[p.symbol()].constant_value())
         return point

@@ -4,6 +4,7 @@ during the configuration and execution of a search.
 """
 from abc import ABC, abstractmethod
 from functools import total_ordering
+from multiprocessing.managers import SyncManager
 from queue import Queue as SQueue
 import traceback
 from typing import Dict, List, Union
@@ -11,8 +12,9 @@ from funman.config import Config
 from funman.model import Parameter
 from funman.constants import NEG_INFINITY, POS_INFINITY, BIG_NUMBER
 from numpy import average
-from pysmt.shortcuts import Real, GE, LT, And, TRUE, Equals
+from pysmt.shortcuts import Real, GE, LT, LE, And, TRUE, Equals
 import funman.math_utils as math_utils
+import multiprocess as mp
 
 
 class Interval(object):
