@@ -25,10 +25,14 @@ class ParameterSynthesisScenario(AnalysisScenario):
         model: Model,
         query: Query,
         search=None,
+        smt_encoder=None,
         config: Dict = None,
     ) -> None:
         super().__init__()
         self.parameters = parameters
+        self.smt_encoder = smt_encoder
+        self.model_encoding = None
+        self.query_encoding = None
 
         if search is None:
             search = BoxSearch()
@@ -57,10 +61,18 @@ class ParameterSynthesisScenario(AnalysisScenario):
         if config is None:
             config = SearchConfig()
 
+        self.encode()
         result = self.search.search(self, config=config)
         parameter_space = ParameterSpace(result.true_boxes, result.false_boxes)
 
         return ParameterSynthesisScenarioResult(parameter_space)
+
+    def encode(self):
+        self.model_encoding = self.smt_encoder.encode_model(self.model)
+        self.query_encoding = self.smt_encoder.encode_query(
+            self.model_encoding, self.query
+        )
+        return self.model_encoding, self.query_encoding
 
 
 class ParameterSynthesisScenarioResult(AnalysisScenarioResult):

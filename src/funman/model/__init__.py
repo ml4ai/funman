@@ -64,29 +64,32 @@ class ChimeModel(CannedModel):
             == 0
         ]
 
-            # Query(And(model[3]) if isinstance(model[3], list) else model[3]),
+        # Query(And(model[3]) if isinstance(model[3], list) else model[3]),
         return And(
-                And(assigned_parameters),
-                model[1],
-                (
-                    And([And(layer) for step in model[2] for layer in step])
-                    if isinstance(model[2], list)
-                    else model[2]
-                ),
-            )
-        
+            And(assigned_parameters),
+            model[1],
+            (
+                And([And(layer) for step in model[2] for layer in step])
+                if isinstance(model[2], list)
+                else model[2]
+            ),
+        )
 
 
 class Query(object):
-    def __init__(self, formula) -> None:
-        self.formula = formula
+    def __init__(self) -> None:
+        pass
+
+
+class QueryTrue(Query):
+    pass
 
 
 class QueryLE(Query):
-    def __init__(self, model, variable, ub) -> None:
-        super().__init__(None)
-        timepoints = model.symbols[variable]
-        self.formula = And([LE(s, Real(ub)) for s in timepoints.values()])
+    def __init__(self, variable, ub) -> None:
+        super().__init__()
+        self.variable = variable
+        self.ub = ub
 
 
 class Parameter(object):

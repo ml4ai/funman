@@ -1,12 +1,10 @@
 """
 This submodule defined the Parameter Synthesis scenario.
 """
-from model2smtlib.bilayer.translate import Bilayer
+from funman.model import Query
+from funman.model.bilayer import Bilayer
 from funman.scenario import AnalysisScenario, AnalysisScenarioResult
-from funman.examples.chime import CHIME
-from funman.model import Model, Parameter, Query
-from funman.parameter_space import ParameterSpace
-from funman.search import BoxSearch, SMTCheck, SearchConfig
+from funman.search import SMTCheck, SearchConfig
 from pysmt.fnode import FNode
 from pysmt.shortcuts import get_free_variables, And
 from typing import Any, Dict, List, Union
@@ -21,14 +19,21 @@ class ConsistencyScenario(AnalysisScenario):
     def __init__(
         self,
         model: Union[str, FNode, Bilayer],
+        query: Query,
+        smt_encoder=None,
         search=None,
         config: Dict = None,
     ) -> None:
         super(ConsistencyScenario, self).__init__()
+        self.smt_encoder = smt_encoder
+        self.model_encoding = None
+        self.query_encoding = None
+
         if search is None:
             search = SMTCheck()
         self.search = search
         self.model = model
+        self.query = query
 
     def solve(self, config: SearchConfig = None) -> "ConsistencyScenarioResult":
         """
@@ -47,9 +52,17 @@ class ConsistencyScenario(AnalysisScenario):
         if config is None:
             config = SearchConfig()
 
+        self.encode()
         result = self.search.search(self, config=config)
 
         return ConsistencyScenarioResult(result, self)
+
+    def encode(self):
+        self.model_encoding = self.smt_encoder.encode_model(self.model)
+        self.query_encoding = self.smt_encoder.encode_query(
+            self.model_encoding, self.query
+        )
+        return self.model_encoding, self.query_encoding
 
 
 class ConsistencyScenarioResult(AnalysisScenarioResult):
@@ -63,8 +76,31 @@ class ConsistencyScenarioResult(AnalysisScenarioResult):
         self.consistent = result
         self.scenario = scenario
 
+    def parameters(self):
+        if self.consistent:
+            parameters = self.scenario.smt_encoder.parameter_values(
+                self.scenario.model, self.consistent
+            )
+            return parameters
+        else:
+            raise Exception(
+                f"Cannot get paratmer values for an inconsistent scenario."
+            )
+
+    def dataframe(self):
+        if self.consistent:
+            timeseries = self.scenario.smt_encoder.symbol_timeseries(
+                self.scenario.model_encoding, self.consistent
+            )
+            df = pd.DataFrame.from_dict(timeseries)
+            df = df.interpolate(method="linear")
+            return df
+        else:
+            raise Exception(f"Cannot plot result for an inconsistent scenario.")
+
     def plot(self):
-        timeseries = self.scenario.model.symbol_timeseries(self.consistent)
-        df = pd.DataFrame.from_dict(timeseries)
-        df.interpolate(method="linear").plot(marker="o")
-        plt.show(block=False)
+        if self.consistent:
+            self.dataframe().plot(marker="o")
+            plt.show(block=False)
+        else:
+            raise Exception(f"Cannot plot result for an inconsistent scenario.")

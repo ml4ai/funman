@@ -42,7 +42,9 @@ class Search(object):
 
 class SMTCheck(Search):
     def search(self, problem, config: SearchConfig = None) -> SearchEpisode:
-        return get_model(problem.model.formula)
+        return get_model(
+            And(problem.model_encoding.formula, problem.query_encoding.formula)
+        )
 
 
 class BoxSearch(Search):
@@ -164,8 +166,8 @@ class BoxSearch(Search):
                         # If no cached point, then attempt to generate one
                         phi = And(
                             box.to_smt(),
-                            episode.problem.model.formula,
-                            Not(episode.problem.query.formula),
+                            episode.problem.model_encoding.formula,
+                            Not(episode.problem.query_encoding.formula),
                         )
                         res = get_model(phi)
                         # Record the false point
@@ -191,8 +193,8 @@ class BoxSearch(Search):
                             # If no cached point, then attempt to generate one
                             phi1 = And(
                                 box.to_smt(),
-                                episode.problem.model.formula,
-                                episode.problem.query.formula,
+                                episode.problem.model_encoding.formula,
+                                episode.problem.query_encoding.formula,
                             )
                             res1 = get_model(phi1)
                             # Record the true point
@@ -385,6 +387,8 @@ class BoxSearch(Search):
         """
         if config is None:
             config = SearchConfig()
+
+        problem.encode()
 
         if config.number_of_processes > 1:
             return self._search_mp(problem, config)
