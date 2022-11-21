@@ -28,7 +28,7 @@ class BoxPlotter(object):
         title: str = "Feasible Regions",
         color_map: Dict[str, str] = {"true": "g", "false": "r", "unknown": "b"},
         shape_map: Dict[str, str] = {"true": "x", "false": "o"},
-        alpha = 0.2,
+        alpha=0.2,
     ) -> None:
         self.parameters = parameters
         # assert (
@@ -79,8 +79,8 @@ class BoxPlotter(object):
             while True:
                 try:
                     # if self.real_time_plotting and self.write_region_to_cache is not None:
-                    #     time.sleep(0.1)                    
-                        region = episode.get_box_to_plot()
+                    #     time.sleep(0.1)
+                    region = episode.get_box_to_plot()
                 except Empty:
                     break
                 else:
@@ -93,18 +93,22 @@ class BoxPlotter(object):
                             if region["label"] == "unknown":
                                 if self.real_time_plotting:
                                     self.plot_add_patch(
-                                        region["box"], color=self.color_map[region["label"]]
+                                        region["box"],
+                                        color=self.color_map[region["label"]],
                                     )
                             else:
                                 if self.real_time_plotting:
                                     self.plot_add_box(
-                                        region, color=self.color_map[region["label"]]
+                                        region,
+                                        color=self.color_map[region["label"]],
                                     )
                         elif "point" in region:
                             l.debug(f"{region['label']}: {region['point']}")
                             if self.real_time_plotting:
                                 self.plot_add_point(
-                                    region["point"], color=self.color_map[region["label"]], shape=self.shape_map[region["label"]]
+                                    region["point"],
+                                    color=self.color_map[region["label"]],
+                                    shape=self.shape_map[region["label"]],
                                 )
                     except Exception as e:
                         print(e)
@@ -115,9 +119,9 @@ class BoxPlotter(object):
             if self.out_cache is not None:
                 self.out_cache.close()
             rval.put({"true_boxes": [], "false_boxes": []})
-                
-    
-    def plot_list_of_boxes(self): 
+
+
+    def plot_list_of_boxes(self):
         while True:
             try:
                 box = self.episode.get_box_to_plot()
@@ -125,8 +129,13 @@ class BoxPlotter(object):
                 break
             else:
                 try:
-                    if self.plot_bounds.intersects(box["box"]) and box["box"].finite():
-                        self.plot_add_box(box, color=self.color_map[box["label"]])
+                    if (
+                        self.plot_bounds.intersects(box["box"])
+                        and box["box"].finite()
+                    ):
+                        self.plot_add_box(
+                            box, color=self.color_map[box["label"]]
+                        )
                 except Exception as e:
                     pass
                 pass
@@ -157,10 +166,13 @@ class BoxPlotter(object):
         self.fig.canvas.flush_events()
         # plt.show(block=False)
 
-    def plot_add_point(self, point: Point, color="r", shape='x', alpha=0.2):
+    def plot_add_point(self, point: Point, color="r", shape="x", alpha=0.2):
         plt.scatter(
-            point.values[self.px], point.values[self.py], color=color, marker=shape,
-            alpha=alpha
+            point.values[self.px],
+            point.values[self.py],
+            color=color,
+            marker=shape,
+            alpha=alpha,
         )
         self.fig.canvas.draw()
         self.fig.canvas.flush_events()
@@ -206,26 +218,34 @@ class BoxPlotter(object):
         x_values = [i.bounds[p1].lb, i.bounds[p1].ub]
         plt.plot(x_values, np.zeros(len(x_values)), color, linestyle="-")
 
-    def plot2DBox(i, p1: Parameter, p2: Parameter, color="g",alpha=0.2):
+    def plot2DBox(self, i, p1: Parameter, p2: Parameter, color="g", alpha=0.2):
         x_limits = i.bounds[p1]
         y_limits = i.bounds[p2]
         if abs(float(x_limits.lb)) < 100 and abs(float(x_limits.ub)) < 100:
             x = np.linspace(float(x_limits.lb), float(x_limits.ub), 1000)
-            plt.fill_between(x, y_limits.lb, y_limits.ub, color=color, alpha=alpha)
+            plt.fill_between(
+                x, y_limits.lb, y_limits.ub, color=color, alpha=alpha
+            )
         plt.show(block=False)
-    
-    def plot2DBox_temp(a, color="g",alpha=0.2): ## temp DMI 11/2/22 - clean up later
+
+    def plot2DBox_temp(
+        a, color="g", alpha=0.2
+    ):  ## temp DMI 11/2/22 - clean up later
         plt.ion()
         a_params = list(a.bounds.keys())
-        x_limits = a.bounds[a_params[0]] # first box, first parameter
-        y_limits = a.bounds[a_params[1]] # first box, second parameter
+        x_limits = a.bounds[a_params[0]]  # first box, first parameter
+        y_limits = a.bounds[a_params[1]]  # first box, second parameter
         if abs(float(x_limits.lb)) < 100 and abs(float(x_limits.ub)) < 100:
             x = np.linspace(float(x_limits.lb), float(x_limits.ub), 1000)
-            plt.fill_between(x, y_limits.lb, y_limits.ub, color=color, alpha=alpha)
+            plt.fill_between(
+                x, y_limits.lb, y_limits.ub, color=color, alpha=alpha
+            )
             plt.pause(1)
         plt.show()
-    
-    def plot2DBoxByHeight_temp(x_limits, height, color="g",alpha=0.2): ## temp DMI 11/2/22 - clean up later
+
+    def plot2DBoxByHeight_temp(
+        x_limits, height, color="g", alpha=0.2
+    ):  ## temp DMI 11/2/22 - clean up later
         plt.ion()
         if abs(float(x_limits[0])) < 100 and abs(float(x_limits[1])) < 100:
             x = np.linspace(float(x_limits[0]), float(x_limits[1]), 1000)
@@ -233,19 +253,25 @@ class BoxPlotter(object):
             plt.pause(1)
         plt.show()
 
-    def plot2DBoxes_temp(list_of_boxes, color="g",alpha=0.2): ## temp DMI 11/2/22 - clean up later
+    def plot2DBoxes_temp(
+        list_of_boxes, color="g", alpha=0.2
+    ):  ## temp DMI 11/2/22 - clean up later
         for a in list_of_boxes:
             a_params = list(a.bounds.keys())
-            x_limits = a.bounds[a_params[0]] # first box, first parameter
-            y_limits = a.bounds[a_params[1]] # first box, second parameter
+            x_limits = a.bounds[a_params[0]]  # first box, first parameter
+            y_limits = a.bounds[a_params[1]]  # first box, second parameter
             if abs(float(x_limits.lb)) < 100 and abs(float(x_limits.ub)) < 100:
                 x = np.linspace(float(x_limits.lb), float(x_limits.ub), 1000)
-                plt.fill_between(x, y_limits.lb, y_limits.ub, color=color, alpha=alpha)
+                plt.fill_between(
+                    x, y_limits.lb, y_limits.ub, color=color, alpha=alpha
+                )
         plt.show()
         plt.pause(5)
         plt.close()
-    
-    def plot2DBoxesByHeight_temp(list_of_x_limits, heights, color="g",alpha=0.2): ## temp DMI 11/2/22 - clean up later
+
+    def plot2DBoxesByHeight_temp(
+        list_of_x_limits, heights, color="g", alpha=0.2
+    ):  ## temp DMI 11/2/22 - clean up later
         for i in range(len(list_of_x_limits)):
             x_limits = list_of_x_limits[i]
             height = heights[i]
@@ -256,7 +282,7 @@ class BoxPlotter(object):
         plt.pause(5)
         plt.close()
 
-    def plot2DBoxList(b, color="g", alpha=0.2): 
+    def plot2DBoxList(b, color="g", alpha=0.2):
         box = list(b.bounds.values())
         x_limits = box[0]
         y_limits = box[1]

@@ -14,6 +14,7 @@ from funman.search_utils import (
     encode_false_box,
     encode_true_point,
     encode_false_point,
+    encode_unknown_box,
 )
 from pyparsing import abstractmethod
 
@@ -141,6 +142,7 @@ class BoxSearch(Search):
             while True:
                 try:
                     box: Box = episode.get_unknown()
+                    rval.put(encode_unknown_box(box))
                     l.info(f"{process_name} claimed work")
                 except Empty:
                     exit = self._handle_empty_queue(
@@ -152,15 +154,13 @@ class BoxSearch(Search):
                         continue
                 else:
                     # Check whether box intersects f (false region)
-                    false_point = None
-                    try:
-                        # First see if a cached false point exists in the box
-                        false_point = next(
-                            fp
-                            for fp in episode.false_points
-                            if box.contains_point(fp)
-                        )
-                    except StopIteration:
+                    # First see if a cached false point exists in the box
+                    false_points = [
+                        fp
+                        for fp in episode.false_points
+                        if box.contains_point(fp)
+                    ]
+                    if len(false_points) == 0:
                         # If no cached point, then attempt to generate one
                         phi = And(
                             box.to_smt(),
@@ -170,23 +170,24 @@ class BoxSearch(Search):
                         res = get_model(phi)
                         # Record the false point
                         if res:
-                            false_point = episode.extract_point(res)
-                            episode.add_false_point(false_point)
-                            rval.put(encode_false_point(false_point))
+                            false_points = [episode.extract_point(res)]
+                            map(episode.add_false_point, false_points)
+                            map(
+                                lambda x: rval.put(encode_false_point(x)),
+                                false_points,
+                            )
 
-                    if false_point:
+                    if len(false_points) > 0:
                         # box intersects f (false region)
 
                         # Check whether box intersects t (true region)
-                        true_point = None
-                        try:
-                            # First see if a cached false point exists in the box
-                            true_point = next(
-                                tp
-                                for tp in episode.true_points
-                                if box.contains_point(tp)
-                            )
-                        except StopIteration:
+                        # First see if a cached false point exists in the box
+                        true_points = [
+                            tp
+                            for tp in episode.true_points
+                            if box.contains_point(tp)
+                        ]
+                        if len(true_points) == 0:
                             # If no cached point, then attempt to generate one
                             phi1 = And(
                                 box.to_smt(),
@@ -196,15 +197,18 @@ class BoxSearch(Search):
                             res1 = get_model(phi1)
                             # Record the true point
                             if res1:
-                                true_point = episode.extract_point(res1)
-                                episode.add_true_point(true_point)
-                                rval.put(encode_true_point(true_point))
+                                true_points = [episode.extract_point(res1)]
+                                map(episode.add_true_point, true_points)
+                                map(
+                                    lambda x: rval.put(encode_true_point(x)),
+                                    true_points,
+                                )
 
-                        if true_point:
+                        if len(true_points) > 0:
                             # box intersects both t and f, so it must be split
                             # use the true and false points to compute a midpoint
                             if self.split(
-                                box, episode, points=[true_point, false_point]
+                                box, episode, points=true_points + false_points
                             ):
                                 l.info(f"{process_name} produced work")
                             if episode.config.number_of_processes > 1:
@@ -305,7 +309,7 @@ class BoxSearch(Search):
         false_points = []
         break_on_interrupt = False
         try:
-            handler.open()
+            # handler.open()
             while True:
                 try:
                     result: dict = rval.get(timeout=config.queue_timeout)
@@ -326,6 +330,8 @@ class BoxSearch(Search):
                             true_boxes.append(inst)
                         elif label == "false":
                             false_boxes.append(inst)
+                        elif label == "unknown":
+                            pass  # Allow unknown boxes for plotting
                         else:
                             l.warn(f"Skipping Box with label: {label}")
                     elif typ is Point:
@@ -348,7 +354,7 @@ class BoxSearch(Search):
         finally:
             if config.wait_action is not None:
                 config.wait_action.run()
-            handler.close()
+            # handler.close()
         return {
             "true_boxes": true_boxes,
             "false_boxes": false_boxes,
@@ -395,7 +401,9 @@ class BoxSearch(Search):
             "true_points": [],
             "false_points": [],
         }
+        config.handler.open()
         self.expand(rval, episode, handler=self._run_handler_step)
+        config.handler.close()
         # rval.put(None)
 
         # all_results = self._run_handler(rval, config)
