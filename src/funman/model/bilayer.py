@@ -29,7 +29,51 @@ from pysmt.shortcuts import (
 from pysmt.typing import INT, REAL, BOOL
 
 
-class BilayerMeasurement(object):
+class BilayerGraph(object):
+    def __init__(self):
+        self.node_incoming_edges = {}
+        self.node_outgoing_edges = {}
+
+    def _get_json_node(self, node_dict, node_type, node_list, node_name):
+        for indx, i in enumerate(node_list):
+            node_dict[indx + 1] = node_type(indx + 1, i[node_name])
+
+    def _get_json_edge(
+        self, edge_type, edge_list, src, src_nodes, tgt, tgt_nodes
+    ):
+        edges = []
+        for json_edge in edge_list:
+            edge = edge_type(
+                src_nodes[json_edge[src]], tgt_nodes[json_edge[tgt]]
+            )
+            edges.append(edge)
+
+            if edge.tgt not in self.node_incoming_edges:
+                self.node_incoming_edges[edge.tgt] = {}
+            self.node_incoming_edges[edge.tgt][edge.src] = edge
+            if edge.src not in self.node_outgoing_edges:
+                self.node_outgoing_edges[edge.src] = {}
+            self.node_outgoing_edges[edge.src][edge.tgt] = edge
+
+        return edges
+
+    def _incoming_edges(self, node: "BilayerNode"):
+        return self.node_incoming_edges[node]
+
+
+class BilayerMeasurement(BilayerGraph):
+    def __init__(self) -> None:
+        super().__init__()
+        self.state: Dict[int, BilayerStateNode] = {}
+        self.flux: Dict[
+            int, BilayerFluxNode
+        ] = {}  # Functions, defined in observable, one param per flux
+        self.observable: Dict[int, BilayerStateNode] = {}
+        self.input_edges: BilayerEdge = (
+            []
+        )  # Input to observable, defined in Win
+        self.output_edges: BilayerEdge = []  # Flux to Output, defined in Wa,Wn
+
     def from_json(src):
         measurement = BilayerMeasurement()
         if isinstance(src, dict):
@@ -39,8 +83,42 @@ class BilayerMeasurement(object):
                 data = json.load(f)
 
         # TODO extract measurment graph
+        blm = BilayerMeasurement()
 
-        return BilayerMeasurement()
+        # Get the input state variable nodes
+        blm._get_json_node(
+            blm.state, BilayerStateNode, data["state"], "variable"
+        )
+
+        # Get the output state variable nodes (tangent)
+        blm._get_json_node(
+            blm.observable, BilayerStateNode, data["observable"], "observable"
+        )
+
+        # Get the flux nodes
+        blm._get_json_node(blm.flux, BilayerFluxNode, data["rate"], "parameter")
+
+        # Get the input edges
+        blm.input_edges += blm._get_json_edge(
+            BilayerEdge,
+            data["Din"],
+            "variable",
+            blm.state,
+            "parameter",
+            blm.flux,
+        )
+
+        # Get the output edges
+        blm.output_edges += blm._get_json_edge(
+            BilayerPositiveEdge,
+            data["Dout"],
+            "parameter",
+            blm.flux,
+            "observable",
+            blm.observable,
+        )
+
+        return blm
 
     def to_dot(self):
         dot = graphviz.Digraph(
@@ -50,14 +128,14 @@ class BilayerMeasurement(object):
                 "shape": "box"
             },
         )
-        # for n in (
-        #     list(self.tangent.values())
-        #     + list(self.flux.values())
-        #     + list(self.state.values())
-        # ):
-        #     n.to_dot(dot)
-        # for e in self.input_edges + self.output_edges:
-        #     e.to_dot(dot)
+        for n in (
+            list(self.state.values())
+            + list(self.flux.values())
+            + list(self.observable.values())
+        ):
+            n.to_dot(dot)
+        for e in self.input_edges + self.output_edges:
+            e.to_dot(dot)
         return dot
 
 
@@ -69,19 +147,18 @@ class BilayerNode(object):
     def to_dot(self, dot):
         return dot.node(self.parameter)
 
-
-class BilayerStateNode(BilayerNode):
     def to_smtlib(self, timepoint):
         param = self.parameter
         ans = Symbol(f"{param}_{timepoint}", REAL)
         return ans
+
+
+class BilayerStateNode(BilayerNode):
+    pass
 
 
 class BilayerFluxNode(BilayerNode):
-    def to_smtlib(self, timepoint):
-        param = self.parameter
-        ans = Symbol(f"{param}_{timepoint}", REAL)
-        return ans
+    pass
 
 
 class BilayerEdge(object):
@@ -123,16 +200,11 @@ class BilayerModel(Model):
         self.measurements = measurements  # TODO incorporate into model
         self.init_values = init_values
         self.parameter_bounds = parameter_bounds
-        
-
- 
-    
-
-    
 
 
-class Bilayer(object):
+class Bilayer(BilayerGraph):
     def __init__(self):
+        super().__init__()
         self.tangent: Dict[
             int, BilayerStateNode
         ] = {}  # Output layer variables, defined in Qout
@@ -171,10 +243,6 @@ class Bilayer(object):
 
         return bilayer
 
-    def _get_json_node(self, node_dict, node_type, node_list, node_name):
-        for indx, i in enumerate(node_list):
-            node_dict[indx + 1] = node_type(indx + 1, i[node_name])
-
     def _get_json_to_statenodes(self, data):
         self._get_json_node(
             self.state, BilayerStateNode, data["Qin"], "variable"
@@ -189,14 +257,6 @@ class Bilayer(object):
         self._get_json_node(
             self.flux, BilayerFluxNode, data["Box"], "parameter"
         )
-
-    def _get_json_edge(
-        self, edge_type, edge_list, src, src_nodes, tgt, tgt_nodes
-    ):
-        return [
-            edge_type(src_nodes[json_edge[src]], tgt_nodes[json_edge[tgt]])
-            for json_edge in edge_list
-        ]
 
     def _get_json_to_input_edges(self, data):
         self.input_edges += self._get_json_edge(

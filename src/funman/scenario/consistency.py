@@ -87,20 +87,21 @@ class ConsistencyScenarioResult(AnalysisScenarioResult):
                 f"Cannot get paratmer values for an inconsistent scenario."
             )
 
-    def dataframe(self):
+    def dataframe(self, interpolate="linear"):
         if self.consistent:
             timeseries = self.scenario.smt_encoder.symbol_timeseries(
                 self.scenario.model_encoding, self.consistent
             )
             df = pd.DataFrame.from_dict(timeseries)
-            df = df.interpolate(method="linear")
+            if interpolate:
+                df = df.interpolate(method=interpolate)
             return df
         else:
             raise Exception(f"Cannot plot result for an inconsistent scenario.")
 
-    def plot(self):
+    def plot(self, **kwargs):
         if self.consistent:
-            self.dataframe().plot(marker="o")
+            self.dataframe().plot(marker="o", **kwargs)
             plt.show(block=False)
         else:
             raise Exception(f"Cannot plot result for an inconsistent scenario.")
