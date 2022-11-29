@@ -1,9 +1,7 @@
 import json
 import graphviz
 from typing import Dict, List, Union
-from funman.model import Model, Parameter
-from funman.search_utils import Box
-import pysmt
+from funman.model import Model
 from pysmt.shortcuts import (
     get_model,
     And,

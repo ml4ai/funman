@@ -29,6 +29,9 @@ class SearchEpisode(ABC):
         self.manager = manager
 
 
+class DRealSearchEpisode(SearchEpisode):
+    pass
+
 class BoxSearchEpisode(SearchEpisode):
     def __init__(
         self, config: SearchConfig, problem, manager: SyncManager

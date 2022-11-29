@@ -21,7 +21,6 @@ class ConsistencyScenario(AnalysisScenario):
         model: Union[str, FNode, Bilayer],
         query: Query,
         smt_encoder=None,
-        search=None,
         config: Dict = None,
     ) -> None:
         super(ConsistencyScenario, self).__init__()
@@ -29,9 +28,7 @@ class ConsistencyScenario(AnalysisScenario):
         self.model_encoding = None
         self.query_encoding = None
 
-        if search is None:
-            search = SMTCheck()
-        self.search = search
+        self.searches = []
         self.model = model
         self.query = query
 
@@ -53,7 +50,16 @@ class ConsistencyScenario(AnalysisScenario):
             config = SearchConfig()
 
         self.encode()
-        result = self.search.search(self, config=config)
+
+        if config.search is None:
+            search = SMTCheck()
+        else:
+            search = config.search()
+        
+        if search not in self.searches:
+            self.searches.append(search)
+            
+        result = search.search(self, config=config)
 
         return ConsistencyScenarioResult(result, self)
 

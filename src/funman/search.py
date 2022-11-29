@@ -3,7 +3,11 @@ This submodule contains the search algorithms used to run FUNMAN.
 """
 import traceback
 from typing import List
-from funman.search_episode import BoxSearchEpisode, SearchEpisode
+from funman.search_episode import (
+    BoxSearchEpisode,
+    DRealSearchEpisode,
+    SearchEpisode,
+)
 from funman.search_utils import (
     Box,
     Point,
@@ -16,6 +20,7 @@ from funman.search_utils import (
     encode_false_point,
     encode_unknown_box,
 )
+from funman_dreal.funman_dreal import DReal
 from pyparsing import abstractmethod
 
 from pysmt.shortcuts import get_model, And, Not
@@ -42,9 +47,27 @@ class Search(object):
 
 class SMTCheck(Search):
     def search(self, problem, config: SearchConfig = None) -> SearchEpisode:
-        return get_model(
-            And(problem.model_encoding.formula, problem.query_encoding.formula)
-        )
+        episode = config.episode_type()
+        result = self.expand(problem, episode)
+        episode.model = result
+
+    def expand(self, problem, episode):
+        if isinstance(episode, DRealSearchEpisode):
+            dreal = DReal()
+            result = dreal.get_model(
+                And(
+                    problem.model_encoding.formula,
+                    problem.query_encoding.formula,
+                )
+            )
+        else:
+            result = get_model(
+                And(
+                    problem.model_encoding.formula,
+                    problem.query_encoding.formula,
+                )
+            )
+        return result
 
 
 class BoxSearch(Search):
@@ -396,7 +419,7 @@ class BoxSearch(Search):
             return self._search_sp(problem, config)
 
     def _search_sp(self, problem, config: SearchConfig):
-        episode = BoxSearchEpisode(config, problem, None)
+        episode = config.episode_type(config, problem, None)
         episode.initialize_boxes(0)
         rval = QueueSP()
         all_results = {
@@ -481,3 +504,144 @@ class BoxSearch(Search):
                 episode.true_points = all_results.get("true_points")
                 episode.false_points = all_results.get("false_points")
                 return episode
+
+
+class DrealBoxSearch(BoxSearch):
+    def __init__(self) -> None:
+        super().__init__()
+
+    def _push_formula(self, formula):
+        episode.problem.model_encoding.formula
+
+    def expand(
+        self,
+        rval,
+        episode: BoxSearchEpisode,
+        idx: int = None,
+        more_work: Condition = None,
+        idle_mutex: Lock = None,
+        idle_flags: List[Event] = None,
+        handler: ResultHandler = None,
+    ):
+        """
+        A single search process will evaluate and expand the boxes in the
+        episode.unknown_boxes queue.  The processes exit when the queue is
+        empty.  For each box, the algorithm checks whether the box contains a
+        false (infeasible) point.  If it contains a false point, then it checks
+        if the box contains a true point.  If a box contains both a false and
+        true point, then the box is split into two boxes and both are added to
+        the unknown_boxes queue.  If a box contains no false points, then it is
+        a true_box (all points are feasible).  If a box contains no true points,
+        then it is a false_box (all points are infeasible).
+
+        The return value is pushed onto the rval queue to end the process's work
+        within the method.  The return value is a Dict[str, List[Box]] type that
+        maps the "true_boxes" and "false_boxes" to a list of boxes in each set.
+        Each box in these sets is unique by design.
+
+        Parameters
+        ----------
+        rval : Queue
+            Return value shared queue
+        episode : BoxSearchEpisode
+            Shared search data and statistics.
+        """
+        process_name = f"Expander_{idx}_p{os.getpid()}"
+        l = self._logger(episode.config, process_name=process_name)
+
+        try:
+            l.info(f"{process_name} entering process loop")
+            while True:
+                try:
+                    box: Box = episode.get_unknown()
+                    rval.put(encode_unknown_box(box))
+                    l.info(f"{process_name} claimed work")
+                except Empty:
+                    exit = self._handle_empty_queue(
+                        process_name, episode, more_work, idle_mutex, idle_flags
+                    )
+                    if exit:
+                        break
+                    else:
+                        continue
+                else:
+                    # Check whether box intersects f (false region)
+                    # First see if a cached false point exists in the box
+                    false_points = [
+                        fp
+                        for fp in episode.false_points
+                        if box.contains_point(fp)
+                    ]
+                    if len(false_points) == 0:
+                        # If no cached point, then attempt to generate one
+                        phi = And(
+                            box.to_smt(),
+                            episode.problem.model_encoding.formula,
+                            Not(episode.problem.query_encoding.formula),
+                        )
+                        res = get_model(phi)
+                        # Record the false point
+                        if res:
+                            false_points = [episode.extract_point(res)]
+                            map(episode.add_false_point, false_points)
+                            map(
+                                lambda x: rval.put(encode_false_point(x)),
+                                false_points,
+                            )
+
+                    if len(false_points) > 0:
+                        # box intersects f (false region)
+
+                        # Check whether box intersects t (true region)
+                        # First see if a cached false point exists in the box
+                        true_points = [
+                            tp
+                            for tp in episode.true_points
+                            if box.contains_point(tp)
+                        ]
+                        if len(true_points) == 0:
+                            # If no cached point, then attempt to generate one
+                            phi1 = And(
+                                box.to_smt(),
+                                episode.problem.model_encoding.formula,
+                                episode.problem.query_encoding.formula,
+                            )
+                            res1 = get_model(phi1)
+                            # Record the true point
+                            if res1:
+                                true_points = [episode.extract_point(res1)]
+                                map(episode.add_true_point, true_points)
+                                map(
+                                    lambda x: rval.put(encode_true_point(x)),
+                                    true_points,
+                                )
+
+                        if len(true_points) > 0:
+                            # box intersects both t and f, so it must be split
+                            # use the true and false points to compute a midpoint
+                            if self.split(
+                                box, episode, points=true_points + false_points
+                            ):
+                                l.info(f"{process_name} produced work")
+                            if episode.config.number_of_processes > 1:
+                                with more_work:
+                                    more_work.notify_all()
+                        else:
+                            # box is a subset of f (intersects f but not t)
+                            episode.add_false(
+                                box
+                            )  # TODO consider merging lists of boxes
+                            rval.put(encode_false_box(box))
+
+                    else:
+                        # box does not intersect f, so it is in t (true region)
+                        episode.add_true(box)
+                        rval.put(encode_true_box(box))
+                    episode.on_iteration()
+                    if handler:
+                        handler(rval, episode.config)
+                    l.info(f"{process_name} finished work")
+        except KeyboardInterrupt:
+            l.info(f"{process_name} Keyboard Interrupt")
+        except Exception:
+            l.error(traceback.format_exc())

@@ -11,6 +11,7 @@ from typing import Dict, List, Union
 from funman.config import Config
 from funman.model import Parameter
 from funman.constants import NEG_INFINITY, POS_INFINITY, BIG_NUMBER
+
 from numpy import average
 from pysmt.shortcuts import Real, GE, LT, LE, And, TRUE, Equals
 import funman.math_utils as math_utils
@@ -880,6 +881,8 @@ class SearchConfig(Config):
         wait_action=None,
         wait_action_timeout=0.05,
         read_cache=None,
+        episode_type=None,
+        search=None,
     ) -> None:
         self.tolerance = tolerance
         self.queue_timeout = queue_timeout
@@ -889,6 +892,8 @@ class SearchConfig(Config):
         self.wait_action = wait_action
         self.wait_action_timeout = wait_action_timeout
         self.read_cache = read_cache
+        self.episode_type = episode_type
+        self.search = search
 
 
 def _encode_labeled_box(box: Box, label: str):

@@ -1,8 +1,21 @@
+from functools import partial
 import os
 import docker
 from shutil import copyfile, rmtree
 import time
-
+import io
+from pysmt.smtlib.solver import SmtLibSolver, SmtLibOptions
+from pysmt.logics import QF_NRA
+from pysmt.solvers.solver import Solver
+from pysmt.smtlib.parser import SmtLibParser
+from pysmt.smtlib.script import SmtLibCommand
+import pysmt.smtlib.commands as smtcmd
+from pysmt.exceptions import (
+    SolverReturnedUnknownResultError,
+    UnknownSolverAnswerError,
+)
+from pysmt.decorators import clear_pending_pop
+from tenacity import retry
 
 # def setup(smt2_file, benchmark_path, out_dir):
 #     print("setting up docker")
@@ -61,3 +74,197 @@ def run_dreal(
         model = f.read()
 
     return model
+
+
+class DReal(SmtLibSolver):
+    LOGICS = [QF_NRA]
+    OptionsClass = SmtLibOptions
+
+    def __init__(
+        self, args, environment, logic, LOGICS=None, **options
+    ) -> None:
+        Solver.__init__(self, environment, logic=logic, **options)
+        self.to = self.environment.typeso
+        self.LOGICS = DReal.LOGICS
+        self.declared_vars = [set()]
+        self.declared_sorts = [set()]
+        self.parser = SmtLibParser(interactive=True)
+
+        # solver_opts = kwargs["solver_opts"] if "solver_opts" in kwargs else ""
+
+        self.wait = 1  # How long to wait on next socket recv
+        self.last_sent = None  # Last message sent to container
+        self.client = docker.APIClient()
+        self.container = self.client.create_container(
+            "dreal/dreal4",
+            stdin_open=True,
+            tty=True,
+            entrypoint=f"/usr/bin/dreal --in",
+        )
+        self.client.start(self.container)
+
+        self.stdout = self.client.attach_socket(
+            self.container,
+            params={"stdout": 1, "stderr": 1, "stream": 1},
+        )
+        self.stdin = self.client.attach_socket(
+            self.container,
+            params={"stdin": 1, "stream": 1},
+        )
+
+        # Initialize solver
+        try:
+            self.options(self)
+        except Exception as e:
+            pass
+
+        self.set_logic(logic)
+
+    def container_alive(func):
+        def inner(*args):
+            time.sleep(1)
+            status = args[0].client.inspect_container(args[0].container)[
+                "State"
+            ]["Status"]
+            if status == "exited":
+                raise Exception(
+                    f"Cannot send command to container with status: {status}"
+                )
+            else:
+                return func(*args)
+
+        return inner
+
+    @container_alive
+    def _send_command(self, cmd):
+        """Sends a command to the socket."""
+        self._debug("Sending: %s", cmd.serialize_to_string())
+
+        # s._sock.send(input.encode("utf-8"))
+        text = io.StringIO()
+        cmd.serialize(text, daggify=False)
+
+        if "set-option" in text.getvalue():
+            # dreal does not support set-option command
+            self.wait = 0
+            # print(f"Skipped: {text.getvalue()}")
+            return
+        else:
+            # if "check-sat" in text.getvalue():
+            #     self.wait = 10
+            # # elif "assert" in text.getvalue():
+            # #     self.wait = 1
+            # # elif "declare-fun" in text.getvalue():
+            # #     self.wait = 1
+            # else:
+            self.wait = 1
+
+            text.write("\n")
+            payload = text.getvalue().encode("utf-8")
+            self.last_sent = payload
+            self.stdin._sock.sendall(payload)
+            self.stdin.flush()
+            # print(f"Sent: {payload}")
+
+    @retry
+    def _read_socket(self):
+        return self.stdout._sock.recv(1)
+
+    @container_alive
+    def _get_answer(self):
+        """Reads a line from socket."""
+        if self.wait > 0:
+            # print("Reading from socket: ")
+            # self.stdout._sock.settimeout(self.wait)
+            try:
+                msg = []
+                reading_result = False
+                result = []
+                while True:
+                    b = self._read_socket()
+                    if b == b"\r":
+                        continue
+                    msg.append(b)
+                    if self.last_sent == b"(check-sat)\n":
+                        # Keep reading to get result until "\n"
+                        if reading_result:
+                            if b == b"\n":
+                                break
+                            else:
+                                result.append(b)
+                        elif b"".join(msg) == self.last_sent:
+                            reading_result = True
+                    elif b"".join(msg) == self.last_sent:
+                        break
+
+                if len(result) > 0:
+                    res = b"".join(result).decode()
+                else:
+                    res = "success"
+            except TimeoutError as e:
+                print(f"Timeout waiting for socket receive.")
+                res = "success"
+            except Exception as e:
+                print(f"Failed to read from socket: {e}")
+            # s.close()
+        else:
+            res = "success"
+        # print(f"Read: {res}")
+        return res
+
+    @clear_pending_pop
+    def solve(self, assumptions=None):
+        assert assumptions is None
+        self._send_command(SmtLibCommand(smtcmd.CHECK_SAT, []))
+        ans = self._get_answer()
+        if ans == "sat" or ans == "success" or "delta-sat" in ans:
+            return True
+        elif "unsat" in ans:
+            return False
+        elif ans == "unknown":
+            raise SolverReturnedUnknownResultError
+        else:
+            raise UnknownSolverAnswerError("Solver returned: " + ans)
+
+    def _exit(self):
+        # self._send_command(SmtLibCommand(smtcmd.EXIT, []))
+
+        self.stdin.close()
+        self.stdout.close()
+        print("Stopping dreal container ...")
+        self.client.stop(self.container)
+        self.client.wait(self.container)
+        # raw_stream,status = client.get_archive(container,'/received.txt')
+        # tar_archive = BytesIO(b"".join((i for i in raw_stream)))
+        # t = tarfile.open(mode='r:', fileobj=tar_archive)
+        # text_from_container_file = t.extractfile('received.txt').read().decode('utf-8')
+        self.client.remove_container(self.container)
+        print("Done stopping dreal container.")
+        return
+
+    def send_input(self, input):
+        s = self.client.attach_socket(
+            self.container,
+            params={"stdout": 1, "stderr": 1, "stream": 1, "stdin": 1},
+        )
+        # pass
+        s._sock.settimeout(1)
+        s._sock.send(input.encode("utf-8"))
+        rval = io.StringIO()
+        while 1:
+            try:
+                msg = s._sock.recv(1024)
+            except TimeoutError as e:
+                # print(f"Timeout waiting for data from container: {e}")
+                msg = None
+            if not msg:
+                break
+            else:
+                try:
+                    for line in msg.split(b"\n"):
+                        content = f"{line[8:].decode()}\n"
+                        rval.write(content)
+                except Exception as e:
+                    print(f"Could not decode response: {msg} because {e}")
+        s.close()
+        return rval.getvalue()
