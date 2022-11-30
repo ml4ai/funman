@@ -72,12 +72,12 @@ class Interval(object):
         lhs = (
             (self.lb == NEG_INFINITY or other.lb != NEG_INFINITY)
             if (self.lb == NEG_INFINITY or other.lb == NEG_INFINITY)
-            else self.lb <= other.lb
+            else self.lb < other.lb ## DMI change < to <=
         )
         rhs = (
             (other.ub != POS_INFINITY or self.ub == POS_INFINITY)
             if (self.ub == POS_INFINITY or other.ub == POS_INFINITY)
-            else other.ub <= self.ub
+            else other.ub < self.ub ## DMI change < to <=
         )
         return lhs or rhs
     
@@ -193,8 +193,27 @@ class Box(object):
             [interval.contains(other.bounds[p]) for p, interval in self.bounds.items()]
         )
 
+    def equal(b1, b2, param_list): ## added 11/27/22 DMI
+        result = []
+        for p1 in param_list:
+            for b in b1.bounds:
+                if b.name == p1:
+                    b1_bounds = [b.lb, b.ub]
+            for b in b2.bounds:
+                if b.name == p1:
+                    b2_bounds = [b.lb, b.ub]
+            if b1_bounds == b2_bounds:
+                result.append(True)
+            else: 
+                result.append(False)
+        return all(result)
+
     def intersects(self, other: "Box") -> bool:
-        return all(
+#        print([
+#                interval.intersects(other.bounds[p])
+#                for p, interval in self.bounds.items()
+#        ]) ## DMI delete later
+        return all( 
             [
                 interval.intersects(other.bounds[p])
                 for p, interval in self.bounds.items()
@@ -353,6 +372,7 @@ class Box(object):
         widths = [bounds.width() for _, bounds in self.bounds.items()]
         max_width = max(widths)
         param = list(self.bounds.keys())[widths.index(max_width)]
+#        print('width info:', param, max_width)## DMI delete
         return param, max_width
 
     def width(self) -> float:
@@ -399,6 +419,20 @@ class Box(object):
                 return [float(maxArray.lb), float(minArray.ub)]
             else: ## no intersection.
                 return []
+
+    def intersect_two_boxes_selected_parameters(b1, b2, param_list): ## added 11/21/22 DMM
+        result = []
+        for p1 in param_list:
+            for b in b1.bounds:
+                if b.name == p1:
+                    b1_bounds = Interval.make_interval([b.lb, b.ub])
+            for b in b2.bounds:
+                if b.name == p1:
+                    b2_bounds = Interval.make_interval([b.lb, b.ub])
+            intersection_ans = Box.intersection(b1_bounds, b2_bounds)
+            dict_element = Parameter(p1, intersection_ans[0], intersection_ans[1])
+            result.append(dict_element)
+        return Box({i for i in result})
 
     def intersect_two_boxes(b1,b2):
         a = list(b1.bounds.values())

@@ -1,8 +1,10 @@
 from multiprocessing import Queue
 from typing import Dict, List
 from funman.model import Parameter
+from funman.constants import NEG_INFINITY, POS_INFINITY
 from funman.search_episode import BoxSearchEpisode
 from funman.search_utils import Box, Interval
+from funman import math_utils
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 from IPython.display import clear_output
@@ -137,6 +139,29 @@ class BoxPlotter(object):
         x_values = [i.bounds[p1].lb, i.bounds[p1].ub]
         plt.plot(x_values, np.zeros(len(x_values)), color, linestyle="-")
 
+    def plot2DBoxTemp(b1: Box, p1, p2, color="g", alpha=0.2, ax=None, title=None): ## added 11/21/22 DMI
+        for b in b1.bounds:
+            if b.name == p1:
+                p1_lb = b.lb
+                p1_ub = b.ub
+            elif b.name == p2:
+                p2_lb = b.lb
+                p2_ub = b.ub
+        if math_utils.gt(p1_lb, NEG_INFINITY) and math_utils.lt(p1_ub, POS_INFINITY):
+            x = np.linspace(p1_lb, p1_ub, 1000)
+            plt.fill_between(x, p2_lb, p2_ub, color=color, alpha=alpha)
+            plt.xlabel(p1)
+            plt.ylabel(p2)
+            custom_lines = [
+                Line2D([0], [0], color=color,alpha=0.2,lw=4),
+            ]
+            plt.title(title)
+            plt.legend(custom_lines, ["box"])
+
+    def plot2DBoxesTemp(boxes: List[Box], p1, p2, colors, alpha=0.2, ax=None, title=None): ## added 11/27/22 DMI
+        for i in range(len(boxes)):
+            BoxPlotter.plot2DBoxTemp(boxes[i], p1, p2, color=colors[i])
+
     def plot2DBox(i, p1: Parameter, p2: Parameter, color="g",alpha=0.2):
         x_limits = i.bounds[p1]
         y_limits = i.bounds[p2]
@@ -144,68 +169,6 @@ class BoxPlotter(object):
             x = np.linspace(float(x_limits.lb), float(x_limits.ub), 1000)
             plt.fill_between(x, y_limits.lb, y_limits.ub, color=color, alpha=alpha)
         plt.show(block=False)
-    
-    def plot2DBox_temp(a, color="g",alpha=0.2): ## temp DMI 11/2/22 - clean up later
-        plt.ion()
-        a_params = list(a.bounds.keys())
-        x_limits = a.bounds[a_params[0]] # first box, first parameter
-        y_limits = a.bounds[a_params[1]] # first box, second parameter
-        if abs(float(x_limits.lb)) < 100 and abs(float(x_limits.ub)) < 100:
-            x = np.linspace(float(x_limits.lb), float(x_limits.ub), 1000)
-            plt.fill_between(x, y_limits.lb, y_limits.ub, color=color, alpha=alpha)
-            plt.pause(1)
-        plt.show()
-    
-    def plot2DBoxByHeight_temp(x_limits, height, color="g",alpha=0.2): ## temp DMI 11/2/22 - clean up later
-        plt.ion()
-        if abs(float(x_limits[0])) < 100 and abs(float(x_limits[1])) < 100:
-            x = np.linspace(float(x_limits[0]), float(x_limits[1]), 1000)
-            plt.fill_between(x, 0, height, color=color, alpha=alpha)
-            plt.pause(1)
-        plt.show()
-
-    def plot2DBoxes_temp(list_of_boxes, color="g",alpha=0.2): ## temp DMI 11/2/22 - clean up later
-        for a in list_of_boxes:
-            a_params = list(a.bounds.keys())
-            x_limits = a.bounds[a_params[0]] # first box, first parameter
-            y_limits = a.bounds[a_params[1]] # first box, second parameter
-            if abs(float(x_limits.lb)) < 100 and abs(float(x_limits.ub)) < 100:
-                x = np.linspace(float(x_limits.lb), float(x_limits.ub), 1000)
-                plt.fill_between(x, y_limits.lb, y_limits.ub, color=color, alpha=alpha)
-#        plt.show()
-#        plt.pause(5)
-#        plt.close()
-    
-    def plot2DBoxesByBounds_temp(list_of_x_limits, list_of_y_limits, color="purple",alpha=0.2): ## temp DMI 11/2/22 - clean up later
-        for i in range(len(list_of_x_limits)):
-            x_limits = list_of_x_limits[i]
-            y_limits = list_of_y_limits[i]
-            if abs(float(x_limits[0])) < 100 and abs(float(x_limits[1])) < 100:
-                x = np.linspace(float(x_limits[0]), float(x_limits[1]), 1000)
-                plt.fill_between(x, y_limits.lb, y_limits.ub, color=color, alpha=alpha)
-#        plt.show()
-#        plt.pause(5)
-#        plt.close()
-
-    def plot2DBoxesByHeight_temp(list_of_x_limits, heights, color="g",alpha=0.2): ## temp DMI 11/2/22 - clean up later
-        for i in range(len(list_of_x_limits)):
-            x_limits = list_of_x_limits[i]
-            height = heights[i]
-            if abs(float(x_limits[0])) < 100 and abs(float(x_limits[1])) < 100:
-                x = np.linspace(float(x_limits[0]), float(x_limits[1]), 1000)
-                plt.fill_between(x, 0, height, color=color, alpha=alpha)
-#        plt.show()
-#        plt.pause(5)
-#        plt.close()
-
-
-    def plot2DBoxesCombined_temp(list_of_boxes, list_of_x_limits, list_of_y_limits, heights, color="g",alpha=0.2): ## temp DMI 11/2/22 - clean up later
-        BoxPlotter.plot2DBoxesByHeight_temp(list_of_x_limits, heights)
-        BoxPlotter.plot2DBoxesByBounds_temp(list_of_x_limits, list_of_y_limits,color='b')
-        BoxPlotter.plot2DBoxes_temp(list_of_boxes,color='r')
-        plt.show()
-        plt.pause(5)
-        plt.close()
 
     def plot2DBoxList(b, color="g", alpha=0.2): 
         box = list(b.bounds.values())
