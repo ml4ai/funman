@@ -195,16 +195,30 @@ class DReal(SmtLibSolver):
 
             # print(f"Sent: {payload}")
 
+    def _get_value_answer(self):
+        """Reads and parses an assignment from the STDOUT pipe"""
+        # lst = self.parser.get_assignment_list(self.solver_stdout)
+        lst = [[0.0, 0.0]]
+        self._debug("Read: %s", lst)
+        return lst
+
+    def get_value(self, item):
+        # self._send_command(SmtLibCommand(smtcmd.GET_VALUE, [item]))
+        lst = self._get_value_answer()
+        assert len(lst) == 1
+        assert len(lst[0]) == 2
+        return lst[0][1]
+
     def _send_batch(self):
         payload = b""
         while not self.batch.empty():
             cmd = self.batch.get()
             text = io.StringIO()
             cmd.serialize(text, daggify=False, printer=FUNMANSmtPrinter(text))
-            # text.write("\r\n")
+            text.write("\r\n")
             encoded_text = text.getvalue().encode("utf-8")
             payload += encoded_text
-            self.sent_batch.put((cmd, text.getvalue().encode("utf-8")))
+            self.sent_batch.put((cmd, encoded_text))
         self.stdin._sock.sendall(payload)
         self.stdin.flush()
 
@@ -217,6 +231,7 @@ class DReal(SmtLibSolver):
             msg = []
             reading_result = False
             result = []
+            encoded_text = encoded_text.replace(b"\r", b"")
             while True:
                 b = self._read_socket()
                 if b == b"\r":
@@ -233,6 +248,9 @@ class DReal(SmtLibSolver):
                         reading_result = True
                 elif b"".join(msg) == encoded_text:
                     break
+                elif b"".join(msg) == b"\n":
+                    msg = []
+                    continue
 
             if len(result) > 0:
                 res = b"".join(result).decode()
