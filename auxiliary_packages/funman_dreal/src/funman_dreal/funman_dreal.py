@@ -1,10 +1,13 @@
 from functools import partial
 import os
+from queue import Queue
 import docker
 from shutil import copyfile, rmtree
 import time
 import io
+from funman.util import FUNMANSmtPrinter
 from pysmt.smtlib.solver import SmtLibSolver, SmtLibOptions
+from pysmt.solvers.solver import Solver, SolverOptions
 from pysmt.logics import QF_NRA
 from pysmt.solvers.solver import Solver
 from pysmt.smtlib.parser import SmtLibParser
@@ -16,6 +19,11 @@ from pysmt.exceptions import (
 )
 from pysmt.decorators import clear_pending_pop
 from tenacity import retry
+from pysmt.shortcuts import get_env, GT, Symbol
+from pysmt.logics import QF_NRA
+from pysmt.exceptions import SolverRedefinitionError
+from functools import partial
+import pysmt.smtlib.commands as smtcmd
 
 # def setup(smt2_file, benchmark_path, out_dir):
 #     print("setting up docker")
@@ -76,9 +84,29 @@ def run_dreal(
     return model
 
 
+def add_dreal_to_pysmt():
+    name = "dreal"
+    env = get_env()
+    if name in env.factory._all_solvers:
+        raise SolverRedefinitionError("Solver %s already defined" % name)
+    solver = partial(DReal, "dreal/dreal4", LOGICS=DReal.LOGICS)
+    solver.LOGICS = DReal.LOGICS
+    env.factory._all_solvers[name] = solver
+    env.factory._generic_solvers[name] = ("dreal/dreal4", DReal.LOGICS)
+    env.factory.solver_preference_list.append(name)
+
+
 class DReal(SmtLibSolver):
     LOGICS = [QF_NRA]
     OptionsClass = SmtLibOptions
+
+    commands_to_enqueue = [
+        smtcmd.SET_LOGIC,
+        smtcmd.DEFINE_FUN,
+        smtcmd.PUSH,
+        smtcmd.POP,
+    ]
+    commands_to_flush = [smtcmd.CHECK_SAT, smtcmd.ASSERT]
 
     def __init__(
         self, args, environment, logic, LOGICS=None, **options
@@ -91,7 +119,10 @@ class DReal(SmtLibSolver):
         self.parser = SmtLibParser(interactive=True)
 
         # solver_opts = kwargs["solver_opts"] if "solver_opts" in kwargs else ""
-
+        self.batch = Queue()  # Batch of commands to send in one call
+        self.sent_batch = (
+            Queue()
+        )  # Batch of commands already sent and needs to be checked
         self.wait = 1  # How long to wait on next socket recv
         self.last_sent = None  # Last message sent to container
         self.client = docker.APIClient()
@@ -122,7 +153,7 @@ class DReal(SmtLibSolver):
 
     def container_alive(func):
         def inner(*args):
-            time.sleep(1)
+            # time.sleep(1)
             status = args[0].client.inspect_container(args[0].container)[
                 "State"
             ]["Status"]
@@ -135,16 +166,14 @@ class DReal(SmtLibSolver):
 
         return inner
 
-    @container_alive
+    # @container_alive
     def _send_command(self, cmd):
         """Sends a command to the socket."""
         self._debug("Sending: %s", cmd.serialize_to_string())
 
         # s._sock.send(input.encode("utf-8"))
-        text = io.StringIO()
-        cmd.serialize(text, daggify=False)
 
-        if "set-option" in text.getvalue():
+        if cmd.name == smtcmd.SET_OPTION:
             # dreal does not support set-option command
             self.wait = 0
             # print(f"Skipped: {text.getvalue()}")
@@ -159,54 +188,72 @@ class DReal(SmtLibSolver):
             # else:
             self.wait = 1
 
-            text.write("\n")
-            payload = text.getvalue().encode("utf-8")
-            self.last_sent = payload
-            self.stdin._sock.sendall(payload)
-            self.stdin.flush()
+            # self.last_sent = payload
+            self.batch.put(cmd)
+            if cmd.name in DReal.commands_to_flush:
+                self._send_batch()
+
             # print(f"Sent: {payload}")
+
+    def _send_batch(self):
+        payload = b""
+        while not self.batch.empty():
+            cmd = self.batch.get()
+            text = io.StringIO()
+            cmd.serialize(text, daggify=False, printer=FUNMANSmtPrinter(text))
+            # text.write("\r\n")
+            encoded_text = text.getvalue().encode("utf-8")
+            payload += encoded_text
+            self.sent_batch.put((cmd, text.getvalue().encode("utf-8")))
+        self.stdin._sock.sendall(payload)
+        self.stdin.flush()
 
     @retry
     def _read_socket(self):
         return self.stdout._sock.recv(1)
 
-    @container_alive
+    def _get_command_result(self, command, encoded_text):
+        try:
+            msg = []
+            reading_result = False
+            result = []
+            while True:
+                b = self._read_socket()
+                if b == b"\r":
+                    continue
+                msg.append(b)
+                if command == smtcmd.CHECK_SAT:
+                    # Keep reading to get result until "\n"
+                    if reading_result:
+                        if b == b"\n":
+                            break
+                        else:
+                            result.append(b)
+                    elif b"".join(msg) == encoded_text:
+                        reading_result = True
+                elif b"".join(msg) == encoded_text:
+                    break
+
+            if len(result) > 0:
+                res = b"".join(result).decode()
+            else:
+                res = "success"
+        except TimeoutError as e:
+            print(f"Timeout waiting for socket receive.")
+            res = "success"
+        except Exception as e:
+            print(f"Failed to read from socket: {e}")
+        return res
+
+    # @container_alive
     def _get_answer(self):
         """Reads a line from socket."""
         if self.wait > 0:
             # print("Reading from socket: ")
             # self.stdout._sock.settimeout(self.wait)
-            try:
-                msg = []
-                reading_result = False
-                result = []
-                while True:
-                    b = self._read_socket()
-                    if b == b"\r":
-                        continue
-                    msg.append(b)
-                    if self.last_sent == b"(check-sat)\n":
-                        # Keep reading to get result until "\n"
-                        if reading_result:
-                            if b == b"\n":
-                                break
-                            else:
-                                result.append(b)
-                        elif b"".join(msg) == self.last_sent:
-                            reading_result = True
-                    elif b"".join(msg) == self.last_sent:
-                        break
-
-                if len(result) > 0:
-                    res = b"".join(result).decode()
-                else:
-                    res = "success"
-            except TimeoutError as e:
-                print(f"Timeout waiting for socket receive.")
-                res = "success"
-            except Exception as e:
-                print(f"Failed to read from socket: {e}")
-            # s.close()
+            res = "success"
+            while not self.sent_batch.empty():
+                res = self._get_command_result(*self.sent_batch.get())
         else:
             res = "success"
         # print(f"Read: {res}")

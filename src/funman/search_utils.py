@@ -883,6 +883,7 @@ class SearchConfig(Config):
         read_cache=None,
         episode_type=None,
         search=None,
+        solver="z3",
     ) -> None:
         self.tolerance = tolerance
         self.queue_timeout = queue_timeout
@@ -894,6 +895,7 @@ class SearchConfig(Config):
         self.read_cache = read_cache
         self.episode_type = episode_type
         self.search = search
+        self.solver = solver
 
 
 def _encode_labeled_box(box: Box, label: str):

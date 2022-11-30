@@ -22,8 +22,8 @@ from funman.search_utils import (
 )
 from funman_dreal.funman_dreal import DReal
 from pyparsing import abstractmethod
-
-from pysmt.shortcuts import get_model, And, Not
+from pysmt.logics import QF_NRA
+from pysmt.shortcuts import get_model, And, Not, Solver
 
 import multiprocessing as mp
 from multiprocessing.synchronize import Condition, Event, Lock
@@ -47,26 +47,23 @@ class Search(object):
 
 class SMTCheck(Search):
     def search(self, problem, config: SearchConfig = None) -> SearchEpisode:
-        episode = config.episode_type()
+        episode = SearchEpisode(config=config, problem=problem)
         result = self.expand(problem, episode)
         episode.model = result
+        return result
 
     def expand(self, problem, episode):
-        if isinstance(episode, DRealSearchEpisode):
-            dreal = DReal()
-            result = dreal.get_model(
+        with Solver(name=episode.config.solver, logic=QF_NRA) as s:
+            s.add_assertion(
                 And(
                     problem.model_encoding.formula,
                     problem.query_encoding.formula,
                 )
             )
-        else:
-            result = get_model(
-                And(
-                    problem.model_encoding.formula,
-                    problem.query_encoding.formula,
-                )
-            )
+            result = s.solve()
+            if result:
+                result = s.get_model()
+
         return result
 
 
@@ -419,7 +416,7 @@ class BoxSearch(Search):
             return self._search_sp(problem, config)
 
     def _search_sp(self, problem, config: SearchConfig):
-        episode = config.episode_type(config, problem, None)
+        episode = BoxSearchEpisode(config=config, problem=problem)
         episode.initialize_boxes(0)
         rval = QueueSP()
         all_results = {

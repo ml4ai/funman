@@ -20,7 +20,7 @@ l.setLevel(logging.INFO)
 
 class SearchEpisode(ABC):
     def __init__(
-        self, config: SearchConfig, problem, manager: SyncManager
+        self, config: SearchConfig, problem, manager: SyncManager = None
     ) -> None:
         self.config: SearchConfig = config
         self.problem = problem
@@ -31,6 +31,7 @@ class SearchEpisode(ABC):
 
 class DRealSearchEpisode(SearchEpisode):
     pass
+
 
 class BoxSearchEpisode(SearchEpisode):
     def __init__(
