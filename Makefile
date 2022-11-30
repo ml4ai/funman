@@ -59,14 +59,18 @@ deploy-pages: docs
 	git branch -D gh-pages
 
 build-docker:
-	DOCKER_BUILDKIT=1 docker build -t funman -f . ..
+	DOCKER_BUILDKIT=1 docker build \
+		--build-arg UNAME=$$USER \
+		--build-arg UID=$$(id -u) \
+		--build-arg GID=$$(id -g) \
+		-t funman -f . ..
 
 run-docker:
 	docker run \
+		-d \
 		-it \
-		--rm \
 		--cpus=8 \
 		--name funman-dev \
-		--mount=type=bind,source=$$PWD/../model2smtlib,target=/model2smtlib \
-		--mount=type=bind,source=$$PWD,target=/funman \
+		--mount=type=bind,source=$$PWD/../model2smtlib,target=$$HOME/model2smtlib \
+		--mount=type=bind,source=$$PWD,target=$$HOME/funman \
 		funman:latest
