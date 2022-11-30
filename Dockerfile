@@ -71,5 +71,7 @@ RUN pip install -e funman/auxiliary_packages/funman_demo
 # RUN --mount=type=bind,source=./funman,target=/funman,rw \
 #     pip install -e /funman/auxiliary_packages/funman_demo
 
+RUN pip install -e funman/auxiliary_packages/funman_dreal
+
 WORKDIR /home/$UNAME/funman
 CMD /bin/bash
