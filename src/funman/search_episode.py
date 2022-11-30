@@ -35,7 +35,7 @@ class DRealSearchEpisode(SearchEpisode):
 
 class BoxSearchEpisode(SearchEpisode):
     def __init__(
-        self, config: SearchConfig, problem, manager: SyncManager
+        self, config: SearchConfig, problem, manager: SyncManager = None
     ) -> None:
         super(BoxSearchEpisode, self).__init__(config, problem, manager)
         self.unknown_boxes = manager.Queue() if manager else SQueue()

@@ -83,7 +83,9 @@ class TestHandcoded(unittest.TestCase):
         #   T(I(t), I(t+1)) &&
         #   t+1 = t + 1     &&
         #   T(I(t), I(t+1)) <-> I(t+1) = I(t) + 1.0
-        trans_func_def = ForAll([t_sym, tp1_sym], And(trans_func, transf_func_eq))
+        trans_func_def = ForAll(
+            [t_sym, tp1_sym], And(trans_func, transf_func_eq)
+        )
         # substitute(transf_func_eq, subs))
 
         # I(1) = 2.0
@@ -98,6 +100,8 @@ class TestHandcoded(unittest.TestCase):
 
     def test_simple_chime_propositional(self):
         num_timepoints = 12
+        chime = CHIME()
+        vars, (parameters, init, dynamics, query) = chime.make_model()
         (
             susceptible,
             infected,
@@ -106,33 +110,21 @@ class TestHandcoded(unittest.TestCase):
             infected_n,
             recovered_n,
             scale,
-            beta,
+            betas,
             gamma,
-            delta,
             n,
-        ) = CHIME.make_chime_variables(num_timepoints)
-        parameters, init, dynamics, bounds = CHIME.make_chime_model(
-            susceptible,
-            infected,
-            recovered,
-            susceptible_n,
-            infected_n,
-            recovered_n,
-            scale,
-            beta,
-            gamma,
             delta,
-            n,
-            num_timepoints,
-        )
-        query = CHIME.make_chime_query(infected, num_timepoints)
+        ) = vars
 
         # Check that dynamics (minus query) is consistent
-        phi1 = And(parameters, init, dynamics)
-        phi2 = And(parameters, init, dynamics, query)
-        write_smtlib(phi2, f"chime_{num_timepoints}.smt2")
+        # phi1 = And(parameters, init, dynamics)
+        # phi2 = And(parameters, init, dynamics, query)
+        # write_smtlib(phi2, f"chime_{num_timepoints}.smt2")
         # res = is_sat(phi)
-        model = get_model(phi1)
+        phi = chime.encode_time_horizon(
+            parameters, init, dynamics, query, num_timepoints
+        )
+        model = get_model(phi)
 
         infected_values = [float(model.get_py_value(i)) for i in infected]
         print(f"infected = {infected_values}")
@@ -144,19 +136,6 @@ class TestHandcoded(unittest.TestCase):
             # print("*" * 80)
             # phi = init & dynamics & query
             # phi = And(parameters, init, dynamics, bounds, query).simplify()
-
-            # Solve phi
-            model = get_model(phi2)
-            if model:
-                print("Model & Query is consistent")
-                # print("*" * 80)
-                # print(model)
-                # print("*" * 80)
-
-                # infected_values = [model.get_py_value(i) for i in infected]
-                # print(f"infected = {infected_values}")
-            else:
-                print("Model & Query is inconsistent")
         else:
             print("Model is inconsistent")
 

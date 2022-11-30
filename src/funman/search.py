@@ -416,7 +416,7 @@ class BoxSearch(Search):
             return self._search_sp(problem, config)
 
     def _search_sp(self, problem, config: SearchConfig):
-        episode = BoxSearchEpisode(config=config, problem=problem)
+        episode = BoxSearchEpisode(config, problem)
         episode.initialize_boxes(0)
         rval = QueueSP()
         all_results = {
@@ -443,7 +443,7 @@ class BoxSearch(Search):
         processes = config.number_of_processes
         with mp.Manager() as manager:
             rval = manager.Queue()
-            episode = BoxSearchEpisode(config, problem, manager)
+            episode = BoxSearchEpisode(config, problem, manager=manager)
 
             expand_count = processes - 1
             episode.initialize_boxes(expand_count)

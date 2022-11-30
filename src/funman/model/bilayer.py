@@ -191,13 +191,11 @@ class BilayerModel(Model):
         measurements=None,
         init_values=None,
         parameter_bounds=None,
-        encoding_options=None,
     ) -> None:
-        super().__init__(None)
+        super().__init__(init_values=init_values, parameter_bounds=parameter_bounds)
         self.bilayer = bilayer
-        self.measurements = measurements  # TODO incorporate into model
-        self.init_values = init_values
-        self.parameter_bounds = parameter_bounds
+        self.measurements = measurements
+       
 
 
 class Bilayer(BilayerGraph):

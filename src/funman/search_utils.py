@@ -16,6 +16,9 @@ from numpy import average
 from pysmt.shortcuts import Real, GE, LT, LE, And, TRUE, Equals
 import funman.math_utils as math_utils
 import multiprocess as mp
+import logging
+
+l = logging.getLogger(__name__)
 
 
 class Interval(object):
