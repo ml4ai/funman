@@ -2,6 +2,7 @@ FROM ubuntu:20.04
 
 # Install base dependencies
 RUN apt update && apt install -y --no-install-recommends \
+    make \
     git \
     python3-dev \
     python3-pip \
@@ -42,6 +43,8 @@ RUN pip install --no-cache-dir sphinx==5.2.2
 RUN pip install --no-cache-dir sphinx-rtd-theme==1.0.0
 RUN pip install --no-cache-dir twine
 RUN pip install --no-cache-dir build
+RUN pip install --no-cache-dir pylint
+RUN pip install --no-cache-dir black
 
 WORKDIR /home/$UNAME
 
@@ -55,6 +58,7 @@ RUN pip install -e automates
 # RUN pip install https://github.com/danbryce/automates/archive/e5fb635757aa57007615a75371f55dd4a24851e0.zip
 
 RUN pip install --no-cache-dir z3-solver
+RUN pip install --no-cache-dir graphviz
 
 # Install funman dev packages
 COPY --chown=$UID:$GID ./model2smtlib model2smtlib
