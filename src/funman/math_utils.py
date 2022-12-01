@@ -1,28 +1,7 @@
-"""
-This submodule contains helper functions for math operations used in FUNMAN
-"""
-from typing import Literal, Union
 from funman.constants import NEG_INFINITY, POS_INFINITY
 
-Number = Union[int, float, Literal["-inf", "inf"]]
-
 # lhs < rhs
-def lt(lhs: Number, rhs: Number) -> bool:
-    """
-    Less than comparison
-
-    Parameters
-    ----------
-    lhs : Number
-        The left hand side
-    rhs : Number
-        The right hand side
-
-    Returns
-    -------
-    bool
-        lhs < rhs
-    """
+def lt(lhs, rhs):
     # inf < ?
     if lhs == POS_INFINITY:
         return False
@@ -50,22 +29,7 @@ def lt(lhs: Number, rhs: Number) -> bool:
     return lhs < rhs
 
 # lhs > rhs
-def gt(lhs: Number, rhs: Number) -> bool:
-    """
-    Greater than comparison
-
-    Parameters
-    ----------
-    lhs : Number
-        The left hand side
-    rhs : Number
-        The right hand side
-
-    Returns
-    -------
-    bool
-        lhs > rhs
-    """
+def gt(lhs, rhs):
     # ? > inf
     if rhs == POS_INFINITY:
         return False
@@ -93,39 +57,48 @@ def gt(lhs: Number, rhs: Number) -> bool:
     return lhs > rhs
 
 # lhs >= rhs
-def gte(lhs: Number, rhs: Number) -> bool:
-    """
-    Greater than or equal comparison
-
-    Parameters
-    ----------
-    lhs : Number
-        The left hand side
-    rhs : Number
-        The right hand side
-
-    Returns
-    -------
-    bool
-        lhs >= rhs
-    """
+def gte(lhs, rhs):
     return not lt(lhs, rhs)
 
 # lhs <= rhs
-def lte(lhs: Number, rhs: Number) -> bool:
-    """
-    Less than or equal comparison
-
-    Parameters
-    ----------
-    lhs : Number
-        The left hand side
-    rhs : Number
-        The right hand side
-
-    Returns
-    -------
-    bool
-        lhs <= rhs
-    """
+def lte(lhs, rhs):
     return not gt(lhs, rhs)
+
+def minus(lhs, rhs):
+    if lhs == rhs:
+        return 0
+    # inf - (< inf)
+    if lhs == POS_INFINITY:
+        return POS_INFINITY
+    # (-inf) - (> -inf)
+    if lhs == NEG_INFINITY:
+        return NEG_INFINITY
+    if rhs == POS_INFINITY:
+        return NEG_INFINITY
+    if rhs == NEG_INFINITY:
+        return POS_INFINITY
+    return lhs - rhs
+        
+            
+def plus(lhs, rhs):
+    if lhs == NEG_INFINITY:
+        if rhs == POS_INFINITY:
+            return 0
+        else:
+            return NEG_INFINITY
+    if rhs == NEG_INFINITY:
+        if lhs == POS_INFINITY:
+            return 0
+        else:
+            return NEG_INFINITY
+    if lhs == POS_INFINITY:
+        if rhs == NEG_INFINITY:
+            return 0
+        else:
+            return POS_INFINITY
+    if rhs == POS_INFINITY:
+        if lhs == NEG_INFINITY:
+            return 0
+        else:
+            return POS_INFINITY
+    return lhs + rhs

@@ -7,8 +7,8 @@ from funman.model import Model, Parameter, Query
 from funman.parameter_space import ParameterSpace
 from funman.search import BoxSearch, SearchConfig
 from pysmt.fnode import FNode
-from pysmt.shortcuts import get_free_variables, And
 from typing import Any, Dict, List, Union
+
 
 class ParameterSynthesisScenario(AnalysisScenario):
     """
@@ -22,70 +22,23 @@ class ParameterSynthesisScenario(AnalysisScenario):
     def __init__(
         self,
         parameters: List[Parameter],
-        model: Union[str, FNode],
+        model: Model,
+        query: Query,
         search=None,
+        smt_encoder=None,
         config: Dict = None,
     ) -> None:
         super().__init__()
         self.parameters = parameters
+        self.smt_encoder = smt_encoder
+        self.model_encoding = None
+        self.query_encoding = None
 
         if search is None:
             search = BoxSearch()
         self.search = search
-
-        if isinstance(model, str):
-            self.chime = CHIME()
-            epochs = config["epochs"]
-            population_size = config["population_size"]
-            infectious_days = config["infectious_days"]
-            # infected_threshold = config["infected_threhold"]
-            vars, model = self.chime.make_model(
-                epochs=epochs,
-                population_size=population_size,
-                infectious_days=infectious_days,
-                infected_threshold=0.1,
-                linearize=config.get("linearize", False),
-            )
-            self.vars = vars
-        else:
-            self.vars = model.get_free_variables()
-
-        # self.model = model
-
-        # Associate parameters with symbols in the model
-        symbol_map = {
-            s.symbol_name(): s for p in model[0] for s in get_free_variables(p)
-        }
-        for p in self.parameters:
-            if not p._symbol:
-                p._symbol = symbol_map[p.name]
-
-        param_symbols = set({p.name for p in self.parameters})
-        assigned_parameters = [
-            p
-            for p in model[0]
-            if len(
-                set(
-                    {q.symbol_name() for q in get_free_variables(p)}
-                ).intersection(param_symbols)
-            )
-            == 0
-        ]
-        self.query = Query(
-            And(model[3]) if isinstance(model[3], list) else model[3]
-        )
-
-        self.model = Model(
-            And(
-                And(assigned_parameters),
-                model[1],
-                (
-                    And([And(layer) for step in model[2] for layer in step])
-                    if isinstance(model[2], list)
-                    else model[2]
-                ),
-            )
-        )
+        self.model = model
+        self.query = query
 
     def solve(
         self, config: SearchConfig = None
@@ -108,10 +61,18 @@ class ParameterSynthesisScenario(AnalysisScenario):
         if config is None:
             config = SearchConfig()
 
+        self.encode()
         result = self.search.search(self, config=config)
         parameter_space = ParameterSpace(result.true_boxes, result.false_boxes)
 
         return ParameterSynthesisScenarioResult(parameter_space)
+
+    def encode(self):
+        self.model_encoding = self.smt_encoder.encode_model(self.model)
+        self.query_encoding = self.smt_encoder.encode_query(
+            self.model_encoding, self.query
+        )
+        return self.model_encoding, self.query_encoding
 
 
 class ParameterSynthesisScenarioResult(AnalysisScenarioResult):

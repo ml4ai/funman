@@ -1,7 +1,7 @@
 PIPENV=PIPENV_VENV_IN_PROJECT=1 pipenv
 DOCS_REMOTE?=origin
 
-.PHONY: setup-dev-env destroy-dev-env docs
+.PHONY: setup-dev-env destroy-dev-env docs build-docker, run-docker
 setup-dev-env: setup-pipenv setup-pysmt
 
 setup-pipenv:
@@ -17,6 +17,7 @@ setup-pysmt:
 
 destroy-dev-env:
 	$(PIPENV) --rm
+	rm Pipfile.lock || true
 
 setup-conda-dev-env: set-conda setup-conda-packages setup-pipenv setup-pysmt 
 
@@ -56,3 +57,20 @@ deploy-pages: docs
 	git push $(DOCS_REMOTE)
 	git checkout main
 	git branch -D gh-pages
+
+build-docker:
+	DOCKER_BUILDKIT=1 docker build \
+		--build-arg UNAME=$$USER \
+		--build-arg UID=$$(id -u) \
+		--build-arg GID=$$(id -g) \
+		-t funman -f . ..
+
+run-docker:
+	docker run \
+		-d \
+		-it \
+		--cpus=8 \
+		--name funman-dev \
+		--mount=type=bind,source=$$PWD/../model2smtlib,target=$$HOME/model2smtlib \
+		--mount=type=bind,source=$$PWD,target=$$HOME/funman \
+		funman:latest

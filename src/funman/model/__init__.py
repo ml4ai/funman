@@ -5,17 +5,39 @@ models in FUNMAN.
 from typing import Union
 from funman.constants import NEG_INFINITY, POS_INFINITY
 from copy import deepcopy
-from pysmt.shortcuts import Symbol, REAL
+
+from pysmt.shortcuts import Symbol, REAL, get_free_variables, And, Real, LE
 
 
 class Model(object):
+    def __init__(self, init_values=None, parameter_bounds=None) -> None:
+        self.init_values = init_values
+        self.parameter_bounds = parameter_bounds
+
+
+class EncodedModel(Model):
     def __init__(self, formula) -> None:
-        self.formula = formula
+       self.formula = formula
+
+
+class CannedModel(Model):
+    pass
 
 
 class Query(object):
-    def __init__(self, formula) -> None:
-        self.formula = formula
+    def __init__(self) -> None:
+        pass
+
+
+class QueryTrue(Query):
+    pass
+
+
+class QueryLE(Query):
+    def __init__(self, variable, ub) -> None:
+        super().__init__()
+        self.variable = variable
+        self.ub = ub
 
 
 class Parameter(object):

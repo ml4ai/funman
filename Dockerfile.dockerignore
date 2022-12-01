@@ -1,0 +1,9 @@
+# Assumes running from ASKEM/code
+*
+
+!funman
+!model2smtlib
+
+**/.*
+**/build
+**/dist

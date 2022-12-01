@@ -29,7 +29,5 @@ class AnalysisScenarioResult(object):
     """
 
     @abstractclassmethod
-    def plot():
+    def plot(self):
         pass
-
-    pass

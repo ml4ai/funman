@@ -242,6 +242,7 @@ class TestHandcoded(unittest.TestCase):
             elapsed = elapsed()
         return model, elapsed
 
+    @unittest.skip("Time consuming ...")
     def test_simple_chime_propositional(self):
 
         min_num_timepoints = 30

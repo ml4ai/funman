@@ -1,15 +1,16 @@
 """
 This submodule defined the Parameter Synthesis scenario.
 """
-from . import AnalysisScenario, AnalysisScenarioResult
-from funman.examples.chime import CHIME
-from funman.model import Model, Parameter, Query
-from funman.parameter_space import ParameterSpace
-from funman.search import BoxSearch, SMTCheck, SearchConfig
+from funman.model import Query
+from funman.model.bilayer import Bilayer
+from funman.scenario import AnalysisScenario, AnalysisScenarioResult
+from funman.search import SMTCheck, SearchConfig
 from pysmt.fnode import FNode
 from pysmt.shortcuts import get_free_variables, And
 from typing import Any, Dict, List, Union
 from pysmt.solvers.solver import Model as pysmtModel
+import pandas as pd
+import matplotlib.pyplot as plt
 
 
 class ConsistencyScenario(AnalysisScenario):
@@ -17,16 +18,19 @@ class ConsistencyScenario(AnalysisScenario):
 
     def __init__(
         self,
-        model: Union[str, FNode],
-        search=None,
+        model: Union[str, FNode, Bilayer],
+        query: Query,
+        smt_encoder=None,
         config: Dict = None,
     ) -> None:
         super(ConsistencyScenario, self).__init__()
-        if search is None:
-            search = SMTCheck()
-        self.search = search
+        self.smt_encoder = smt_encoder
+        self.model_encoding = None
+        self.query_encoding = None
 
+        self.searches = []
         self.model = model
+        self.query = query
 
     def solve(self, config: SearchConfig = None) -> "ConsistencyScenarioResult":
         """
@@ -45,9 +49,26 @@ class ConsistencyScenario(AnalysisScenario):
         if config is None:
             config = SearchConfig()
 
-        result = self.search.search(self, config=config)
+        self.encode()
+
+        if config.search is None:
+            search = SMTCheck()
+        else:
+            search = config.search()
+        
+        if search not in self.searches:
+            self.searches.append(search)
+            
+        result = search.search(self, config=config)
 
         return ConsistencyScenarioResult(result, self)
+
+    def encode(self):
+        self.model_encoding = self.smt_encoder.encode_model(self.model)
+        self.query_encoding = self.smt_encoder.encode_query(
+            self.model_encoding, self.query
+        )
+        return self.model_encoding, self.query_encoding
 
 
 class ConsistencyScenarioResult(AnalysisScenarioResult):
@@ -61,30 +82,32 @@ class ConsistencyScenarioResult(AnalysisScenarioResult):
         self.consistent = result
         self.scenario = scenario
 
-    def _split_symbol(self, symbol):
-        return symbol.symbol_name().rsplit("_", 1)
+    def parameters(self):
+        if self.consistent:
+            parameters = self.scenario.smt_encoder.parameter_values(
+                self.scenario.model, self.consistent
+            )
+            return parameters
+        else:
+            raise Exception(
+                f"Cannot get paratmer values for an inconsistent scenario."
+            )
 
-    def timeseries(self):
-        series = {}
-        if isinstance(self.consistent, pysmtModel):
-            vars = list(self.scenario.model.formula.get_free_variables())
-            # vars.sort(key=lambda x: x.symbol_name())
-            for var in vars:
-                var_name, timepoint = self._split_symbol(var)
-                if var_name not in series:
-                    series[var_name] = {}
-                series[var_name][timepoint] = float(
-                    self.consistent.get_py_value(var)
-                )
-        a_series = {}
-        max_t = max(
-            [max([int(k) for k in tps.keys()]) for _, tps in series.items()]
-        )
-        # a_series["index"] = list(range(0, max_t+1))
-        for var, tps in series.items():
+    def dataframe(self, interpolate="linear"):
+        if self.consistent:
+            timeseries = self.scenario.smt_encoder.symbol_timeseries(
+                self.scenario.model_encoding, self.consistent
+            )
+            df = pd.DataFrame.from_dict(timeseries)
+            if interpolate:
+                df = df.interpolate(method=interpolate)
+            return df
+        else:
+            raise Exception(f"Cannot plot result for an inconsistent scenario.")
 
-            vals = [None] * (int(max_t) + 1)
-            for t, v in tps.items():
-                vals[int(t)] = v
-            a_series[var] = vals
-        return a_series
+    def plot(self, **kwargs):
+        if self.consistent:
+            self.dataframe().plot(marker="o", **kwargs)
+            plt.show(block=False)
+        else:
+            raise Exception(f"Cannot plot result for an inconsistent scenario.")

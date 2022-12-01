@@ -99,7 +99,6 @@ class ParameterSpace(object):
     @staticmethod
     def compare(ps1, ps2) -> bool:
         raise NotImplementedError()
-        raise NotImplementedError()
 
     def plot(self, color="b", alpha=0.2):
         custom_lines = [

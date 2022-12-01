@@ -4,15 +4,21 @@ during the configuration and execution of a search.
 """
 from abc import ABC, abstractmethod
 from functools import total_ordering
+from multiprocessing.managers import SyncManager
 from queue import Queue as SQueue
 import traceback
 from typing import Dict, List, Union
 from funman.config import Config
 from funman.model import Parameter
 from funman.constants import NEG_INFINITY, POS_INFINITY, BIG_NUMBER
+
 from numpy import average
-from pysmt.shortcuts import Real, GE, LT, And, TRUE, Equals
+from pysmt.shortcuts import Real, GE, LT, LE, And, TRUE, Equals
 import funman.math_utils as math_utils
+import multiprocess as mp
+import logging
+
+l = logging.getLogger(__name__)
 
 
 class Interval(object):
@@ -75,12 +81,12 @@ class Interval(object):
         lhs = (
             (self.lb == NEG_INFINITY or other.lb != NEG_INFINITY)
             if (self.lb == NEG_INFINITY or other.lb == NEG_INFINITY)
-            else self.lb <= other.lb
+            else self.lb < other.lb ## DMI change < to <=
         )
         rhs = (
             (other.ub != POS_INFINITY or self.ub == POS_INFINITY)
             if (self.ub == POS_INFINITY or other.ub == POS_INFINITY)
-            else other.ub <= self.ub
+            else other.ub < self.ub ## DMI change < to <=
         )
         return lhs or rhs
 
@@ -101,6 +107,66 @@ class Interval(object):
             return self.lb + BIG_NUMBER
         else:
             return ((self.ub - self.lb) / 2) + self.lb
+
+    def union(self, other: "Interval") -> List["Interval"]:
+        if self == other:  ## intervals are equal, so return original interval
+            ans = [self]
+            total_height = [Interval.width(self)]
+            return ans, total_height
+        else:  ## intervals are not the same. start by identifying the lower and higher intervals.
+            if self.lb == other.lb:
+                if math_utils.lt(self.ub, other.lb):
+                    minInterval = self
+                    maxInterval = other
+                else:  ## other.ub > self.ub
+                    minInterval = other
+                    maxInterval = self
+            elif math_utils.lt(self.lb, other.lb):
+                minInterval = self
+                maxInterval = other
+            else:
+                minInterval = other
+                maxInterval = self
+        if math_utils.gte(
+            minInterval.ub, maxInterval.lb
+        ):  ## intervals intersect.
+            ans = Interval.make_interval([minInterval.lb, maxInterval.ub])
+            total_height = Interval.width(ans)
+            return ans, total_height
+        elif math_utils.lt(
+            minInterval.ub, maxInterval.lb
+        ):  ## intervals are disjoint.
+            ans = [minInterval, maxInterval]
+            total_height = [
+                math_utils.plus(
+                    Interval.width(minInterval), Interval.width(maxInterval)
+                )
+            ]
+            return ans, total_height
+
+    def subtract_two_1d_intervals(
+        a: "Interval", b: "Interval"
+    ) -> "Interval":  ## TODO Drisana - fix
+        """Given 2 intervals a = [a0,a1] and b=[b0,b1], return the part of a that does not intersect with b."""
+        if math_utils.gte(a.lb, b.lb):
+            if math_utils.lte(a.ub, b.ub):  ## a is a subset of b: return None
+                return None
+            return Interval(b.ub, a.ub)
+        elif math_utils.lt(a.lb, b.lb):
+            return Interval(a.lb, b.lb)
+
+        return None
+
+    def subtract_two_1d_lists(a, b):
+        """Given 2 intervals a = [a0,a1] and b=[b0,b1], return the part of a that does not intersect with b."""
+
+        if math_utils.lt(a[0], b[0]):
+            return [a[0], b[0]]
+
+        if math_utils.gt(a[0], b[0]):
+            return [b[0], a[0]]
+
+        return None
 
     def union(self, other: "Interval") -> List["Interval"]:
         if self == other:  ## intervals are equal, so return original interval
@@ -306,8 +372,27 @@ class Box(object):
             ]
         )
 
+    def equal(b1, b2, param_list): ## added 11/27/22 DMI
+        result = []
+        for p1 in param_list:
+            for b in b1.bounds:
+                if b.name == p1:
+                    b1_bounds = [b.lb, b.ub]
+            for b in b2.bounds:
+                if b.name == p1:
+                    b2_bounds = [b.lb, b.ub]
+            if b1_bounds == b2_bounds:
+                result.append(True)
+            else: 
+                result.append(False)
+        return all(result)
+
     def intersects(self, other: "Box") -> bool:
-        return all(
+#        print([
+#                interval.intersects(other.bounds[p])
+#                for p, interval in self.bounds.items()
+#        ]) ## DMI delete later
+        return all( 
             [
                 interval.intersects(other.bounds[p])
                 for p, interval in self.bounds.items()
@@ -356,6 +441,7 @@ class Box(object):
     def split_bounds(a: "Box", b: "Box"):
         interval_list = []
         height_list = []
+        ybounds_list = []
         a_params = list(a.bounds.keys())
         b_params = list(b.bounds.keys())
         beta_0_a = a.bounds[a_params[0]]  # first box, first parameter
@@ -379,35 +465,45 @@ class Box(object):
         )
         if beta_0_intersection != None:
             interval = beta_0_intersection
+            ybounds = Interval.union(beta_1_a, beta_1_b)[0]
             height = Interval.union(beta_1_a, beta_1_b)[1]
             if interval not in interval_list:
                 interval_list.append(interval)
                 height_list.append(height)
+                ybounds_list.append(ybounds)
         if beta_0_a_new != None:
             interval = beta_0_a_new
+            ybounds = beta_1_a
             height = Interval.width(beta_1_a)
             if interval not in interval_list:
-                interval_list.append(interval)
+                interval_list.append([interval.lb, interval.ub])
                 height_list.append(height)
+                ybounds_list.append(ybounds)
         if beta_0_a_new_2 != None:
             interval = beta_0_a_new_2
+            ybounds = beta_1_a
             height = Interval.width(beta_1_a)
             if interval not in interval_list:
-                interval_list.append(interval)
+                interval_list.append([interval.lb, interval.ub])
                 height_list.append(height)
+                ybounds_list.append(ybounds)
         if beta_0_b_new != None:
             interval = beta_0_b_new
+            ybounds = beta_1_b
             height = Interval.width(beta_1_b)
             if interval not in interval_list:
-                interval_list.append(interval)
+                interval_list.append([interval.lb, interval.ub])
                 height_list.append(height)
+                ybounds_list.append(ybounds)
         if beta_0_b_new_2 != None:
             interval = beta_0_b_new_2
+            ybounds = beta_1_b
             height = Interval.width(beta_1_b)
             if interval not in interval_list:
-                interval_list.append(interval)
+                interval_list.append([interval.lb, interval.ub])
                 height_list.append(height)
-        return interval_list, height_list
+                ybounds_list.append(ybounds)
+        return interval_list, height_list, ybounds_list
 
     def check_bounds_disjoint_equal_bool(a: "Box", b: "Box"):
         ### specify first parameter (the one to check whether there is an intersection on)
@@ -438,10 +534,10 @@ class Box(object):
         beta_1_a = a.bounds[a_params[1]]  # first box, second parameter
         beta_0_b = b.bounds[b_params[0]]  # second box, first parameter
         beta_1_b = b.bounds[b_params[1]]  # second box, second parameter
-        print("beta_0_a:", beta_0_a)
-        print("beta_0_b:", beta_0_b)
-        print("beta_1_a:", beta_1_a)
-        print("beta_1_b:", beta_1_b)
+        #        print('beta_0_a:',beta_0_a)
+        #        print('beta_0_b:',beta_0_b)
+        #        print('beta_1_a:',beta_1_a)
+        #        print('beta_1_b:',beta_1_b)
         if beta_0_a == beta_0_b:  ## bounds are equal: done
             print("done: beta_0 bounds are equal")
             ## calculate width of union
@@ -463,16 +559,30 @@ class Box(object):
                 )
             else:  ## there is both some intersection and some symmetric difference. split accordingly.
                 #                print("in progress: splitting")
-                return (
-                    False,
-                    Box.split_bounds(a, b),
-                    Interval.union(beta_1_a, beta_1_b),
-                )
+                return False, Box.split_bounds(
+                    a, b
+                )  # , Interval.union(beta_1_a, beta_1_b)
+
+    def _get_max_width_point_parameter(self, points):
+        # get the average distance from the center point for each parameter
+        centers = {
+            p: average([pt.values[p] for pt in points]) for p in self.bounds
+        }
+        point_distances = [
+            {p: abs(pt.values[p] - centers[p]) for p in pt.values}
+            for pt in points
+        ]
+        parameter_widths = {
+            p: average([pt[p] for pt in point_distances]) for p in self.bounds
+        }
+        max_width_parameter = max(parameter_widths, key=parameter_widths.get)
+        return max_width_parameter
 
     def _get_max_width_parameter(self):
         widths = [bounds.width() for _, bounds in self.bounds.items()]
         max_width = max(widths)
         param = list(self.bounds.keys())[widths.index(max_width)]
+#        print('width info:', param, max_width)## DMI delete
         return param, max_width
 
     def width(self) -> float:
@@ -483,21 +593,38 @@ class Box(object):
         return self.cached_width
 
     def split(self, points=None):
-        p, _ = self._get_max_width_parameter()
+        """
+        Split box along max width dimension. If points are provided, then pick the axis where the points are maximally distant.
+
+        Parameters
+        ----------
+        points : List[Point], optional
+            solution points that the split will separate, by default None
+
+        Returns
+        -------
+        List[Box]
+            Boxes resulting from the split.
+        """
+
         if points:
+            p = self._get_max_width_point_parameter(points)
             mid = self.bounds[p].midpoint(
                 points=[pt.values[p] for pt in points]
             )
         else:
+            p, _ = self._get_max_width_parameter()
             mid = self.bounds[p].midpoint()
 
         b1 = self._copy()
         b2 = self._copy()
 
         # b1 is lower half
+        assert b1.bounds[p].lb < mid
         b1.bounds[p] = Interval(b1.bounds[p].lb, mid)
 
         # b2 is upper half
+        assert mid <= b2.bounds[p].ub
         b2.bounds[p] = Interval(mid, b2.bounds[p].ub)
 
         return [b2, b1]
@@ -505,6 +632,58 @@ class Box(object):
     def intersection(a: Interval, b: Interval) -> Interval:
         """Given 2 intervals with a = [a0,a1] and b=[b0,b1], check whether they intersect.  If they do, return interval with their intersection."""
         if a == b:
+            return a
+        else:
+            if a.lb == b.lb:
+                if math_utils.lt(a.ub, b.ub):
+                    minArray = a
+                    maxArray = b
+                else:
+                    minArray = b
+                    maxArray = a
+            elif math_utils.lt(a.lb, b.lb):
+                minArray = a
+                maxArray = b
+            else:
+                minArray = b
+                maxArray = a
+            if math_utils.gt(
+                minArray.ub, maxArray.lb
+            ):  ## has nonempty intersection. return intersection
+                return [float(maxArray.lb), float(minArray.ub)]
+            else:  ## no intersection.
+                return []
+
+    def intersect_two_boxes_selected_parameters(b1, b2, param_list): ## added 11/21/22 DMM
+        result = []
+        for p1 in param_list:
+            for b in b1.bounds:
+                if b.name == p1:
+                    b1_bounds = Interval.make_interval([b.lb, b.ub])
+            for b in b2.bounds:
+                if b.name == p1:
+                    b2_bounds = Interval.make_interval([b.lb, b.ub])
+            intersection_ans = Box.intersection(b1_bounds, b2_bounds)
+            dict_element = Parameter(p1, intersection_ans[0], intersection_ans[1])
+            result.append(dict_element)
+        return Box({i for i in result})
+
+    def intersect_two_boxes(b1, b2):
+        a = list(b1.bounds.values())
+        b = list(b2.bounds.values())
+        result = []
+        d = len(a)  ## dimension
+        for i in range(d):
+            subresult = Box.intersection(a[i], b[i])
+            if subresult == []:
+                return None
+            else:
+                result.append(subresult)
+        return result
+
+    def subtract_two_1d_boxes(a, b):
+        """Given 2 intervals a = [a0,a1] and b=[b0,b1], return the part of a that does not intersect with b."""
+        if intersect_two_1d_boxes(a, b) == None:
             return a
         else:
             if a.lb == b.lb:
@@ -739,6 +918,9 @@ class SearchConfig(Config):
         wait_action=None,
         wait_action_timeout=0.05,
         read_cache=None,
+        episode_type=None,
+        search=None,
+        solver="z3",
     ) -> None:
         self.tolerance = tolerance
         self.queue_timeout = queue_timeout
@@ -748,6 +930,9 @@ class SearchConfig(Config):
         self.wait_action = wait_action
         self.wait_action_timeout = wait_action_timeout
         self.read_cache = read_cache
+        self.episode_type = episode_type
+        self.search = search
+        self.solver = solver
 
 
 def _encode_labeled_box(box: Box, label: str):
@@ -763,7 +948,7 @@ def encode_false_box(box: Box):
 
 
 def encode_unknown_box(box: Box):
-    return _encode_labeled_box(box, "unkown")
+    return _encode_labeled_box(box, "unknown")
 
 
 def decode_labeled_box(box: dict):

@@ -25,7 +25,7 @@ from pysmt.typing import INT, REAL, BOOL
 import unittest
 import os
 from funman import Funman
-from funman.model import Parameter, Model
+from funman.model import Parameter, EncodedModel
 from funman.scenario.parameter_synthesis import ParameterSynthesisScenario
 from funman.examples.chime import CHIME
 
@@ -77,7 +77,7 @@ class TestCompilation(unittest.TestCase):
             ]
         )
 
-        model = Model(And(params, init, dynamics, bounds))
+        model = EncodedModel(And(params, init, dynamics, bounds))
 
         scenario = ParameterSynthesisScenario(parameters, model, BoxSearch())
         funman = Funman()
