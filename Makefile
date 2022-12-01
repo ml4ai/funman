@@ -58,7 +58,10 @@ deploy-pages: docs
 	git checkout main
 	git branch -D gh-pages
 
-build-docker:
+build-docker-dreal:
+	docker build -t funman_dreal4 -f ./Dockerfile.dreal4 .
+
+build-docker: build-docker-dreal
 	DOCKER_BUILDKIT=1 docker build \
 		--build-arg UNAME=$$USER \
 		--build-arg UID=$$(id -u) \
@@ -71,6 +74,4 @@ run-docker:
 		-it \
 		--cpus=8 \
 		--name funman-dev \
-		--mount=type=bind,source=$$PWD/../model2smtlib,target=$$HOME/model2smtlib \
-		--mount=type=bind,source=$$PWD,target=$$HOME/funman \
 		funman:latest
