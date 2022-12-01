@@ -1,6 +1,7 @@
 from functools import partial
 import os
 from queue import Queue
+from typing import Dict, List
 import docker
 from shutil import copyfile, rmtree
 import time
@@ -19,7 +20,7 @@ from pysmt.exceptions import (
 )
 from pysmt.decorators import clear_pending_pop
 from tenacity import retry
-from pysmt.shortcuts import get_env, GT, Symbol
+from pysmt.shortcuts import get_env, GT, Symbol, Real
 from pysmt.logics import QF_NRA
 from pysmt.exceptions import SolverRedefinitionError
 from functools import partial
@@ -102,11 +103,14 @@ class DReal(SmtLibSolver):
 
     commands_to_enqueue = [
         smtcmd.SET_LOGIC,
-        smtcmd.DEFINE_FUN,
         smtcmd.PUSH,
         smtcmd.POP,
+        smtcmd.DEFINE_FUN,
+        smtcmd.ASSERT,
     ]
-    commands_to_flush = [smtcmd.CHECK_SAT, smtcmd.ASSERT]
+    commands_to_flush = [
+        smtcmd.CHECK_SAT,
+    ]
 
     def __init__(
         self, args, environment, logic, LOGICS=None, **options
@@ -130,7 +134,7 @@ class DReal(SmtLibSolver):
             "dreal/dreal4",
             stdin_open=True,
             tty=True,
-            entrypoint=f"/usr/bin/dreal --in",
+            entrypoint=f"/usr/bin/dreal --in --model --smtlib2-compliant",
         )
         self.client.start(self.container)
 
@@ -142,6 +146,10 @@ class DReal(SmtLibSolver):
             self.container,
             params={"stdin": 1, "stream": 1},
         )
+
+        self.models: List[Dict[str, (float, float)]] = []
+        self.current_model = None
+        self.symbols = set([])
 
         # Initialize solver
         try:
@@ -174,19 +182,17 @@ class DReal(SmtLibSolver):
         # s._sock.send(input.encode("utf-8"))
 
         if cmd.name == smtcmd.SET_OPTION:
-            # dreal does not support set-option command
             self.wait = 0
-            # print(f"Skipped: {text.getvalue()}")
             return
         else:
-            # if "check-sat" in text.getvalue():
-            #     self.wait = 10
-            # # elif "assert" in text.getvalue():
-            # #     self.wait = 1
-            # # elif "declare-fun" in text.getvalue():
-            # #     self.wait = 1
-            # else:
             self.wait = 1
+
+            if cmd.name == smtcmd.CHECK_SAT:
+                self.current_model = {}
+                self.models.append(self.current_model)
+            elif cmd.name == smtcmd.DECLARE_FUN:
+                symbol = cmd.args[0]
+                self.symbols.add(symbol)
 
             # self.last_sent = payload
             self.batch.put(cmd)
@@ -197,17 +203,16 @@ class DReal(SmtLibSolver):
 
     def _get_value_answer(self):
         """Reads and parses an assignment from the STDOUT pipe"""
-        # lst = self.parser.get_assignment_list(self.solver_stdout)
-        lst = [[0.0, 0.0]]
+        value = self.solver_stdout
+        lst = self.parser.get_assignment_list(value)
+        # lst = [[0.0, 0.0]]
         self._debug("Read: %s", lst)
         return lst
 
     def get_value(self, item):
-        # self._send_command(SmtLibCommand(smtcmd.GET_VALUE, [item]))
-        lst = self._get_value_answer()
-        assert len(lst) == 1
-        assert len(lst[0]) == 2
-        return lst[0][1]
+        return Real(
+            self.current_model[item.symbol_name()][0]
+        )  # return lower bound
 
     def _send_batch(self):
         payload = b""
@@ -219,49 +224,100 @@ class DReal(SmtLibSolver):
             encoded_text = text.getvalue().encode("utf-8")
             payload += encoded_text
             self.sent_batch.put((cmd, encoded_text))
-        self.stdin._sock.sendall(payload)
-        self.stdin.flush()
+        # payload += b"\r\n"
+        self.stdin._sock.send(payload)
+        # self.stdin.flush()
 
     @retry
     def _read_socket(self):
         return self.stdout._sock.recv(1)
 
-    def _get_command_result(self, command, encoded_text):
-        try:
-            msg = []
-            reading_result = False
-            result = []
-            encoded_text = encoded_text.replace(b"\r", b"")
-            while True:
-                b = self._read_socket()
-                if b == b"\r":
-                    continue
-                msg.append(b)
-                if command == smtcmd.CHECK_SAT:
-                    # Keep reading to get result until "\n"
-                    if reading_result:
-                        if b == b"\n":
-                            break
-                        else:
-                            result.append(b)
-                    elif b"".join(msg) == encoded_text:
-                        reading_result = True
-                elif b"".join(msg) == encoded_text:
-                    break
-                elif b"".join(msg) == b"\n":
-                    msg = []
-                    continue
+    def _read_line(self):
+        # Read a line of content, skipping empty lines with only "\n"
+        msg = []
+        while True:
+            b = self._read_socket()
+            if b == b"\r" or (b == b"\n" and len(msg) == 0):
+                continue
+            msg.append(b)
+            if b == b"\n":
+                line = b"".join(msg)
+                # print(f"Read: {line}")
+                return line
 
-            if len(result) > 0:
-                res = b"".join(result).decode()
-            else:
-                res = "success"
+    def _get_echo_result(self, encoded_text):
+        """
+        Read back the stdout from dreal that echo's the encoded_text
+
+        Parameters
+        ----------
+        command : str
+            SMTLib Command
+        encoded_text : str
+            Serialized command text
+        """
+
+        encoded_text = encoded_text.replace(b"\r", b"")
+        line = self._read_line()  # .replace(b"\n", b"")
+        if encoded_text == line:
+            return "success"
+        else:
+            raise Exception(
+                f"Could not read back echoed command from dreal: {encoded_text}, Got: {line}"
+            )
+
+    def get_check_sat_value_result(self):
+        line = self._read_line().decode()
+        if "delta-sat" in line:
+            return "delta-sat"
+        elif "unsat" in line:
+            return "unsat"
+        elif "sat" in line:
+            return "sat"
+
+    def _get_model(self):
+        """
+        Read list of "symbol: [lb, ub]\n" and store as model
+        """
+        while len(self.current_model) < len(self.symbols):
+            line = self._read_line().decode()
+            [symbol_str, bounds] = line.split(":")
+            [lb, ub] = (
+                bounds.replace("[", "").replace("]", "").strip().split(",")
+            )
+            self.current_model[symbol_str.strip()] = [float(lb), float(ub)]
+
+    def _get_check_sat_result(self, encoded_text):
+        """
+        Read back the stdout from dreal that echo's the encoded_text, the result, and possibly a model.
+
+        Parameters
+        ----------
+        command : str
+            SMTLib Command
+        encoded_text : str
+            Serialized command text
+        """
+        if self._get_echo_result(encoded_text):  # read back "(check-sat)"
+            result = self.get_check_sat_value_result()
+            if result == "delta-sat" or result == "sat":
+                self._get_model()
+            return result
+
+    def _get_command_result(self, command, encoded_text):
+        handlers = {
+            smtcmd.SET_LOGIC: self._get_echo_result,
+            smtcmd.DECLARE_FUN: self._get_echo_result,
+            smtcmd.ASSERT: self._get_echo_result,
+            smtcmd.CHECK_SAT: self._get_check_sat_result,
+        }
+        try:
+            return handlers[command.name](encoded_text)
         except TimeoutError as e:
             print(f"Timeout waiting for socket receive.")
             res = "success"
         except Exception as e:
             print(f"Failed to read from socket: {e}")
-        return res
 
     # @container_alive
     def _get_answer(self):
