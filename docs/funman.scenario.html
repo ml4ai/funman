@@ -21,7 +21,7 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="prev" title="funman.examples package" href="funman.examples.html" /> 
+    <link rel="prev" title="funman.model package" href="funman.model.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -52,10 +52,12 @@
 <li class="toctree-l2"><a class="reference internal" href="funman.html#funman.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
 <li class="toctree-l2 current"><a class="reference internal" href="funman.html#subpackages">Subpackages</a><ul class="current">
 <li class="toctree-l3"><a class="reference internal" href="funman.examples.html">funman.examples package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="funman.model.html">funman.model package</a></li>
 <li class="toctree-l3 current"><a class="current reference internal" href="#">funman.scenario package</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#funman.scenario.AnalysisScenario"><code class="docutils literal notranslate"><span class="pre">AnalysisScenario</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#funman.scenario.AnalysisScenarioResult"><code class="docutils literal notranslate"><span class="pre">AnalysisScenarioResult</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#funman-scenario-consistency">funman.scenario.consistency</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#funman-scenario-parameter-synthesis">funman.scenario.parameter_synthesis</a></li>
 </ul>
 </li>
@@ -65,11 +67,11 @@
 <li class="toctree-l2"><a class="reference internal" href="funman.html#funman-config">funman.config</a></li>
 <li class="toctree-l2"><a class="reference internal" href="funman.html#funman-constants">funman.constants</a></li>
 <li class="toctree-l2"><a class="reference internal" href="funman.html#funman-math-utils">funman.math_utils</a></li>
-<li class="toctree-l2"><a class="reference internal" href="funman.html#funman-model">funman.model</a></li>
 <li class="toctree-l2"><a class="reference internal" href="funman.html#funman-parameter-space">funman.parameter_space</a></li>
 <li class="toctree-l2"><a class="reference internal" href="funman.html#funman-search">funman.search</a></li>
 <li class="toctree-l2"><a class="reference internal" href="funman.html#funman-search-episode">funman.search_episode</a></li>
 <li class="toctree-l2"><a class="reference internal" href="funman.html#funman-search-utils">funman.search_utils</a></li>
+<li class="toctree-l2"><a class="reference internal" href="funman.html#funman-util">funman.util</a></li>
 </ul>
 </li>
 </ul>
@@ -135,6 +137,63 @@ is capable of solving.</p>
 <section id="submodules">
 <h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this heading"></a></h2>
 </section>
+<section id="funman-scenario-consistency">
+<h2>funman.scenario.consistency<a class="headerlink" href="#funman-scenario-consistency" title="Permalink to this heading"></a></h2>
+<div class="graphviz"><object data="_images/inheritance-4d2f69e4ea8a0c9b21a8e4533f730f7362cfe634.svg" type="image/svg+xml" class="inheritance graphviz">
+<p class="warning">Inheritance diagram of funman.scenario.consistency</p></object></div>
+<span class="target" id="module-funman.scenario.consistency"></span><p>This submodule defined the Parameter Synthesis scenario.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="funman.scenario.consistency.ConsistencyScenario">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">funman.scenario.consistency.</span></span><span class="sig-name descname"><span class="pre">ConsistencyScenario</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">FNode</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="funman.model.html#funman.model.bilayer.Bilayer" title="funman.model.bilayer.Bilayer"><span class="pre">Bilayer</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">query</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="funman.model.html#funman.model.Query" title="funman.model.Query"><span class="pre">Query</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">smt_encoder</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Dict</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#funman.scenario.consistency.ConsistencyScenario" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#funman.scenario.AnalysisScenario" title="funman.scenario.AnalysisScenario"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnalysisScenario</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="funman.scenario.consistency.ConsistencyScenario.encode">
+<span class="sig-name descname"><span class="pre">encode</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#funman.scenario.consistency.ConsistencyScenario.encode" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="funman.scenario.consistency.ConsistencyScenario.solve">
+<span class="sig-name descname"><span class="pre">solve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="funman.html#funman.search_utils.SearchConfig" title="funman.search_utils.SearchConfig"><span class="pre">SearchConfig</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#funman.scenario.consistency.ConsistencyScenarioResult" title="funman.scenario.consistency.ConsistencyScenarioResult"><span class="pre">ConsistencyScenarioResult</span></a></span></span><a class="headerlink" href="#funman.scenario.consistency.ConsistencyScenario.solve" title="Permalink to this definition"></a></dt>
+<dd><p>Check model consistency.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>config</strong> (<a class="reference internal" href="funman.html#funman.search_utils.SearchConfig" title="funman.search_utils.SearchConfig"><em>SearchConfig</em></a>) – Options for the Search algorithm.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>ConsistencyScenarioResult indicating whether the model is consistent.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>result</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="funman.scenario.consistency.ConsistencyScenarioResult">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">funman.scenario.consistency.</span></span><span class="sig-name descname"><span class="pre">ConsistencyScenarioResult</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">result</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scenario</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#funman.scenario.consistency.ConsistencyScenario" title="funman.scenario.consistency.ConsistencyScenario"><span class="pre">ConsistencyScenario</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#funman.scenario.consistency.ConsistencyScenarioResult" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#funman.scenario.AnalysisScenarioResult" title="funman.scenario.AnalysisScenarioResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnalysisScenarioResult</span></code></a></p>
+<p>ConsistencyScenarioResult result, which includes the consistency flag and
+search statistics.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="funman.scenario.consistency.ConsistencyScenarioResult.dataframe">
+<span class="sig-name descname"><span class="pre">dataframe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">interpolate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'linear'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#funman.scenario.consistency.ConsistencyScenarioResult.dataframe" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="funman.scenario.consistency.ConsistencyScenarioResult.parameters">
+<span class="sig-name descname"><span class="pre">parameters</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#funman.scenario.consistency.ConsistencyScenarioResult.parameters" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="funman.scenario.consistency.ConsistencyScenarioResult.plot">
+<span class="sig-name descname"><span class="pre">plot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#funman.scenario.consistency.ConsistencyScenarioResult.plot" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
 <section id="funman-scenario-parameter-synthesis">
 <h2>funman.scenario.parameter_synthesis<a class="headerlink" href="#funman-scenario-parameter-synthesis" title="Permalink to this heading"></a></h2>
 <div class="graphviz"><object data="_images/inheritance-f5d6405c851878d00c50bf014c2e7cfb8d131573.svg" type="image/svg+xml" class="inheritance graphviz">
@@ -142,13 +201,18 @@ is capable of solving.</p>
 <span class="target" id="module-funman.scenario.parameter_synthesis"></span><p>This submodule defined the Parameter Synthesis scenario.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="funman.scenario.parameter_synthesis.ParameterSynthesisScenario">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">funman.scenario.parameter_synthesis.</span></span><span class="sig-name descname"><span class="pre">ParameterSynthesisScenario</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parameters</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="funman.html#funman.model.Parameter" title="funman.model.Parameter"><span class="pre">Parameter</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">FNode</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">search</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Dict</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#funman.scenario.parameter_synthesis.ParameterSynthesisScenario" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">funman.scenario.parameter_synthesis.</span></span><span class="sig-name descname"><span class="pre">ParameterSynthesisScenario</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parameters</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="funman.model.html#funman.model.Parameter" title="funman.model.Parameter"><span class="pre">Parameter</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="funman.model.html#funman.model.Model" title="funman.model.Model"><span class="pre">Model</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">query</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="funman.model.html#funman.model.Query" title="funman.model.Query"><span class="pre">Query</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">search</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">smt_encoder</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Dict</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#funman.scenario.parameter_synthesis.ParameterSynthesisScenario" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="#funman.scenario.AnalysisScenario" title="funman.scenario.AnalysisScenario"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnalysisScenario</span></code></a></p>
 <p>Parameter synthesis problem description that identifies the parameters to
 synthesize for a particular model.  The general problem is to identify
 multi-dimensional (one dimension per parameter) regions where either all
 points in the region are valid (true) parameters for the model or invalid
 (false) parameters.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="funman.scenario.parameter_synthesis.ParameterSynthesisScenario.encode">
+<span class="sig-name descname"><span class="pre">encode</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#funman.scenario.parameter_synthesis.ParameterSynthesisScenario.encode" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
 <dl class="py method">
 <dt class="sig sig-object py" id="funman.scenario.parameter_synthesis.ParameterSynthesisScenario.solve">
 <span class="sig-name descname"><span class="pre">solve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="funman.html#funman.search_utils.SearchConfig" title="funman.search_utils.SearchConfig"><span class="pre">SearchConfig</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#funman.scenario.parameter_synthesis.ParameterSynthesisScenarioResult" title="funman.scenario.parameter_synthesis.ParameterSynthesisScenarioResult"><span class="pre">ParameterSynthesisScenarioResult</span></a></span></span><a class="headerlink" href="#funman.scenario.parameter_synthesis.ParameterSynthesisScenario.solve" title="Permalink to this definition"></a></dt>
@@ -185,7 +249,7 @@ search statistics.</p>
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="funman.examples.html" class="btn btn-neutral float-left" title="funman.examples package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="funman.model.html" class="btn btn-neutral float-left" title="funman.model package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
     </div>
 
   <hr/>

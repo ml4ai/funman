@@ -77,7 +77,7 @@
              
   <section id="package-diagram">
 <h1>Package Diagram<a class="headerlink" href="#package-diagram" title="Permalink to this heading"></a></h1>
-<div class="graphviz"><object data="_images/graphviz-2a5419cebfd2da9df9c530d51019e37454d90cac.svg" type="image/svg+xml" class="graphviz">
+<div class="graphviz"><object data="_images/graphviz-ed8d10316130ed4b9472cbb648daafcf2fd5f14e.svg" type="image/svg+xml" class="graphviz">
 <p class="warning">digraph &quot;packages&quot; {
 rankdir=BT
 charset=&quot;utf-8&quot;
@@ -89,19 +89,30 @@ charset=&quot;utf-8&quot;
 &quot;funman.examples.chime&quot; [color=&quot;black&quot;, label=&quot;funman.examples.chime&quot;, shape=&quot;box&quot;, style=&quot;solid&quot;];
 &quot;funman.math_utils&quot; [color=&quot;black&quot;, label=&quot;funman.math_utils&quot;, shape=&quot;box&quot;, style=&quot;solid&quot;];
 &quot;funman.model&quot; [color=&quot;black&quot;, label=&quot;funman.model&quot;, shape=&quot;box&quot;, style=&quot;solid&quot;];
+&quot;funman.model.bilayer&quot; [color=&quot;black&quot;, label=&quot;funman.model.bilayer&quot;, shape=&quot;box&quot;, style=&quot;solid&quot;];
+&quot;funman.model.chime&quot; [color=&quot;black&quot;, label=&quot;funman.model.chime&quot;, shape=&quot;box&quot;, style=&quot;solid&quot;];
 &quot;funman.parameter_space&quot; [color=&quot;black&quot;, label=&quot;funman.parameter_space&quot;, shape=&quot;box&quot;, style=&quot;solid&quot;];
 &quot;funman.scenario&quot; [color=&quot;black&quot;, label=&quot;funman.scenario&quot;, shape=&quot;box&quot;, style=&quot;solid&quot;];
+&quot;funman.scenario.consistency&quot; [color=&quot;black&quot;, label=&quot;funman.scenario.consistency&quot;, shape=&quot;box&quot;, style=&quot;solid&quot;];
 &quot;funman.scenario.parameter_synthesis&quot; [color=&quot;black&quot;, label=&quot;funman.scenario.parameter_synthesis&quot;, shape=&quot;box&quot;, style=&quot;solid&quot;];
 &quot;funman.search&quot; [color=&quot;black&quot;, label=&quot;funman.search&quot;, shape=&quot;box&quot;, style=&quot;solid&quot;];
 &quot;funman.search_episode&quot; [color=&quot;black&quot;, label=&quot;funman.search_episode&quot;, shape=&quot;box&quot;, style=&quot;solid&quot;];
 &quot;funman.search_utils&quot; [color=&quot;black&quot;, label=&quot;funman.search_utils&quot;, shape=&quot;box&quot;, style=&quot;solid&quot;];
+&quot;funman.util&quot; [color=&quot;black&quot;, label=&quot;funman.util&quot;, shape=&quot;box&quot;, style=&quot;solid&quot;];
 &quot;funman&quot; -&gt; &quot;funman._version&quot; [arrowhead=&quot;open&quot;, arrowtail=&quot;none&quot;];
 &quot;funman&quot; -&gt; &quot;funman.config&quot; [arrowhead=&quot;open&quot;, arrowtail=&quot;none&quot;];
 &quot;funman&quot; -&gt; &quot;funman.scenario&quot; [arrowhead=&quot;open&quot;, arrowtail=&quot;none&quot;];
 &quot;funman.math_utils&quot; -&gt; &quot;funman.constants&quot; [arrowhead=&quot;open&quot;, arrowtail=&quot;none&quot;];
 &quot;funman.model&quot; -&gt; &quot;funman.constants&quot; [arrowhead=&quot;open&quot;, arrowtail=&quot;none&quot;];
+&quot;funman.model.bilayer&quot; -&gt; &quot;funman.model&quot; [arrowhead=&quot;open&quot;, arrowtail=&quot;none&quot;];
+&quot;funman.model.chime&quot; -&gt; &quot;funman.examples.chime&quot; [arrowhead=&quot;open&quot;, arrowtail=&quot;none&quot;];
+&quot;funman.model.chime&quot; -&gt; &quot;funman.model&quot; [arrowhead=&quot;open&quot;, arrowtail=&quot;none&quot;];
 &quot;funman.parameter_space&quot; -&gt; &quot;funman.search_utils&quot; [arrowhead=&quot;open&quot;, arrowtail=&quot;none&quot;];
 &quot;funman.scenario&quot; -&gt; &quot;funman.config&quot; [arrowhead=&quot;open&quot;, arrowtail=&quot;none&quot;];
+&quot;funman.scenario.consistency&quot; -&gt; &quot;funman.model&quot; [arrowhead=&quot;open&quot;, arrowtail=&quot;none&quot;];
+&quot;funman.scenario.consistency&quot; -&gt; &quot;funman.model.bilayer&quot; [arrowhead=&quot;open&quot;, arrowtail=&quot;none&quot;];
+&quot;funman.scenario.consistency&quot; -&gt; &quot;funman.scenario&quot; [arrowhead=&quot;open&quot;, arrowtail=&quot;none&quot;];
+&quot;funman.scenario.consistency&quot; -&gt; &quot;funman.search&quot; [arrowhead=&quot;open&quot;, arrowtail=&quot;none&quot;];
 &quot;funman.scenario.parameter_synthesis&quot; -&gt; &quot;funman.examples.chime&quot; [arrowhead=&quot;open&quot;, arrowtail=&quot;none&quot;];
 &quot;funman.scenario.parameter_synthesis&quot; -&gt; &quot;funman.model&quot; [arrowhead=&quot;open&quot;, arrowtail=&quot;none&quot;];
 &quot;funman.scenario.parameter_synthesis&quot; -&gt; &quot;funman.parameter_space&quot; [arrowhead=&quot;open&quot;, arrowtail=&quot;none&quot;];
@@ -111,6 +122,7 @@ charset=&quot;utf-8&quot;
 &quot;funman.search_episode&quot; -&gt; &quot;funman.search_utils&quot; [arrowhead=&quot;open&quot;, arrowtail=&quot;none&quot;];
 &quot;funman.search_utils&quot; -&gt; &quot;funman.config&quot; [arrowhead=&quot;open&quot;, arrowtail=&quot;none&quot;];
 &quot;funman.search_utils&quot; -&gt; &quot;funman.constants&quot; [arrowhead=&quot;open&quot;, arrowtail=&quot;none&quot;];
+&quot;funman.search_utils&quot; -&gt; &quot;funman.math_utils&quot; [arrowhead=&quot;open&quot;, arrowtail=&quot;none&quot;];
 &quot;funman.search_utils&quot; -&gt; &quot;funman.model&quot; [arrowhead=&quot;open&quot;, arrowtail=&quot;none&quot;];
 }</p></object></div>
 </section>

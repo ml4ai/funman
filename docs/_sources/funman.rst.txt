@@ -13,6 +13,7 @@ Subpackages
    :maxdepth: 4
 
    funman.examples
+   funman.model
    funman.scenario
 
 Submodules
@@ -44,16 +45,6 @@ funman.math\_utils
    :parts: 1
 
 .. automodule:: funman.math_utils
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-funman.model
-------------
-.. inheritance-diagram:: funman.model
-   :parts: 1
-
-.. automodule:: funman.model
    :members:
    :undoc-members:
    :show-inheritance:
@@ -94,6 +85,16 @@ funman.search\_utils
    :parts: 1
 
 .. automodule:: funman.search_utils
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+funman.util
+-----------
+.. inheritance-diagram:: funman.util
+   :parts: 1
+
+.. automodule:: funman.util
    :members:
    :undoc-members:
    :show-inheritance:

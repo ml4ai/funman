@@ -77,17 +77,37 @@
              
   <section id="class-diagram">
 <h1>Class Diagram<a class="headerlink" href="#class-diagram" title="Permalink to this heading"></a></h1>
-<div class="graphviz"><object data="_images/graphviz-9fad8be6cb34f8e7b02b7039c886c0b386c519f2.svg" type="image/svg+xml" class="graphviz">
+<div class="graphviz"><object data="_images/graphviz-a141674487ee86e21cca916eaf2a5e16078973e7.svg" type="image/svg+xml" class="graphviz">
 <p class="warning">digraph &quot;classes&quot; {
 rankdir=BT
 charset=&quot;utf-8&quot;
 &quot;funman.scenario.AnalysisScenario&quot; [color=&quot;black&quot;, fontcolor=&quot;black&quot;, label=&quot;AnalysisScenario&quot;, shape=&quot;record&quot;, style=&quot;solid&quot;];
 &quot;funman.scenario.AnalysisScenarioResult&quot; [color=&quot;black&quot;, fontcolor=&quot;black&quot;, label=&quot;AnalysisScenarioResult&quot;, shape=&quot;record&quot;, style=&quot;solid&quot;];
+&quot;funman.model.bilayer.Bilayer&quot; [color=&quot;black&quot;, fontcolor=&quot;black&quot;, label=&quot;Bilayer&quot;, shape=&quot;record&quot;, style=&quot;solid&quot;];
+&quot;funman.model.bilayer.BilayerEdge&quot; [color=&quot;black&quot;, fontcolor=&quot;black&quot;, label=&quot;BilayerEdge&quot;, shape=&quot;record&quot;, style=&quot;solid&quot;];
+&quot;funman.model.bilayer.BilayerFluxNode&quot; [color=&quot;black&quot;, fontcolor=&quot;black&quot;, label=&quot;BilayerFluxNode&quot;, shape=&quot;record&quot;, style=&quot;solid&quot;];
+&quot;funman.model.bilayer.BilayerGraph&quot; [color=&quot;black&quot;, fontcolor=&quot;black&quot;, label=&quot;BilayerGraph&quot;, shape=&quot;record&quot;, style=&quot;solid&quot;];
+&quot;funman.model.bilayer.BilayerMeasurement&quot; [color=&quot;black&quot;, fontcolor=&quot;black&quot;, label=&quot;BilayerMeasurement&quot;, shape=&quot;record&quot;, style=&quot;solid&quot;];
+&quot;funman.model.bilayer.BilayerModel&quot; [color=&quot;black&quot;, fontcolor=&quot;black&quot;, label=&quot;BilayerModel&quot;, shape=&quot;record&quot;, style=&quot;solid&quot;];
+&quot;funman.model.bilayer.BilayerNegativeEdge&quot; [color=&quot;black&quot;, fontcolor=&quot;black&quot;, label=&quot;BilayerNegativeEdge&quot;, shape=&quot;record&quot;, style=&quot;solid&quot;];
+&quot;funman.model.bilayer.BilayerNode&quot; [color=&quot;black&quot;, fontcolor=&quot;black&quot;, label=&quot;BilayerNode&quot;, shape=&quot;record&quot;, style=&quot;solid&quot;];
+&quot;funman.model.bilayer.BilayerPositiveEdge&quot; [color=&quot;black&quot;, fontcolor=&quot;black&quot;, label=&quot;BilayerPositiveEdge&quot;, shape=&quot;record&quot;, style=&quot;solid&quot;];
+&quot;funman.model.bilayer.BilayerStateNode&quot; [color=&quot;black&quot;, fontcolor=&quot;black&quot;, label=&quot;BilayerStateNode&quot;, shape=&quot;record&quot;, style=&quot;solid&quot;];
 &quot;funman.search_utils.Box&quot; [color=&quot;black&quot;, fontcolor=&quot;black&quot;, label=&quot;Box&quot;, shape=&quot;record&quot;, style=&quot;solid&quot;];
 &quot;funman.search.BoxSearch&quot; [color=&quot;black&quot;, fontcolor=&quot;black&quot;, label=&quot;BoxSearch&quot;, shape=&quot;record&quot;, style=&quot;solid&quot;];
 &quot;funman.search_episode.BoxSearchEpisode&quot; [color=&quot;black&quot;, fontcolor=&quot;black&quot;, label=&quot;BoxSearchEpisode&quot;, shape=&quot;record&quot;, style=&quot;solid&quot;];
 &quot;funman.examples.chime.CHIME&quot; [color=&quot;black&quot;, fontcolor=&quot;black&quot;, label=&quot;CHIME&quot;, shape=&quot;record&quot;, style=&quot;solid&quot;];
+&quot;funman.model.CannedModel&quot; [color=&quot;black&quot;, fontcolor=&quot;black&quot;, label=&quot;CannedModel&quot;, shape=&quot;record&quot;, style=&quot;solid&quot;];
+&quot;funman.model.chime.ChimeModel&quot; [color=&quot;black&quot;, fontcolor=&quot;black&quot;, label=&quot;ChimeModel&quot;, shape=&quot;record&quot;, style=&quot;solid&quot;];
 &quot;funman.config.Config&quot; [color=&quot;black&quot;, fontcolor=&quot;black&quot;, label=&quot;Config&quot;, shape=&quot;record&quot;, style=&quot;solid&quot;];
+&quot;funman.scenario.consistency.ConsistencyScenario&quot; [color=&quot;black&quot;, fontcolor=&quot;black&quot;, label=&quot;ConsistencyScenario&quot;, shape=&quot;record&quot;, style=&quot;solid&quot;];
+&quot;funman.scenario.consistency.ConsistencyScenarioResult&quot; [color=&quot;black&quot;, fontcolor=&quot;black&quot;, label=&quot;ConsistencyScenarioResult&quot;, shape=&quot;record&quot;, style=&quot;solid&quot;];
+&quot;funman.search_episode.DRealSearchEpisode&quot; [color=&quot;black&quot;, fontcolor=&quot;black&quot;, label=&quot;DRealSearchEpisode&quot;, shape=&quot;record&quot;, style=&quot;solid&quot;];
+&quot;funman.search.DrealBoxSearch&quot; [color=&quot;black&quot;, fontcolor=&quot;black&quot;, label=&quot;DrealBoxSearch&quot;, shape=&quot;record&quot;, style=&quot;solid&quot;];
+&quot;funman.model.EncodedModel&quot; [color=&quot;black&quot;, fontcolor=&quot;black&quot;, label=&quot;EncodedModel&quot;, shape=&quot;record&quot;, style=&quot;solid&quot;];
+&quot;funman.util.FUNMANSmtDagPrinter&quot; [color=&quot;black&quot;, fontcolor=&quot;black&quot;, label=&quot;FUNMANSmtDagPrinter&quot;, shape=&quot;record&quot;, style=&quot;solid&quot;];
+&quot;funman.util.FUNMANSmtLibScript&quot; [color=&quot;black&quot;, fontcolor=&quot;black&quot;, label=&quot;FUNMANSmtLibScript&quot;, shape=&quot;record&quot;, style=&quot;solid&quot;];
+&quot;funman.util.FUNMANSmtPrinter&quot; [color=&quot;black&quot;, fontcolor=&quot;black&quot;, label=&quot;FUNMANSmtPrinter&quot;, shape=&quot;record&quot;, style=&quot;solid&quot;];
 &quot;funman.Funman&quot; [color=&quot;black&quot;, fontcolor=&quot;black&quot;, label=&quot;Funman&quot;, shape=&quot;record&quot;, style=&quot;solid&quot;];
 &quot;funman.search_utils.Interval&quot; [color=&quot;black&quot;, fontcolor=&quot;black&quot;, label=&quot;Interval&quot;, shape=&quot;record&quot;, style=&quot;solid&quot;];
 &quot;funman.model.Model&quot; [color=&quot;black&quot;, fontcolor=&quot;black&quot;, label=&quot;Model&quot;, shape=&quot;record&quot;, style=&quot;solid&quot;];
@@ -97,18 +117,38 @@ charset=&quot;utf-8&quot;
 &quot;funman.scenario.parameter_synthesis.ParameterSynthesisScenarioResult&quot; [color=&quot;black&quot;, fontcolor=&quot;black&quot;, label=&quot;ParameterSynthesisScenarioResult&quot;, shape=&quot;record&quot;, style=&quot;solid&quot;];
 &quot;funman.search_utils.Point&quot; [color=&quot;black&quot;, fontcolor=&quot;black&quot;, label=&quot;Point&quot;, shape=&quot;record&quot;, style=&quot;solid&quot;];
 &quot;funman.model.Query&quot; [color=&quot;black&quot;, fontcolor=&quot;black&quot;, label=&quot;Query&quot;, shape=&quot;record&quot;, style=&quot;solid&quot;];
+&quot;funman.model.QueryLE&quot; [color=&quot;black&quot;, fontcolor=&quot;black&quot;, label=&quot;QueryLE&quot;, shape=&quot;record&quot;, style=&quot;solid&quot;];
+&quot;funman.model.QueryTrue&quot; [color=&quot;black&quot;, fontcolor=&quot;black&quot;, label=&quot;QueryTrue&quot;, shape=&quot;record&quot;, style=&quot;solid&quot;];
 &quot;funman.search_utils.ResultCombinedHandler&quot; [color=&quot;black&quot;, fontcolor=&quot;black&quot;, label=&quot;ResultCombinedHandler&quot;, shape=&quot;record&quot;, style=&quot;solid&quot;];
 &quot;funman.search_utils.ResultHandler&quot; [color=&quot;black&quot;, fontcolor=&quot;black&quot;, label=&quot;ResultHandler&quot;, shape=&quot;record&quot;, style=&quot;solid&quot;];
+&quot;funman.search.SMTCheck&quot; [color=&quot;black&quot;, fontcolor=&quot;black&quot;, label=&quot;SMTCheck&quot;, shape=&quot;record&quot;, style=&quot;solid&quot;];
+&quot;funman.search.Search&quot; [color=&quot;black&quot;, fontcolor=&quot;black&quot;, label=&quot;Search&quot;, shape=&quot;record&quot;, style=&quot;solid&quot;];
 &quot;funman.search_utils.SearchConfig&quot; [color=&quot;black&quot;, fontcolor=&quot;black&quot;, label=&quot;SearchConfig&quot;, shape=&quot;record&quot;, style=&quot;solid&quot;];
 &quot;funman.search_episode.SearchEpisode&quot; [color=&quot;black&quot;, fontcolor=&quot;black&quot;, label=&quot;SearchEpisode&quot;, shape=&quot;record&quot;, style=&quot;solid&quot;];
 &quot;funman.search_utils.SearchStatistics&quot; [color=&quot;black&quot;, fontcolor=&quot;black&quot;, label=&quot;SearchStatistics&quot;, shape=&quot;record&quot;, style=&quot;solid&quot;];
 &quot;funman.search_utils.WaitAction&quot; [color=&quot;black&quot;, fontcolor=&quot;black&quot;, label=&quot;WaitAction&quot;, shape=&quot;record&quot;, style=&quot;solid&quot;];
+&quot;funman.model.CannedModel&quot; -&gt; &quot;funman.model.Model&quot; [arrowhead=&quot;empty&quot;, arrowtail=&quot;none&quot;];
+&quot;funman.model.EncodedModel&quot; -&gt; &quot;funman.model.Model&quot; [arrowhead=&quot;empty&quot;, arrowtail=&quot;none&quot;];
+&quot;funman.model.QueryLE&quot; -&gt; &quot;funman.model.Query&quot; [arrowhead=&quot;empty&quot;, arrowtail=&quot;none&quot;];
+&quot;funman.model.QueryTrue&quot; -&gt; &quot;funman.model.Query&quot; [arrowhead=&quot;empty&quot;, arrowtail=&quot;none&quot;];
+&quot;funman.model.bilayer.Bilayer&quot; -&gt; &quot;funman.model.bilayer.BilayerGraph&quot; [arrowhead=&quot;empty&quot;, arrowtail=&quot;none&quot;];
+&quot;funman.model.bilayer.BilayerFluxNode&quot; -&gt; &quot;funman.model.bilayer.BilayerNode&quot; [arrowhead=&quot;empty&quot;, arrowtail=&quot;none&quot;];
+&quot;funman.model.bilayer.BilayerMeasurement&quot; -&gt; &quot;funman.model.bilayer.BilayerGraph&quot; [arrowhead=&quot;empty&quot;, arrowtail=&quot;none&quot;];
+&quot;funman.model.bilayer.BilayerNegativeEdge&quot; -&gt; &quot;funman.model.bilayer.BilayerEdge&quot; [arrowhead=&quot;empty&quot;, arrowtail=&quot;none&quot;];
+&quot;funman.model.bilayer.BilayerPositiveEdge&quot; -&gt; &quot;funman.model.bilayer.BilayerEdge&quot; [arrowhead=&quot;empty&quot;, arrowtail=&quot;none&quot;];
+&quot;funman.model.bilayer.BilayerStateNode&quot; -&gt; &quot;funman.model.bilayer.BilayerNode&quot; [arrowhead=&quot;empty&quot;, arrowtail=&quot;none&quot;];
+&quot;funman.search.BoxSearch&quot; -&gt; &quot;funman.search.Search&quot; [arrowhead=&quot;empty&quot;, arrowtail=&quot;none&quot;];
+&quot;funman.search.DrealBoxSearch&quot; -&gt; &quot;funman.search.BoxSearch&quot; [arrowhead=&quot;empty&quot;, arrowtail=&quot;none&quot;];
+&quot;funman.search.SMTCheck&quot; -&gt; &quot;funman.search.Search&quot; [arrowhead=&quot;empty&quot;, arrowtail=&quot;none&quot;];
 &quot;funman.search_episode.BoxSearchEpisode&quot; -&gt; &quot;funman.search_episode.SearchEpisode&quot; [arrowhead=&quot;empty&quot;, arrowtail=&quot;none&quot;];
+&quot;funman.search_episode.DRealSearchEpisode&quot; -&gt; &quot;funman.search_episode.SearchEpisode&quot; [arrowhead=&quot;empty&quot;, arrowtail=&quot;none&quot;];
 &quot;funman.search_utils.ResultCombinedHandler&quot; -&gt; &quot;funman.search_utils.ResultHandler&quot; [arrowhead=&quot;empty&quot;, arrowtail=&quot;none&quot;];
 &quot;funman.search_utils.SearchConfig&quot; -&gt; &quot;funman.config.Config&quot; [arrowhead=&quot;empty&quot;, arrowtail=&quot;none&quot;];
-&quot;funman.examples.chime.CHIME&quot; -&gt; &quot;funman.scenario.parameter_synthesis.ParameterSynthesisScenario&quot; [arrowhead=&quot;diamond&quot;, arrowtail=&quot;none&quot;, fontcolor=&quot;green&quot;, label=&quot;chime&quot;, style=&quot;solid&quot;];
-&quot;funman.model.Model&quot; -&gt; &quot;funman.scenario.parameter_synthesis.ParameterSynthesisScenario&quot; [arrowhead=&quot;diamond&quot;, arrowtail=&quot;none&quot;, fontcolor=&quot;green&quot;, label=&quot;model&quot;, style=&quot;solid&quot;];
-&quot;funman.model.Query&quot; -&gt; &quot;funman.scenario.parameter_synthesis.ParameterSynthesisScenario&quot; [arrowhead=&quot;diamond&quot;, arrowtail=&quot;none&quot;, fontcolor=&quot;green&quot;, label=&quot;query&quot;, style=&quot;solid&quot;];
+&quot;funman.model.bilayer.BilayerEdge&quot; -&gt; &quot;funman.model.bilayer.Bilayer&quot; [arrowhead=&quot;diamond&quot;, arrowtail=&quot;none&quot;, fontcolor=&quot;green&quot;, label=&quot;input_edges&quot;, style=&quot;solid&quot;];
+&quot;funman.model.bilayer.BilayerEdge&quot; -&gt; &quot;funman.model.bilayer.Bilayer&quot; [arrowhead=&quot;diamond&quot;, arrowtail=&quot;none&quot;, fontcolor=&quot;green&quot;, label=&quot;output_edges&quot;, style=&quot;solid&quot;];
+&quot;funman.model.bilayer.BilayerEdge&quot; -&gt; &quot;funman.model.bilayer.BilayerMeasurement&quot; [arrowhead=&quot;diamond&quot;, arrowtail=&quot;none&quot;, fontcolor=&quot;green&quot;, label=&quot;input_edges&quot;, style=&quot;solid&quot;];
+&quot;funman.model.bilayer.BilayerEdge&quot; -&gt; &quot;funman.model.bilayer.BilayerMeasurement&quot; [arrowhead=&quot;diamond&quot;, arrowtail=&quot;none&quot;, fontcolor=&quot;green&quot;, label=&quot;output_edges&quot;, style=&quot;solid&quot;];
+&quot;funman.scenario.consistency.ConsistencyScenario&quot; -&gt; &quot;funman.scenario.consistency.ConsistencyScenarioResult&quot; [arrowhead=&quot;diamond&quot;, arrowtail=&quot;none&quot;, fontcolor=&quot;green&quot;, label=&quot;scenario&quot;, style=&quot;solid&quot;];
 &quot;funman.search.BoxSearch&quot; -&gt; &quot;funman.scenario.parameter_synthesis.ParameterSynthesisScenario&quot; [arrowhead=&quot;diamond&quot;, arrowtail=&quot;none&quot;, fontcolor=&quot;green&quot;, label=&quot;search&quot;, style=&quot;solid&quot;];
 &quot;funman.search_utils.SearchConfig&quot; -&gt; &quot;funman.search_episode.SearchEpisode&quot; [arrowhead=&quot;diamond&quot;, arrowtail=&quot;none&quot;, fontcolor=&quot;green&quot;, label=&quot;config&quot;, style=&quot;solid&quot;];
 &quot;funman.search_utils.SearchStatistics&quot; -&gt; &quot;funman.search_episode.SearchEpisode&quot; [arrowhead=&quot;diamond&quot;, arrowtail=&quot;none&quot;, fontcolor=&quot;green&quot;, label=&quot;statistics&quot;, style=&quot;solid&quot;];

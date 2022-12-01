@@ -56,6 +56,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#funman.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#subpackages">Subpackages</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="funman.examples.html">funman.examples package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="funman.model.html">funman.model package</a></li>
 <li class="toctree-l3"><a class="reference internal" href="funman.scenario.html">funman.scenario package</a></li>
 </ul>
 </li>
@@ -70,12 +71,8 @@
 <li class="toctree-l3"><a class="reference internal" href="#funman.math_utils.gte"><code class="docutils literal notranslate"><span class="pre">gte()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#funman.math_utils.lt"><code class="docutils literal notranslate"><span class="pre">lt()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#funman.math_utils.lte"><code class="docutils literal notranslate"><span class="pre">lte()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="#funman-model">funman.model</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#funman.model.Model"><code class="docutils literal notranslate"><span class="pre">Model</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#funman.model.Parameter"><code class="docutils literal notranslate"><span class="pre">Parameter</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#funman.model.Query"><code class="docutils literal notranslate"><span class="pre">Query</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#funman.math_utils.minus"><code class="docutils literal notranslate"><span class="pre">minus()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#funman.math_utils.plus"><code class="docutils literal notranslate"><span class="pre">plus()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#funman-parameter-space">funman.parameter_space</a><ul>
@@ -83,6 +80,7 @@
 <li class="toctree-l4"><a class="reference internal" href="#funman.parameter_space.ParameterSpace.compare"><code class="docutils literal notranslate"><span class="pre">ParameterSpace.compare()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#funman.parameter_space.ParameterSpace.construct_all_equal"><code class="docutils literal notranslate"><span class="pre">ParameterSpace.construct_all_equal()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#funman.parameter_space.ParameterSpace.intersect"><code class="docutils literal notranslate"><span class="pre">ParameterSpace.intersect()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#funman.parameter_space.ParameterSpace.plot"><code class="docutils literal notranslate"><span class="pre">ParameterSpace.plot()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#funman.parameter_space.ParameterSpace.project"><code class="docutils literal notranslate"><span class="pre">ParameterSpace.project()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#funman.parameter_space.ParameterSpace.symmetric_difference"><code class="docutils literal notranslate"><span class="pre">ParameterSpace.symmetric_difference()</span></code></a></li>
 </ul>
@@ -94,6 +92,19 @@
 <li class="toctree-l4"><a class="reference internal" href="#funman.search.BoxSearch.expand"><code class="docutils literal notranslate"><span class="pre">BoxSearch.expand()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#funman.search.BoxSearch.search"><code class="docutils literal notranslate"><span class="pre">BoxSearch.search()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#funman.search.BoxSearch.split"><code class="docutils literal notranslate"><span class="pre">BoxSearch.split()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#funman.search.DrealBoxSearch"><code class="docutils literal notranslate"><span class="pre">DrealBoxSearch</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#funman.search.DrealBoxSearch.expand"><code class="docutils literal notranslate"><span class="pre">DrealBoxSearch.expand()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#funman.search.SMTCheck"><code class="docutils literal notranslate"><span class="pre">SMTCheck</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#funman.search.SMTCheck.expand"><code class="docutils literal notranslate"><span class="pre">SMTCheck.expand()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#funman.search.SMTCheck.search"><code class="docutils literal notranslate"><span class="pre">SMTCheck.search()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#funman.search.Search"><code class="docutils literal notranslate"><span class="pre">Search</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#funman.search.Search.search"><code class="docutils literal notranslate"><span class="pre">Search.search()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -114,23 +125,32 @@
 <li class="toctree-l4"><a class="reference internal" href="#funman.search_episode.BoxSearchEpisode.on_start"><code class="docutils literal notranslate"><span class="pre">BoxSearchEpisode.on_start()</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="#funman.search_episode.DRealSearchEpisode"><code class="docutils literal notranslate"><span class="pre">DRealSearchEpisode</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#funman.search_episode.SearchEpisode"><code class="docutils literal notranslate"><span class="pre">SearchEpisode</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#funman-search-utils">funman.search_utils</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#funman.search_utils.Box"><code class="docutils literal notranslate"><span class="pre">Box</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#funman.search_utils.Box.check_bounds_disjoint_equal"><code class="docutils literal notranslate"><span class="pre">Box.check_bounds_disjoint_equal()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#funman.search_utils.Box.check_bounds_disjoint_equal_bool"><code class="docutils literal notranslate"><span class="pre">Box.check_bounds_disjoint_equal_bool()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#funman.search_utils.Box.contains"><code class="docutils literal notranslate"><span class="pre">Box.contains()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#funman.search_utils.Box.contains_point"><code class="docutils literal notranslate"><span class="pre">Box.contains_point()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#funman.search_utils.Box.equal"><code class="docutils literal notranslate"><span class="pre">Box.equal()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#funman.search_utils.Box.finite"><code class="docutils literal notranslate"><span class="pre">Box.finite()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#funman.search_utils.Box.from_dict"><code class="docutils literal notranslate"><span class="pre">Box.from_dict()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#funman.search_utils.Box.intersect_two_boxes"><code class="docutils literal notranslate"><span class="pre">Box.intersect_two_boxes()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#funman.search_utils.Box.intersect_two_boxes_selected_parameters"><code class="docutils literal notranslate"><span class="pre">Box.intersect_two_boxes_selected_parameters()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#funman.search_utils.Box.intersection"><code class="docutils literal notranslate"><span class="pre">Box.intersection()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#funman.search_utils.Box.intersects"><code class="docutils literal notranslate"><span class="pre">Box.intersects()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#funman.search_utils.Box.make_box_2d"><code class="docutils literal notranslate"><span class="pre">Box.make_box_2d()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#funman.search_utils.Box.split"><code class="docutils literal notranslate"><span class="pre">Box.split()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#funman.search_utils.Box.split_bounds"><code class="docutils literal notranslate"><span class="pre">Box.split_bounds()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#funman.search_utils.Box.subtract_two_1d_boxes"><code class="docutils literal notranslate"><span class="pre">Box.subtract_two_1d_boxes()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#funman.search_utils.Box.subtract_two_1d_intervals"><code class="docutils literal notranslate"><span class="pre">Box.subtract_two_1d_intervals()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#funman.search_utils.Box.symmetric_difference_two_boxes"><code class="docutils literal notranslate"><span class="pre">Box.symmetric_difference_two_boxes()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#funman.search_utils.Box.to_dict"><code class="docutils literal notranslate"><span class="pre">Box.to_dict()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#funman.search_utils.Box.to_smt"><code class="docutils literal notranslate"><span class="pre">Box.to_smt()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#funman.search_utils.Box.union"><code class="docutils literal notranslate"><span class="pre">Box.union()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#funman.search_utils.Box.width"><code class="docutils literal notranslate"><span class="pre">Box.width()</span></code></a></li>
 </ul>
 </li>
@@ -141,9 +161,13 @@
 <li class="toctree-l4"><a class="reference internal" href="#funman.search_utils.Interval.from_dict"><code class="docutils literal notranslate"><span class="pre">Interval.from_dict()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#funman.search_utils.Interval.intersection"><code class="docutils literal notranslate"><span class="pre">Interval.intersection()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#funman.search_utils.Interval.intersects"><code class="docutils literal notranslate"><span class="pre">Interval.intersects()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#funman.search_utils.Interval.make_interval"><code class="docutils literal notranslate"><span class="pre">Interval.make_interval()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#funman.search_utils.Interval.midpoint"><code class="docutils literal notranslate"><span class="pre">Interval.midpoint()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#funman.search_utils.Interval.subtract_two_1d_intervals"><code class="docutils literal notranslate"><span class="pre">Interval.subtract_two_1d_intervals()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#funman.search_utils.Interval.subtract_two_1d_lists"><code class="docutils literal notranslate"><span class="pre">Interval.subtract_two_1d_lists()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#funman.search_utils.Interval.to_dict"><code class="docutils literal notranslate"><span class="pre">Interval.to_dict()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#funman.search_utils.Interval.to_smt"><code class="docutils literal notranslate"><span class="pre">Interval.to_smt()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#funman.search_utils.Interval.union"><code class="docutils literal notranslate"><span class="pre">Interval.union()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#funman.search_utils.Interval.width"><code class="docutils literal notranslate"><span class="pre">Interval.width()</span></code></a></li>
 </ul>
 </li>
@@ -180,6 +204,23 @@
 <li class="toctree-l3"><a class="reference internal" href="#funman.search_utils.encode_true_point"><code class="docutils literal notranslate"><span class="pre">encode_true_point()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#funman.search_utils.encode_unknown_box"><code class="docutils literal notranslate"><span class="pre">encode_unknown_box()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#funman.search_utils.encode_unknown_point"><code class="docutils literal notranslate"><span class="pre">encode_unknown_point()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#funman-util">funman.util</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#funman.util.FUNMANSmtDagPrinter"><code class="docutils literal notranslate"><span class="pre">FUNMANSmtDagPrinter</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#funman.util.FUNMANSmtDagPrinter.walk_real_constant"><code class="docutils literal notranslate"><span class="pre">FUNMANSmtDagPrinter.walk_real_constant()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#funman.util.FUNMANSmtLibScript"><code class="docutils literal notranslate"><span class="pre">FUNMANSmtLibScript</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#funman.util.FUNMANSmtLibScript.serialize"><code class="docutils literal notranslate"><span class="pre">FUNMANSmtLibScript.serialize()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#funman.util.FUNMANSmtPrinter"><code class="docutils literal notranslate"><span class="pre">FUNMANSmtPrinter</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#funman.util.FUNMANSmtPrinter.walk_real_constant"><code class="docutils literal notranslate"><span class="pre">FUNMANSmtPrinter.walk_real_constant()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#funman.util.smtlibscript_from_formula"><code class="docutils literal notranslate"><span class="pre">smtlibscript_from_formula()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#funman.util.smtlibscript_from_formula_list"><code class="docutils literal notranslate"><span class="pre">smtlibscript_from_formula_list()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -278,6 +319,63 @@ which comprises all relevant output pertaining to the AnalysisScenario.</p>
 </li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="funman.model.html">funman.model package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="funman.model.html#funman.model.CannedModel"><code class="docutils literal notranslate"><span class="pre">CannedModel</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="funman.model.html#funman.model.EncodedModel"><code class="docutils literal notranslate"><span class="pre">EncodedModel</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="funman.model.html#funman.model.Model"><code class="docutils literal notranslate"><span class="pre">Model</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="funman.model.html#funman.model.Parameter"><code class="docutils literal notranslate"><span class="pre">Parameter</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="funman.model.html#funman.model.Parameter.symbol"><code class="docutils literal notranslate"><span class="pre">Parameter.symbol()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="funman.model.html#funman.model.Parameter.timed_copy"><code class="docutils literal notranslate"><span class="pre">Parameter.timed_copy()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="funman.model.html#funman.model.Query"><code class="docutils literal notranslate"><span class="pre">Query</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="funman.model.html#funman.model.QueryLE"><code class="docutils literal notranslate"><span class="pre">QueryLE</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="funman.model.html#funman.model.QueryTrue"><code class="docutils literal notranslate"><span class="pre">QueryTrue</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="funman.model.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="funman.model.html#funman-model-bilayer">funman.model.bilayer</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="funman.model.html#funman.model.bilayer.Bilayer"><code class="docutils literal notranslate"><span class="pre">Bilayer</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="funman.model.html#funman.model.bilayer.Bilayer.from_json"><code class="docutils literal notranslate"><span class="pre">Bilayer.from_json()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="funman.model.html#funman.model.bilayer.Bilayer.to_dot"><code class="docutils literal notranslate"><span class="pre">Bilayer.to_dot()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="funman.model.html#funman.model.bilayer.Bilayer.to_smtlib"><code class="docutils literal notranslate"><span class="pre">Bilayer.to_smtlib()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="funman.model.html#funman.model.bilayer.Bilayer.to_smtlib_timepoint"><code class="docutils literal notranslate"><span class="pre">Bilayer.to_smtlib_timepoint()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="funman.model.html#funman.model.bilayer.BilayerEdge"><code class="docutils literal notranslate"><span class="pre">BilayerEdge</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="funman.model.html#funman.model.bilayer.BilayerEdge.to_dot"><code class="docutils literal notranslate"><span class="pre">BilayerEdge.to_dot()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="funman.model.html#funman.model.bilayer.BilayerEdge.to_smtlib"><code class="docutils literal notranslate"><span class="pre">BilayerEdge.to_smtlib()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="funman.model.html#funman.model.bilayer.BilayerFluxNode"><code class="docutils literal notranslate"><span class="pre">BilayerFluxNode</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="funman.model.html#funman.model.bilayer.BilayerGraph"><code class="docutils literal notranslate"><span class="pre">BilayerGraph</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="funman.model.html#funman.model.bilayer.BilayerMeasurement"><code class="docutils literal notranslate"><span class="pre">BilayerMeasurement</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="funman.model.html#funman.model.bilayer.BilayerMeasurement.from_json"><code class="docutils literal notranslate"><span class="pre">BilayerMeasurement.from_json()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="funman.model.html#funman.model.bilayer.BilayerMeasurement.to_dot"><code class="docutils literal notranslate"><span class="pre">BilayerMeasurement.to_dot()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="funman.model.html#funman.model.bilayer.BilayerModel"><code class="docutils literal notranslate"><span class="pre">BilayerModel</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="funman.model.html#funman.model.bilayer.BilayerNegativeEdge"><code class="docutils literal notranslate"><span class="pre">BilayerNegativeEdge</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="funman.model.html#funman.model.bilayer.BilayerNegativeEdge.to_dot"><code class="docutils literal notranslate"><span class="pre">BilayerNegativeEdge.to_dot()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="funman.model.html#funman.model.bilayer.BilayerNegativeEdge.to_smtlib"><code class="docutils literal notranslate"><span class="pre">BilayerNegativeEdge.to_smtlib()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="funman.model.html#funman.model.bilayer.BilayerNode"><code class="docutils literal notranslate"><span class="pre">BilayerNode</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="funman.model.html#funman.model.bilayer.BilayerNode.to_dot"><code class="docutils literal notranslate"><span class="pre">BilayerNode.to_dot()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="funman.model.html#funman.model.bilayer.BilayerNode.to_smtlib"><code class="docutils literal notranslate"><span class="pre">BilayerNode.to_smtlib()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="funman.model.html#funman.model.bilayer.BilayerPositiveEdge"><code class="docutils literal notranslate"><span class="pre">BilayerPositiveEdge</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="funman.model.html#funman.model.bilayer.BilayerPositiveEdge.to_smtlib"><code class="docutils literal notranslate"><span class="pre">BilayerPositiveEdge.to_smtlib()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="funman.model.html#funman.model.bilayer.BilayerStateNode"><code class="docutils literal notranslate"><span class="pre">BilayerStateNode</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="funman.model.html#funman-model-chime">funman.model.chime</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="funman.model.html#funman.model.chime.ChimeModel"><code class="docutils literal notranslate"><span class="pre">ChimeModel</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="funman.scenario.html">funman.scenario package</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="funman.scenario.html#funman.scenario.AnalysisScenario"><code class="docutils literal notranslate"><span class="pre">AnalysisScenario</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="funman.scenario.html#funman.scenario.AnalysisScenario.simulate"><code class="docutils literal notranslate"><span class="pre">AnalysisScenario.simulate()</span></code></a></li>
@@ -289,8 +387,23 @@ which comprises all relevant output pertaining to the AnalysisScenario.</p>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="funman.scenario.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="funman.scenario.html#funman-scenario-consistency">funman.scenario.consistency</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="funman.scenario.html#funman.scenario.consistency.ConsistencyScenario"><code class="docutils literal notranslate"><span class="pre">ConsistencyScenario</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="funman.scenario.html#funman.scenario.consistency.ConsistencyScenario.encode"><code class="docutils literal notranslate"><span class="pre">ConsistencyScenario.encode()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="funman.scenario.html#funman.scenario.consistency.ConsistencyScenario.solve"><code class="docutils literal notranslate"><span class="pre">ConsistencyScenario.solve()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="funman.scenario.html#funman.scenario.consistency.ConsistencyScenarioResult"><code class="docutils literal notranslate"><span class="pre">ConsistencyScenarioResult</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="funman.scenario.html#funman.scenario.consistency.ConsistencyScenarioResult.dataframe"><code class="docutils literal notranslate"><span class="pre">ConsistencyScenarioResult.dataframe()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="funman.scenario.html#funman.scenario.consistency.ConsistencyScenarioResult.parameters"><code class="docutils literal notranslate"><span class="pre">ConsistencyScenarioResult.parameters()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="funman.scenario.html#funman.scenario.consistency.ConsistencyScenarioResult.plot"><code class="docutils literal notranslate"><span class="pre">ConsistencyScenarioResult.plot()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="funman.scenario.html#funman-scenario-parameter-synthesis">funman.scenario.parameter_synthesis</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="funman.scenario.html#funman.scenario.parameter_synthesis.ParameterSynthesisScenario"><code class="docutils literal notranslate"><span class="pre">ParameterSynthesisScenario</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="funman.scenario.html#funman.scenario.parameter_synthesis.ParameterSynthesisScenario.encode"><code class="docutils literal notranslate"><span class="pre">ParameterSynthesisScenario.encode()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="funman.scenario.html#funman.scenario.parameter_synthesis.ParameterSynthesisScenario.solve"><code class="docutils literal notranslate"><span class="pre">ParameterSynthesisScenario.solve()</span></code></a></li>
 </ul>
 </li>
@@ -323,111 +436,35 @@ which comprises all relevant output pertaining to the AnalysisScenario.</p>
 </section>
 <section id="funman-math-utils">
 <h2>funman.math_utils<a class="headerlink" href="#funman-math-utils" title="Permalink to this heading"></a></h2>
-<span class="target" id="module-funman.math_utils"></span><p>This submodule contains helper functions for math operations used in FUNMAN</p>
-<dl class="py function">
+<span class="target" id="module-funman.math_utils"></span><dl class="py function">
 <dt class="sig sig-object py" id="funman.math_utils.gt">
-<span class="sig-prename descclassname"><span class="pre">funman.math_utils.</span></span><span class="sig-name descname"><span class="pre">gt</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lhs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'-inf'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'inf'</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rhs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'-inf'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'inf'</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#funman.math_utils.gt" title="Permalink to this definition"></a></dt>
-<dd><p>Greater than comparison</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>lhs</strong> (<em>Number</em>) – The left hand side</p></li>
-<li><p><strong>rhs</strong> (<em>Number</em>) – The right hand side</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>lhs &gt; rhs</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>bool</p>
-</dd>
-</dl>
-</dd></dl>
+<span class="sig-prename descclassname"><span class="pre">funman.math_utils.</span></span><span class="sig-name descname"><span class="pre">gt</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lhs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rhs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#funman.math_utils.gt" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="funman.math_utils.gte">
-<span class="sig-prename descclassname"><span class="pre">funman.math_utils.</span></span><span class="sig-name descname"><span class="pre">gte</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lhs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'-inf'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'inf'</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rhs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'-inf'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'inf'</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#funman.math_utils.gte" title="Permalink to this definition"></a></dt>
-<dd><p>Greater than or equal comparison</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>lhs</strong> (<em>Number</em>) – The left hand side</p></li>
-<li><p><strong>rhs</strong> (<em>Number</em>) – The right hand side</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>lhs &gt;= rhs</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>bool</p>
-</dd>
-</dl>
-</dd></dl>
+<span class="sig-prename descclassname"><span class="pre">funman.math_utils.</span></span><span class="sig-name descname"><span class="pre">gte</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lhs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rhs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#funman.math_utils.gte" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="funman.math_utils.lt">
-<span class="sig-prename descclassname"><span class="pre">funman.math_utils.</span></span><span class="sig-name descname"><span class="pre">lt</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lhs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'-inf'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'inf'</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rhs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'-inf'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'inf'</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#funman.math_utils.lt" title="Permalink to this definition"></a></dt>
-<dd><p>Less than comparison</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>lhs</strong> (<em>Number</em>) – The left hand side</p></li>
-<li><p><strong>rhs</strong> (<em>Number</em>) – The right hand side</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>lhs &lt; rhs</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>bool</p>
-</dd>
-</dl>
-</dd></dl>
+<span class="sig-prename descclassname"><span class="pre">funman.math_utils.</span></span><span class="sig-name descname"><span class="pre">lt</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lhs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rhs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#funman.math_utils.lt" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="funman.math_utils.lte">
-<span class="sig-prename descclassname"><span class="pre">funman.math_utils.</span></span><span class="sig-name descname"><span class="pre">lte</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lhs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'-inf'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'inf'</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rhs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'-inf'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'inf'</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#funman.math_utils.lte" title="Permalink to this definition"></a></dt>
-<dd><p>Less than or equal comparison</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>lhs</strong> (<em>Number</em>) – The left hand side</p></li>
-<li><p><strong>rhs</strong> (<em>Number</em>) – The right hand side</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>lhs &lt;= rhs</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>bool</p>
-</dd>
-</dl>
-</dd></dl>
+<span class="sig-prename descclassname"><span class="pre">funman.math_utils.</span></span><span class="sig-name descname"><span class="pre">lte</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lhs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rhs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#funman.math_utils.lte" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
 
-</section>
-<section id="funman-model">
-<h2>funman.model<a class="headerlink" href="#funman-model" title="Permalink to this heading"></a></h2>
-<div class="graphviz"><object data="_images/inheritance-7dd5e000b96670829a32b7d2f0b9507fe91c1834.svg" type="image/svg+xml" class="inheritance graphviz">
-<p class="warning">Inheritance diagram of funman.model</p></object></div>
-<span class="target" id="module-funman.model"></span><p>This submodule contains class definitions used to represent and interact with
-models in FUNMAN.</p>
-<dl class="py class">
-<dt class="sig sig-object py" id="funman.model.Model">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">funman.model.</span></span><span class="sig-name descname"><span class="pre">Model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">formula</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#funman.model.Model" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="funman.math_utils.minus">
+<span class="sig-prename descclassname"><span class="pre">funman.math_utils.</span></span><span class="sig-name descname"><span class="pre">minus</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lhs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rhs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#funman.math_utils.minus" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
 
-<dl class="py class">
-<dt class="sig sig-object py" id="funman.model.Parameter">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">funman.model.</span></span><span class="sig-name descname"><span class="pre">Parameter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lb</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'-inf'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ub</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'inf'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">symbol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#funman.model.Parameter" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="funman.model.Query">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">funman.model.</span></span><span class="sig-name descname"><span class="pre">Query</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">formula</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#funman.model.Query" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="funman.math_utils.plus">
+<span class="sig-prename descclassname"><span class="pre">funman.math_utils.</span></span><span class="sig-name descname"><span class="pre">plus</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lhs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rhs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#funman.math_utils.plus" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
 
 </section>
 <section id="funman-parameter-space">
@@ -458,6 +495,11 @@ known to be false.</p>
 <dd></dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="funman.parameter_space.ParameterSpace.plot">
+<span class="sig-name descname"><span class="pre">plot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'b'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.2</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#funman.parameter_space.ParameterSpace.plot" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="funman.parameter_space.ParameterSpace.project">
 <em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">project</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#funman.parameter_space.ParameterSpace" title="funman.parameter_space.ParameterSpace"><span class="pre">ParameterSpace</span></a></span></span><a class="headerlink" href="#funman.parameter_space.ParameterSpace.project" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
@@ -472,16 +514,16 @@ known to be false.</p>
 </section>
 <section id="funman-search">
 <h2>funman.search<a class="headerlink" href="#funman-search" title="Permalink to this heading"></a></h2>
-<div class="graphviz"><object data="_images/inheritance-5bb3a73c3e7c5b969d356546722ad031400ce750.svg" type="image/svg+xml" class="inheritance graphviz">
+<div class="graphviz"><object data="_images/inheritance-2705b7845d4da1b23e5044202e17715aeb93a2aa.svg" type="image/svg+xml" class="inheritance graphviz">
 <p class="warning">Inheritance diagram of funman.search</p></object></div>
 <span class="target" id="module-funman.search"></span><p>This submodule contains the search algorithms used to run FUNMAN.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="funman.search.BoxSearch">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">funman.search.</span></span><span class="sig-name descname"><span class="pre">BoxSearch</span></span><a class="headerlink" href="#funman.search.BoxSearch" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dd><p>Bases: <a class="reference internal" href="#funman.search.Search" title="funman.search.Search"><code class="xref py py-class docutils literal notranslate"><span class="pre">Search</span></code></a></p>
 <dl class="py method">
 <dt class="sig sig-object py" id="funman.search.BoxSearch.expand">
-<span class="sig-name descname"><span class="pre">expand</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rval</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Queue</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">episode</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#funman.search_episode.BoxSearchEpisode" title="funman.search_episode.BoxSearchEpisode"><span class="pre">BoxSearchEpisode</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">more_work</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Condition</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">idle_mutex</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Lock</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">idle_flags</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Event</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#funman.search.BoxSearch.expand" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">expand</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rval</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">episode</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#funman.search_episode.BoxSearchEpisode" title="funman.search_episode.BoxSearchEpisode"><span class="pre">BoxSearchEpisode</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">idx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">more_work</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Condition</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">idle_mutex</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Lock</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">idle_flags</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Event</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">handler</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#funman.search_utils.ResultHandler" title="funman.search_utils.ResultHandler"><span class="pre">ResultHandler</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#funman.search.BoxSearch.expand" title="Permalink to this definition"></a></dt>
 <dd><p>A single search process will evaluate and expand the boxes in the
 episode.unknown_boxes queue.  The processes exit when the queue is
 empty.  For each box, the algorithm checks whether the box contains a
@@ -537,16 +579,75 @@ of the search.</p>
 
 </dd></dl>
 
+<dl class="py class">
+<dt class="sig sig-object py" id="funman.search.DrealBoxSearch">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">funman.search.</span></span><span class="sig-name descname"><span class="pre">DrealBoxSearch</span></span><a class="headerlink" href="#funman.search.DrealBoxSearch" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#funman.search.BoxSearch" title="funman.search.BoxSearch"><code class="xref py py-class docutils literal notranslate"><span class="pre">BoxSearch</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="funman.search.DrealBoxSearch.expand">
+<span class="sig-name descname"><span class="pre">expand</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rval</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">episode</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#funman.search_episode.BoxSearchEpisode" title="funman.search_episode.BoxSearchEpisode"><span class="pre">BoxSearchEpisode</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">idx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">more_work</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Condition</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">idle_mutex</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Lock</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">idle_flags</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Event</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">handler</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#funman.search_utils.ResultHandler" title="funman.search_utils.ResultHandler"><span class="pre">ResultHandler</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#funman.search.DrealBoxSearch.expand" title="Permalink to this definition"></a></dt>
+<dd><p>A single search process will evaluate and expand the boxes in the
+episode.unknown_boxes queue.  The processes exit when the queue is
+empty.  For each box, the algorithm checks whether the box contains a
+false (infeasible) point.  If it contains a false point, then it checks
+if the box contains a true point.  If a box contains both a false and
+true point, then the box is split into two boxes and both are added to
+the unknown_boxes queue.  If a box contains no false points, then it is
+a true_box (all points are feasible).  If a box contains no true points,
+then it is a false_box (all points are infeasible).</p>
+<p>The return value is pushed onto the rval queue to end the process’s work
+within the method.  The return value is a Dict[str, List[Box]] type that
+maps the “true_boxes” and “false_boxes” to a list of boxes in each set.
+Each box in these sets is unique by design.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>rval</strong> (<em>Queue</em>) – Return value shared queue</p></li>
+<li><p><strong>episode</strong> (<a class="reference internal" href="#funman.search_episode.BoxSearchEpisode" title="funman.search_episode.BoxSearchEpisode"><em>BoxSearchEpisode</em></a>) – Shared search data and statistics.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="funman.search.SMTCheck">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">funman.search.</span></span><span class="sig-name descname"><span class="pre">SMTCheck</span></span><a class="headerlink" href="#funman.search.SMTCheck" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#funman.search.Search" title="funman.search.Search"><code class="xref py py-class docutils literal notranslate"><span class="pre">Search</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="funman.search.SMTCheck.expand">
+<span class="sig-name descname"><span class="pre">expand</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">episode</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#funman.search.SMTCheck.expand" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="funman.search.SMTCheck.search">
+<span class="sig-name descname"><span class="pre">search</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#funman.search_utils.SearchConfig" title="funman.search_utils.SearchConfig"><span class="pre">SearchConfig</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#funman.search_episode.SearchEpisode" title="funman.search_episode.SearchEpisode"><span class="pre">SearchEpisode</span></a></span></span><a class="headerlink" href="#funman.search.SMTCheck.search" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="funman.search.Search">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">funman.search.</span></span><span class="sig-name descname"><span class="pre">Search</span></span><a class="headerlink" href="#funman.search.Search" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="funman.search.Search.search">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">search</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#funman.search_utils.SearchConfig" title="funman.search_utils.SearchConfig"><span class="pre">SearchConfig</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#funman.search_episode.SearchEpisode" title="funman.search_episode.SearchEpisode"><span class="pre">SearchEpisode</span></a></span></span><a class="headerlink" href="#funman.search.Search.search" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
 </section>
 <section id="funman-search-episode">
 <h2>funman.search_episode<a class="headerlink" href="#funman-search-episode" title="Permalink to this heading"></a></h2>
-<div class="graphviz"><object data="_images/inheritance-be806840bf933fb03ae1501e75d5ed291830a492.svg" type="image/svg+xml" class="inheritance graphviz">
+<div class="graphviz"><object data="_images/inheritance-e88104f5194138d76c3d1e592c54d91e7402e2d7.svg" type="image/svg+xml" class="inheritance graphviz">
 <p class="warning">Inheritance diagram of funman.search_episode</p></object></div>
 <span class="target" id="module-funman.search_episode"></span><p>This submodule defines the representations for episodes (single executions) of
 one of the search algorithms supported by FUNMAN.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="funman.search_episode.BoxSearchEpisode">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">funman.search_episode.</span></span><span class="sig-name descname"><span class="pre">BoxSearchEpisode</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#funman.search_utils.SearchConfig" title="funman.search_utils.SearchConfig"><span class="pre">SearchConfig</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">problem</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">manager</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">SyncManager</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#funman.search_episode.BoxSearchEpisode" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">funman.search_episode.</span></span><span class="sig-name descname"><span class="pre">BoxSearchEpisode</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#funman.search_utils.SearchConfig" title="funman.search_utils.SearchConfig"><span class="pre">SearchConfig</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">problem</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">manager</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">SyncManager</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#funman.search_episode.BoxSearchEpisode" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="#funman.search_episode.SearchEpisode" title="funman.search_episode.SearchEpisode"><code class="xref py py-class docutils literal notranslate"><span class="pre">SearchEpisode</span></code></a></p>
 <dl class="py method">
 <dt class="sig sig-object py" id="funman.search_episode.BoxSearchEpisode.add_false">
@@ -611,8 +712,14 @@ one of the search algorithms supported by FUNMAN.</p>
 </dd></dl>
 
 <dl class="py class">
+<dt class="sig sig-object py" id="funman.search_episode.DRealSearchEpisode">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">funman.search_episode.</span></span><span class="sig-name descname"><span class="pre">DRealSearchEpisode</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#funman.search_utils.SearchConfig" title="funman.search_utils.SearchConfig"><span class="pre">SearchConfig</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">problem</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">manager</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">SyncManager</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#funman.search_episode.DRealSearchEpisode" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#funman.search_episode.SearchEpisode" title="funman.search_episode.SearchEpisode"><code class="xref py py-class docutils literal notranslate"><span class="pre">SearchEpisode</span></code></a></p>
+</dd></dl>
+
+<dl class="py class">
 <dt class="sig sig-object py" id="funman.search_episode.SearchEpisode">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">funman.search_episode.</span></span><span class="sig-name descname"><span class="pre">SearchEpisode</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#funman.search_utils.SearchConfig" title="funman.search_utils.SearchConfig"><span class="pre">SearchConfig</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">problem</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">manager</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">SyncManager</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#funman.search_episode.SearchEpisode" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">funman.search_episode.</span></span><span class="sig-name descname"><span class="pre">SearchEpisode</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#funman.search_utils.SearchConfig" title="funman.search_utils.SearchConfig"><span class="pre">SearchConfig</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">problem</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">manager</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">SyncManager</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#funman.search_episode.SearchEpisode" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></p>
 </dd></dl>
 
@@ -628,6 +735,16 @@ during the configuration and execution of a search.</p>
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">funman.search_utils.</span></span><span class="sig-name descname"><span class="pre">Box</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parameters</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#funman.search_utils.Box" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <dl class="py method">
+<dt class="sig sig-object py" id="funman.search_utils.Box.check_bounds_disjoint_equal">
+<span class="sig-name descname"><span class="pre">check_bounds_disjoint_equal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">b</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#funman.search_utils.Box" title="funman.search_utils.Box"><span class="pre">Box</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#funman.search_utils.Box.check_bounds_disjoint_equal" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="funman.search_utils.Box.check_bounds_disjoint_equal_bool">
+<span class="sig-name descname"><span class="pre">check_bounds_disjoint_equal_bool</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">b</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#funman.search_utils.Box" title="funman.search_utils.Box"><span class="pre">Box</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#funman.search_utils.Box.check_bounds_disjoint_equal_bool" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="funman.search_utils.Box.contains">
 <span class="sig-name descname"><span class="pre">contains</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">other</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#funman.search_utils.Box" title="funman.search_utils.Box"><span class="pre">Box</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#funman.search_utils.Box.contains" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
@@ -635,6 +752,11 @@ during the configuration and execution of a search.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="funman.search_utils.Box.contains_point">
 <span class="sig-name descname"><span class="pre">contains_point</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">point</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#funman.search_utils.Point" title="funman.search_utils.Point"><span class="pre">Point</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#funman.search_utils.Box.contains_point" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="funman.search_utils.Box.equal">
+<span class="sig-name descname"><span class="pre">equal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">b2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">param_list</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#funman.search_utils.Box.equal" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
@@ -653,6 +775,11 @@ during the configuration and execution of a search.</p>
 <dd></dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="funman.search_utils.Box.intersect_two_boxes_selected_parameters">
+<span class="sig-name descname"><span class="pre">intersect_two_boxes_selected_parameters</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">b2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">param_list</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#funman.search_utils.Box.intersect_two_boxes_selected_parameters" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="funman.search_utils.Box.intersection">
 <span class="sig-name descname"><span class="pre">intersection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">b</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#funman.search_utils.Interval" title="funman.search_utils.Interval"><span class="pre">Interval</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#funman.search_utils.Interval" title="funman.search_utils.Interval"><span class="pre">Interval</span></a></span></span><a class="headerlink" href="#funman.search_utils.Box.intersection" title="Permalink to this definition"></a></dt>
 <dd><p>Given 2 intervals with a = [a0,a1] and b=[b0,b1], check whether they intersect.  If they do, return interval with their intersection.</p>
@@ -664,9 +791,37 @@ during the configuration and execution of a search.</p>
 <dd></dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="funman.search_utils.Box.make_box_2d">
+<span class="sig-name descname"><span class="pre">make_box_2d</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#funman.search_utils.Box" title="funman.search_utils.Box"><span class="pre">Box</span></a></span></span><a class="headerlink" href="#funman.search_utils.Box.make_box_2d" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="funman.search_utils.Box.split">
 <span class="sig-name descname"><span class="pre">split</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">points</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#funman.search_utils.Box.split" title="Permalink to this definition"></a></dt>
+<dd><p>Split box along max width dimension. If points are provided, then pick the axis where the points are maximally distant.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>points</strong> (<em>List</em><em>[</em><a class="reference internal" href="#funman.search_utils.Point" title="funman.search_utils.Point"><em>Point</em></a><em>]</em><em>, </em><em>optional</em>) – solution points that the split will separate, by default None</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Boxes resulting from the split.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>List[<a class="reference internal" href="#funman.search_utils.Box" title="funman.search_utils.Box">Box</a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="funman.search_utils.Box.split_bounds">
+<span class="sig-name descname"><span class="pre">split_bounds</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">b</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#funman.search_utils.Box" title="funman.search_utils.Box"><span class="pre">Box</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#funman.search_utils.Box.split_bounds" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="funman.search_utils.Box.subtract_two_1d_boxes">
+<span class="sig-name descname"><span class="pre">subtract_two_1d_boxes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">b</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#funman.search_utils.Box.subtract_two_1d_boxes" title="Permalink to this definition"></a></dt>
+<dd><p>Given 2 intervals a = [a0,a1] and b=[b0,b1], return the part of a that does not intersect with b.</p>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="funman.search_utils.Box.subtract_two_1d_intervals">
@@ -686,7 +841,12 @@ during the configuration and execution of a search.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="funman.search_utils.Box.to_smt">
-<span class="sig-name descname"><span class="pre">to_smt</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#funman.search_utils.Box.to_smt" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">to_smt</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">closed_upper_bound</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#funman.search_utils.Box.to_smt" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="funman.search_utils.Box.union">
+<span class="sig-name descname"><span class="pre">union</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">b</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#funman.search_utils.Box" title="funman.search_utils.Box"><span class="pre">Box</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#funman.search_utils.Box" title="funman.search_utils.Box"><span class="pre">Box</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#funman.search_utils.Box.union" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
@@ -731,9 +891,26 @@ during the configuration and execution of a search.</p>
 <dd></dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="funman.search_utils.Interval.make_interval">
+<span class="sig-name descname"><span class="pre">make_interval</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#funman.search_utils.Interval" title="funman.search_utils.Interval"><span class="pre">Interval</span></a></span></span><a class="headerlink" href="#funman.search_utils.Interval.make_interval" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="funman.search_utils.Interval.midpoint">
 <span class="sig-name descname"><span class="pre">midpoint</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">points</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#funman.search_utils.Interval.midpoint" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="funman.search_utils.Interval.subtract_two_1d_intervals">
+<span class="sig-name descname"><span class="pre">subtract_two_1d_intervals</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">b</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#funman.search_utils.Interval" title="funman.search_utils.Interval"><span class="pre">Interval</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#funman.search_utils.Interval" title="funman.search_utils.Interval"><span class="pre">Interval</span></a></span></span><a class="headerlink" href="#funman.search_utils.Interval.subtract_two_1d_intervals" title="Permalink to this definition"></a></dt>
+<dd><p>Given 2 intervals a = [a0,a1] and b=[b0,b1], return the part of a that does not intersect with b.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="funman.search_utils.Interval.subtract_two_1d_lists">
+<span class="sig-name descname"><span class="pre">subtract_two_1d_lists</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">b</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#funman.search_utils.Interval.subtract_two_1d_lists" title="Permalink to this definition"></a></dt>
+<dd><p>Given 2 intervals a = [a0,a1] and b=[b0,b1], return the part of a that does not intersect with b.</p>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="funman.search_utils.Interval.to_dict">
@@ -742,7 +919,12 @@ during the configuration and execution of a search.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="funman.search_utils.Interval.to_smt">
-<span class="sig-name descname"><span class="pre">to_smt</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#funman.model.Parameter" title="funman.model.Parameter"><span class="pre">Parameter</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#funman.search_utils.Interval.to_smt" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">to_smt</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="funman.model.html#funman.model.Parameter" title="funman.model.Parameter"><span class="pre">Parameter</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">closed_upper_bound</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#funman.search_utils.Interval.to_smt" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="funman.search_utils.Interval.union">
+<span class="sig-name descname"><span class="pre">union</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">other</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#funman.search_utils.Interval" title="funman.search_utils.Interval"><span class="pre">Interval</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#funman.search_utils.Interval" title="funman.search_utils.Interval"><span class="pre">Interval</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#funman.search_utils.Interval.union" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
@@ -817,7 +999,7 @@ during the configuration and execution of a search.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="funman.search_utils.SearchConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">funman.search_utils.</span></span><span class="sig-name descname"><span class="pre">SearchConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tolerance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">queue_timeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">number_of_processes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">8</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">handler</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#funman.search_utils.ResultHandler" title="funman.search_utils.ResultHandler"><span class="pre">ResultHandler</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wait_timeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wait_action</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wait_action_timeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.05</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">read_cache</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#funman.search_utils.SearchConfig" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">funman.search_utils.</span></span><span class="sig-name descname"><span class="pre">SearchConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tolerance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">queue_timeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">number_of_processes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">8</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">handler</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#funman.search_utils.ResultHandler" title="funman.search_utils.ResultHandler"><span class="pre">ResultHandler</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wait_timeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wait_action</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wait_action_timeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.05</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">read_cache</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">episode_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">search</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'z3'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#funman.search_utils.SearchConfig" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="#funman.config.Config" title="funman.config.Config"><code class="xref py py-class docutils literal notranslate"><span class="pre">Config</span></code></a></p>
 </dd></dl>
 
@@ -881,6 +1063,63 @@ during the configuration and execution of a search.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="funman.search_utils.encode_unknown_point">
 <span class="sig-prename descclassname"><span class="pre">funman.search_utils.</span></span><span class="sig-name descname"><span class="pre">encode_unknown_point</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">point</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#funman.search_utils.Point" title="funman.search_utils.Point"><span class="pre">Point</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#funman.search_utils.encode_unknown_point" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="funman-util">
+<h2>funman.util<a class="headerlink" href="#funman-util" title="Permalink to this heading"></a></h2>
+<div class="graphviz"><object data="_images/inheritance-83b36ff86eb51d5f00c8111f1b233c4d8a775bfb.svg" type="image/svg+xml" class="inheritance graphviz">
+<p class="warning">Inheritance diagram of funman.util</p></object></div>
+<span class="target" id="module-funman.util"></span><dl class="py class">
+<dt class="sig sig-object py" id="funman.util.FUNMANSmtDagPrinter">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">funman.util.</span></span><span class="sig-name descname"><span class="pre">FUNMANSmtDagPrinter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">stream</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">template</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'.def_%d'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">annotations</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#funman.util.FUNMANSmtDagPrinter" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">SmtDagPrinter</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="funman.util.FUNMANSmtDagPrinter.walk_real_constant">
+<span class="sig-name descname"><span class="pre">walk_real_constant</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">formula</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#funman.util.FUNMANSmtDagPrinter.walk_real_constant" title="Permalink to this definition"></a></dt>
+<dd><p>Default function for a node that is not handled by the Walker.</p>
+<p>This tries to handle the node using the Dynamic Walker
+Function information from the environment. If this fails, then
+an UnsupportedOperatorError exception is given.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="funman.util.FUNMANSmtLibScript">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">funman.util.</span></span><span class="sig-name descname"><span class="pre">FUNMANSmtLibScript</span></span><a class="headerlink" href="#funman.util.FUNMANSmtLibScript" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">SmtLibScript</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="funman.util.FUNMANSmtLibScript.serialize">
+<span class="sig-name descname"><span class="pre">serialize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">outstream</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">daggify</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#funman.util.FUNMANSmtLibScript.serialize" title="Permalink to this definition"></a></dt>
+<dd><p>Serializes the SmtLibScript expanding commands</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="funman.util.FUNMANSmtPrinter">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">funman.util.</span></span><span class="sig-name descname"><span class="pre">FUNMANSmtPrinter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">stream</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">annotations</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#funman.util.FUNMANSmtPrinter" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">SmtPrinter</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="funman.util.FUNMANSmtPrinter.walk_real_constant">
+<span class="sig-name descname"><span class="pre">walk_real_constant</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">formula</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#funman.util.FUNMANSmtPrinter.walk_real_constant" title="Permalink to this definition"></a></dt>
+<dd><p>Default function for a node that is not handled by the Walker.</p>
+<p>This tries to handle the node using the Dynamic Walker
+Function information from the environment. If this fails, then
+an UnsupportedOperatorError exception is given.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="funman.util.smtlibscript_from_formula">
+<span class="sig-prename descclassname"><span class="pre">funman.util.</span></span><span class="sig-name descname"><span class="pre">smtlibscript_from_formula</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">formula</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logic</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#funman.util.smtlibscript_from_formula" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="funman.util.smtlibscript_from_formula_list">
+<span class="sig-prename descclassname"><span class="pre">funman.util.</span></span><span class="sig-name descname"><span class="pre">smtlibscript_from_formula_list</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">formulas</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logic</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#funman.util.smtlibscript_from_formula_list" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
 
 </section>

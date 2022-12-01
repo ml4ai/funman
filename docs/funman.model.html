@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>funman.model package &mdash; funman  documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="_static/graphviz.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="funman.scenario package" href="funman.scenario.html" />
+    <link rel="prev" title="funman.examples package" href="funman.examples.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="index.html" class="icon icon-home"> funman
+          </a>
+              <div class="version">
+                1.1.0
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="use_cases.html">Use Cases</a></li>
+<li class="toctree-l1"><a class="reference internal" href="classes.html">Class Diagram</a></li>
+<li class="toctree-l1"><a class="reference internal" href="packages.html">Package Diagram</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="funman.html">funman package</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="funman.html#funman.Funman"><code class="docutils literal notranslate"><span class="pre">Funman</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="funman.html#funman.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="funman.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="funman.examples.html">funman.examples package</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">funman.model package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#funman.model.CannedModel"><code class="docutils literal notranslate"><span class="pre">CannedModel</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#funman.model.EncodedModel"><code class="docutils literal notranslate"><span class="pre">EncodedModel</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#funman.model.Model"><code class="docutils literal notranslate"><span class="pre">Model</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#funman.model.Parameter"><code class="docutils literal notranslate"><span class="pre">Parameter</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#funman.model.Query"><code class="docutils literal notranslate"><span class="pre">Query</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#funman.model.QueryLE"><code class="docutils literal notranslate"><span class="pre">QueryLE</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#funman.model.QueryTrue"><code class="docutils literal notranslate"><span class="pre">QueryTrue</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#funman-model-bilayer">funman.model.bilayer</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#funman-model-chime">funman.model.chime</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="funman.scenario.html">funman.scenario package</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="funman.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="funman.html#funman-config">funman.config</a></li>
+<li class="toctree-l2"><a class="reference internal" href="funman.html#funman-constants">funman.constants</a></li>
+<li class="toctree-l2"><a class="reference internal" href="funman.html#funman-math-utils">funman.math_utils</a></li>
+<li class="toctree-l2"><a class="reference internal" href="funman.html#funman-parameter-space">funman.parameter_space</a></li>
+<li class="toctree-l2"><a class="reference internal" href="funman.html#funman-search">funman.search</a></li>
+<li class="toctree-l2"><a class="reference internal" href="funman.html#funman-search-episode">funman.search_episode</a></li>
+<li class="toctree-l2"><a class="reference internal" href="funman.html#funman-search-utils">funman.search_utils</a></li>
+<li class="toctree-l2"><a class="reference internal" href="funman.html#funman-util">funman.util</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">funman</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="funman.html">funman package</a> &raquo;</li>
+      <li>funman.model package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/funman.model.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-funman.model">
+<span id="funman-model-package"></span><h1>funman.model package<a class="headerlink" href="#module-funman.model" title="Permalink to this heading"></a></h1>
+<p>This submodule contains class definitions used to represent and interact with
+models in FUNMAN.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="funman.model.CannedModel">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">funman.model.</span></span><span class="sig-name descname"><span class="pre">CannedModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">init_values</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parameter_bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#funman.model.CannedModel" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#funman.model.Model" title="funman.model.Model"><code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></a></p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="funman.model.EncodedModel">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">funman.model.</span></span><span class="sig-name descname"><span class="pre">EncodedModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">formula</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#funman.model.EncodedModel" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#funman.model.Model" title="funman.model.Model"><code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></a></p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="funman.model.Model">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">funman.model.</span></span><span class="sig-name descname"><span class="pre">Model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">init_values</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parameter_bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#funman.model.Model" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="funman.model.Parameter">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">funman.model.</span></span><span class="sig-name descname"><span class="pre">Parameter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lb</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'-inf'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ub</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'inf'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">symbol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#funman.model.Parameter" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="funman.model.Parameter.symbol">
+<span class="sig-name descname"><span class="pre">symbol</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#funman.model.Parameter.symbol" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="funman.model.Parameter.timed_copy">
+<span class="sig-name descname"><span class="pre">timed_copy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">timepoint</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#funman.model.Parameter.timed_copy" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="funman.model.Query">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">funman.model.</span></span><span class="sig-name descname"><span class="pre">Query</span></span><a class="headerlink" href="#funman.model.Query" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="funman.model.QueryLE">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">funman.model.</span></span><span class="sig-name descname"><span class="pre">QueryLE</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">variable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ub</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#funman.model.QueryLE" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#funman.model.Query" title="funman.model.Query"><code class="xref py py-class docutils literal notranslate"><span class="pre">Query</span></code></a></p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="funman.model.QueryTrue">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">funman.model.</span></span><span class="sig-name descname"><span class="pre">QueryTrue</span></span><a class="headerlink" href="#funman.model.QueryTrue" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#funman.model.Query" title="funman.model.Query"><code class="xref py py-class docutils literal notranslate"><span class="pre">Query</span></code></a></p>
+</dd></dl>
+
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this heading"></a></h2>
+</section>
+<section id="funman-model-bilayer">
+<h2>funman.model.bilayer<a class="headerlink" href="#funman-model-bilayer" title="Permalink to this heading"></a></h2>
+<div class="graphviz"><object data="_images/inheritance-37ac5ef1ba3db056dad252eb666146796adc2f93.svg" type="image/svg+xml" class="inheritance graphviz">
+<p class="warning">Inheritance diagram of funman.model.bilayer</p></object></div>
+<span class="target" id="module-funman.model.bilayer"></span><dl class="py class">
+<dt class="sig sig-object py" id="funman.model.bilayer.Bilayer">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">funman.model.bilayer.</span></span><span class="sig-name descname"><span class="pre">Bilayer</span></span><a class="headerlink" href="#funman.model.bilayer.Bilayer" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#funman.model.bilayer.BilayerGraph" title="funman.model.bilayer.BilayerGraph"><code class="xref py py-class docutils literal notranslate"><span class="pre">BilayerGraph</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="funman.model.bilayer.Bilayer.from_json">
+<span class="sig-name descname"><span class="pre">from_json</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#funman.model.bilayer.Bilayer.from_json" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="funman.model.bilayer.Bilayer.to_dot">
+<span class="sig-name descname"><span class="pre">to_dot</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#funman.model.bilayer.Bilayer.to_dot" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="funman.model.bilayer.Bilayer.to_smtlib">
+<span class="sig-name descname"><span class="pre">to_smtlib</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">timepoints</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#funman.model.bilayer.Bilayer.to_smtlib" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="funman.model.bilayer.Bilayer.to_smtlib_timepoint">
+<span class="sig-name descname"><span class="pre">to_smtlib_timepoint</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">timepoint</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">next_timepoint</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#funman.model.bilayer.Bilayer.to_smtlib_timepoint" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="funman.model.bilayer.BilayerEdge">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">funman.model.bilayer.</span></span><span class="sig-name descname"><span class="pre">BilayerEdge</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">src</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tgt</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#funman.model.bilayer.BilayerEdge" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="funman.model.bilayer.BilayerEdge.to_dot">
+<span class="sig-name descname"><span class="pre">to_dot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dot</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#funman.model.bilayer.BilayerEdge.to_dot" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="funman.model.bilayer.BilayerEdge.to_smtlib">
+<span class="sig-name descname"><span class="pre">to_smtlib</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">timepoint</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#funman.model.bilayer.BilayerEdge.to_smtlib" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="funman.model.bilayer.BilayerFluxNode">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">funman.model.bilayer.</span></span><span class="sig-name descname"><span class="pre">BilayerFluxNode</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parameter</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#funman.model.bilayer.BilayerFluxNode" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#funman.model.bilayer.BilayerNode" title="funman.model.bilayer.BilayerNode"><code class="xref py py-class docutils literal notranslate"><span class="pre">BilayerNode</span></code></a></p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="funman.model.bilayer.BilayerGraph">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">funman.model.bilayer.</span></span><span class="sig-name descname"><span class="pre">BilayerGraph</span></span><a class="headerlink" href="#funman.model.bilayer.BilayerGraph" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="funman.model.bilayer.BilayerMeasurement">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">funman.model.bilayer.</span></span><span class="sig-name descname"><span class="pre">BilayerMeasurement</span></span><a class="headerlink" href="#funman.model.bilayer.BilayerMeasurement" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#funman.model.bilayer.BilayerGraph" title="funman.model.bilayer.BilayerGraph"><code class="xref py py-class docutils literal notranslate"><span class="pre">BilayerGraph</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="funman.model.bilayer.BilayerMeasurement.from_json">
+<span class="sig-name descname"><span class="pre">from_json</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#funman.model.bilayer.BilayerMeasurement.from_json" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="funman.model.bilayer.BilayerMeasurement.to_dot">
+<span class="sig-name descname"><span class="pre">to_dot</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#funman.model.bilayer.BilayerMeasurement.to_dot" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="funman.model.bilayer.BilayerModel">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">funman.model.bilayer.</span></span><span class="sig-name descname"><span class="pre">BilayerModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bilayer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">measurements</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">init_values</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parameter_bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#funman.model.bilayer.BilayerModel" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#funman.model.Model" title="funman.model.Model"><code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></a></p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="funman.model.bilayer.BilayerNegativeEdge">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">funman.model.bilayer.</span></span><span class="sig-name descname"><span class="pre">BilayerNegativeEdge</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">src</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tgt</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#funman.model.bilayer.BilayerNegativeEdge" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#funman.model.bilayer.BilayerEdge" title="funman.model.bilayer.BilayerEdge"><code class="xref py py-class docutils literal notranslate"><span class="pre">BilayerEdge</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="funman.model.bilayer.BilayerNegativeEdge.to_dot">
+<span class="sig-name descname"><span class="pre">to_dot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dot</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#funman.model.bilayer.BilayerNegativeEdge.to_dot" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="funman.model.bilayer.BilayerNegativeEdge.to_smtlib">
+<span class="sig-name descname"><span class="pre">to_smtlib</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">timepoint</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#funman.model.bilayer.BilayerNegativeEdge.to_smtlib" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="funman.model.bilayer.BilayerNode">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">funman.model.bilayer.</span></span><span class="sig-name descname"><span class="pre">BilayerNode</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parameter</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#funman.model.bilayer.BilayerNode" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="funman.model.bilayer.BilayerNode.to_dot">
+<span class="sig-name descname"><span class="pre">to_dot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dot</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#funman.model.bilayer.BilayerNode.to_dot" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="funman.model.bilayer.BilayerNode.to_smtlib">
+<span class="sig-name descname"><span class="pre">to_smtlib</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">timepoint</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#funman.model.bilayer.BilayerNode.to_smtlib" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="funman.model.bilayer.BilayerPositiveEdge">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">funman.model.bilayer.</span></span><span class="sig-name descname"><span class="pre">BilayerPositiveEdge</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">src</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tgt</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#funman.model.bilayer.BilayerPositiveEdge" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#funman.model.bilayer.BilayerEdge" title="funman.model.bilayer.BilayerEdge"><code class="xref py py-class docutils literal notranslate"><span class="pre">BilayerEdge</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="funman.model.bilayer.BilayerPositiveEdge.to_smtlib">
+<span class="sig-name descname"><span class="pre">to_smtlib</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">timepoint</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#funman.model.bilayer.BilayerPositiveEdge.to_smtlib" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="funman.model.bilayer.BilayerStateNode">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">funman.model.bilayer.</span></span><span class="sig-name descname"><span class="pre">BilayerStateNode</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parameter</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#funman.model.bilayer.BilayerStateNode" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#funman.model.bilayer.BilayerNode" title="funman.model.bilayer.BilayerNode"><code class="xref py py-class docutils literal notranslate"><span class="pre">BilayerNode</span></code></a></p>
+</dd></dl>
+
+</section>
+<section id="funman-model-chime">
+<h2>funman.model.chime<a class="headerlink" href="#funman-model-chime" title="Permalink to this heading"></a></h2>
+<div class="graphviz"><object data="_images/inheritance-6f17dc666e298931ab3cb99abf40da49beac705a.svg" type="image/svg+xml" class="inheritance graphviz">
+<p class="warning">Inheritance diagram of funman.model.chime</p></object></div>
+<span class="target" id="module-funman.model.chime"></span><dl class="py class">
+<dt class="sig sig-object py" id="funman.model.chime.ChimeModel">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">funman.model.chime.</span></span><span class="sig-name descname"><span class="pre">ChimeModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chime</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="funman.examples.html#funman.examples.chime.CHIME" title="funman.examples.chime.CHIME"><span class="pre">CHIME</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">init_values</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parameter_bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#funman.model.chime.ChimeModel" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#funman.model.CannedModel" title="funman.model.CannedModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">CannedModel</span></code></a></p>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="funman.examples.html" class="btn btn-neutral float-left" title="funman.examples package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="funman.scenario.html" class="btn btn-neutral float-right" title="funman.scenario package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, SIFT.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
