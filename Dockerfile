@@ -2,6 +2,7 @@ FROM ubuntu:20.04
 
 # Install base dependencies
 RUN apt update && apt install -y --no-install-recommends \
+    curl \
     make \
     git \
     python3-dev \
@@ -19,6 +20,9 @@ RUN apt update && apt install -y \
     libgraphviz-dev \
     pkg-config \
     && rm -rf /var/lib/apt/lists/*
+
+# install dreal
+RUN curl -fsSL https://raw.githubusercontent.com/dreal/dreal4/4.21.06.2/setup/ubuntu/20.04/install.sh | bash
 
 # setup non-root user
 ARG UNAME=funman
@@ -45,6 +49,7 @@ RUN pip install --no-cache-dir twine
 RUN pip install --no-cache-dir build
 RUN pip install --no-cache-dir pylint
 RUN pip install --no-cache-dir black
+RUN pip install --no-cache-dir dreal
 
 WORKDIR /home/$UNAME
 
