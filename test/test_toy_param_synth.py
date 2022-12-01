@@ -27,7 +27,7 @@ from pysmt.typing import INT, REAL, BOOL
 import unittest
 import os
 from funman import Funman
-from funman.model import Parameter, Model
+from funman.model import Parameter, EncodedModel
 from funman.scenario import ParameterSynthesisScenario
 from funman.math_utils import lt
 from funman.search_utils import Interval,Box
@@ -40,7 +40,7 @@ class TestCompilation(unittest.TestCase):
         parameters = [Parameter("x", x)]
 
         # 0.0 <= x <= 5
-        model = Model(And(LE(x, Real(5.0)), GE(x, Real(0.0))))
+        model = EncodedModel(And(LE(x, Real(5.0)), GE(x, Real(0.0))))
 
         scenario = ParameterSynthesisScenario(parameters, model, BoxSearch())
         funman = Funman()
@@ -54,7 +54,7 @@ class TestCompilation(unittest.TestCase):
         parameters = [Parameter("x", x), Parameter("y", y)]
 
         # 0.0 < x < 5.0, 10.0 < y < 12.0
-        model = Model(
+        model = EncodedModel(
             And(
                 LE(x, Real(5.0)), GE(x, Real(0.0)), LE(y, Real(12.0)), GE(y, Real(10.0))
             )
