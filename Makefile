@@ -73,5 +73,21 @@ run-docker:
 		-d \
 		-it \
 		--cpus=8 \
-		--name funman-dev \
+		--name funman \
 		funman:latest
+
+build-docker-dev: 
+	DOCKER_BUILDKIT=1 docker build \
+		--build-arg UNAME=$$USER \
+		--build-arg UID=$$(id -u) \
+		--build-arg GID=$$(id -g) \
+		-t funman-dev -f ./Dockerfile.dev ..
+
+run-docker-dev:
+	docker run \
+		-d \
+		-it \
+		--cpus=5 \
+		--name funman-dev \
+		-v $(shell pwd)/..:/code \
+		funman-dev:latest

@@ -189,3 +189,4 @@ cython_debug/
 **/*.smt2.stdout
 test/smtlib/out
 test/out
+.docker_venv
