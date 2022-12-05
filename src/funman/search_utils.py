@@ -938,6 +938,8 @@ class SearchConfig(Config):
         self.episode_type = episode_type
         self.search = search
         self.solver = solver
+        if self.solver == "dreal":
+            import funman_dreal  # Needed to add dreal to pysmt solver list
 
 
 def _encode_labeled_box(box: Box, label: str):

@@ -459,7 +459,7 @@ class DRealNative(Solver, SmtLibBasicSolver, SmtLibIgnoreMixin):
             v = self.converter.symbol_to_decl[cmd.args[0]]
         else:
             v = dreal.Variable(cmd.args[0].symbol_name(), dreal.Variable.Real)
-        self.context.DeclareVariable(v, 0, 1)
+        self.context.DeclareVariable(v)
         self.symbols[cmd.args[0].symbol_name()] = (cmd.args[0], v)
 
     def cmd_assert(self, cmd: SmtLibCommand):
@@ -509,7 +509,7 @@ class DRealNative(Solver, SmtLibBasicSolver, SmtLibIgnoreMixin):
         return EagerModel(assignment=assignment, environment=self.environment)
 
     def get_value(self, item):
-        return self.model[item].lb()
+        return Real(self.model[item].lb())
 
     @clear_pending_pop
     def solve(self, assumptions=None):

@@ -20,7 +20,6 @@ from funman.search_utils import (
     encode_false_point,
     encode_unknown_box,
 )
-from funman_dreal.funman_dreal import DReal
 from pyparsing import abstractmethod
 from pysmt.logics import QF_NRA
 from pysmt.shortcuts import get_model, And, Not, Solver
@@ -123,6 +122,61 @@ class BoxSearch(Search):
         else:
             return True
 
+    def initialize_encoding(self, solver, episode):
+        solver.add_assertion(episode.problem.model_encoding.formula)
+
+    def initialize_box(self, solver, box):
+        solver.push(1)
+        solver.add_assertion(box.to_smt())
+
+    def setup_false_query(self, solver, episode):
+        solver.push(1)
+        solver.add_assertion(Not(episode.problem.query_encoding.formula))
+
+    def setup_true_query(self, solver, episode):
+        solver.push(1)
+        solver.add_assertion(episode.problem.query_encoding.formula)
+
+    def get_false_points(self, solver, episode, box, rval):
+        false_points = [
+            fp for fp in episode.false_points if box.contains_point(fp)
+        ]
+        if len(false_points) == 0:
+            # If no cached point, then attempt to generate one
+            print("Checking false query")
+            self.setup_false_query(solver, episode)
+            if solver.solve():
+                # Record the false point
+                res = solver.get_model()
+                false_points = [episode.extract_point(res)]
+                map(episode.add_false_point, false_points)
+                map(
+                    lambda x: rval.put(encode_false_point(x)),
+                    false_points,
+                )
+            solver.pop(1)  # Remove false query
+        return false_points
+
+    def get_true_points(self, solver, episode, box, rval):
+        true_points = [
+            tp for tp in episode.true_points if box.contains_point(tp)
+        ]
+        if len(true_points) == 0:
+            # If no cached point, then attempt to generate one
+            print("Checking true query")
+            self.setup_true_query(solver, episode)
+            if solver.solve():
+                # Record the true point
+                res1 = solver.get_model()
+                true_points = [episode.extract_point(res1)]
+                map(episode.add_true_point, true_points)
+                map(
+                    lambda x: rval.put(encode_true_point(x)),
+                    true_points,
+                )
+            solver.pop(1)  # Remove true query
+        return true_points
+
     def expand(
         self,
         rval,
@@ -160,97 +214,78 @@ class BoxSearch(Search):
         l = self._logger(episode.config, process_name=process_name)
 
         try:
-            l.info(f"{process_name} entering process loop")
-            while True:
-                try:
-                    box: Box = episode.get_unknown()
-                    rval.put(encode_unknown_box(box))
-                    l.info(f"{process_name} claimed work")
-                except Empty:
-                    exit = self._handle_empty_queue(
-                        process_name, episode, more_work, idle_mutex, idle_flags
-                    )
-                    if exit:
-                        break
-                    else:
-                        continue
-                else:
-                    # Check whether box intersects f (false region)
-                    # First see if a cached false point exists in the box
-                    false_points = [
-                        fp
-                        for fp in episode.false_points
-                        if box.contains_point(fp)
-                    ]
-                    if len(false_points) == 0:
-                        # If no cached point, then attempt to generate one
-                        phi = And(
-                            box.to_smt(),
-                            episode.problem.model_encoding.formula,
-                            Not(episode.problem.query_encoding.formula),
+            with Solver(name=episode.config.solver, logic=QF_NRA) as solver:
+                l.info(f"{process_name} entering process loop")
+                print("Starting initializing dynamics of model")
+                self.initialize_encoding(solver, episode)
+                print("Initialized dynamics of model")
+                while True:
+                    try:
+                        box: Box = episode.get_unknown()
+                        rval.put(encode_unknown_box(box))
+                        l.info(f"{process_name} claimed work")
+                    except Empty:
+                        exit = self._handle_empty_queue(
+                            process_name,
+                            episode,
+                            more_work,
+                            idle_mutex,
+                            idle_flags,
                         )
-                        res = get_model(phi)
-                        # Record the false point
-                        if res:
-                            false_points = [episode.extract_point(res)]
-                            map(episode.add_false_point, false_points)
-                            map(
-                                lambda x: rval.put(encode_false_point(x)),
-                                false_points,
-                            )
-
-                    if len(false_points) > 0:
-                        # box intersects f (false region)
+                        if exit:
+                            break
+                        else:
+                            continue
+                    else:
+                        self.initialize_box(solver, box)
 
                         # Check whether box intersects t (true region)
                         # First see if a cached false point exists in the box
-                        true_points = [
-                            tp
-                            for tp in episode.true_points
-                            if box.contains_point(tp)
-                        ]
-                        if len(true_points) == 0:
-                            # If no cached point, then attempt to generate one
-                            phi1 = And(
-                                box.to_smt(),
-                                episode.problem.model_encoding.formula,
-                                episode.problem.query_encoding.formula,
-                            )
-                            res1 = get_model(phi1)
-                            # Record the true point
-                            if res1:
-                                true_points = [episode.extract_point(res1)]
-                                map(episode.add_true_point, true_points)
-                                map(
-                                    lambda x: rval.put(encode_true_point(x)),
-                                    true_points,
-                                )
+                        true_points = self.get_true_points(
+                            solver, episode, box, rval
+                        )
 
                         if len(true_points) > 0:
-                            # box intersects both t and f, so it must be split
-                            # use the true and false points to compute a midpoint
-                            if self.split(
-                                box, episode, points=true_points + false_points
-                            ):
-                                l.info(f"{process_name} produced work")
-                            if episode.config.number_of_processes > 1:
-                                with more_work:
-                                    more_work.notify_all()
-                        else:
-                            # box is a subset of f (intersects f but not t)
-                            episode.add_false(
-                                box
-                            )  # TODO consider merging lists of boxes
-                            rval.put(encode_false_box(box))
+                            # box intersects f (true region)
 
-                    else:
-                        # box does not intersect f, so it is in t (true region)
-                        episode.add_true(box)
-                        rval.put(encode_true_box(box))
-                    episode.on_iteration()
-                    if handler:
-                        handler(rval, episode.config)
-                    l.info(f"{process_name} finished work")
+                            # Check whether box intersects f (false region)
+                            # First see if a cached false point exists in the box
+                            false_points = self.get_false_points(
+                                solver, episode, box, rval
+                            )
+
+                            if len(false_points) > 0:
+                                # box intersects f (false region)
+
+                                # box intersects both t and f, so it must be split
+                                # use the true and false points to compute a midpoint
+                                if self.split(
+                                    box,
+                                    episode,
+                                    points=true_points + false_points,
+                                ):
+                                    l.info(f"{process_name} produced work")
+                                if episode.config.number_of_processes > 1:
+                                    with more_work:
+                                        more_work.notify_all()
+                                print(f"Split({box})")
+                            else:
+                                # box is a subset of f (intersects f but not t)
+                                episode.add_false(
+                                    box
+                                )  # TODO consider merging lists of boxes
+                                rval.put(encode_false_box(box))
+                                print(f"--- False({box})")
+                        else:
+                            # box does not intersect f, so it is in t (true region)
+                            episode.add_true(box)
+                            rval.put(encode_true_box(box))
+                            print(f"+++ True({box})")
+                        solver.pop(1)  # Remove box from solver
+                        episode.on_iteration()
+                        if handler:
+                            handler(rval, episode.config)
+                        l.info(f"{process_name} finished work")
         except KeyboardInterrupt:
             l.info(f"{process_name} Keyboard Interrupt")
         except Exception:

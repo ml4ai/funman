@@ -48,10 +48,10 @@ class DRealConverter(Converter, DagWalker):
         return term
 
     def walk_le(self, formula, args, **kwargs):
-        res = args[0] <= args[1]
-        # res = yicespy.yices_arith_leq_atom(args[0], args[1])
-        # self._check_term_result(res)
-        return res
+        return args[0] <= args[1]
+
+    def walk_lt(self, formula, args, **kwargs):
+        return args[0] < args[1]
 
     def walk_plus(self, formula, args, **kwargs):
         return functools.reduce(lambda a, b: a + b, args)
