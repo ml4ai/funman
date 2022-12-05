@@ -45,7 +45,7 @@ init-pages:
 	git checkout main
 	git branch -D gh-pages
 
-deploy-pages: docs
+deploy-pages:
 	mv docs/build/html www
 	touch www/.nojekyll
 	rm www/.buildinfo || true

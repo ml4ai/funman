@@ -22,8 +22,11 @@ setup(
     packages=find_packages("src"),
     package_dir={"": "src"},
     install_requires=[
+        "funman_dreal",
+        "graphviz",
         "model2smtlib",
-        "multiprocess" "graphviz",
+        "multiprocess",
+        "tenacity",
         "pyparsing",
         "pandas",
         "matplotlib"
