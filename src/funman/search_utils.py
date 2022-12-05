@@ -12,7 +12,8 @@ from funman.config import Config
 from funman.model import Parameter
 from funman.constants import NEG_INFINITY, POS_INFINITY, BIG_NUMBER
 
-from numpy import average
+
+from statistics import mean as average
 from pysmt.shortcuts import Real, GE, LT, LE, And, TRUE, Equals
 import funman.math_utils as math_utils
 import multiprocess as mp
@@ -81,12 +82,12 @@ class Interval(object):
         lhs = (
             (self.lb == NEG_INFINITY or other.lb != NEG_INFINITY)
             if (self.lb == NEG_INFINITY or other.lb == NEG_INFINITY)
-            else self.lb < other.lb ## DMI change < to <=
+            else self.lb < other.lb  ## DMI change < to <=
         )
         rhs = (
             (other.ub != POS_INFINITY or self.ub == POS_INFINITY)
             if (self.ub == POS_INFINITY or other.ub == POS_INFINITY)
-            else other.ub < self.ub ## DMI change < to <=
+            else other.ub < self.ub  ## DMI change < to <=
         )
         return lhs or rhs
 
@@ -372,7 +373,7 @@ class Box(object):
             ]
         )
 
-    def equal(b1, b2, param_list): ## added 11/27/22 DMI
+    def equal(b1, b2, param_list):  ## added 11/27/22 DMI
         result = []
         for p1 in param_list:
             for b in b1.bounds:
@@ -383,16 +384,16 @@ class Box(object):
                     b2_bounds = [b.lb, b.ub]
             if b1_bounds == b2_bounds:
                 result.append(True)
-            else: 
+            else:
                 result.append(False)
         return all(result)
 
     def intersects(self, other: "Box") -> bool:
-#        print([
-#                interval.intersects(other.bounds[p])
-#                for p, interval in self.bounds.items()
-#        ]) ## DMI delete later
-        return all( 
+        #        print([
+        #                interval.intersects(other.bounds[p])
+        #                for p, interval in self.bounds.items()
+        #        ]) ## DMI delete later
+        return all(
             [
                 interval.intersects(other.bounds[p])
                 for p, interval in self.bounds.items()
@@ -582,7 +583,7 @@ class Box(object):
         widths = [bounds.width() for _, bounds in self.bounds.items()]
         max_width = max(widths)
         param = list(self.bounds.keys())[widths.index(max_width)]
-#        print('width info:', param, max_width)## DMI delete
+        #        print('width info:', param, max_width)## DMI delete
         return param, max_width
 
     def width(self) -> float:
@@ -654,7 +655,9 @@ class Box(object):
             else:  ## no intersection.
                 return []
 
-    def intersect_two_boxes_selected_parameters(b1, b2, param_list): ## added 11/21/22 DMM
+    def intersect_two_boxes_selected_parameters(
+        b1, b2, param_list
+    ):  ## added 11/21/22 DMM
         result = []
         for p1 in param_list:
             for b in b1.bounds:
@@ -664,7 +667,9 @@ class Box(object):
                 if b.name == p1:
                     b2_bounds = Interval.make_interval([b.lb, b.ub])
             intersection_ans = Box.intersection(b1_bounds, b2_bounds)
-            dict_element = Parameter(p1, intersection_ans[0], intersection_ans[1])
+            dict_element = Parameter(
+                p1, intersection_ans[0], intersection_ans[1]
+            )
             result.append(dict_element)
         return Box({i for i in result})
 
