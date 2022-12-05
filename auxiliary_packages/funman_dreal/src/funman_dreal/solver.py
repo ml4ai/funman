@@ -6,6 +6,7 @@ from shutil import copyfile, rmtree
 import time
 import io
 from funman.util import FUNMANSmtPrinter
+from funman_dreal.converter import DRealConverter
 from pysmt.smtlib.solver import SmtLibSolver, SmtLibOptions
 from pysmt.solvers.solver import Solver, SolverOptions
 from pysmt.logics import QF_NRA
@@ -13,6 +14,7 @@ from pysmt.solvers.solver import Solver
 from pysmt.smtlib.parser import SmtLibParser
 from pysmt.smtlib.script import SmtLibCommand
 import pysmt.smtlib.commands as smtcmd
+from pysmt.solvers.eager import EagerModel
 from pysmt.exceptions import (
     SolverReturnedUnknownResultError,
     UnknownSolverAnswerError,
@@ -24,6 +26,9 @@ from pysmt.logics import QF_NRA
 from pysmt.exceptions import SolverRedefinitionError
 from functools import partial
 import pysmt.smtlib.commands as smtcmd
+from pysmt.solvers.smtlib import SmtLibBasicSolver, SmtLibIgnoreMixin
+
+import dreal
 
 # def setup(smt2_file, benchmark_path, out_dir):
 #     print("setting up docker")
@@ -89,10 +94,10 @@ def add_dreal_to_pysmt():
     env = get_env()
     if name in env.factory._all_solvers:
         raise SolverRedefinitionError("Solver %s already defined" % name)
-    solver = partial(DReal, "dreal/dreal4", LOGICS=DReal.LOGICS)
-    solver.LOGICS = DReal.LOGICS
+    solver = partial(DRealNative, "dreal/dreal4", LOGICS=DRealNative.LOGICS)
+    solver.LOGICS = DRealNative.LOGICS
     env.factory._all_solvers[name] = solver
-    env.factory._generic_solvers[name] = ("dreal/dreal4", DReal.LOGICS)
+    env.factory._generic_solvers[name] = ("dreal/dreal4", DRealNative.LOGICS)
     env.factory.solver_preference_list.append(name)
 
 
@@ -333,3 +338,128 @@ class DReal(SmtLibSolver):
                     print(f"Could not decode response: {msg} because {e}")
         s.close()
         return rval.getvalue()
+
+
+class DRealNative(Solver, SmtLibBasicSolver, SmtLibIgnoreMixin):
+    LOGICS = [QF_NRA]
+    OptionsClass = SolverOptions
+
+    commands_to_enqueue = [
+        smtcmd.SET_LOGIC,
+        smtcmd.DEFINE_FUN,
+        smtcmd.PUSH,
+        smtcmd.POP,
+    ]
+    commands_to_flush = [smtcmd.CHECK_SAT, smtcmd.ASSERT]
+
+    def __init__(
+        self, args, environment, logic, LOGICS=None, **options
+    ) -> None:
+        Solver.__init__(self, environment, logic=logic, **options)
+
+        # Setup super class attributes
+        self.converter = DRealConverter(environment)
+        # self.options(self)
+        # self.options.set_params(self)
+        self.mgr = environment.formula_manager
+        self.model = None
+
+        # dreal specific attributes
+        self.context = dreal.Context()
+        self.context.SetLogic(dreal.Logic.QF_NRA)
+        self.config = dreal.Config()
+        self.config.precision = 0.0001
+        self.model = None
+        # dreal.set_log_level(dreal.LogLevel.TRACE)
+
+        # self.to = self.environment.typeso
+        self.LOGICS = DReal.LOGICS
+        self.symbols = {}
+
+    @clear_pending_pop
+    def add_assertion(self, formula, named=None):
+        # print(f"Assert({formula})")
+
+        f = self.converter.convert(formula)
+
+        deps = formula.get_free_variables()
+        # Declare all variables
+        for symbol in deps:
+            assert symbol.is_symbol()
+            self.cmd_declare_fun(
+                SmtLibCommand(name=smtcmd.DECLARE_FUN, args=[symbol])
+            )
+        code = self.context.Assert(f)
+
+    def cmd_set_option(self, cmd):
+        pass
+
+    def cmd_set_logic(self, cmd):
+        pass
+
+    def cmd_declare_fun(self, cmd):
+        # print(f"DeclareVariable({cmd.args[0]})")
+        if cmd.args[0] in self.converter.symbol_to_decl:
+            v = self.converter.symbol_to_decl[cmd.args[0]]
+        else:
+            v = dreal.Variable(cmd.args[0].symbol_name(), dreal.Variable.Real)
+        self.context.DeclareVariable(v, 0, 1)
+        self.symbols[cmd.args[0].symbol_name()] = (cmd.args[0], v)
+
+    def cmd_assert(self, cmd: SmtLibCommand):
+        self.add_assertion(cmd.args[0])
+
+    def cmd_push(self, cmd):
+        self.push(cmd.args[0])
+
+    def push(self, levels):
+        self.context.Push(levels)
+
+    def cmd_pop(self, cmd):
+        self.pop(cmd.args[0])
+
+    def pop(self, levels):
+        self.context.Pop(levels)
+
+    def cmd_check_sat(self, cmd):
+        return self.check_sat()
+
+    def check_sat(self):
+        # print("CheckSat()")
+        result = self.context.CheckSat()
+        # result = dreal.CheckSatisfiability(self.assertion, 0.001)
+        self.model = result
+        return result
+
+    def _send_command(self, cmd):
+        handlers = {
+            smtcmd.SET_LOGIC: self.cmd_set_logic,
+            smtcmd.SET_OPTION: self.cmd_set_option,
+            smtcmd.DECLARE_FUN: self.cmd_declare_fun,
+            smtcmd.ASSERT: self.cmd_assert,
+            smtcmd.PUSH: self.cmd_push,
+            smtcmd.POP: self.cmd_pop,
+            smtcmd.CHECK_SAT: self.cmd_check_sat,
+        }
+        return handlers[cmd.name](cmd)
+
+    def get_model(self):
+        assignment = {}
+        for sn in self.symbols:
+            s = self.symbols[sn][0]
+            if s.is_term():
+                v = self.get_value(self.symbols[sn][1])
+                assignment[s] = v
+        return EagerModel(assignment=assignment, environment=self.environment)
+
+    def get_value(self, item):
+        return self.model[item].lb()
+
+    @clear_pending_pop
+    def solve(self, assumptions=None):
+        assert assumptions is None
+        ans = self.check_sat()
+        return ans is not None
+
+    def _exit(self):
+        pass

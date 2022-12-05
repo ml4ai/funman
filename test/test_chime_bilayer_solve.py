@@ -1,7 +1,11 @@
 import sys
 from funman.scenario.consistency import ConsistencyScenario
-from funman.search import BoxSearch, SearchConfig
+from funman.search import BoxSearch, SearchConfig, SMTCheck
 from funman.search_utils import Box
+from model2smtlib.bilayer.translate import (
+    BilayerEncoder,
+    BilayerEncodingOptions,
+)
 from funman.util import smtlibscript_from_formula
 from pysmt.shortcuts import (
     get_model,
@@ -28,7 +32,7 @@ from pysmt.typing import INT, REAL, BOOL
 import unittest
 import os
 from funman import Funman
-from funman.model import Parameter, Model
+from funman.model import Parameter, Model, QueryLE
 from model2smtlib.bilayer.translate import (
     Bilayer,
     BilayerEncodingOptions,
@@ -56,22 +60,44 @@ class TestChimeBilayerSolve(unittest.TestCase):
         bilayer = Bilayer.from_json(bilayer_json_file)
         assert bilayer
 
-        scenario = ConsistencyScenario(
-            BilayerModel(
-                bilayer,
-                init_values={"S": 1000, "I": 1, "R": 1},
-                parameter_bounds={
-                    "beta": [0.00067, 0.00067],
-                    "gamma": [1.0 / 14.0, 1.0 / 14.0],
-                },
-                encoding_options=BilayerEncodingOptions(
-                    step_size=4, max_steps=16
-                ),
-            )
+        transmission_reduction = 0.05
+        model = BilayerModel(
+            bilayer,
+            init_values={"S": 10000, "I": 1, "R": 1},
+            parameter_bounds={
+                "beta": [
+                    0.0,
+                    1.0
+                    # 0.00067 * (1.0 - transmission_reduction),
+                    # 0.00067 * (1.0 - transmission_reduction),
+                ],
+                # "beta" : [0.00005, 0.00007],
+                "gamma": [
+                    0.0,
+                    1.0
+                    # 1.0 / 14.0, 1.0 / 14.0
+                ],
+                # "hr": [0.01, 0.01]
+            },
         )
 
-        result = Funman().solve(scenario)
+        query = QueryLE("I", 10000)
+
+        duration = 1
+        scenario = ConsistencyScenario(
+            model,
+            query,
+            smt_encoder=BilayerEncoder(
+                config=BilayerEncodingOptions(step_size=1, max_steps=duration)
+            ),  # four months,
+        )
+
+        result = Funman().solve(
+            scenario, config=SearchConfig(solver="dreal", search=SMTCheck)
+        )
         assert result
+
+        result.plot(logy=True)
 
 
 if __name__ == "__main__":

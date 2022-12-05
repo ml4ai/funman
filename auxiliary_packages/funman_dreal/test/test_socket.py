@@ -1,13 +1,13 @@
 import os
 import unittest
-from funman_dreal.funman_dreal import DReal, run_dreal
+from funman_dreal.solver import DReal, run_dreal
 from funman.examples.chime import CHIME
 from funman.util import (
     smtlibscript_from_formula_list,
     smtlibscript_from_formula,
 )
 import io
-from funman_dreal.funman_dreal import DReal
+from funman_dreal.solver import DReal
 from pysmt.shortcuts import get_env, GT, Solver, Symbol, Equals, Real
 from pysmt.logics import QF_NRA
 from pysmt.exceptions import SolverRedefinitionError
@@ -141,7 +141,7 @@ class TestRunDreal(unittest.TestCase):
             s.pop(1)
             s.add_assertion(Equals(Symbol("q", REAL), Real(1.0)))
             s.add_assertion(Equals(Symbol("p", REAL), Real(0.0)))
-            res3 = s.solve() # unsat
+            res3 = s.solve()  # unsat
         assert res1 and res2 and not res3
 
 
