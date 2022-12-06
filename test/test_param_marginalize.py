@@ -148,7 +148,22 @@ class TestCompilation(unittest.TestCase):
             param_list = {i for i in param_list}
             box1_result = Box(param_list)
             return box1_result
- 
+
+        def add_box_variable(b, vars_list, new_var_name, new_bounds_lb, new_bounds_ub):
+            """Takes a subset of selected variables (vars_list) of a given box (b) and returns another box that is given by b's values for only the selected variables."""       
+            param_list = []
+            for i in range(len(list(b.bounds.keys()))):
+                variable_name = list(b.bounds.keys())[i].name
+                variable_values = list(b.bounds.values())[i]
+                if variable_name in vars_list:
+                    current_param = Parameter(f"{variable_name}", variable_values.lb, variable_values.ub)
+                    param_list.append(current_param)
+            new_param = Parameter(f"{new_var_name}", new_bounds_lb, new_bounds_ub)
+            param_list.append(new_param)
+            param_list = {i for i in param_list}
+            box1_result = Box(param_list)
+            return box1_result
+
         def marginalize(b1, b2, var):
             ## First check that the two boxes have the same variables
             vars_b1 = set([b.name for b in b1.bounds])
@@ -171,7 +186,6 @@ class TestCompilation(unittest.TestCase):
             for b in b1.bounds:
                 if b.name != var:
                     desired_vars_list.append(b.name)
-#                    print(b.name, b.lb, b.ub)
             ## Visualize marginalized spaces
             BoxPlotter.plot2DBoxesTemp([b1, b2],desired_vars_list[0],desired_vars_list[1],colors=['y','b'])    
             custom_lines = [Line2D([0], [0], color='y',alpha=0.2, lw=4),Line2D([0], [0], color='b',alpha=0.2, lw=4)]
@@ -179,7 +193,6 @@ class TestCompilation(unittest.TestCase):
             plt.show() 
             ## Find the intersection (if it exists)
             intersection_marginal = Box.intersect_two_boxes_selected_parameters(b1,b2,desired_vars_list)
-            print('intersection test:')
             ## Form versions of boxes minus the part that we're marginalizing: named box1_x_y and box2_x_y
             box1_x_y = subset_of_box_variables(b1,desired_vars_list)
             box2_x_y = subset_of_box_variables(b2,desired_vars_list)
@@ -187,41 +200,74 @@ class TestCompilation(unittest.TestCase):
             unknown_boxes = [box1_x_y, box2_x_y]
             false_boxes = []
             true_boxes = []
+            unknown_boxes_full = [b1, b2]
+            false_boxes_full = []
+            true_boxes_full = []
             while len(unknown_boxes) > 0:
                 b = unknown_boxes.pop()
+                b_full = unknown_boxes_full.pop()
                 if Box.contains(intersection_marginal, b) == True:
                     false_boxes.append(b)
+                    false_boxes_full.append(b_full)
                 elif Box.contains(b, intersection_marginal) == True:
                     new_boxes = Box.split(b)
+                    for bound in b_full.bounds:
+                        if bound.name == var: 
+                            marg_var = bound.name
+                            marg_var_lb = bound.lb
+                            marg_var_ub = bound.ub
                     for i in range(len(new_boxes)):
-                        unknown_boxes.append(new_boxes[i])
+                        unknown_boxes.append(new_boxes[i]) ## new split boxes: find the marginalization variable (called var) and append it
+                        new_box_full = add_box_variable(new_boxes[i], desired_vars_list, var, marg_var_lb, marg_var_ub)
+                        unknown_boxes_full.append(new_box_full)
                 else:
                     true_boxes.append(b)
+                    true_boxes_full.append(b_full)
+            ## Fix true box values and plot
             for b in list(true_boxes):
-                param_list = []
-                for i in range(len(list(b.bounds.keys()))):
-                    variable_name = list(b.bounds.keys())[i].name
-                    variable_values = list(b.bounds.values())[i]
-#                    print('name:', variable_name, 'values:', variable_values)
-                    current_param = Parameter(f"{variable_name}", variable_values.lb, variable_values.ub)
-                    param_list.append(current_param)
-                param_list = {i for i in param_list}
-                b = Box(param_list)
+                b = subset_of_box_variables(b, desired_vars_list)
                 BoxPlotter.plot2DBoxTemp(b,desired_vars_list[0],desired_vars_list[1],color='g') 
+            ## Fix false box values and plot
             for b in list(false_boxes):
-                param_list = []
-                for i in range(len(list(b.bounds.keys()))):
-                    variable_name = list(b.bounds.keys())[i].name
-                    variable_values = list(b.bounds.values())[i]
-                    current_param = Parameter(f"{variable_name}", variable_values.lb, variable_values.ub)
-                    param_list.append(current_param)
-                param_list = {i for i in param_list}
-                b = Box(param_list)
+                b = subset_of_box_variables(b, desired_vars_list)
                 BoxPlotter.plot2DBoxTemp(b,desired_vars_list[0],desired_vars_list[1],color='r')
             custom_lines = [Line2D([0], [0], color='r',alpha=0.2, lw=4),Line2D([0], [0], color='g',alpha=0.2, lw=4)]
             plt.legend(custom_lines, ['Intersection', 'Symmetric Difference'])
-            plt.show() 
-        marginalize(box1, box2, 'z')  
+            plt.show()
+            non_intersecting_boxes = list(true_boxes_full)
+            intersecting_boxes = list(false_boxes_full)
+            result = [] ## List of boxes to be returned.
+            if len(intersecting_boxes) > 1:
+                for bound in intersecting_boxes[0].bounds:
+                    if bound.name == var: 
+                        marg_var_0 = bound.name
+                        marg_var_lb_0 = bound.lb
+                        marg_var_ub_0 = bound.ub
+                        bounds_0 = Interval.make_interval([marg_var_lb_0, marg_var_ub_0])
+                for bound in intersecting_boxes[1].bounds:
+                    if bound.name == var: 
+                        marg_var_1 = bound.name
+                        marg_var_lb_1 = bound.lb
+                        marg_var_ub_1 = bound.ub
+                        bounds_1 = Interval.make_interval([marg_var_lb_1, marg_var_ub_1])
+                interval_union_result = Interval.union(bounds_0, bounds_1)[0]
+                if len(interval_union_result) == 1: ## intersection along all variables (including marginal): form the union.
+                    ## Make new result with last bound given by the above interval
+                    box_subset = subset_of_box_variables(intersecting_boxes[0], desired_vars_list)
+                    box_result_union = add_box_variable(box_subset, desired_vars_list, var, interval_union_result[0].lb, interval_union_result[0].ub)
+                    result.append(box_result_union)
+                    for box in non_intersecting_boxes:
+                        result.append(box)
+                else:
+                    for box in non_intersecting_boxes:
+                        result.append(box)
+                    for box in intersecting_boxes:
+                        result.append(box)
+            return result ## result is the list of boxes where, for the non-marginalized terms, boxes are either disjoint or equal and for the marginalized terms, the union over the marginalized variable has been taken. 
+        ## Test: marginalize the boxes box1 and box2 based on the variable z. 
+        print(marginalize(box1, box2, 'z'))
+        
+         
 
 if __name__ == "__main__":
     unittest.main()
