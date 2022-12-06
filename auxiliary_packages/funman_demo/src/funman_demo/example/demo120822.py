@@ -62,10 +62,10 @@ class Scenario1(object):
 
         self.config = {
             # "transmission_reduction": 0.05,
-            "duration": 20,
+            "duration": 10,
             "step_size": 2,
             "query_variable": "H",
-            "query_threshold": 22,
+            "query_threshold": 0.5,
         }
 
         self.models = {
