@@ -186,6 +186,7 @@ class BoxSearch(Search):
         idle_mutex: Lock = None,
         idle_flags: List[Event] = None,
         handler: ResultHandler = None,
+        all_results=None,
     ):
         """
         A single search process will evaluate and expand the boxes in the
@@ -284,7 +285,9 @@ class BoxSearch(Search):
                         solver.pop(1)  # Remove box from solver
                         episode.on_iteration()
                         if handler:
-                            handler(rval, episode.config)
+                            all_results = handler(
+                                rval, episode.config, all_results
+                            )
                         l.info(f"{process_name} finished work")
         except KeyboardInterrupt:
             l.info(f"{process_name} Keyboard Interrupt")
@@ -353,17 +356,17 @@ class BoxSearch(Search):
             "false_points": false_points,
         }
 
-    def _run_handler_step(self, rval, config: SearchConfig):
+    def _run_handler_step(self, rval, config: SearchConfig, all_results):
         """
         Execute one step of processing the results of expand()
         """
         l = self._logger(config, process_name=f"search_process_result_handler")
 
         handler: ResultHandler = config.handler
-        true_boxes = []
-        false_boxes = []
-        true_points = []
-        false_points = []
+        # true_boxes = []
+        # false_boxes = []
+        # true_points = []
+        # false_points = []
         break_on_interrupt = False
         try:
             # handler.open()
@@ -384,18 +387,18 @@ class BoxSearch(Search):
                     ((inst, label), typ) = decode_labeled_object(result)
                     if typ is Box:
                         if label == "true":
-                            true_boxes.append(inst)
+                            all_results["true_boxes"].append(inst)
                         elif label == "false":
-                            false_boxes.append(inst)
+                            all_results["false_boxes"].append(inst)
                         elif label == "unknown":
                             pass  # Allow unknown boxes for plotting
                         else:
                             l.warn(f"Skipping Box with label: {label}")
                     elif typ is Point:
                         if label == "true":
-                            true_points.append(inst)
+                            all_results["true_points"].append(inst)
                         elif label == "false":
-                            false_points.append(inst)
+                            all_results["false_points"].append(inst)
                         else:
                             l.warn(f"Skipping Point with label: {label}")
                     else:
@@ -412,12 +415,7 @@ class BoxSearch(Search):
             if config.wait_action is not None:
                 config.wait_action.run()
             # handler.close()
-        return {
-            "true_boxes": true_boxes,
-            "false_boxes": false_boxes,
-            "true_points": true_points,
-            "false_points": false_points,
-        }
+        return all_results
 
     def search(self, problem, config: SearchConfig = None) -> SearchEpisode:
         """
@@ -461,7 +459,12 @@ class BoxSearch(Search):
             "false_points": [],
         }
         config.handler.open()
-        self.expand(rval, episode, handler=self._run_handler_step)
+        self.expand(
+            rval,
+            episode,
+            handler=self._run_handler_step,
+            all_results=all_results,
+        )
         config.handler.close()
         # rval.put(None)
 

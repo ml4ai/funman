@@ -104,7 +104,7 @@ class TestChimeBilayerSolve(unittest.TestCase):
             )
         model.parameter_bounds["beta"] = [lb, ub]
 
-        query = QueryLE("H", 30)
+        query = QueryLE("H", 0.5)
 
         encoder = BilayerEncoder(
             config=BilayerEncodingOptions(step_size=2, max_steps=duration)
@@ -132,7 +132,7 @@ class TestChimeBilayerSolve(unittest.TestCase):
     def test_chime_bilayer_synthesize(self):
 
         model, query, encoder = self.setup(
-            duration=20, transmission_reduction=[-0.05, 0.15]
+            duration=10, transmission_reduction=[-0.05, 0.15]
         )
 
         # The efficacy can be up to 4x that of baseline (i.e., 0.05 - 0.20)
@@ -172,6 +172,9 @@ class TestChimeBilayerSolve(unittest.TestCase):
             ),
         )
         assert result
+
+        ## Convert beta parameter space back to reduction proportion
+        result.transform({"beta": })
 
 
 if __name__ == "__main__":

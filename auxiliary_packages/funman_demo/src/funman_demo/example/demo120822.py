@@ -20,6 +20,7 @@ from funman.search_episode import DRealSearchEpisode
 from funman.search import SMTCheck, BoxSearch
 import os
 import tempfile
+import pandas as pd
 
 # import funman_dreal # Needed to use dreal with pysmt
 
@@ -62,36 +63,53 @@ class Scenario1(object):
 
         self.config = {
             # "transmission_reduction": 0.05,
-            "duration": 10,
-            "step_size": 2,
+            "duration": 10,  # 10
+            "step_size": 3,
             "query_variable": "H",
             "query_threshold": 0.5,
         }
 
         self.models = {
-            "intervention1": BilayerModel(
-                self.chime_bilayer,
-                measurements=self.hospital_measurements,
-                init_values={"S": 10000, "I": 1, "R": 1},
-                parameter_bounds={
-                    "beta": [
-                        0.000067,
-                        0.000067,
-                    ],
-                    "gamma": [1.0 / 14.0, 1.0 / 14.0],
-                    "hr": [0.01, 0.01],
-                },
-            ),
-            "intervention2": BilayerModel(
-                self.chime_bilayer,
-                measurements=self.hospital_measurements,
-                init_values={"S": 10000, "I": 1, "R": 1},
-                parameter_bounds={
-                    "beta": [0.000067, 0.000067],
-                    "gamma": [1.0 / 14.0, 1.0 / 14.0],
-                    "hr": [0.01, 0.01],
-                },
-            ),
+            "intervention1": [
+                BilayerModel(
+                    self.chime_bilayer,
+                    measurements=self.hospital_measurements,
+                    init_values={"S": 10000, "I": 1, "R": 1},
+                    parameter_bounds={
+                        "beta": [
+                            0.000067,
+                            0.000067,
+                        ],
+                        "gamma": [1.0 / 14.0, 1.0 / 14.0],
+                        "hr": [0.01, 0.01],
+                    },
+                ),
+                BilayerModel(
+                    self.chime_bilayer,
+                    measurements=self.hospital_measurements,
+                    init_values={"S": 10000, "I": 1, "R": 1},
+                    parameter_bounds={
+                        "beta": [
+                            0.000067,
+                            0.000067,
+                        ],
+                        "gamma": [1.0 / 14.0, 1.0 / 14.0],
+                        "hr": [0.01, 0.01],
+                    },
+                ),
+            ],
+            "intervention2": [
+                BilayerModel(
+                    self.chime_bilayer,
+                    measurements=self.hospital_measurements,
+                    init_values={"S": 10000, "I": 1, "R": 1},
+                    parameter_bounds={
+                        "beta": [0.000067, 0.000067],
+                        "gamma": [1.0 / 14.0, 1.0 / 14.0],
+                        "hr": [0.01, 0.01],
+                    },
+                )
+            ],
         }
 
         self.encoding_options = BilayerEncodingOptions(
@@ -144,31 +162,46 @@ class Scenario1(object):
         return self.md
 
     def analyze_intervention_1(self, transmission_reduction):
-        self.models["intervention1"].parameter_bounds["beta"] = [
-            self.models["intervention1"].parameter_bounds["beta"][0]
-            * (1.0 - transmission_reduction),
-            self.models["intervention1"].parameter_bounds["beta"][1]
-            * (1.0 - transmission_reduction),
-        ]
-        result = Funman().solve(
-            ConsistencyScenario(
-                self.models["intervention1"],
-                self.query,
-                smt_encoder=BilayerEncoder(config=self.encoding_options),
-            ),
-            config=SearchConfig(solver="dreal", search=SMTCheck),
+        results = []
+        for model in self.models["intervention1"]:
+            model.parameter_bounds["beta"] = [
+                model.parameter_bounds["beta"][0]
+                * (1.0 - transmission_reduction),
+                model.parameter_bounds["beta"][1]
+                * (1.0 - transmission_reduction),
+            ]
+            result = Funman().solve(
+                ConsistencyScenario(
+                    model,
+                    self.query,
+                    smt_encoder=BilayerEncoder(config=self.encoding_options),
+                ),
+                config=SearchConfig(solver="dreal", search=SMTCheck),
+            )
+            if result.consistent:
+                msg = "Query Satisfied"
+                plot = result.plot(logy=True)
+                # print(f"parameters = {result.parameters()}")
+                df = result.dataframe()
+            else:
+                msg = "Query Not Satisfied"
+                plot = None
+                dataframe = None
+            results.append({"message": msg, "plot": plot, "dataframe": df})
+        return results
+
+    def compare_model_results(self, results):
+        df = pd.DataFrame(
+            {
+                f"Model {i}": result["dataframe"]["H"]
+                for i, result in enumerate(results)
+            }
         )
-        if result.consistent:
-            self.plot = result.plot(logy=True)
-            # print(f"parameters = {result.parameters()}")
-            self.dataframe = result.dataframe()
-        else:
-            self.plot = None
-            self.dataframe = None
-        if result.consistent:
-            return "Query Satisfied", self.plot, self.dataframe
-        else:
-            return "Query Not Satisfied", None, None
+        df = df.apply(lambda x: self.config["query_threshold"] - x)
+        ax = df.boxplot()
+        ax.set_title("Unused Hospital Capacity per Day")
+        ax.set_xlabel("Model")
+        ax.set_ylabel("Unused Hospital Capacity")
 
     def analyze_intervention_2(self, transmission_reduction):
         if not isinstance(transmission_reduction, list):
@@ -195,7 +228,7 @@ class Scenario1(object):
             ),
             config=SearchConfig(
                 number_of_processes=1,
-                tolerance=1e-6,
+                tolerance=1e-8,
                 solver="dreal",
                 search=BoxSearch,
                 # wait_action = NotebookImageRefresher(os.path.join(tmp_dir_path, "search.png"), sleep_for=1),
