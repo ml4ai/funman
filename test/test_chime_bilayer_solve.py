@@ -40,6 +40,7 @@ from model2smtlib.bilayer.translate import (
     Bilayer,
     BilayerEncodingOptions,
     BilayerModel,
+    BilayerMeasurement,
 )
 
 import pandas as pd
@@ -63,21 +64,47 @@ class TestChimeBilayerSolve(unittest.TestCase):
         bilayer = Bilayer.from_json(bilayer_json_file)
         assert bilayer
 
+        measurements = {
+            "state": [{"variable": "I"}],
+            "observable": [{"observable": "H"}],
+            "rate": [{"parameter": "hr"}],
+            "Din": [{"variable": 1, "parameter": 1}],
+            "Dout": [{"parameter": 1, "observable": 1}],
+        }
+        hospital_measurements = BilayerMeasurement.from_json(measurements)
+
         model = BilayerModel(
             bilayer,
+            measurements=hospital_measurements,
             init_values={"S": 10000, "I": 1, "R": 1},
             parameter_bounds={
                 "beta": [
-                    0.000067 * (1.0 - transmission_reduction),
-                    0.000067 * (1.0 - transmission_reduction),
+                    0.000067,
+                    0.000067,
                 ],
                 # "beta" : [0.00005, 0.00007],
                 "gamma": [1.0 / 14.0, 1.0 / 14.0],
-                # "hr": [0.01, 0.01]
+                "hr": [0.01, 0.01],
             },
         )
 
-        query = QueryLE("I", 1000)
+        if isinstance(transmission_reduction, list):
+            lb = model.parameter_bounds["beta"][0] * (
+                1.0 - transmission_reduction[1]
+            )
+            ub = model.parameter_bounds["beta"][1] * (
+                1.0 - transmission_reduction[0]
+            )
+        else:
+            lb = model.parameter_bounds["beta"][0] * (
+                1.0 - transmission_reduction
+            )
+            ub = model.parameter_bounds["beta"][1] * (
+                1.0 - transmission_reduction
+            )
+        model.parameter_bounds["beta"] = [lb, ub]
+
+        query = QueryLE("H", 30)
 
         encoder = BilayerEncoder(
             config=BilayerEncodingOptions(step_size=2, max_steps=duration)
@@ -87,7 +114,9 @@ class TestChimeBilayerSolve(unittest.TestCase):
 
     @unittest.skip("temporarily remove")
     def test_chime_bilayer_solve(self):
-        model, query, encoder = self.setup()
+        model, query, encoder = self.setup(
+            duration=10, transmission_reduction=0.05
+        )
 
         scenario = ConsistencyScenario(model, query, smt_encoder=encoder)
 
@@ -99,26 +128,21 @@ class TestChimeBilayerSolve(unittest.TestCase):
         result.plot(logy=True)
         print(result.dataframe())
 
+    # @unittest.skip("temporarily remove")
     def test_chime_bilayer_synthesize(self):
-        transmission_reduction = 0.05
+
         model, query, encoder = self.setup(
-            transmission_reduction=transmission_reduction
+            duration=20, transmission_reduction=[-0.05, 0.15]
         )
 
-        model.parameter_bounds["beta"] = [
-            # 0.000001,
-            # 0.00001,
-            0.0,
-            0.001,
-        ]  # beta no longer prescribed
         # The efficacy can be up to 4x that of baseline (i.e., 0.05 - 0.20)
         parameters = [
             Parameter(
                 "beta",
                 # lb=0.000001,
                 # ub=0.00001,
-                lb=0.0,
-                ub=0.001,
+                lb=model.parameter_bounds["beta"][0],
+                ub=model.parameter_bounds["beta"][1],
             )
         ]
         tmp_dir_path = tempfile.mkdtemp(prefix="funman-")

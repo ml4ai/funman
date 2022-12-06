@@ -270,17 +270,17 @@ class BoxSearch(Search):
                                         more_work.notify_all()
                                 print(f"Split({box})")
                             else:
-                                # box is a subset of f (intersects f but not t)
-                                episode.add_false(
-                                    box
-                                )  # TODO consider merging lists of boxes
-                                rval.put(encode_false_box(box))
-                                print(f"--- False({box})")
+                                # box does not intersect f, so it is in t (true region)
+                                episode.add_true(box)
+                                rval.put(encode_true_box(box))
+                                print(f"+++ True({box})")
                         else:
-                            # box does not intersect f, so it is in t (true region)
-                            episode.add_true(box)
-                            rval.put(encode_true_box(box))
-                            print(f"+++ True({box})")
+                            # box is a subset of f (intersects f but not t)
+                            episode.add_false(
+                                box
+                            )  # TODO consider merging lists of boxes
+                            rval.put(encode_false_box(box))
+                            print(f"--- False({box})")
                         solver.pop(1)  # Remove box from solver
                         episode.on_iteration()
                         if handler:

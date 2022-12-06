@@ -192,10 +192,11 @@ class BilayerModel(Model):
         init_values=None,
         parameter_bounds=None,
     ) -> None:
-        super().__init__(init_values=init_values, parameter_bounds=parameter_bounds)
+        super().__init__(
+            init_values=init_values, parameter_bounds=parameter_bounds
+        )
         self.bilayer = bilayer
         self.measurements = measurements
-       
 
 
 class Bilayer(BilayerGraph):
@@ -356,4 +357,6 @@ class Bilayer(BilayerGraph):
             )
             # print(eqn)
             eqns.append(eqn)
+            is_positive = GE(state_var_next_step_smt, Real(0.0))
+            eqns.append(is_positive)
         return And(eqns)

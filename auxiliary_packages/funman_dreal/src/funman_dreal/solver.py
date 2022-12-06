@@ -424,7 +424,8 @@ class DRealNative(Solver, SmtLibBasicSolver, SmtLibIgnoreMixin):
         self.context = dreal.Context()
         self.context.SetLogic(dreal.Logic.QF_NRA)
         self.config = dreal.Config()
-        self.config.precision = 0.0001
+        self.config.precision = 0.01
+        self.config.use_worklist_fixpoint = True
         self.model = None
         # dreal.set_log_level(dreal.LogLevel.TRACE)
 
