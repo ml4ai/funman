@@ -66,7 +66,7 @@ build-docker: build-docker-dreal
 		--build-arg UNAME=$$USER \
 		--build-arg UID=$$(id -u) \
 		--build-arg GID=$$(id -g) \
-		-t funman -f . ..
+		-t funman -f ./Dockerfile ..
 
 run-docker:
 	docker run \
@@ -74,7 +74,11 @@ run-docker:
 		-it \
 		--cpus=8 \
 		--name funman \
+                -p 8888:8888 \
+		-v $$PWD/../model2smtlib:/home/$$USER/model2smtlib \
+		-v $$PWD:/home/$$USER/funman \
 		funman:latest
+
 
 build-docker-dev: 
 	DOCKER_BUILDKIT=1 docker build \
@@ -94,3 +98,4 @@ run-docker-dev:
 
 attach-docker-dev: 
 	docker attach funman-dev
+

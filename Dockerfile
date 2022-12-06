@@ -25,7 +25,7 @@ RUN apt update && apt install -y \
 ARG UNAME=funman
 ARG UID=1000
 ARG GID=1000
-RUN groupadd -g $GID $UNAME
+RUN groupadd -o -g $GID $UNAME
 RUN useradd -m -u $UID -g $GID -G sudo -s /bin/bash $UNAME
 USER $UNAME
 
