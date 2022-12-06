@@ -91,3 +91,6 @@ run-docker-dev:
 		--name funman-dev \
 		-v $(shell pwd)/..:/code \
 		funman-dev:latest
+
+attach-docker-dev: 
+	docker attach funman-dev
