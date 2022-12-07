@@ -26,7 +26,13 @@ import pandas as pd
 
 
 class Scenario1(object):
-    def __init__(self):
+    def __init__(
+        self,
+        init_values={"S": 9998, "I": 1, "R": 1},
+        query_threshold=10000,
+        duration=1,
+        step_size=1,
+    ):
         # Define the dynamics with a bilayer
 
         self.chime_bilayer_src = {
@@ -63,18 +69,18 @@ class Scenario1(object):
 
         self.config = {
             # "transmission_reduction": 0.05,
-            "duration": 10,  # 10
-            "step_size": 3,
+            "duration": duration,  # 10
+            "step_size": step_size,
             "query_variable": "H",
-            "query_threshold": 0.5,
+            "query_threshold": query_threshold,
         }
 
         self.models = {
-            "intervention1": [
-                BilayerModel(
+            "intervention1": {
+                "SIR+H": BilayerModel(
                     self.chime_bilayer,
                     measurements=self.hospital_measurements,
-                    init_values={"S": 10000, "I": 1, "R": 1},
+                    init_values=init_values,
                     parameter_bounds={
                         "beta": [
                             0.000067,
@@ -84,10 +90,10 @@ class Scenario1(object):
                         "hr": [0.01, 0.01],
                     },
                 ),
-                BilayerModel(
+                "SVIIR": BilayerModel(
                     self.chime_bilayer,
                     measurements=self.hospital_measurements,
-                    init_values={"S": 10000, "I": 1, "R": 1},
+                    init_values=init_values,
                     parameter_bounds={
                         "beta": [
                             0.000067,
@@ -97,19 +103,19 @@ class Scenario1(object):
                         "hr": [0.01, 0.01],
                     },
                 ),
-            ],
-            "intervention2": [
-                BilayerModel(
+            },
+            "intervention2": {
+                "SIR+H": BilayerModel(
                     self.chime_bilayer,
                     measurements=self.hospital_measurements,
-                    init_values={"S": 10000, "I": 1, "R": 1},
+                    init_values=init_values,
                     parameter_bounds={
                         "beta": [0.000067, 0.000067],
                         "gamma": [1.0 / 14.0, 1.0 / 14.0],
                         "hr": [0.01, 0.01],
                     },
                 )
-            ],
+            },
         }
 
         self.encoding_options = BilayerEncodingOptions(
@@ -148,8 +154,10 @@ class Scenario1(object):
         )
         self.md = md(
             f"""# Bilayer and Measurement Model
+SIR Bilayer (left), Hospitalized Measurement (right)
+
 ![](bilayer.png) ![](measurement.png)
-# Initial State
+# Initial State (population 10000)
 {init_values_md}
 # Parameter Bounds
 {parameters_bounds_md}
@@ -162,8 +170,9 @@ class Scenario1(object):
         return self.md
 
     def analyze_intervention_1(self, transmission_reduction):
-        results = []
-        for model in self.models["intervention1"]:
+        results = {}
+        for model_name, model in self.models["intervention1"].items():
+
             model.parameter_bounds["beta"] = [
                 model.parameter_bounds["beta"][0]
                 * (1.0 - transmission_reduction),
@@ -179,29 +188,37 @@ class Scenario1(object):
                 config=SearchConfig(solver="dreal", search=SMTCheck),
             )
             if result.consistent:
-                msg = "Query Satisfied"
-                plot = result.plot(logy=True)
-                # print(f"parameters = {result.parameters()}")
-                df = result.dataframe()
+                msg = f"{model_name}: Query Satisfied"
+                plot = result.plot(
+                    y=["S", "I", "R", "H"],
+                    logy=True,
+                    title=f"Scenario 1 with {transmission_reduction} reduction in transmissibiilty, {model_name}",
+                    ylabel="Population",
+                    xlabel="Day",
+                )
+                dataframe = result.dataframe()
             else:
-                msg = "Query Not Satisfied"
+                msg = f"{model_name}: Query Not Satisfied"
                 plot = None
                 dataframe = None
-            results.append({"message": msg, "plot": plot, "dataframe": df})
+            results[model_name] = {"message": msg, "plot": plot, "dataframe": dataframe}
+            
         return results
 
     def compare_model_results(self, results):
         df = pd.DataFrame(
             {
-                f"Model {i}": result["dataframe"]["H"]
-                for i, result in enumerate(results)
+                f"{name}": result["dataframe"]["H"]
+                for name, result in results.items()
+                if result["dataframe"] is not None
             }
         )
         df = df.apply(lambda x: self.config["query_threshold"] - x)
-        ax = df.boxplot()
-        ax.set_title("Unused Hospital Capacity per Day")
-        ax.set_xlabel("Model")
-        ax.set_ylabel("Unused Hospital Capacity")
+        if len(df) > 0:
+            ax = df.boxplot()
+            ax.set_title("Unused Hospital Capacity per Day")
+            ax.set_xlabel("Model")
+            ax.set_ylabel("Unused Hospital Capacity")
 
     def analyze_intervention_2(self, transmission_reduction):
         if not isinstance(transmission_reduction, list):
@@ -209,44 +226,60 @@ class Scenario1(object):
                 f"transmission_reduction must be a list of the form [lb, ub]"
             )
 
-        lb = self.models["intervention2"].parameter_bounds["beta"][0] * (
-            1.0 - transmission_reduction[1]
-        )
-        ub = self.models["intervention2"].parameter_bounds["beta"][1] * (
-            1.0 - transmission_reduction[0]
-        )
-        self.models["intervention2"].parameter_bounds["beta"] = [lb, ub]
+        results = []
+        for model in self.models["intervention2"]:
 
-        parameters = [Parameter("beta", lb=lb, ub=ub)]
-        tmp_dir_path = tempfile.mkdtemp(prefix="funman-")
-        result = Funman().solve(
-            ParameterSynthesisScenario(
-                parameters,
-                self.models["intervention2"],
-                self.query,
-                smt_encoder=BilayerEncoder(config=self.encoding_options),
-            ),
-            config=SearchConfig(
-                number_of_processes=1,
-                tolerance=1e-8,
-                solver="dreal",
-                search=BoxSearch,
-                # wait_action = NotebookImageRefresher(os.path.join(tmp_dir_path, "search.png"), sleep_for=1),
-                handler=ResultCombinedHandler(
-                    [
-                        ResultCacheWriter(
-                            os.path.join(tmp_dir_path, "search.json")
-                        ),
-                        RealtimeResultPlotter(
-                            parameters,
-                            plot_points=True,
-                            realtime_save_path=os.path.join(
-                                tmp_dir_path, "search.png"
-                            ),
-                        ),
-                    ]
+            lb = model.parameter_bounds["beta"][0] * (
+                1.0 - transmission_reduction[1]
+            )
+            ub = model.parameter_bounds["beta"][1] * (
+                1.0 - transmission_reduction[0]
+            )
+            model.parameter_bounds["beta"] = [lb, ub]
+
+            parameters = [Parameter("beta", lb=lb, ub=ub)]
+            tmp_dir_path = tempfile.mkdtemp(prefix="funman-")
+            result = Funman().solve(
+                ParameterSynthesisScenario(
+                    parameters,
+                    model,
+                    self.query,
+                    smt_encoder=BilayerEncoder(config=self.encoding_options),
                 ),
-            ),
-        )
-        self.plot = result.plot()
-        return self.plot, result.parameter_space
+                config=SearchConfig(
+                    number_of_processes=1,
+                    tolerance=1e-8,
+                    solver="dreal",
+                    search=BoxSearch,
+                    # wait_action = NotebookImageRefresher(os.path.join(tmp_dir_path, "search.png"), sleep_for=1),
+                    handler=ResultCombinedHandler(
+                        [
+                            ResultCacheWriter(
+                                os.path.join(tmp_dir_path, "search.json")
+                            ),
+                            RealtimeResultPlotter(
+                                parameters,
+                                plot_points=True,
+                                realtime_save_path=os.path.join(
+                                    tmp_dir_path, "search.png"
+                                ),
+                            ),
+                        ]
+                    ),
+                ),
+            )
+            msg = ""
+            plot = result.plot()
+            df = pd.DataFrame()
+            results.append(
+                {
+                    "message": msg,
+                    "plot": plot,
+                    "dataframe": df,
+                    "parameter_space": result.parameter_space,
+                }
+            )
+        return results
+
+    def analyze_intervention_3(self, transmission_reduction):
+        pass

@@ -107,16 +107,18 @@ class TestChimeBilayerSolve(unittest.TestCase):
         query = QueryLE("H", 0.5)
 
         encoder = BilayerEncoder(
-            config=BilayerEncodingOptions(step_size=2, max_steps=duration)
+            config=BilayerEncodingOptions(step_size=1, max_steps=duration)
         )
 
         return model, query, encoder
 
-    @unittest.skip("temporarily remove")
+    #@unittest.skip("temporarily remove")
     def test_chime_bilayer_solve(self):
         model, query, encoder = self.setup(
-            duration=10, transmission_reduction=0.05
+            duration=1, transmission_reduction=0.00
         )
+        model.init_values["S"] = 100000
+        query.ub = 30000
 
         scenario = ConsistencyScenario(model, query, smt_encoder=encoder)
 
@@ -128,7 +130,7 @@ class TestChimeBilayerSolve(unittest.TestCase):
         result.plot(logy=True)
         print(result.dataframe())
 
-    # @unittest.skip("temporarily remove")
+    @unittest.skip("temporarily remove")
     def test_chime_bilayer_synthesize(self):
 
         model, query, encoder = self.setup(
@@ -173,8 +175,6 @@ class TestChimeBilayerSolve(unittest.TestCase):
         )
         assert result
 
-        ## Convert beta parameter space back to reduction proportion
-        result.transform({"beta": })
 
 
 if __name__ == "__main__":
