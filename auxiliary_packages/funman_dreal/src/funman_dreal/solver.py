@@ -424,10 +424,11 @@ class DRealNative(Solver, SmtLibBasicSolver, SmtLibIgnoreMixin):
         self.context = dreal.Context()
         self.context.SetLogic(dreal.Logic.QF_NRA)
         self.config = dreal.Config()
-        self.config.precision = 1
+        self.config.precision = 1000
         # self.config.use_worklist_fixpoint = True
         self.model = None
-        # dreal.set_log_level(dreal.LogLevel.TRACE)
+        # dreal.set_log_level(dreal.LogLevel.DEBUG)
+        # self.config.number_of_jobs = 4
 
         # self.to = self.environment.typeso
         self.LOGICS = DReal.LOGICS
@@ -470,12 +471,14 @@ class DRealNative(Solver, SmtLibBasicSolver, SmtLibIgnoreMixin):
         self.push(cmd.args[0])
 
     def push(self, levels):
+        # print("Push()")
         self.context.Push(levels)
 
     def cmd_pop(self, cmd):
         self.pop(cmd.args[0])
 
     def pop(self, levels):
+        # print("Pop()")
         self.context.Pop(levels)
 
     def cmd_check_sat(self, cmd):

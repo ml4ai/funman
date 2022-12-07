@@ -112,13 +112,13 @@ class TestChimeBilayerSolve(unittest.TestCase):
 
         return model, query, encoder
 
-    #@unittest.skip("temporarily remove")
+    @unittest.skip("temporarily remove")
     def test_chime_bilayer_solve(self):
         model, query, encoder = self.setup(
             duration=1, transmission_reduction=0.00
         )
-        model.init_values["S"] = 100000
-        query.ub = 30000
+
+        query.ub = 10000
 
         scenario = ConsistencyScenario(model, query, smt_encoder=encoder)
 
@@ -130,13 +130,18 @@ class TestChimeBilayerSolve(unittest.TestCase):
         result.plot(logy=True)
         print(result.dataframe())
 
-    @unittest.skip("temporarily remove")
+    # @unittest.skip("temporarily remove")
     def test_chime_bilayer_synthesize(self):
 
         model, query, encoder = self.setup(
-            duration=10, transmission_reduction=[-0.05, 0.15]
+            duration=10, transmission_reduction=[-0.05, 0.1]
         )
-
+        model.init_values = {
+            "S": 7438.567991,
+            "I": 2261.927694,
+            "R": 299.504315,
+        }
+        query.ub = 75
         # The efficacy can be up to 4x that of baseline (i.e., 0.05 - 0.20)
         parameters = [
             Parameter(
@@ -154,7 +159,7 @@ class TestChimeBilayerSolve(unittest.TestCase):
             ),
             config=SearchConfig(
                 number_of_processes=1,
-                tolerance=1e-6,
+                tolerance=1e-8,
                 solver="dreal",
                 search=BoxSearch,
                 handler=ResultCombinedHandler(
@@ -175,6 +180,7 @@ class TestChimeBilayerSolve(unittest.TestCase):
         )
         assert result
 
+        # sample points from true boxes and call
 
 
 if __name__ == "__main__":

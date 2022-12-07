@@ -190,6 +190,7 @@ class BilayerModel(Model):
         bilayer,
         measurements=None,
         init_values=None,
+        identical_parameters=[],
         parameter_bounds=None,
     ) -> None:
         super().__init__(
@@ -197,6 +198,7 @@ class BilayerModel(Model):
         )
         self.bilayer = bilayer
         self.measurements = measurements
+        self.identical_parameters = identical_parameters
 
 
 class Bilayer(BilayerGraph):
