@@ -1,6 +1,7 @@
 """
 This submodule defined the Parameter Synthesis scenario.
 """
+from funman.search_episode import SearchEpisode
 from . import AnalysisScenario, AnalysisScenarioResult
 from funman.examples.chime import CHIME
 from funman.model import Model, Parameter, Query
@@ -63,9 +64,7 @@ class ParameterSynthesisScenario(AnalysisScenario):
 
         self.encode()
         result = self.search.search(self, config=config)
-        parameter_space = ParameterSpace(result.true_boxes, result.false_boxes)
-
-        return ParameterSynthesisScenarioResult(parameter_space)
+        return ParameterSynthesisScenarioResult(result, self)
 
     def encode(self):
         self.model_encoding = self.smt_encoder.encode_model(self.model)
@@ -81,6 +80,13 @@ class ParameterSynthesisScenarioResult(AnalysisScenarioResult):
     search statistics.
     """
 
-    def __init__(self, result: Any) -> None:
+    def __init__(self, episode: SearchEpisode, scenario: ParameterSynthesisScenario) -> None:
         super().__init__()
-        self.parameter_space = result
+        self.episode = episode
+        self.scenario = scenario
+        self.parameter_space = ParameterSpace(
+            episode.true_boxes,
+            episode.false_boxes,
+            episode.true_points,
+            episode.false_points
+        )

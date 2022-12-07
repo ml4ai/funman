@@ -58,4 +58,9 @@ def plot_cached_search(search_path, alpha: float = 0.2):
                     l.info(f"Skipping Point with label: {label}")
             else:
                 l.error(f"Skipping invalid object type: {typ}")
-    plot_parameter_space(ParameterSpace(true_boxes, false_boxes), alpha=alpha)
+    plot_parameter_space(ParameterSpace(
+            true_boxes,
+            false_boxes,
+            true_points,
+            false_points
+        ), alpha=alpha)
