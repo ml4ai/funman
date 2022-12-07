@@ -1,6 +1,7 @@
 """
 This submodule defined the Parameter Synthesis scenario.
 """
+from funman.scenario.consistency import ConsistencyScenario
 from funman.search_episode import SearchEpisode
 from . import AnalysisScenario, AnalysisScenarioResult
 from funman.examples.chime import CHIME
@@ -9,6 +10,7 @@ from funman.parameter_space import ParameterSpace
 from funman.search import BoxSearch, SearchConfig
 from pysmt.fnode import FNode
 from typing import Any, Dict, List, Union
+from funman.search import SMTCheck
 
 
 class ParameterSynthesisScenario(AnalysisScenario):
@@ -80,7 +82,9 @@ class ParameterSynthesisScenarioResult(AnalysisScenarioResult):
     search statistics.
     """
 
-    def __init__(self, episode: SearchEpisode, scenario: ParameterSynthesisScenario) -> None:
+    def __init__(
+        self, episode: SearchEpisode, scenario: ParameterSynthesisScenario
+    ) -> None:
         super().__init__()
         self.episode = episode
         self.scenario = scenario
@@ -88,5 +92,41 @@ class ParameterSynthesisScenarioResult(AnalysisScenarioResult):
             episode.true_boxes,
             episode.false_boxes,
             episode.true_points,
-            episode.false_points
+            episode.false_points,
         )
+
+    # points are of the form (see Point.to_dict())
+    # [
+    #     {"values": {"beta": 0.1}}
+    # ]
+    def true_point_timeseries(self, points=None):
+        # for each true box
+        dfs = []
+        for tbox in self.parameter_space.true_boxes:
+            # print("-" * 80)
+            # print("Parameter assignments:")
+            # update the model with the
+            for p, i in tbox.bounds.items():
+                # pick a point for the parameter within the true box
+                point = (i.lb + i.ub) * 0.5
+                # assign that parameter to the value of the picked point
+                self.scenario.model.parameter_bounds[p.name] = [point, point]
+            #     print(f"    {p.name} = {point}")
+            # print("-" * 80)
+
+            # check the consistency
+            scenario = ConsistencyScenario(
+                self.scenario.model,
+                self.scenario.query,
+                smt_encoder=self.scenario.smt_encoder,
+            )
+            result = scenario.solve(
+                config=SearchConfig(solver="dreal", search=SMTCheck)
+            )
+            assert result
+            # plot the results
+            # result.plot(logy=True)
+            # print(result.dataframe())
+            # print("=" * 80)
+            dfs.append(result.dataframe())
+        return dfs
