@@ -34,10 +34,11 @@ class QueryTrue(Query):
 
 
 class QueryLE(Query):
-    def __init__(self, variable, ub) -> None:
+    def __init__(self, variable, ub, at_end=False) -> None:
         super().__init__()
         self.variable = variable
         self.ub = ub
+        self.at_end=at_end
 
 
 class Parameter(object):

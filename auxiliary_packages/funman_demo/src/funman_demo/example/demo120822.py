@@ -172,6 +172,7 @@ class Scenario1(object):
                     identical_parameters=[
                         ["beta_1", "beta_2"],
                         ["gamma_1", "gamma_2"],
+                        ["v_s1", "v_s2"],
                     ],
                     parameter_bounds={
                         "beta_1": [0.000067, 0.000067],
@@ -511,6 +512,7 @@ class Scenario2(object):
                     identical_parameters=[
                         ["beta_1", "beta_2"],
                         ["gamma_1", "gamma_2"],
+                        ["v_s1", "v_s2"],
                     ],
                     init_values={"S": 10000, "V": 1, "I": 1, "I_v": 1, "R": 1},
                     parameter_bounds={
@@ -534,7 +536,7 @@ class Scenario2(object):
 
         # query = QueryTrue()
         self.query = QueryLE(
-            self.config["query_variable"], self.config["query_threshold"]
+            self.config["query_variable"], self.config["query_threshold"], at_end=True
         )
 
     def to_md(self, model):
@@ -598,7 +600,9 @@ SIR Bilayer (left), Infected Measurement (right)
             )
 
         results = []
-        for model_name, model in self.models["intervention_vaccination"].items():
+        for model_name, model in self.models[
+            "intervention_vaccination"
+        ].items():
 
             lb = model.parameter_bounds["v_r"][0] * (
                 1.0 + vaccination_increase[0]
