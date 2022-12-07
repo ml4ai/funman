@@ -613,6 +613,10 @@ class Box(object):
             mid = self.bounds[p].midpoint(
                 points=[pt.values[p] for pt in points]
             )
+            if mid == self.bounds[p].lb or mid == self.bounds[p].ub:
+                # Fall back to box midpoint if point-based mid is degenerate
+                p, _ = self._get_max_width_parameter()
+                mid = self.bounds[p].midpoint()
         else:
             p, _ = self._get_max_width_parameter()
             mid = self.bounds[p].midpoint()

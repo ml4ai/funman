@@ -169,6 +169,7 @@ class Scenario1(object):
                     self.chime_sviivr_bilayer,
                     measurements=self.hospital_measurements1,
                     init_values={"S": 10000, "V": 1, "I": 1, "I_v": 1, "R": 1},
+                    identical_parameters = [["beta_1", "beta_2"], ["gamma_1", "gamma_2"]],
                     parameter_bounds={
                         "beta_1": [0.000067, 0.000067],
                         "beta_2": [0.000067, 0.000067],
@@ -338,20 +339,30 @@ SIR Bilayer (left), Hospitalized Measurement (right)
                 f"transmission_reduction must be a list of the form [lb, ub]"
             )
 
-        results = []
+        results = {}
         for model_name, model in self.models["intervention2"].items():
             if model_name not in models:
                 continue
 
-            lb = model.parameter_bounds["beta"][0] * (
-                1.0 - transmission_reduction[1]
-            )
-            ub = model.parameter_bounds["beta"][1] * (
-                1.0 - transmission_reduction[0]
-            )
-            model.parameter_bounds["beta"] = [lb, ub]
+            if model_name == "SIR+H":
+                lb = model.parameter_bounds["beta"][0] * (
+                    1.0 - transmission_reduction[1]
+                )
+                ub = model.parameter_bounds["beta"][1] * (
+                    1.0 - transmission_reduction[0]
+                )
+                model.parameter_bounds["beta"] = [lb, ub]
+                parameters = [Parameter("beta", lb=lb, ub=ub)]
+            elif model_name == "SVIIR":
+                for beta in ["beta_1", "beta_2"]:
+                    model.parameter_bounds[beta] = [
+                        model.parameter_bounds[beta][0]
+                        * (1.0 - transmission_reduction[1]),
+                        model.parameter_bounds[beta][1]
+                        * (1.0 - 1.0 - transmission_reduction[0]),
+                    ]
+                    parameters = [Parameter("beta_1", lb=lb, ub=ub)]
 
-            parameters = [Parameter("beta", lb=lb, ub=ub)]
             tmp_dir_path = tempfile.mkdtemp(prefix="funman-")
             result = Funman().solve(
                 ParameterSynthesisScenario(
@@ -382,17 +393,11 @@ SIR Bilayer (left), Hospitalized Measurement (right)
                     ),
                 ),
             )
-            msg = ""
-            plot = result.plot()
-            df = pd.DataFrame()
-            results.append(
-                {
-                    "message": msg,
-                    "plot": plot,
-                    "dataframe": df,
-                    "parameter_space": result.parameter_space,
-                }
-            )
+            # msg = ""
+            # plot = result.plot()
+            # df = pd.DataFrame()
+            results[model_name] = result
+
         return results
 
     def analyze_intervention_3(self, transmission_reduction):
