@@ -128,12 +128,15 @@ class Scenario1(object):
         self.measurements1 = {
             "state": [{"variable": "I"}, {"variable": "I_v"}],
             "observable": [{"observable": "H"}],
-            "rate": [{"parameter": "hr"}],
+            "rate": [{"parameter": "hr_1"}, {"parameter": "hr_2"}],
             "Din": [
                 {"variable": 1, "parameter": 1},
-                {"variable": 2, "parameter": 1},
+                {"variable": 2, "parameter": 2},
             ],
-            "Dout": [{"parameter": 1, "observable": 1}],
+            "Dout": [
+                {"parameter": 1, "observable": 1},
+                {"parameter": 2, "observable": 1},
+            ],
         }
         self.hospital_measurements1 = BilayerMeasurement.from_json(
             self.measurements1
@@ -173,6 +176,7 @@ class Scenario1(object):
                         ["beta_1", "beta_2"],
                         ["gamma_1", "gamma_2"],
                         ["v_s1", "v_s2"],
+                        ["hr_1", "hr_2"],
                     ],
                     parameter_bounds={
                         "beta_1": [0.000067, 0.000067],
@@ -181,8 +185,9 @@ class Scenario1(object):
                         "gamma_2": [1.0 / 14.0, 1.0 / 14.0],
                         "v_s1": [0.000067, 0.000067],
                         "v_s2": [0.000067, 0.000067],
-                        "v_r": [0.05, 0.05],
-                        "hr": [0.01, 0.01],
+                        "v_r": [0.001, 0.001],
+                        "hr_1": [0.01, 0.01],
+                        "hr_2": [0.01, 0.01],
                     },
                 ),
             },
@@ -536,7 +541,9 @@ class Scenario2(object):
 
         # query = QueryTrue()
         self.query = QueryLE(
-            self.config["query_variable"], self.config["query_threshold"], at_end=True
+            self.config["query_variable"],
+            self.config["query_threshold"],
+            at_end=True,
         )
 
     def to_md(self, model):
