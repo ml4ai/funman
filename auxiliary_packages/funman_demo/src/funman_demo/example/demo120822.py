@@ -210,7 +210,7 @@ class Scenario1(object):
             self.measurements1
         )
 
-        self.measurements_2 = {
+        self.measurements2 = {
             "state": [{"variable": "I_crit"}],
             "observable": [{"observable": "H"}],
             "rate": [{"parameter": "hr"}],
@@ -276,7 +276,7 @@ class Scenario1(object):
                     identical_parameters=[
                         ["beta_1", "beta_2"],
                         ["gamma_1", "gamma_2"],
-                    ]
+                    ],
                     parameter_bounds={
                         "beta_1": [0.000067, 0.000067],
                         "beta_2": [0.000067, 0.000067],
