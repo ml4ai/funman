@@ -5,13 +5,20 @@ are represented as a collection of boxes that are either known to be true or
 known to be false.
 """
 from typing import List
-from funman.search_utils import Box
+from funman.search_utils import Box, Point
 
 
 class ParameterSpace(object):
-    def __init__(self, true_boxes: List[Box], false_boxes: List[Box]) -> None:
+    def __init__(self,
+    true_boxes: List[Box],
+    false_boxes: List[Box],
+    true_points: List[Point],
+    false_points: List[Point],
+    ) -> None:
         self.true_boxes = true_boxes
         self.false_boxes = false_boxes
+        self.true_points = true_points
+        self.false_points = false_points
 
     # STUB project parameter space onto a parameter
     @staticmethod
