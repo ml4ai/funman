@@ -2,7 +2,7 @@ import sys
 import tempfile
 from funman.scenario.consistency import ConsistencyScenario
 from funman.search import BoxSearch, SearchConfig, SMTCheck
-from funman.search_utils import Box, ResultCombinedHandler
+from funman.search_utils import Box, Point, ResultCombinedHandler
 from model2smtlib.bilayer.translate import (
     BilayerEncoder,
     BilayerEncodingOptions,
@@ -34,7 +34,7 @@ import unittest
 import os
 from funman import Funman
 from funman.model import Parameter, Model, QueryLE
-from funman.scenario.parameter_synthesis import ParameterSynthesisScenario
+from funman.scenario.parameter_synthesis import ParameterSynthesisScenario, ParameterSynthesisScenarioResult
 from funman_demo.handlers import ResultCacheWriter, RealtimeResultPlotter
 from model2smtlib.bilayer.translate import (
     Bilayer,
@@ -129,7 +129,7 @@ class TestChimeBilayerSolve(unittest.TestCase):
             )
         ]
         tmp_dir_path = tempfile.mkdtemp(prefix="funman-")
-        result = Funman().solve(
+        result: ParameterSynthesisScenarioResult = Funman().solve(
             ParameterSynthesisScenario(
                 parameters, model, query, smt_encoder=encoder
             ),
@@ -156,30 +156,23 @@ class TestChimeBilayerSolve(unittest.TestCase):
         )
         assert result
 
-        # for a given parameter space
         ps = result.parameter_space
-        # for each true box
+        points = []
         for tbox in ps.true_boxes:
+            values = {}
+            for p, i in tbox.bounds.items():
+                param_assignment = (i.lb + i.ub) * 0.5
+                values[p.name] = param_assignment
+            points.append(Point.from_dict({"values": values}))
+
+        dfs = result.true_point_timeseries(points=points)
+        for point, df in zip(points, dfs):
             print("-" * 80)
             print("Parameter assignments:")
-            # update the model with the 
-            for p, i in tbox.bounds.items():
-                # pick a point for the parameter within the true box
-                point = (i.lb + i.ub) * 0.5
-                # assign that parameter to the value of the picked point
-                model.parameter_bounds[p.name] = [point, point]
-                print(f"    {p.name} = {point}")
+            for param, value in point.values.items():
+                print(f"    {param.name} = {value}")
             print("-" * 80)
-
-            # check the consistency 
-            scenario = ConsistencyScenario(model, query, smt_encoder=encoder)
-            result = Funman().solve(
-                scenario, config=SearchConfig(solver="dreal", search=SMTCheck)
-            )
-            assert result
-            # plot the results
-            result.plot(logy=True)
-            print(result.dataframe())
+            print(df)
             print("=" * 80)
 
 if __name__ == "__main__":

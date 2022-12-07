@@ -3,13 +3,14 @@ This submodule defined the Parameter Synthesis scenario.
 """
 from funman.scenario.consistency import ConsistencyScenario
 from funman.search_episode import SearchEpisode
+from funman.search_utils import Point
 from . import AnalysisScenario, AnalysisScenarioResult
 from funman.examples.chime import CHIME
 from funman.model import Model, Parameter, Query
 from funman.parameter_space import ParameterSpace
 from funman.search import BoxSearch, SearchConfig
 from pysmt.fnode import FNode
-from typing import Any, Dict, List, Union
+from typing import Dict, List, Union
 from funman.search import SMTCheck
 
 
@@ -99,20 +100,20 @@ class ParameterSynthesisScenarioResult(AnalysisScenarioResult):
     # [
     #     {"values": {"beta": 0.1}}
     # ]
-    def true_point_timeseries(self, points=None):
+    # Or
+    # List[Point]
+    def true_point_timeseries(self, points : Union[List[Point], List[dict]] = None):
         # for each true box
         dfs = []
-        for tbox in self.parameter_space.true_boxes:
-            # print("-" * 80)
-            # print("Parameter assignments:")
+        for point in points:
+            if isinstance(point, dict):
+                point = Point.from_dict(point)
+            if not isinstance(point, Point):
+                raise Exception("Provided point is not of type Point")
             # update the model with the
-            for p, i in tbox.bounds.items():
-                # pick a point for the parameter within the true box
-                point = (i.lb + i.ub) * 0.5
+            for p, v in point.values.items():
                 # assign that parameter to the value of the picked point
-                self.scenario.model.parameter_bounds[p.name] = [point, point]
-            #     print(f"    {p.name} = {point}")
-            # print("-" * 80)
+                self.scenario.model.parameter_bounds[p.name] = [v, v]
 
             # check the consistency
             scenario = ConsistencyScenario(
@@ -127,6 +128,5 @@ class ParameterSynthesisScenarioResult(AnalysisScenarioResult):
             # plot the results
             # result.plot(logy=True)
             # print(result.dataframe())
-            # print("=" * 80)
             dfs.append(result.dataframe())
         return dfs
