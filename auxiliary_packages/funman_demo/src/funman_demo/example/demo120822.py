@@ -169,7 +169,10 @@ class Scenario1(object):
                     self.chime_sviivr_bilayer,
                     measurements=self.hospital_measurements1,
                     init_values={"S": 10000, "V": 1, "I": 1, "I_v": 1, "R": 1},
-                    identical_parameters = [["beta_1", "beta_2"], ["gamma_1", "gamma_2"]],
+                    identical_parameters=[
+                        ["beta_1", "beta_2"],
+                        ["gamma_1", "gamma_2"],
+                    ],
                     parameter_bounds={
                         "beta_1": [0.000067, 0.000067],
                         "beta_2": [0.000067, 0.000067],
@@ -407,7 +410,7 @@ SIR Bilayer (left), Hospitalized Measurement (right)
 class Scenario2(object):
     def __init__(
         self,
-        init_values={"S": 9996, "V": 1, "I": 1, "I_v":1, "R": 1},
+        init_values={"S": 9996, "V": 1, "I": 1, "I_v": 1, "R": 1},
         query_threshold=10000,
         duration=1,
         step_size=1,
@@ -505,6 +508,10 @@ class Scenario2(object):
                 "SVIIR": BilayerModel(
                     self.chime_sviivr_bilayer,
                     measurements=self.hospital_measurements,
+                    identical_parameters=[
+                        ["beta_1", "beta_2"],
+                        ["gamma_1", "gamma_2"],
+                    ],
                     init_values={"S": 10000, "V": 1, "I": 1, "I_v": 1, "R": 1},
                     parameter_bounds={
                         "beta_1": [0.000067, 0.000067],
@@ -569,20 +576,20 @@ SIR Bilayer (left), Infected Measurement (right)
         )
         return self.md
 
-#    def compare_model_results(self, results):
-#        df = pd.DataFrame(
-#            {
-#                f"{name}": result["dataframe"]["H"]
-#                for name, result in results.items()
-#                if result["dataframe"] is not None
-#            }
-#        )
-#        df = df.apply(lambda x: self.config["query_threshold"] - x)
-#        if len(df) > 0:
-#            ax = df.boxplot()
-#            ax.set_title("Unused Hospital Capacity per Day")
-#            ax.set_xlabel("Model")
-#            ax.set_ylabel("Unused Hospital Capacity")
+    #    def compare_model_results(self, results):
+    #        df = pd.DataFrame(
+    #            {
+    #                f"{name}": result["dataframe"]["H"]
+    #                for name, result in results.items()
+    #                if result["dataframe"] is not None
+    #            }
+    #        )
+    #        df = df.apply(lambda x: self.config["query_threshold"] - x)
+    #        if len(df) > 0:
+    #            ax = df.boxplot()
+    #            ax.set_title("Unused Hospital Capacity per Day")
+    #            ax.set_xlabel("Model")
+    #            ax.set_ylabel("Unused Hospital Capacity")
 
     def analyze_intervention_vaccination(self, vaccination_increase):
         if not isinstance(vaccination_increase, list):
@@ -591,7 +598,7 @@ SIR Bilayer (left), Infected Measurement (right)
             )
 
         results = []
-        for model in self.models["intervention_vaccination"]:
+        for model_name, model in self.models["intervention_vaccination"].items():
 
             lb = model.parameter_bounds["v_r"][0] * (
                 1.0 + vaccination_increase[0]
@@ -644,4 +651,3 @@ SIR Bilayer (left), Infected Measurement (right)
                 }
             )
         return results
-
