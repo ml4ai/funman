@@ -50,6 +50,53 @@ class Scenario1(object):
 
         self.chime_bilayer = Bilayer.from_json(self.chime_bilayer_src)
 
+        self.chime_sviivr_bilayer_src = {
+            "Qin":[{"variable":"S"},
+                    {"variable":"V"},
+                    {"variable":"I"},
+                    {"variable":"I_v"},
+                    {"variable":"R"}],
+             "Box":[{"parameter":"beta_1"},
+                    {"parameter":"beta_2"},
+                    {"parameter":"v_r"},
+                    {"parameter":"v_s1"},
+                    {"parameter":"v_s2"},
+                    {"parameter":"gamma_1"},
+                    {"parameter":"gamma_2"}],
+             "Qout":[{"tanvar":"S'"},
+                     {"tanvar":"V'"},
+                     {"tanvar":"I'"},
+                     {"tanvar":"I_v'"},
+                     {"tanvar":"R'"}],
+             "Win":[{"arg":1,"call":1},
+                    {"arg":1,"call":2},
+                    {"arg":1,"call":3},
+                    {"arg":2,"call":4},
+                    {"arg":2,"call":5},
+                    {"arg":3,"call":1},
+                    {"arg":3,"call":4},
+                    {"arg":3,"call":6},
+                    {"arg":4,"call":2},
+                    {"arg":4,"call":5},
+                    {"arg":4,"call":7}],
+             "Wa":[{"influx":1,"infusion":3},
+                   {"influx":2,"infusion":3},
+                   {"influx":3,"infusion":2},
+                   {"influx":4,"infusion":4},
+                   {"influx":5,"infusion":4},
+                   {"influx":6,"infusion":5},
+                   {"influx":7,"infusion":5}],
+             "Wn":[{"efflux":1,"effusion":1},
+                   {"efflux":2,"effusion":1},
+                   {"efflux":3,"effusion":1},
+                   {"efflux":4,"effusion":2},
+                   {"efflux":5,"effusion":2},
+                   {"efflux":6,"effusion":3},
+                   {"efflux":7,"effusion":4}]
+        }
+
+        self.chime_sviivr_bilayer = Bilayer.from_json(self.chime_sviivr_bilayer_src)
+
         # Define the measurements made of the bilayer variables
         # Hospitalizations (H) are a proportion (hr) of those infected (I)
 
@@ -91,15 +138,17 @@ class Scenario1(object):
                     },
                 ),
                 "SVIIR": BilayerModel(
-                    self.chime_bilayer,
+                    self.chime_sviivr_bilayer,
                     measurements=self.hospital_measurements,
-                    init_values=init_values,
+                    init_values={"S": 10000, "V":1, "I": 1, "I_v":1, "R": 1},
                     parameter_bounds={
-                        "beta": [
-                            0.000067,
-                            0.000067,
-                        ],
-                        "gamma": [1.0 / 14.0, 1.0 / 14.0],
+                        "beta_1": [0.000067,0.000067],
+                        "beta_2": [0.000067,0.000067],
+                        "gamma_1": [1.0 / 14.0, 1.0 / 14.0],
+                        "gamma_2": [1.0 / 14.0, 1.0 / 14.0],
+                        "v_s1": [0.000067,0.000067],
+                        "v_s2": [0.000067,0.000067],
+                        "v_r": [0.05,0.05],
                         "hr": [0.01, 0.01],
                     },
                 ),
@@ -114,8 +163,24 @@ class Scenario1(object):
                         "gamma": [1.0 / 14.0, 1.0 / 14.0],
                         "hr": [0.01, 0.01],
                     },
-                )
-            },
+                ),
+        
+                "SVIIR": BilayerModel(
+                    self.chime_sviivr_bilayer,
+                    measurements=self.hospital_measurements,
+                    init_values={"S": 10000, "V":1, "I": 1, "I_v":1, "R": 1},
+                    parameter_bounds={
+                        "beta_1": [0.000067,0.000067],
+                        "beta_2": [0.000067,0.000067],
+                        "gamma_1": [1.0 / 14.0, 1.0 / 14.0],
+                        "gamma_2": [1.0 / 14.0, 1.0 / 14.0],
+                        "v_s1": [0.000067,0.000067],
+                        "v_s2": [0.000067,0.000067],
+                        "v_r": [0.05,0.05],
+                        "hr": [0.01, 0.01],
+                    },
+                ),
+            }
         }
 
         self.encoding_options = BilayerEncodingOptions(
