@@ -125,6 +125,20 @@ class Scenario1(object):
             self.measurements
         )
 
+        self.measurements1 = {
+            "state": [{"variable": "I"}, {"variable": "I_v"}],
+            "observable": [{"observable": "H"}],
+            "rate": [{"parameter": "hr"}],
+            "Din": [
+                {"variable": 1, "parameter": 1},
+                {"variable": 2, "parameter": 1},
+            ],
+            "Dout": [{"parameter": 1, "observable": 1}],
+        }
+        self.hospital_measurements1 = BilayerMeasurement.from_json(
+            self.measurements1
+        )
+
         # Model Setup for both Intervention 1
         # - Prescribed reduction in transmission, i.e., beta' = (1-transmission_reduction)beta
 
@@ -153,7 +167,7 @@ class Scenario1(object):
                 ),
                 "SVIIR": BilayerModel(
                     self.chime_sviivr_bilayer,
-                    measurements=self.hospital_measurements,
+                    measurements=self.hospital_measurements1,
                     init_values={"S": 10000, "V": 1, "I": 1, "I_v": 1, "R": 1},
                     parameter_bounds={
                         "beta_1": [0.000067, 0.000067],
@@ -201,10 +215,12 @@ class Scenario1(object):
             max_steps=self.config["duration"],
         )
 
-        # query = QueryTrue()
-        self.query = QueryLE(
-            self.config["query_variable"], self.config["query_threshold"]
-        )
+        if self.config["query_threshold"] is None:
+            self.query = QueryTrue()
+        else:
+            self.query = QueryLE(
+                self.config["query_variable"], self.config["query_threshold"]
+            )
 
     def to_md(self, model):
 
@@ -276,8 +292,13 @@ SIR Bilayer (left), Hospitalized Measurement (right)
             )
             if result.consistent:
                 msg = f"{model_name}: Query Satisfied"
+                variables = list(model.init_values.keys()) + [
+                    v.parameter
+                    for k, v in model.measurements.observable.items()
+                ]
+
                 plot = result.plot(
-                    y=["S", "I", "R", "H"],
+                    y=variables,
                     logy=True,
                     title=f"Scenario 1 with {transmission_reduction} reduction in transmissibiilty, {model_name}",
                     ylabel="Population",
@@ -311,14 +332,16 @@ SIR Bilayer (left), Hospitalized Measurement (right)
             ax.set_xlabel("Model")
             ax.set_ylabel("Unused Hospital Capacity")
 
-    def analyze_intervention_2(self, transmission_reduction):
+    def analyze_intervention_2(self, transmission_reduction, models=[]):
         if not isinstance(transmission_reduction, list):
             raise Exception(
                 f"transmission_reduction must be a list of the form [lb, ub]"
             )
 
         results = []
-        for model in self.models["intervention2"]:
+        for model_name, model in self.models["intervention2"].items():
+            if model_name not in models:
+                continue
 
             lb = model.parameter_bounds["beta"][0] * (
                 1.0 - transmission_reduction[1]

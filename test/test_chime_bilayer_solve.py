@@ -112,7 +112,7 @@ class TestChimeBilayerSolve(unittest.TestCase):
 
         return model, query, encoder
 
-    #@unittest.skip("temporarily remove")
+    @unittest.skip("temporarily remove")
     def test_chime_bilayer_solve(self):
         model, query, encoder = self.setup(
             duration=1, transmission_reduction=0.00
@@ -130,11 +130,11 @@ class TestChimeBilayerSolve(unittest.TestCase):
         result.plot(logy=True)
         print(result.dataframe())
 
-    @unittest.skip("temporarily remove")
+    # @unittest.skip("temporarily remove")
     def test_chime_bilayer_synthesize(self):
 
         model, query, encoder = self.setup(
-            duration=10, transmission_reduction=[-0.05, 0.15]
+            duration=5, transmission_reduction=[-0.05, 0.15]
         )
 
         # The efficacy can be up to 4x that of baseline (i.e., 0.05 - 0.20)
@@ -175,7 +175,7 @@ class TestChimeBilayerSolve(unittest.TestCase):
         )
         assert result
 
-
+        # sample points from true boxes and call 
 
 if __name__ == "__main__":
     unittest.main()

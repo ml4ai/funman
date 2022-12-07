@@ -123,6 +123,7 @@ class BoxSearch(Search):
             return True
 
     def initialize_encoding(self, solver, episode):
+        solver.push(1)
         solver.add_assertion(episode.problem.model_encoding.formula)
 
     def initialize_box(self, solver, box):
@@ -289,6 +290,7 @@ class BoxSearch(Search):
                                 rval, episode.config, all_results
                             )
                         l.info(f"{process_name} finished work")
+                    solver.pop(1)  # Remove the dynamics from the solver
         except KeyboardInterrupt:
             l.info(f"{process_name} Keyboard Interrupt")
         except Exception:
