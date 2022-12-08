@@ -394,6 +394,14 @@ SIR Bilayer (left), Hospitalized Measurement (right)
                         model.parameter_bounds[beta][1]
                         * (1.0 - transmission_reduction),
                     ]
+            elif model_name == "Bucky":
+                for beta in ["beta_1", "beta_2"]:
+                    model.parameter_bounds[beta] = [
+                        model.parameter_bounds[beta][0]
+                        * (1.0 - transmission_reduction),
+                        model.parameter_bounds[beta][1]
+                        * (1.0 - transmission_reduction),
+                    ]
             result = Funman().solve(
                 ConsistencyScenario(
                     model,
@@ -464,7 +472,7 @@ SIR Bilayer (left), Hospitalized Measurement (right)
                 )
                 model.parameter_bounds["beta"] = [lb, ub]
                 parameters = [Parameter("beta", lb=lb, ub=ub)]
-            elif model_name == "SVIIR":
+            elif model_name == "SVIIR" or model_name == "Bucky":
                 for beta in ["beta_1", "beta_2"]:
                     model.parameter_bounds[beta] = [
                         model.parameter_bounds[beta][0]
