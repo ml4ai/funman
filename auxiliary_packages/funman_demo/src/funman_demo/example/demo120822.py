@@ -342,7 +342,7 @@ SIR Bilayer (left), Hospitalized Measurement (right)
             ax.set_xlabel("Model")
             ax.set_ylabel("Unused Hospital Capacity")
 
-    def analyze_intervention_2(self, transmission_reduction, models=[]):
+    def analyze_intervention_2(self, transmission_reduction, models=[], init_values={}):
         if not isinstance(transmission_reduction, list):
             raise Exception(
                 f"transmission_reduction must be a list of the form [lb, ub]"
@@ -352,6 +352,9 @@ SIR Bilayer (left), Hospitalized Measurement (right)
         for model_name, model in self.models["intervention2"].items():
             if model_name not in models:
                 continue
+
+            if model_name in init_values:
+                model.init_values = init_values[model_name]
 
             if model_name == "SIR+H":
                 lb = model.parameter_bounds["beta"][0] * (
