@@ -110,6 +110,74 @@ class Scenario1(object):
         self.chime_sviivr_bilayer = Bilayer.from_json(
             self.chime_sviivr_bilayer_src
         )
+ 
+        self.bucky_bilayer_src = {
+            "Qin":[{"variable":"S"},
+                    {"variable":"E"},
+                    {"variable":"I_asym"},
+                    {"variable":"I_mild"},
+                    {"variable":"I_crit"},
+                    {"variable":"R"},
+                    {"variable":"R_hosp"},
+                    {"variable":"D"}],
+             "Box":[{"parameter":"beta_1"},
+                    {"parameter":"beta_2"},
+                    {"parameter":"delta_1"},
+                    {"parameter":"sigma"},
+                    {"parameter":"delta_2"},
+                    {"parameter":"delta_3"},
+                    {"parameter":"gamma_1"},
+                    {"parameter":"gamma_2"},
+                    {"parameter":"gamma_h"},
+                    {"parameter":"theta"},
+                    {"parameter":"delta_4"}],
+             "Qout":[{"tanvar":"S'"},
+                     {"tanvar":"E'"},
+                     {"tanvar":"I_asym'"},
+                     {"tanvar":"I_mild'"},
+                     {"tanvar":"I_crit'"},
+                     {"tanvar":"R'"},
+                     {"tanvar":"R_hosp'"},
+                     {"tanvar":"D'"}],
+             "Win":[{"arg":1,"call":1},
+                    {"arg":1,"call":2},
+                    {"arg":1,"call":3},
+                    {"arg":2,"call":4},
+                    {"arg":2,"call":5},
+                    {"arg":2,"call":6},
+                    {"arg":3,"call":3},
+                    {"arg":3,"call":7},
+                    {"arg":4,"call":1},
+                    {"arg":4,"call":8},
+                    {"arg":5,"call":2},
+                    {"arg":5,"call":9},
+                    {"arg":7,"call":10},
+                    {"arg":7,"call":11}],
+             "Wa":[{"influx":1,"infusion":2},
+                   {"influx":2,"infusion":2},
+                   {"influx":3,"infusion":2},
+                   {"influx":4,"infusion":3},
+                   {"influx":5,"infusion":4},
+                   {"influx":6,"infusion":5},
+                   {"influx":7,"infusion":6},
+                   {"influx":8,"infusion":6},
+                   {"influx":9,"infusion":7},
+                   {"influx":10,"infusion":6},
+                   {"influx":11,"infusion":8}],
+             "Wn":[{"efflux":1,"effusion":1},
+                   {"efflux":2,"effusion":1},
+                   {"efflux":3,"effusion":1},
+                   {"efflux":4,"effusion":2},
+                   {"efflux":5,"effusion":3},
+                   {"efflux":6,"effusion":4},
+                   {"efflux":7,"effusion":3},
+                   {"efflux":8,"effusion":4},
+                   {"efflux":9,"effusion":5},
+                   {"efflux":10,"effusion":7},
+                   {"efflux":11,"effusion":6}],
+        }
+
+        self.bucky_bilayer = Bilayer.from_json(self.bucky_bilayer_src)
 
         # Define the measurements made of the bilayer variables
         # Hospitalizations (H) are a proportion (hr) of those infected (I)
@@ -140,6 +208,17 @@ class Scenario1(object):
         }
         self.hospital_measurements1 = BilayerMeasurement.from_json(
             self.measurements1
+        )
+
+        self.measurements2 = {
+            "state": [{"variable": "I_crit"}],
+            "observable": [{"observable": "H"}],
+            "rate": [{"parameter": "hr"}],
+            "Din": [{"variable": 1, "parameter": 1}],
+            "Dout": [{"parameter": 1, "observable": 1}],
+        }
+        self.hospital_measurements2 = BilayerMeasurement.from_json(
+            self.measurements2
         )
 
         # Model Setup for both Intervention 1
@@ -188,6 +267,29 @@ class Scenario1(object):
                         "v_r": [0.001, 0.001],
                         "hr_1": [0.01, 0.01],
                         "hr_2": [0.01, 0.01],
+                    },
+                ),
+                "Bucky": BilayerModel(
+                    self.bucky_bilayer,
+                    measurements=self.hospital_measurements2,
+                    init_values={"S":10000, "E":100, "I_asym":1, "I_mild":1, "I_crit":1, "R":1, "R_hosp":1, "D":0},
+                    identical_parameters=[
+                        ["beta_1", "beta_2"],
+                        ["gamma_1", "gamma_2"],
+                    ],
+                    parameter_bounds={
+                        "beta_1": [0.000067, 0.000067],
+                        "beta_2": [0.000067, 0.000067],
+                        "delta_1": [0.000033, 0.000033],
+                        "sigma": [0.5, 0.5],
+                        "delta_2": [0.25, 0.25],
+                        "delta_3": [0.125, 0.125],
+                        "gamma_1": [1.0 / 14.0, 1.0 / 14.0],
+                        "gamma_2": [1.0 / 14.0, 1.0 / 14.0],
+                        "gamma_h": [1.0 / 14.0, 1.0 / 14.0],
+                        "theta": [1.0/3.0, 1.0/3.0],
+                        "delta_4": [0.0056, 0.0056],
+                        "hr": [1.0, 1.0],
                     },
                 ),
             },
@@ -292,6 +394,14 @@ SIR Bilayer (left), Hospitalized Measurement (right)
                         model.parameter_bounds[beta][1]
                         * (1.0 - transmission_reduction),
                     ]
+            elif model_name == "Bucky":
+                for beta in ["beta_1", "beta_2"]:
+                    model.parameter_bounds[beta] = [
+                        model.parameter_bounds[beta][0]
+                        * (1.0 - transmission_reduction),
+                        model.parameter_bounds[beta][1]
+                        * (1.0 - transmission_reduction),
+                    ]
             result = Funman().solve(
                 ConsistencyScenario(
                     model,
@@ -365,7 +475,7 @@ SIR Bilayer (left), Hospitalized Measurement (right)
                 )
                 model.parameter_bounds["beta"] = [lb, ub]
                 parameters = [Parameter("beta", lb=lb, ub=ub)]
-            elif model_name == "SVIIR":
+            elif model_name == "SVIIR" or model_name == "Bucky":
                 for beta in ["beta_1", "beta_2"]:
                     model.parameter_bounds[beta] = [
                         model.parameter_bounds[beta][0]
@@ -486,6 +596,7 @@ class Scenario2(object):
         self.chime_sviivr_bilayer = Bilayer.from_json(
             self.chime_sviivr_bilayer_src
         )
+
 
         # Define the measurements made of the bilayer variables
         # Hospitalizations (H) are a proportion (hr) of those infected (I)
