@@ -359,6 +359,6 @@ class Bilayer(BilayerGraph):
             )
             # print(eqn)
             eqns.append(eqn)
-            is_positive = GE(state_var_next_step_smt, Real(0.0))
-            eqns.append(is_positive)
+            # is_positive = GE(state_var_next_step_smt, Real(0.0))
+            # eqns.append(is_positive)
         return And(eqns)

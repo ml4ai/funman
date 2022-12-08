@@ -15,12 +15,14 @@ from funman_demo.handlers import (
     RealtimeResultPlotter,
     NotebookImageRefresher,
 )
-from funman.search_utils import ResultCombinedHandler, SearchConfig
+from funman.search_utils import ResultCombinedHandler, SearchConfig, Point
 from funman.search_episode import DRealSearchEpisode
 from funman.search import SMTCheck, BoxSearch
 import os
 import tempfile
 import pandas as pd
+import matplotlib.pyplot as plt
+from matplotlib.ticker import FormatStrFormatter
 
 # import funman_dreal # Needed to use dreal with pysmt
 
@@ -110,71 +112,83 @@ class Scenario1(object):
         self.chime_sviivr_bilayer = Bilayer.from_json(
             self.chime_sviivr_bilayer_src
         )
- 
+
         self.bucky_bilayer_src = {
-            "Qin":[{"variable":"S"},
-                    {"variable":"E"},
-                    {"variable":"I_asym"},
-                    {"variable":"I_mild"},
-                    {"variable":"I_crit"},
-                    {"variable":"R"},
-                    {"variable":"R_hosp"},
-                    {"variable":"D"}],
-             "Box":[{"parameter":"beta_1"},
-                    {"parameter":"beta_2"},
-                    {"parameter":"delta_1"},
-                    {"parameter":"sigma"},
-                    {"parameter":"delta_2"},
-                    {"parameter":"delta_3"},
-                    {"parameter":"gamma_1"},
-                    {"parameter":"gamma_2"},
-                    {"parameter":"gamma_h"},
-                    {"parameter":"theta"},
-                    {"parameter":"delta_4"}],
-             "Qout":[{"tanvar":"S'"},
-                     {"tanvar":"E'"},
-                     {"tanvar":"I_asym'"},
-                     {"tanvar":"I_mild'"},
-                     {"tanvar":"I_crit'"},
-                     {"tanvar":"R'"},
-                     {"tanvar":"R_hosp'"},
-                     {"tanvar":"D'"}],
-             "Win":[{"arg":1,"call":1},
-                    {"arg":1,"call":2},
-                    {"arg":1,"call":3},
-                    {"arg":2,"call":4},
-                    {"arg":2,"call":5},
-                    {"arg":2,"call":6},
-                    {"arg":3,"call":3},
-                    {"arg":3,"call":7},
-                    {"arg":4,"call":1},
-                    {"arg":4,"call":8},
-                    {"arg":5,"call":2},
-                    {"arg":5,"call":9},
-                    {"arg":7,"call":10},
-                    {"arg":7,"call":11}],
-             "Wa":[{"influx":1,"infusion":2},
-                   {"influx":2,"infusion":2},
-                   {"influx":3,"infusion":2},
-                   {"influx":4,"infusion":3},
-                   {"influx":5,"infusion":4},
-                   {"influx":6,"infusion":5},
-                   {"influx":7,"infusion":6},
-                   {"influx":8,"infusion":6},
-                   {"influx":9,"infusion":7},
-                   {"influx":10,"infusion":6},
-                   {"influx":11,"infusion":8}],
-             "Wn":[{"efflux":1,"effusion":1},
-                   {"efflux":2,"effusion":1},
-                   {"efflux":3,"effusion":1},
-                   {"efflux":4,"effusion":2},
-                   {"efflux":5,"effusion":3},
-                   {"efflux":6,"effusion":4},
-                   {"efflux":7,"effusion":3},
-                   {"efflux":8,"effusion":4},
-                   {"efflux":9,"effusion":5},
-                   {"efflux":10,"effusion":7},
-                   {"efflux":11,"effusion":6}],
+            "Qin": [
+                {"variable": "S"},
+                {"variable": "E"},
+                {"variable": "I_asym"},
+                {"variable": "I_mild"},
+                {"variable": "I_crit"},
+                {"variable": "R"},
+                {"variable": "R_hosp"},
+                {"variable": "D"},
+            ],
+            "Box": [
+                {"parameter": "beta_1"},
+                {"parameter": "beta_2"},
+                {"parameter": "delta_1"},
+                {"parameter": "sigma"},
+                {"parameter": "delta_2"},
+                {"parameter": "delta_3"},
+                {"parameter": "gamma_1"},
+                {"parameter": "gamma_2"},
+                {"parameter": "gamma_h"},
+                {"parameter": "theta"},
+                {"parameter": "delta_4"},
+            ],
+            "Qout": [
+                {"tanvar": "S'"},
+                {"tanvar": "E'"},
+                {"tanvar": "I_asym'"},
+                {"tanvar": "I_mild'"},
+                {"tanvar": "I_crit'"},
+                {"tanvar": "R'"},
+                {"tanvar": "R_hosp'"},
+                {"tanvar": "D'"},
+            ],
+            "Win": [
+                {"arg": 1, "call": 1},
+                {"arg": 1, "call": 2},
+                {"arg": 1, "call": 3},
+                {"arg": 2, "call": 4},
+                {"arg": 2, "call": 5},
+                {"arg": 2, "call": 6},
+                {"arg": 3, "call": 3},
+                {"arg": 3, "call": 7},
+                {"arg": 4, "call": 1},
+                {"arg": 4, "call": 8},
+                {"arg": 5, "call": 2},
+                {"arg": 5, "call": 9},
+                {"arg": 7, "call": 10},
+                {"arg": 7, "call": 11},
+            ],
+            "Wa": [
+                {"influx": 1, "infusion": 2},
+                {"influx": 2, "infusion": 2},
+                {"influx": 3, "infusion": 2},
+                {"influx": 4, "infusion": 3},
+                {"influx": 5, "infusion": 4},
+                {"influx": 6, "infusion": 5},
+                {"influx": 7, "infusion": 6},
+                {"influx": 8, "infusion": 6},
+                {"influx": 9, "infusion": 7},
+                {"influx": 10, "infusion": 6},
+                {"influx": 11, "infusion": 8},
+            ],
+            "Wn": [
+                {"efflux": 1, "effusion": 1},
+                {"efflux": 2, "effusion": 1},
+                {"efflux": 3, "effusion": 1},
+                {"efflux": 4, "effusion": 2},
+                {"efflux": 5, "effusion": 3},
+                {"efflux": 6, "effusion": 4},
+                {"efflux": 7, "effusion": 3},
+                {"efflux": 8, "effusion": 4},
+                {"efflux": 9, "effusion": 5},
+                {"efflux": 10, "effusion": 7},
+                {"efflux": 11, "effusion": 6},
+            ],
         }
 
         self.bucky_bilayer = Bilayer.from_json(self.bucky_bilayer_src)
@@ -272,7 +286,16 @@ class Scenario1(object):
                 "Bucky": BilayerModel(
                     self.bucky_bilayer,
                     measurements=self.hospital_measurements2,
-                    init_values={"S":10000, "E":100, "I_asym":1, "I_mild":1, "I_crit":1, "R":1, "R_hosp":1, "D":0},
+                    init_values={
+                        "S": 10000,
+                        "E": 100,
+                        "I_asym": 1,
+                        "I_mild": 1,
+                        "I_crit": 1,
+                        "R": 1,
+                        "R_hosp": 1,
+                        "D": 0,
+                    },
                     identical_parameters=[
                         ["beta_1", "beta_2"],
                         ["gamma_1", "gamma_2"],
@@ -281,13 +304,13 @@ class Scenario1(object):
                         "beta_1": [0.000067, 0.000067],
                         "beta_2": [0.000067, 0.000067],
                         "delta_1": [0.000033, 0.000033],
-                        "sigma": [0.5, 0.5],
-                        "delta_2": [0.25, 0.25],
-                        "delta_3": [0.125, 0.125],
+                        "sigma": [0.01, 0.01],
+                        "delta_2": [0.01, 0.01],
+                        "delta_3": [0.001, 0.001],
                         "gamma_1": [1.0 / 14.0, 1.0 / 14.0],
                         "gamma_2": [1.0 / 14.0, 1.0 / 14.0],
                         "gamma_h": [1.0 / 14.0, 1.0 / 14.0],
-                        "theta": [1.0/3.0, 1.0/3.0],
+                        "theta": [1.0 / 30.0, 1.0 / 30.0],
                         "delta_4": [0.0056, 0.0056],
                         "hr": [1.0, 1.0],
                     },
@@ -334,33 +357,37 @@ class Scenario1(object):
                 self.config["query_variable"], self.config["query_threshold"]
             )
 
-    def to_md(self, model):
-
-        model.measurements.to_dot().render(filename="measurement", format="png")
-        model.bilayer.to_dot().render(filename="bilayer", format="png")
-
-        init_values_md = "\n".join(
-            {f"- ## {k}: {v}" for k, v in model.init_values.items()}
-        )
-        parameters_bounds_md = "\n".join(
-            {f"- ## {k}: {v}" for k, v in model.parameter_bounds.items()}
-        )
-        q = (
-            "\\bigwedge\\limits_{t \\in [0,"
-            + str(self.config["duration"])
-            + "]} "
-            + self.config["query_variable"]
-            + "_t \\leq"
-            + str(self.config["query_threshold"])
-        )
-        config_md = "\n".join(
-            {f"- ## {k}: {v}" for k, v in self.config.items()}
-        )
-        self.md = md(
-            f"""# Bilayer and Measurement Model
+    def to_md(self, models):
+        md_strs = []
+        for model_name, model in models.items():
+            model.measurements.to_dot().render(
+                filename=f"{model_name}_measurement", format="png"
+            )
+            model.bilayer.to_dot().render(
+                filename=f"{model_name}_bilayer", format="png"
+            )
+            init_values_md = "\n".join(
+                {f"- ## {k}: {v}" for k, v in model.init_values.items()}
+            )
+            parameters_bounds_md = "\n".join(
+                {f"- ## {k}: {v}" for k, v in model.parameter_bounds.items()}
+            )
+            q = (
+                "\\bigwedge\\limits_{t \\in [0,"
+                + str(self.config["duration"])
+                + "]} "
+                + self.config["query_variable"]
+                + "_t \\leq"
+                + str(self.config["query_threshold"])
+            )
+            config_md = "\n".join(
+                {f"- ## {k}: {v}" for k, v in self.config.items()}
+            )
+            md_strs.append(
+                f"""# Bilayer and Measurement Model
 SIR Bilayer (left), Hospitalized Measurement (right)
 
-![](bilayer.png) ![](measurement.png)
+![]({model_name}_bilayer.png) ![]({model_name}_measurement.png)
 # Initial State (population 10000)
 {init_values_md}
 # Parameter Bounds
@@ -370,7 +397,8 @@ SIR Bilayer (left), Hospitalized Measurement (right)
 # Query
 - ## ${q}$
 """
-        )
+            )
+        self.md = md("\n".join(md_strs))
         return self.md
 
     def analyze_intervention_1(self, transmission_reduction, models=[]):
@@ -378,6 +406,8 @@ SIR Bilayer (left), Hospitalized Measurement (right)
         for model_name, model in self.models["intervention1"].items():
             if model_name not in models:
                 continue
+
+            print(f"Analyzing Model: {model_name} ...")
 
             if model_name == "SIR+H":
                 model.parameter_bounds["beta"] = [
@@ -438,21 +468,119 @@ SIR Bilayer (left), Hospitalized Measurement (right)
         return results
 
     def compare_model_results(self, results):
-        df = pd.DataFrame(
-            {
-                f"{name}": result["dataframe"]["H"]
-                for name, result in results.items()
-                if result["dataframe"] is not None
-            }
-        )
-        df = df.apply(lambda x: self.config["query_threshold"] - x)
-        if len(df) > 0:
-            ax = df.boxplot()
-            ax.set_title("Unused Hospital Capacity per Day")
-            ax.set_xlabel("Model")
-            ax.set_ylabel("Unused Hospital Capacity")
+        """Assume that results are of the form {"model": {"dataframe": df}}"""
+        if any([r["dataframe"] is not None for n, r in results.items()]):
+            self.plot_results_metric(
+                results,
+                "H",
+                lambda x: self.config.query_threshold - x,
+                colors={k: f"C{i}" for i, k in enumerate(results.keys())},
+                positions={k: i for i, k in enumerate(results.keys())},
+                labels={k: k for i, k in enumerate(results.keys())},
+            )
+        else:
+            print("No results to plot ...")
 
-    def analyze_intervention_2(self, transmission_reduction, models=[], init_values={}):
+    def plot_results_metric(
+        self,
+        results,
+        var,
+        metric_fn,
+        colors=None,
+        positions=None,
+        labels=None,
+        width=0.1,
+    ):
+        fig, ax = plt.subplots()
+        axs = []
+        for model, result in results.items():
+            df = result["dataframe"]
+            if df is not None:
+                pos = [positions[model]]
+                color = colors[model] if colors else None
+                label = [labels[model]]  # labels[i] if labels else None
+                axn = ax.boxplot(
+                    df[var],
+                    positions=pos,
+                    patch_artist=True,
+                    widths=width,
+                    labels=label,
+                    boxprops=dict(facecolor=color),
+                )
+                axs.append(axn)
+        #     ax1=ax.boxplot(df['x1'], positions=[0.1], labels=["m1"], patch_artist=True, widths=0.35, boxprops=dict(facecolor="C0"))
+        #     ax2=ax.boxplot(df['x2'],  positions=[1.1], labels=["m2"], patch_artist=True, widths=0.35, boxprops=dict(facecolor="C3"))
+        # boxes = [a["boxes"][0] for a in axs]
+        # ax.legend(boxes, labels, loc="upper right")
+        # ax.set_xlim(0, len(results))
+        ax.set_title("Intervention Impact on Hospital Usage")
+        ax.set_xlabel("Model")
+        ax.set_ylabel(" Hospital Usage")
+        return ax
+
+    def extract_true_points(self, results, model_parameter, num_points=5):
+        model_dfs = {}
+        for model_name, result in results.items():
+            param = model_parameter[model_name]
+            points = []
+            for tb in result.parameter_space.true_boxes:
+                interval = tb.to_dict()["bounds"][param]
+                lb = interval["lb"]
+                ub = interval["ub"]
+                for i in range(num_points):
+                    value = lb + (i * (ub - lb) / num_points)
+                    p = Point.from_dict({"values": {param: value}})
+                    points.append(p)
+            dfs = result.true_point_timeseries(points)
+            model_dfs[model_name] = {"points": points, "dataframes": dfs}
+        return model_dfs
+
+    def plot_points(self, points, var="H", width=0.001):
+        fig, ax = plt.subplots()
+        axs = []
+        poss = []
+        for model_name, points_and_dfs in points.items():
+            dfs = points_and_dfs["dataframes"]
+            points = points_and_dfs["points"]
+            for point, df in zip(points, dfs):
+                # print(df[var])
+                # print(point.to_dict())
+                pos = [
+                    1.0 - (x / 0.000067)
+                    for x in point.to_dict()["values"].values()
+                ]
+                poss += pos
+                # print(pos)
+                # color = colors[model] if colors else None
+                # label = [labels[model]]  # labels[i] if labels else None
+                axn = ax.boxplot(
+                    df[var],
+                    positions=pos,
+                    patch_artist=True,
+                    widths=width,
+                    # labels=,
+                    # boxprops=dict(facecolor="C0"),
+                )
+                # axn.set_facecolor("blue")
+                plt.setp(axn["boxes"], facecolor="blue")
+                axs.append(axn)
+            #     ax1=ax.boxplot(df['x1'], positions=[0.1], labels=["m1"], patch_artist=True, widths=0.35, boxprops=dict(facecolor="C0"))
+            #     ax2=ax.boxplot(df['x2'],  positions=[1.1], labels=["m2"], patch_artist=True, widths=0.35, boxprops=dict(facecolor="C3"))
+            # boxes = [a["boxes"][0] for a in axs]
+            # ax.legend(boxes, labels, loc="upper right")
+            # print(min(poss))
+
+            ax.set_xlim(0.001, 0.32)
+            ax.set_title("Intervention Impact on Hospital Usage ")
+            ax.set_xlabel("Reduction in Transmissibility")
+            ax.set_ylabel(" Hospital Usage")
+            # ax.set_xscale("log")
+            ax.xaxis.set_major_formatter(FormatStrFormatter("%.2f"))
+            return ax
+
+    def analyze_intervention_2(
+        self, transmission_reduction, models=[], init_values={}
+    ):
         if not isinstance(transmission_reduction, list):
             raise Exception(
                 f"transmission_reduction must be a list of the form [lb, ub]"
@@ -462,6 +590,8 @@ SIR Bilayer (left), Hospitalized Measurement (right)
         for model_name, model in self.models["intervention2"].items():
             if model_name not in models:
                 continue
+
+            print(f"Analyzing Model: {model_name} ...")
 
             if model_name in init_values:
                 model.init_values = init_values[model_name]
@@ -596,7 +726,6 @@ class Scenario2(object):
         self.chime_sviivr_bilayer = Bilayer.from_json(
             self.chime_sviivr_bilayer_src
         )
-
 
         # Define the measurements made of the bilayer variables
         # Hospitalizations (H) are a proportion (hr) of those infected (I)
