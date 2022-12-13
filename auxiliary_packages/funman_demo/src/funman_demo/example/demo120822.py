@@ -1,7 +1,6 @@
 from funman.model.bilayer import Bilayer, BilayerMeasurement, BilayerModel
 from funman.model import Parameter, QueryLE, QueryTrue
 from IPython.display import Markdown as md
-from IPython.display import Image
 from model2smtlib.bilayer.translate import (
     BilayerEncoder,
     BilayerEncodingOptions,
@@ -31,8 +30,8 @@ class Scenario1(object):
     def __init__(
         self,
         init_values={"S": 9998, "I": 1, "R": 1},
-        query_threshold=10000,
-        duration=1,
+        query_threshold=50,
+        duration=20,
         step_size=1,
     ):
         # Define the dynamics with a bilayer
@@ -338,7 +337,7 @@ class Scenario1(object):
                         "gamma_2": [1.0 / 14.0, 1.0 / 14.0],
                         "v_s1": [0.000067, 0.000067],
                         "v_s2": [0.000067, 0.000067],
-                        "v_r": [0.05, 0.05],
+                        "v_r": [0.001, 0.001],
                         "hr": [0.01, 0.01],
                     },
                 ),
@@ -396,6 +395,7 @@ SIR Bilayer (left), Hospitalized Measurement (right)
 {config_md}
 # Query
 - ## ${q}$
+---
 """
             )
         self.md = md("\n".join(md_strs))
@@ -631,15 +631,12 @@ SIR Bilayer (left), Hospitalized Measurement (right)
                     # wait_action = NotebookImageRefresher(os.path.join(tmp_dir_path, "search.png"), sleep_for=1),
                     handler=ResultCombinedHandler(
                         [
-                            ResultCacheWriter(
-                                os.path.join(tmp_dir_path, "search.json")
-                            ),
+                            ResultCacheWriter(f"{model_name}_box_search.json"),
                             RealtimeResultPlotter(
                                 parameters,
                                 plot_points=True,
-                                realtime_save_path=os.path.join(
-                                    tmp_dir_path, "search.png"
-                                ),
+                                title=f"{model_name} Scenario 1 Intervention 2 Feasible Regions",
+                                realtime_save_path=f"{model_name}_box_search_s1_i2.png",
                             ),
                         ]
                     ),
@@ -730,16 +727,22 @@ class Scenario2(object):
         # Define the measurements made of the bilayer variables
         # Hospitalizations (H) are a proportion (hr) of those infected (I)
 
-        self.measurements = {
-            "state": [{"variable": "I"}],
-            "observable": [{"observable": "H"}],
-            "rate": [{"parameter": "hr"}],
-            "Din": [{"variable": 1, "parameter": 1}],
-            "Dout": [{"parameter": 1, "observable": 1}],
-        }
-        self.hospital_measurements = BilayerMeasurement.from_json(
-            self.measurements
-        )
+        # self.measurements = {
+        #     "state": [{"variable": "I"}, {"variable": "I_v"}],
+        #     "observable": [{"observable": "H"}],
+        #     "rate": [{"parameter": "hr_1"}, {"parameter": "hr_2"}],
+        #     "Din": [
+        #         {"variable": 1, "parameter": 1},
+        #         {"variable": 2, "parameter": 2},
+        #     ],
+        #     "Dout": [
+        #         {"parameter": 1, "observable": 1},
+        #         {"parameter": 2, "observable": 1},
+        #     ],
+        # }
+        # self.hospital_measurements = BilayerMeasurement.from_json(
+        #     self.measurements
+        # )
 
         # Model Setup for both Intervention 1
         # - Prescribed reduction in transmission, i.e., beta' = (1-transmission_reduction)beta
@@ -748,7 +751,7 @@ class Scenario2(object):
             "vaccination_increase": 0.05,
             "duration": duration,  # 10
             "step_size": step_size,
-            "query_variable": "H",
+            "query_variable": "I",
             "query_threshold": query_threshold,
         }
 
@@ -756,11 +759,12 @@ class Scenario2(object):
             "intervention_vaccination": {
                 "SVIIR": BilayerModel(
                     self.chime_sviivr_bilayer,
-                    measurements=self.hospital_measurements,
+                    # measurements=self.hospital_measurements,
                     identical_parameters=[
                         ["beta_1", "beta_2"],
                         ["gamma_1", "gamma_2"],
                         ["v_s1", "v_s2"],
+                        # ["hr_1", "hr_2"],
                     ],
                     init_values={"S": 10000, "V": 1, "I": 1, "I_v": 1, "R": 1},
                     parameter_bounds={
@@ -770,8 +774,9 @@ class Scenario2(object):
                         "gamma_2": [1.0 / 14.0, 1.0 / 14.0],
                         "v_s1": [0.000067, 0.000067],
                         "v_s2": [0.000067, 0.000067],
-                        "v_r": [0.05, 0.05],
-                        "hr": [1.0, 1.0],
+                        "v_r": [0.001, 0.001],
+                        # "hr_1": [0.01, 0.01],
+                        # "hr_2": [0.01, 0.01],
                     },
                 ),
             },
@@ -781,13 +786,14 @@ class Scenario2(object):
             step_size=self.config["step_size"],
             max_steps=self.config["duration"],
         )
-
-        # query = QueryTrue()
-        self.query = QueryLE(
-            self.config["query_variable"],
-            self.config["query_threshold"],
-            at_end=True,
-        )
+        if self.config["query_threshold"] is None:
+            self.query = QueryTrue()
+        else:
+            self.query = QueryLE(
+                self.config["query_variable"],
+                self.config["query_threshold"],
+                at_end=True,
+            )
 
     def to_md(self, model):
 
@@ -849,7 +855,7 @@ SIR Bilayer (left), Infected Measurement (right)
                 f"vaccination_increase must be a list of the form [lb, ub]"
             )
 
-        results = []
+        results = {}
         for model_name, model in self.models[
             "intervention_vaccination"
         ].items():
@@ -863,7 +869,7 @@ SIR Bilayer (left), Infected Measurement (right)
             model.parameter_bounds["v_r"] = [lb, ub]
 
             parameters = [Parameter("v_r", lb=lb, ub=ub)]
-            tmp_dir_path = tempfile.mkdtemp(prefix="funman-")
+            # tmp_dir_path = tempfile.mkdtemp(prefix="funman-")
             result = Funman().solve(
                 ParameterSynthesisScenario(
                     parameters,
@@ -880,13 +886,16 @@ SIR Bilayer (left), Infected Measurement (right)
                     handler=ResultCombinedHandler(
                         [
                             ResultCacheWriter(
-                                os.path.join(tmp_dir_path, "search.json")
+                                os.path.join(
+                                    ".", f"{model_name}_box_search_s2.json"
+                                )
                             ),
                             RealtimeResultPlotter(
                                 parameters,
                                 plot_points=True,
+                                title=f"{model_name} Scenario 2 Feasible Regions",
                                 realtime_save_path=os.path.join(
-                                    tmp_dir_path, "search.png"
+                                    ".", f"{model_name}_box_search_s2.png"
                                 ),
                             ),
                         ]
@@ -896,12 +905,67 @@ SIR Bilayer (left), Infected Measurement (right)
             msg = ""
             plot = result.plot()
             df = pd.DataFrame()
-            results.append(
-                {
-                    "message": msg,
-                    "plot": plot,
-                    "dataframe": df,
-                    "parameter_space": result.parameter_space,
-                }
-            )
+            results[model_name] = result
+
         return results
+
+    def plot_points(self, points, var="I", title=None, width=0.0001):
+        fig, ax = plt.subplots()
+        axs = []
+        poss = []
+        colors = {"SIR+H": "C0", "SVIIR": "C1", "Bucky": "C2"}
+        labels = set([])
+        for model_name, points_and_dfs in points.items():
+            dfs = points_and_dfs["dataframes"]
+            points = points_and_dfs["points"]
+
+            for point, df in zip(points, dfs):
+                # print(df[var])
+                # print(point.to_dict())
+                pos = list(point.to_dict()["values"].values())
+                poss += pos
+                # print(pos)
+                color = colors[model_name] if colors else None
+                label = [model_name]  # labels[i] if labels else None
+                labels.add(model_name)
+                axn = ax.boxplot(
+                    df[var],
+                    positions=pos,
+                    patch_artist=True,
+                    widths=width,
+                    labels=label,
+                    # boxprops=dict(facecolor=color),
+                )
+                # axn.set_facecolor("blue")
+                plt.setp(axn["boxes"], facecolor="blue")
+                axs.append(axn)
+            #     ax1=ax.boxplot(df['x1'], positions=[0.1], labels=["m1"], patch_artist=True, widths=0.35, boxprops=dict(facecolor="C0"))
+            #     ax2=ax.boxplot(df['x2'],  positions=[1.1], labels=["m2"], patch_artist=True, widths=0.35, boxprops=dict(facecolor="C3"))
+            boxes = [a["boxes"][0] for a in axs]
+            ax.legend(boxes, list(labels), loc="upper right")
+            # print(min(poss))
+
+            ax.set_xlim(0.0025, 0.01)
+            ax.set_title("Vaccination Rate impact upon Infections")
+            ax.set_xlabel("Vaccination Rate (v_r)")
+            ax.set_ylabel("Infections")
+            ax.set_xscale("log")
+            ax.xaxis.set_major_formatter(FormatStrFormatter("%.3f"))
+            return ax
+
+    def extract_true_points(self, results, model_parameter, num_points=5):
+        model_dfs = {}
+        for model_name, result in results.items():
+            param = model_parameter[model_name]
+            points = []
+            for tb in result.parameter_space.true_boxes:
+                interval = tb.to_dict()["bounds"][param]
+                lb = interval["lb"]
+                ub = interval["ub"]
+                for i in range(num_points):
+                    value = lb + (i * (ub - lb) / num_points)
+                    p = Point.from_dict({"values": {param: value}})
+                    points.append(p)
+            dfs = result.true_point_timeseries(points)
+            model_dfs[model_name] = {"points": points, "dataframes": dfs}
+        return model_dfs

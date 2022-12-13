@@ -53,6 +53,7 @@ class SMTCheck(Search):
 
     def expand(self, problem, episode):
         with Solver(name=episode.config.solver, logic=QF_NRA) as s:
+            # print(problem.query_encoding.formula)
             s.add_assertion(
                 And(
                     problem.model_encoding.formula,
@@ -144,7 +145,7 @@ class BoxSearch(Search):
         ]
         if len(false_points) == 0:
             # If no cached point, then attempt to generate one
-            print("Checking false query")
+            # print("Checking false query")
             self.setup_false_query(solver, episode)
             if solver.solve():
                 # Record the false point
@@ -164,7 +165,7 @@ class BoxSearch(Search):
         ]
         if len(true_points) == 0:
             # If no cached point, then attempt to generate one
-            print("Checking true query")
+            # print("Checking true query")
             self.setup_true_query(solver, episode)
             if solver.solve():
                 # Record the true point
