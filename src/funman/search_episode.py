@@ -48,22 +48,25 @@ class BoxSearchEpisode(SearchEpisode):
 
     def initialize_boxes(self, expander_count):
         initial_box = self.initial_box()
-        if not self.add_unknown(initial_box):
-            l.exception(
-                f"Did not add an initial box (of width {initial_box.width()}), try reducing config.tolerance, currently {self.config.tolerance}"
-            )
-        # initial_boxes = []
-        # initial_boxes.append(self.initial_box())
-        # num_boxes = 1
-        # while num_boxes < 2 * (self.config.number_of_processes - 1):
-        #     b1, b2 = initial_boxes.get().split()
-        #     initial_boxes.put(b1)
-        #     initial_boxes.put(b2)
-        #     num_boxes += 1
-        # for i in range(num_boxes):
-        #     b = initial_boxes.get()
-        #     self.add_unknown(b)
-        #     l.debug(f"Initial box: {b}")
+        # if not self.add_unknown(initial_box):
+        #     l.exception(
+        #         f"Did not add an initial box (of width {initial_box.width()}), try reducing config.tolerance, currently {self.config.tolerance}"
+        #     )
+        initial_boxes = SQueue()
+        initial_boxes.put(self.initial_box())
+        num_boxes = 1
+        while num_boxes < expander_count:
+            b1, b2 = initial_boxes.get().split()
+            initial_boxes.put(b1)
+            initial_boxes.put(b2)
+            num_boxes += 1
+        for i in range(num_boxes):
+            b = initial_boxes.get()
+            if not self.add_unknown(b):
+                l.exception(
+                    f"Did not add an initial box (of width {initial_box.width()}), try reducing config.tolerance, currently {self.config.tolerance}"
+                )
+            l.debug(f"Initial box: {b}")
 
     def initial_box(self) -> Box:
         return Box(self.problem.parameters)

@@ -1,7 +1,8 @@
-FROM ubuntu:20.04
+FROM funman_dreal4:latest
 
 # Install base dependencies
 RUN apt update && apt install -y --no-install-recommends \
+    curl \
     make \
     git \
     python3-dev \
@@ -24,7 +25,7 @@ RUN apt update && apt install -y \
 ARG UNAME=funman
 ARG UID=1000
 ARG GID=1000
-RUN groupadd -g $GID $UNAME
+RUN groupadd -o -g $GID $UNAME
 RUN useradd -m -u $UID -g $GID -G sudo -s /bin/bash $UNAME
 USER $UNAME
 

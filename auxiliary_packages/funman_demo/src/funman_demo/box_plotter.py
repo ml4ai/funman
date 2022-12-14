@@ -16,6 +16,7 @@ import numpy as np
 from queue import Empty
 
 import logging
+
 l = logging.getLogger(__file__)
 l.setLevel(logging.INFO)
 
@@ -120,7 +121,6 @@ class BoxPlotter(object):
                 self.out_cache.close()
             rval.put({"true_boxes": [], "false_boxes": []})
 
-
     def plot_list_of_boxes(self):
         while True:
             try:
@@ -150,21 +150,22 @@ class BoxPlotter(object):
         # plt.show(block=False)
 
     def plot_add_patch(self, box: Box, color="r"):
-        rect = patches.Rectangle(
-            (box.bounds[self.px].lb, box.bounds[self.py].lb),
-            box.bounds[self.px].width(),
-            box.bounds[self.py].width(),
-            linewidth=1,
-            edgecolor=color,
-            facecolor="none",
-        )
+        if self.py:  # Don't draw a box unless it is > 1-dimension
+            rect = patches.Rectangle(
+                (box.bounds[self.px].lb, box.bounds[self.py].lb),
+                box.bounds[self.px].width(),
+                box.bounds[self.py].width(),
+                linewidth=1,
+                edgecolor=color,
+                facecolor="none",
+            )
 
-        # Add the patch to the Axes
-        self.ax.add_patch(rect)
+            # Add the patch to the Axes
+            self.ax.add_patch(rect)
 
-        self.fig.canvas.draw()
-        self.fig.canvas.flush_events()
-        # plt.show(block=False)
+            self.fig.canvas.draw()
+            self.fig.canvas.flush_events()
+            # plt.show(block=False)
 
     def plot_add_point(self, point: Point, color="r", shape="x", alpha=0.2):
         plt.scatter(

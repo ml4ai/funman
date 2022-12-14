@@ -1,13 +1,17 @@
 """
 This submodule defined the Parameter Synthesis scenario.
 """
+from funman.scenario.consistency import ConsistencyScenario
+from funman.search_episode import SearchEpisode
+from funman.search_utils import Point
 from . import AnalysisScenario, AnalysisScenarioResult
 from funman.examples.chime import CHIME
 from funman.model import Model, Parameter, Query
 from funman.parameter_space import ParameterSpace
 from funman.search import BoxSearch, SearchConfig
 from pysmt.fnode import FNode
-from typing import Any, Dict, List, Union
+from typing import Dict, List, Union
+from funman.search import SMTCheck
 
 
 class ParameterSynthesisScenario(AnalysisScenario):
@@ -63,9 +67,7 @@ class ParameterSynthesisScenario(AnalysisScenario):
 
         self.encode()
         result = self.search.search(self, config=config)
-        parameter_space = ParameterSpace(result.true_boxes, result.false_boxes)
-
-        return ParameterSynthesisScenarioResult(parameter_space)
+        return ParameterSynthesisScenarioResult(result, self)
 
     def encode(self):
         self.model_encoding = self.smt_encoder.encode_model(self.model)
@@ -81,6 +83,50 @@ class ParameterSynthesisScenarioResult(AnalysisScenarioResult):
     search statistics.
     """
 
-    def __init__(self, result: Any) -> None:
+    def __init__(
+        self, episode: SearchEpisode, scenario: ParameterSynthesisScenario
+    ) -> None:
         super().__init__()
-        self.parameter_space = result
+        self.episode = episode
+        self.scenario = scenario
+        self.parameter_space = ParameterSpace(
+            episode.true_boxes,
+            episode.false_boxes,
+            episode.true_points,
+            episode.false_points,
+        )
+
+    # points are of the form (see Point.to_dict())
+    # [
+    #     {"values": {"beta": 0.1}}
+    # ]
+    # Or
+    # List[Point]
+    def true_point_timeseries(self, points : Union[List[Point], List[dict]] = None):
+        # for each true box
+        dfs = []
+        for point in points:
+            if isinstance(point, dict):
+                point = Point.from_dict(point)
+            if not isinstance(point, Point):
+                raise Exception("Provided point is not of type Point")
+            # update the model with the
+            for p, v in point.values.items():
+                # assign that parameter to the value of the picked point
+                self.scenario.model.parameter_bounds[p.name] = [v, v]
+
+            # check the consistency
+            scenario = ConsistencyScenario(
+                self.scenario.model,
+                self.scenario.query,
+                smt_encoder=self.scenario.smt_encoder,
+            )
+            result = scenario.solve(
+                config=SearchConfig(solver="dreal", search=SMTCheck)
+            )
+            assert result
+            # plot the results
+            # result.plot(logy=True)
+            # print(result.dataframe())
+            dfs.append(result.dataframe())
+        return dfs

@@ -58,19 +58,44 @@ deploy-pages:
 	git checkout main
 	git branch -D gh-pages
 
-build-docker:
+build-docker-dreal:
+	docker build -t funman_dreal4 -f ./Dockerfile.dreal4 .
+
+build-docker: build-docker-dreal
 	DOCKER_BUILDKIT=1 docker build \
 		--build-arg UNAME=$$USER \
 		--build-arg UID=$$(id -u) \
 		--build-arg GID=$$(id -g) \
-		-t funman -f . ..
+		-t funman -f ./Dockerfile ..
 
 run-docker:
 	docker run \
 		-d \
 		-it \
 		--cpus=8 \
-		--name funman-dev \
-		--mount=type=bind,source=$$PWD/../model2smtlib,target=$$HOME/model2smtlib \
-		--mount=type=bind,source=$$PWD,target=$$HOME/funman \
+		--name funman \
+                -p 8888:8888 \
+		-v $$PWD/../model2smtlib:/home/$$USER/model2smtlib \
+		-v $$PWD:/home/$$USER/funman \
 		funman:latest
+
+
+build-docker-dev: 
+	DOCKER_BUILDKIT=1 docker build \
+		--build-arg UNAME=$$USER \
+		--build-arg UID=$$(id -u) \
+		--build-arg GID=$$(id -g) \
+		-t funman-dev -f ./Dockerfile.dev ..
+
+run-docker-dev:
+	docker run \
+		-d \
+		-it \
+		--cpus=5 \
+		--name funman-dev \
+		-v $(shell pwd)/..:/code \
+		funman-dev:latest
+
+attach-docker-dev: 
+	docker attach funman-dev
+
