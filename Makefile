@@ -87,7 +87,10 @@ build-docker-dev:
 		--build-arg GID=$$(id -g) \
 		-t funman-dev -f ./Dockerfile.dev ..
 
-run-docker-dev:
+rm-docker-dev-container:
+	docker rm funman-dev || echo "" > /dev/null
+
+run-docker-dev: rm-docker-dev-container
 	docker run \
 		-d \
 		-it \
