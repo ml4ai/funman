@@ -114,8 +114,8 @@ class TestCompilation(unittest.TestCase):
 ######## begin 3d demos
     def test_toy_3d(self):
         ## Manually make boxes for example.
-        dict = {Parameter("x",1,2), Parameter("y",1,2), Parameter("z",5,6)}
-        dict2 = {Parameter("x",1.5,2.5), Parameter("y",1.5,2.5), Parameter("z",1,2)}
+        dict = {Parameter("x",1,2), Parameter("y",1,2), Parameter("z",1,2)}
+        dict2 = {Parameter("x",1.5,2.5), Parameter("y",1.5,2.5), Parameter("z",1.5,2.5)}
         box1 = Box(dict)
         box2 = Box(dict2)
 #### plotting example (subplots): the graphs show up correctly but can't seem to show all axis labels. 
@@ -180,7 +180,7 @@ class TestCompilation(unittest.TestCase):
                     subset_of_variables = [vars_list[i1], vars_list[i2]]
                     BoxPlotter.plot2DBoxesTemp([box1, box2],subset_of_variables[0],subset_of_variables[1],colors=['y','b'])
                     custom_lines = [Line2D([0], [0], color='y',alpha=0.2, lw=4),Line2D([0], [0], color='b',alpha=0.2, lw=4)]
-                    plt.legend(custom_lines, ['Box 1', 'Box 2'])
+                    plt.legend(custom_lines, ['PS 1', 'PS 2'])
                     plt.show()  
             desired_vars_list = []
             for b in b1.bounds:
@@ -189,7 +189,7 @@ class TestCompilation(unittest.TestCase):
             ## Visualize marginalized spaces
             BoxPlotter.plot2DBoxesTemp([b1, b2],desired_vars_list[0],desired_vars_list[1],colors=['y','b'])    
             custom_lines = [Line2D([0], [0], color='y',alpha=0.2, lw=4),Line2D([0], [0], color='b',alpha=0.2, lw=4)]
-            plt.legend(custom_lines, ['Box 1', 'Box 2'])
+            plt.legend(custom_lines, ['PS 1', 'PS 2'])
             plt.show() 
             ## Find the intersection (if it exists)
             intersection_marginal = Box.intersect_two_boxes_selected_parameters(b1,b2,desired_vars_list)
@@ -251,6 +251,7 @@ class TestCompilation(unittest.TestCase):
                         marg_var_ub_1 = bound.ub
                         bounds_1 = Interval.make_interval([marg_var_lb_1, marg_var_ub_1])
                 interval_union_result = Interval.union(bounds_0, bounds_1)[0]
+                interval_union_height = Interval.union(bounds_0, bounds_1)[1]
                 if len(interval_union_result) == 1: ## intersection along all variables (including marginal): form the union.
                     ## Make new result with last bound given by the above interval
                     box_subset = subset_of_box_variables(intersecting_boxes[0], desired_vars_list)
@@ -263,9 +264,11 @@ class TestCompilation(unittest.TestCase):
                         result.append(box)
                     for box in intersecting_boxes:
                         result.append(box)
+                for i in range(len(result)):
+                    print(result[i])
             return result ## result is the list of boxes where, for the non-marginalized terms, boxes are either disjoint or equal and for the marginalized terms, the union over the marginalized variable has been taken. 
         ## Test: marginalize the boxes box1 and box2 based on the variable z. 
-        print(marginalize(box1, box2, 'z'))
+        result = marginalize(box1, box2, 'z')
         
          
 
