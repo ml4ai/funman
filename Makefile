@@ -79,6 +79,33 @@ run-docker:
 		-v $$PWD:/home/$$USER/funman \
 		funman:latest
 
+run-podman:
+	podman run \
+		-d \
+		-it \
+		--cpus=8 \
+		--name funman \
+		--user $$USER \
+		-p 127.0.0.1:8888:8888 \
+		-v $$PWD/../model2smtlib:/home/$$USER/model2smtlib \
+		-v $$PWD:/home/$$USER/funman \
+		--userns=keep-id \
+		funman:latest
+
+run-podman-notebook:
+	podman run \
+		--rm \
+		-it \
+		--cpus=8 \
+		--name funman-notebook \
+		--user $$USER \
+		-p 127.0.0.1:8888:8888 \
+		-v $$PWD/../model2smtlib:/home/$$USER/model2smtlib \
+		-v $$PWD:/home/$$USER/funman \
+		--userns=keep-id \
+		funman:latest \
+		jupyter notebook --allow-root --ip 0.0.0.0 --no-browser /home/$$USER/funman/notebooks
+
 
 build-docker-dev: 
 	DOCKER_BUILDKIT=1 docker build \
