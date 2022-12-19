@@ -1,17 +1,19 @@
 """
 This submodule defined the Parameter Synthesis scenario.
 """
-from funman.scenario.consistency import ConsistencyScenario
-from funman.search_episode import SearchEpisode
-from funman.search_utils import Point
-from . import AnalysisScenario, AnalysisScenarioResult
+from typing import Dict, List, Union
+
+from pysmt.fnode import FNode
+
 from funman.examples.chime import CHIME
 from funman.model import Model, Parameter, Query
 from funman.parameter_space import ParameterSpace
-from funman.search import BoxSearch, SearchConfig
-from pysmt.fnode import FNode
-from typing import Dict, List, Union
-from funman.search import SMTCheck
+from funman.scenario.consistency import ConsistencyScenario
+from funman.search import BoxSearch, SearchConfig, SMTCheck
+from funman.search_episode import SearchEpisode
+from funman.search_utils import Point
+
+from . import AnalysisScenario, AnalysisScenarioResult
 
 
 class ParameterSynthesisScenario(AnalysisScenario):
@@ -102,7 +104,9 @@ class ParameterSynthesisScenarioResult(AnalysisScenarioResult):
     # ]
     # Or
     # List[Point]
-    def true_point_timeseries(self, points : Union[List[Point], List[dict]] = None):
+    def true_point_timeseries(
+        self, points: Union[List[Point], List[dict]] = None
+    ):
         # for each true box
         dfs = []
         for point in points:

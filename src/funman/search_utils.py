@@ -2,22 +2,22 @@
 This submodule contains definitions for the behaviors used
 during the configuration and execution of a search.
 """
+import logging
+import traceback
 from abc import ABC, abstractmethod
 from functools import total_ordering
 from multiprocessing.managers import SyncManager
 from queue import Queue as SQueue
-import traceback
-from typing import Dict, List, Union
-from funman.config import Config
-from funman.model import Parameter
-from funman.constants import NEG_INFINITY, POS_INFINITY, BIG_NUMBER
-
-
 from statistics import mean as average
-from pysmt.shortcuts import Real, GE, LT, LE, And, TRUE, Equals
-import funman.math_utils as math_utils
+from typing import Dict, List, Union
+
 import multiprocess as mp
-import logging
+from pysmt.shortcuts import GE, LE, LT, TRUE, And, Equals, Real
+
+import funman.math_utils as math_utils
+from funman.config import Config
+from funman.constants import BIG_NUMBER, NEG_INFINITY, POS_INFINITY
+from funman.model import Parameter
 
 l = logging.getLogger(__name__)
 
@@ -82,12 +82,12 @@ class Interval(object):
         lhs = (
             (self.lb == NEG_INFINITY or other.lb != NEG_INFINITY)
             if (self.lb == NEG_INFINITY or other.lb == NEG_INFINITY)
-            else self.lb <= other.lb 
+            else self.lb <= other.lb
         )
         rhs = (
             (other.ub != POS_INFINITY or self.ub == POS_INFINITY)
             if (self.ub == POS_INFINITY or other.ub == POS_INFINITY)
-            else other.ub <= self.ub 
+            else other.ub <= self.ub
         )
         return lhs or rhs
 
@@ -110,11 +110,11 @@ class Interval(object):
             return ((self.ub - self.lb) / 2) + self.lb
 
     def union(self, other: "Interval") -> List["Interval"]:
-        if self == other: ## intervals are equal, so return original interval
+        if self == other:  ## intervals are equal, so return original interval
             ans = self
             total_height = [Interval.width(self)]
             return [ans], total_height
-        else: ## intervals are not the same. start by identifying the lower and higher intervals.
+        else:  ## intervals are not the same. start by identifying the lower and higher intervals.
             if self.lb == other.lb:
                 if math_utils.lt(self.ub, other.lb):
                     minInterval = self
@@ -132,9 +132,11 @@ class Interval(object):
             minInterval.ub, maxInterval.lb
         ):  ## intervals intersect.
             ans = Interval.make_interval([minInterval.lb, maxInterval.ub])
-            total_height = Interval.width(ans) 
+            total_height = Interval.width(ans)
             return [ans], total_height
-        elif math_utils.lt(minInterval.ub, maxInterval.lb): ## intervals are disjoint.
+        elif math_utils.lt(
+            minInterval.ub, maxInterval.lb
+        ):  ## intervals are disjoint.
             ans = [minInterval, maxInterval]
             total_height = [
                 math_utils.plus(
@@ -234,7 +236,9 @@ class Interval(object):
 
     def to_smt(self, p: Parameter, closed_upper_bound=False):
         lower = (
-            GE(p.symbol(), Real(self.lb)) if self.lb != NEG_INFINITY else TRUE()
+            GE(p.symbol(), Real(self.lb))
+            if self.lb != NEG_INFINITY
+            else TRUE()
         )
         upper_ineq = LE if closed_upper_bound else LT
         upper = (

@@ -1,16 +1,21 @@
-from multiprocessing.heap import Arena
-from funman.parameter_space import ParameterSpace
-from model2smtlib.gromet.translate import QueryableGromet
-
 import os
 import unittest
+from multiprocessing.heap import Arena
+
+from model2smtlib.gromet.translate import QueryableGromet
+
+from funman.parameter_space import ParameterSpace
 
 RESOURCES = os.path.join("resources")
-GROMET_FILE_1 = os.path.join(RESOURCES, "gromet", "CHIME_SIR_while_loop--Gromet-FN-auto.json")
-GROMET_FILE_2 = os.path.join(RESOURCES, "gromet", "CHIME_SIR_while_loop--Gromet-FN-auto-one-epoch.json")
+GROMET_FILE_1 = os.path.join(
+    RESOURCES, "gromet", "CHIME_SIR_while_loop--Gromet-FN-auto.json"
+)
+GROMET_FILE_2 = os.path.join(
+    RESOURCES, "gromet", "CHIME_SIR_while_loop--Gromet-FN-auto-one-epoch.json"
+)
+
 
 class Test_CHIME_SIR(unittest.TestCase):
-
     @unittest.expectedFailure
     def test_parameter_synthesis(self):
         """
@@ -32,10 +37,14 @@ class Test_CHIME_SIR(unittest.TestCase):
 
         ############################ Evaluate Models ###################################
         # get parameter space for the original (3 epochs)
-        ps_b1_b2_b3 = gromet_org.synthesize_parameters(f"(forall ((t Int)) (<= (I t) {infected_threshold}))")
+        ps_b1_b2_b3 = gromet_org.synthesize_parameters(
+            f"(forall ((t Int)) (<= (I t) {infected_threshold}))"
+        )
         # get parameter space for the constant beta variant
-        ps_bc = gromet_sub.synthesize_parameters(f"(forall ((t Int)) (<= (I t) {infected_threshold}))")
-        
+        ps_bc = gromet_sub.synthesize_parameters(
+            f"(forall ((t Int)) (<= (I t) {infected_threshold}))"
+        )
+
         ############################ Compare Models ####################################
         # construct special parameter space where parameters are equal
         ps_eq = ParameterSpace.construct_all_equal(ps_b1_b2_b3)
@@ -44,7 +53,8 @@ class Test_CHIME_SIR(unittest.TestCase):
         ps = ParameterSpace.intersect(ps_b1_b2_b3, ps_eq)
         # assert the parameters spaces for the original and the constant beta
         # variant are the same
-        assert(ParameterSpace.compare(ps_bc, ps))
+        assert ParameterSpace.compare(ps_bc, ps)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

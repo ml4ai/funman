@@ -1,35 +1,32 @@
-from functools import partial
-import os
-from queue import Queue
-from typing import Dict, List
-import docker
-from shutil import copyfile, rmtree
-import time
 import io
-from funman.util import FUNMANSmtPrinter
-from funman_dreal.converter import DRealConverter
-from pysmt.smtlib.solver import SmtLibSolver, SmtLibOptions
-from pysmt.solvers.solver import Solver, SolverOptions
-from pysmt.logics import QF_NRA
-from pysmt.solvers.solver import Solver
-from pysmt.smtlib.parser import SmtLibParser
-from pysmt.smtlib.script import SmtLibCommand
+import os
+import time
+from functools import partial
+from queue import Queue
+from shutil import copyfile, rmtree
+from typing import Dict, List
+
+import docker
+import dreal
 import pysmt.smtlib.commands as smtcmd
-from pysmt.solvers.eager import EagerModel
+from funman_dreal.converter import DRealConverter
+from pysmt.decorators import clear_pending_pop
 from pysmt.exceptions import (
+    SolverRedefinitionError,
     SolverReturnedUnknownResultError,
     UnknownSolverAnswerError,
 )
-from pysmt.decorators import clear_pending_pop
-from tenacity import retry
-from pysmt.shortcuts import get_env, GT, Symbol, Real
 from pysmt.logics import QF_NRA
-from pysmt.exceptions import SolverRedefinitionError
-from functools import partial
-import pysmt.smtlib.commands as smtcmd
+from pysmt.shortcuts import GT, Real, Symbol, get_env
+from pysmt.smtlib.parser import SmtLibParser
+from pysmt.smtlib.script import SmtLibCommand
+from pysmt.smtlib.solver import SmtLibOptions, SmtLibSolver
+from pysmt.solvers.eager import EagerModel
 from pysmt.solvers.smtlib import SmtLibBasicSolver, SmtLibIgnoreMixin
+from pysmt.solvers.solver import Solver, SolverOptions
+from tenacity import retry
 
-import dreal
+from funman.util import FUNMANSmtPrinter
 
 # def setup(smt2_file, benchmark_path, out_dir):
 #     print("setting up docker")

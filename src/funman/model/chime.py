@@ -1,7 +1,7 @@
+from pysmt.shortcuts import And, get_free_variables
+
 from funman.examples.chime import CHIME
 from funman.model import CannedModel
-
-from pysmt.shortcuts import get_free_variables, And
 
 
 class ChimeModel(CannedModel):

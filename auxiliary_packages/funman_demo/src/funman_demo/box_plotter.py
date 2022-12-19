@@ -1,21 +1,20 @@
 import json
+import logging
 import time
 from multiprocessing import Queue
+from queue import Empty
 from queue import Queue as SQueue
 from typing import Dict, List
+
+import matplotlib.patches as patches
+import matplotlib.pyplot as plt
+import numpy as np
+from IPython.display import clear_output
+from matplotlib.lines import Line2D
+
 from funman.model import Parameter
 from funman.search_episode import BoxSearchEpisode, SearchEpisode
 from funman.search_utils import Box, Interval, Point
-
-
-import matplotlib.pyplot as plt
-from matplotlib.lines import Line2D
-import matplotlib.patches as patches
-from IPython.display import clear_output
-import numpy as np
-from queue import Empty
-
-import logging
 
 l = logging.getLogger(__file__)
 l.setLevel(logging.INFO)
@@ -27,7 +26,11 @@ class BoxPlotter(object):
         parameters: List[Parameter],
         plot_bounds: Box = None,
         title: str = "Feasible Regions",
-        color_map: Dict[str, str] = {"true": "g", "false": "r", "unknown": "b"},
+        color_map: Dict[str, str] = {
+            "true": "g",
+            "false": "r",
+            "unknown": "b",
+        },
         shape_map: Dict[str, str] = {"true": "x", "false": "o"},
         alpha=0.2,
     ) -> None:

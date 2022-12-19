@@ -1,52 +1,52 @@
+import logging
+import os
 import sys
 import tempfile
-from funman.scenario.consistency import ConsistencyScenario
-from funman.search import BoxSearch, SearchConfig, SMTCheck
-from funman.search_utils import Box, Point, ResultCombinedHandler
-from model2smtlib.bilayer.translate import (
-    BilayerEncoder,
-    BilayerEncodingOptions,
-)
-from funman.util import smtlibscript_from_formula
-from pysmt.shortcuts import (
-    get_model,
-    And,
-    Symbol,
-    FunctionType,
-    Function,
-    Equals,
-    Int,
-    Real,
-    substitute,
-    TRUE,
-    FALSE,
-    Iff,
-    Plus,
-    ForAll,
-    LT,
-    simplify,
-    GT,
-    LE,
-    GE,
-)
-from pysmt.typing import INT, REAL, BOOL
 import unittest
-import os
-from funman import Funman
-from funman.model import Parameter, Model, QueryLE
-from funman.scenario.parameter_synthesis import ParameterSynthesisScenario, ParameterSynthesisScenarioResult
-from funman_demo.handlers import ResultCacheWriter, RealtimeResultPlotter
+
+import matplotlib.pyplot as plt
+import pandas as pd
+from funman_demo.handlers import RealtimeResultPlotter, ResultCacheWriter
 from model2smtlib.bilayer.translate import (
     Bilayer,
+    BilayerEncoder,
     BilayerEncodingOptions,
-    BilayerModel,
     BilayerMeasurement,
+    BilayerModel,
 )
+from pysmt.shortcuts import (
+    FALSE,
+    GE,
+    GT,
+    LE,
+    LT,
+    TRUE,
+    And,
+    Equals,
+    ForAll,
+    Function,
+    FunctionType,
+    Iff,
+    Int,
+    Plus,
+    Real,
+    Symbol,
+    get_model,
+    simplify,
+    substitute,
+)
+from pysmt.typing import BOOL, INT, REAL
 
-import pandas as pd
-import matplotlib.pyplot as plt
-
-import logging
+from funman import Funman
+from funman.model import Model, Parameter, QueryLE
+from funman.scenario.consistency import ConsistencyScenario
+from funman.scenario.parameter_synthesis import (
+    ParameterSynthesisScenario,
+    ParameterSynthesisScenarioResult,
+)
+from funman.search import BoxSearch, SearchConfig, SMTCheck
+from funman.search_utils import Box, Point, ResultCombinedHandler
+from funman.util import smtlibscript_from_formula
 
 l = logging.getLogger(__file__)
 l.setLevel(logging.ERROR)
@@ -112,7 +112,6 @@ class TestChimeBilayerSolve(unittest.TestCase):
 
         return model, query, encoder
 
-
     def test_chime_bilayer_synthesize(self):
         model, query, encoder = self.setup(
             duration=8, transmission_reduction=[-0.05, 0.15]
@@ -174,6 +173,7 @@ class TestChimeBilayerSolve(unittest.TestCase):
             print("-" * 80)
             print(df)
             print("=" * 80)
+
 
 if __name__ == "__main__":
     unittest.main()

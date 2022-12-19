@@ -1,19 +1,19 @@
 from pysmt.shortcuts import (
-    get_model,
-    And,
-    Symbol,
-    FunctionType,
-    Function,
-    Equals,
-    Int,
-    Real,
-    Iff,
-    Plus,
-    ForAll,
-    LT,
-    LE,
     GE,
+    LE,
+    LT,
+    And,
+    Equals,
+    ForAll,
+    Function,
+    FunctionType,
+    Iff,
+    Int,
+    Plus,
+    Real,
+    Symbol,
     Times,
+    get_model,
 )
 from pysmt.typing import REAL
 
@@ -50,7 +50,9 @@ class CHIME(object):
         susceptible_n = [
             Symbol(f"s_n_{t+1}", REAL) for t in range(num_timepoints)
         ]
-        infected_n = [Symbol(f"i_n_{t+1}", REAL) for t in range(num_timepoints)]
+        infected_n = [
+            Symbol(f"i_n_{t+1}", REAL) for t in range(num_timepoints)
+        ]
         recovered_n = [
             Symbol(f"r_n_{t+1}", REAL) for t in range(num_timepoints)
         ]
@@ -275,7 +277,9 @@ class CHIME(object):
 
     def encode_time_horizon(self, parameters, init, dynamics, query, horizon):
         dynamics_t = (
-            And([And([And(s_t) for s_t in d_t]) for d_t in dynamics[0:horizon]])
+            And(
+                [And([And(s_t) for s_t in d_t]) for d_t in dynamics[0:horizon]]
+            )
             if horizon > 0
             else TRUE()
         )

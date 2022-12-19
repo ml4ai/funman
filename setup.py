@@ -1,6 +1,7 @@
-from pathlib import Path
-from setuptools import setup, find_packages
 import os
+from pathlib import Path
+
+from setuptools import find_packages, setup
 
 with open(os.path.join("src", "funman", "_version.py")) as version_file:
     version = version_file.readlines()[-1].split()[-1].strip("\"'")

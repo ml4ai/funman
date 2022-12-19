@@ -6,21 +6,16 @@ The funman package implements multiple simulator model analysis methods.  Curren
 - Parameter Synthesis: Generating feasible values for model parameters.
 """
 
+import logging
+
 import funman
 from funman._version import __version__
-
 from funman.config import Config
-from funman.scenario import (
-    AnalysisScenario,
-    AnalysisScenarioResult,
-)
-
-
-
-import logging
+from funman.scenario import AnalysisScenario, AnalysisScenarioResult
 
 l = logging.getLogger(__file__)
 l.setLevel(logging.ERROR)
+
 
 class Funman(object):
     """
@@ -42,7 +37,7 @@ class Funman(object):
         Parameters
         ----------
         problem : AnalysisScenario
-            The problem is a description of the analysis to be performed, and typically describes a Model and a Query. 
+            The problem is a description of the analysis to be performed, and typically describes a Model and a Query.
         config : SearchConfig, optional
             The configuration for the search algorithm applied to analyze the problem, by default SearchConfig()
 
@@ -50,13 +45,13 @@ class Funman(object):
         -------
         AnalysisScenarioResult
             The resulting data, statistics, and other relevant information produced by the analysis.
-        """    
+        """
         return problem.solve(config)
 
 
 def main():
     return funman.Funman()
 
+
 if __name__ == "main":
     main()
-    

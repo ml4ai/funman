@@ -9,7 +9,6 @@
 ### =============================================================================
 
 
-
 # ===============================================================================
 #  SIR, Subroutine, P. Hein
 #  Updates all disease states given the current state values
@@ -43,11 +42,19 @@ def sir(s, i, r, beta, gamma, n):
     :param n: Total population size
     :return:
     """
-    s_n = (-beta * s * i) + s  # Update to the amount of individuals that are susceptible ## sir_s_n_exp
-    i_n = (beta * s * i - gamma * i) + i  # Update to the amount of individuals that are infectious ## sir_i_n_exp
-    r_n = gamma * i + r  # Update to the amount of individuals that are recovered ## sir_r_n_exp
+    s_n = (
+        -beta * s * i
+    ) + s  # Update to the amount of individuals that are susceptible ## sir_s_n_exp
+    i_n = (
+        beta * s * i - gamma * i
+    ) + i  # Update to the amount of individuals that are infectious ## sir_i_n_exp
+    r_n = (
+        gamma * i + r
+    )  # Update to the amount of individuals that are recovered ## sir_r_n_exp
 
-    scale = n / (s_n + i_n + r_n)  # A scaling factor to compute updated disease variables ## sir_scale_exp
+    scale = n / (
+        s_n + i_n + r_n
+    )  # A scaling factor to compute updated disease variables ## sir_scale_exp
 
     s = s_n * scale  ## sir_s_exp
     i = i_n * scale  ## sir_i_exp
@@ -63,7 +70,6 @@ def main():
     """
     ###
 
-
     # initial population
     s = 100
     i = 1
@@ -75,9 +81,11 @@ def main():
     gamma = 0.3
     # simulate dynamics (corresponding roughly to run_projection() )
 
-    print('(s,i,r)=',sir(s, i, r, beta, gamma, n))  ## simsir_loop_1_1_call_sir_exp
+    print(
+        "(s,i,r)=", sir(s, i, r, beta, gamma, n)
+    )  ## simsir_loop_1_1_call_sir_exp
     return sir(s, i, r, beta, gamma, n)  ## simsir_loop_1_1_call_sir_exp
-    
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

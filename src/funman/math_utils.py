@@ -1,5 +1,6 @@
 from funman.constants import NEG_INFINITY, POS_INFINITY
 
+
 # lhs < rhs
 def lt(lhs, rhs):
     # inf < ?
@@ -27,6 +28,7 @@ def lt(lhs, rhs):
     # - rhs = NEG_INFINITY
     # so just use the float check
     return lhs < rhs
+
 
 # lhs > rhs
 def gt(lhs, rhs):
@@ -56,13 +58,16 @@ def gt(lhs, rhs):
     # so just use the float check
     return lhs > rhs
 
+
 # lhs >= rhs
 def gte(lhs, rhs):
     return not lt(lhs, rhs)
 
+
 # lhs <= rhs
 def lte(lhs, rhs):
     return not gt(lhs, rhs)
+
 
 def minus(lhs, rhs):
     if lhs == rhs:
@@ -78,8 +83,8 @@ def minus(lhs, rhs):
     if rhs == NEG_INFINITY:
         return POS_INFINITY
     return lhs - rhs
-        
-            
+
+
 def plus(lhs, rhs):
     if lhs == NEG_INFINITY:
         if rhs == POS_INFINITY:

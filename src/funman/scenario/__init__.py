@@ -3,6 +3,7 @@ This subpackage contains definitions of scenarios that FUNMAN
 is capable of solving.
 """
 from abc import abstractclassmethod
+
 from funman.config import Config
 
 

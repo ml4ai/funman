@@ -1,30 +1,32 @@
 import json
-import graphviz
 from typing import Dict, List, Union
-from funman.model import Model
+
+import graphviz
 from pysmt.shortcuts import (
-    get_model,
-    And,
-    Symbol,
-    FunctionType,
-    Function,
-    Equals,
-    Int,
-    Real,
-    substitute,
-    TRUE,
     FALSE,
-    Iff,
-    Plus,
-    Times,
-    ForAll,
-    simplify,
-    LT,
-    LE,
-    GT,
     GE,
+    GT,
+    LE,
+    LT,
+    TRUE,
+    And,
+    Equals,
+    ForAll,
+    Function,
+    FunctionType,
+    Iff,
+    Int,
+    Plus,
+    Real,
+    Symbol,
+    Times,
+    get_model,
+    simplify,
+    substitute,
 )
-from pysmt.typing import INT, REAL, BOOL
+from pysmt.typing import BOOL, INT, REAL
+
+from funman.model import Model
 
 
 class BilayerGraph(object):
@@ -94,7 +96,9 @@ class BilayerMeasurement(BilayerGraph):
         )
 
         # Get the flux nodes
-        blm._get_json_node(blm.flux, BilayerFluxNode, data["rate"], "parameter")
+        blm._get_json_node(
+            blm.flux, BilayerFluxNode, data["rate"], "parameter"
+        )
 
         # Get the input edges
         blm.input_edges += blm._get_json_edge(

@@ -2,11 +2,12 @@
 This submodule contains class definitions used to represent and interact with
 models in FUNMAN.
 """
-from typing import Union
-from funman.constants import NEG_INFINITY, POS_INFINITY
 from copy import deepcopy
+from typing import Union
 
-from pysmt.shortcuts import Symbol, REAL, get_free_variables, And, Real, LE
+from pysmt.shortcuts import LE, REAL, And, Real, Symbol, get_free_variables
+
+from funman.constants import NEG_INFINITY, POS_INFINITY
 
 
 class Model(object):
@@ -17,7 +18,7 @@ class Model(object):
 
 class EncodedModel(Model):
     def __init__(self, formula) -> None:
-       self.formula = formula
+        self.formula = formula
 
 
 class CannedModel(Model):
@@ -38,7 +39,7 @@ class QueryLE(Query):
         super().__init__()
         self.variable = variable
         self.ub = ub
-        self.at_end=at_end
+        self.at_end = at_end
 
 
 class Parameter(object):

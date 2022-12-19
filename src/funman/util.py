@@ -1,19 +1,17 @@
-from pysmt.smtlib.script import SmtLibScript, SmtLibCommand
-from pysmt.smtlib.printers import (
-    SmtDagPrinter,
-    write_annotations_dag,
-    SmtPrinter,
-    write_annotations,
-)
-
 import warnings
 
-
 import pysmt.smtlib.commands as smtcmd
-from pysmt.exceptions import NoLogicAvailableError, UndefinedLogicError
-from pysmt.oracles import get_logic
-from pysmt.logics import get_closer_smtlib_logic, Logic, SMTLIB2_LOGICS
 from pysmt.environment import get_env
+from pysmt.exceptions import NoLogicAvailableError, UndefinedLogicError
+from pysmt.logics import SMTLIB2_LOGICS, Logic, get_closer_smtlib_logic
+from pysmt.oracles import get_logic
+from pysmt.smtlib.printers import (
+    SmtDagPrinter,
+    SmtPrinter,
+    write_annotations,
+    write_annotations_dag,
+)
+from pysmt.smtlib.script import SmtLibCommand, SmtLibScript
 
 
 class FUNMANSmtLibScript(SmtLibScript):

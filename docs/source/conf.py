@@ -6,9 +6,9 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = 'funman'
-copyright = '2022, SIFT'
-author = 'SIFT'
+project = "funman"
+copyright = "2022, SIFT"
+author = "SIFT"
 
 from funman import __version__
 
@@ -16,22 +16,22 @@ from funman import __version__
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
 extensions = [
-    'sphinx.ext.autodoc',
-    'sphinx.ext.doctest',
-    'sphinx.ext.duration',
-    'sphinx.ext.graphviz',
-    'sphinx.ext.inheritance_diagram',
-    'sphinx.ext.napoleon',
+    "sphinx.ext.autodoc",
+    "sphinx.ext.doctest",
+    "sphinx.ext.duration",
+    "sphinx.ext.graphviz",
+    "sphinx.ext.inheritance_diagram",
+    "sphinx.ext.napoleon",
 ]
 
-templates_path = ['_templates']
+templates_path = ["_templates"]
 exclude_patterns = []
 
 inheritance_graph_attrs = dict(rankdir="TB", size='""')
-graphviz_output_format = 'svg'
+graphviz_output_format = "svg"
 graphviz_dot_args = [
-    '-Ecolor=#6ab0de;',
-    '-Epenwidth=3;',
+    "-Ecolor=#6ab0de;",
+    "-Epenwidth=3;",
 ]
 
 version = __version__
@@ -40,8 +40,8 @@ version = __version__
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
 # html_theme = 'pydata_sphinx_theme'
-html_theme = 'sphinx_rtd_theme'
-html_static_path = ['_static']
+html_theme = "sphinx_rtd_theme"
+html_static_path = ["_static"]
 
 # Napoleon configuration for handling numpy docstrings
 napoleon_numpy_docstring = True
@@ -64,5 +64,5 @@ modulefirst = True
 rst_epilog = """
 .. |FunmanVersion| replace:: {version_num}
 """.format(
-version_num = version,
+    version_num=version,
 )

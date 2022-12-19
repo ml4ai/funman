@@ -186,6 +186,32 @@ def test_parameter_synthesis_2d():
 
 ## Development Setup
 
+### Pre-commit hooks
+FUNMAN has a set of pre-commit hooks to help with code uniformity. These hooks
+will share the same rules as any automated testing so it is recommended to
+install the hooks locally to ease the development process.
+
+To use the pre-commit hooks you with need the tools listed in
+`requirements-dev.txt`. These should be installed in the same environment where
+you git tooling operates.
+```bash
+pip install -r requirements-dev.txt
+```
+
+Once install you should be able to run the following from the root of the repo:
+```bash
+make install-pre-commit-hooks
+```
+
+Once installed you should begin to receive isort/black feedback when
+committing. These should not alter the code during a commit but instead just
+fail and prevent a commit if the code does not conform to the specification.
+
+To autoformat the entire repo you can use:
+```bash
+make format
+```
+
 ### Development Setup: Ubuntu 20.04
 ```bash
 # install python 3.9
