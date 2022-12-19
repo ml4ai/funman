@@ -1,33 +1,32 @@
+import math
+import os
+import unittest
 from cmath import inf
 from contextlib import contextmanager
 from dis import dis
-from pysmt.simplifier import BddSimplifier
+from timeit import default_timer
+
+from pysmt.logics import QF_LRA, QF_NRA, QF_UFLIRA, QF_UFNRA
 from pysmt.shortcuts import (
-    Real,
-    get_model,
-    And,
-    Solver,
-    TRUE,
-    reset_env as pysmt_reset_env,
-    is_sat,
-    Symbol,
     BOOL,
+    TRUE,
+    And,
+    Equals,
     Implies,
     Not,
-    Equals,
-    substitute,
+    Real,
+    Solver,
+    Symbol,
     get_env,
-    TRUE,
-    write_smtlib,
+    get_model,
+    is_sat,
 )
-from pysmt.typing import INT, REAL, BOOL
-from pysmt.logics import QF_NRA, QF_LRA, QF_UFLIRA, QF_UFNRA
-import math
+from pysmt.shortcuts import reset_env as pysmt_reset_env
+from pysmt.shortcuts import substitute, write_smtlib
+from pysmt.simplifier import BddSimplifier
+from pysmt.typing import BOOL, INT, REAL
 
-import unittest
-import os
 from funman.examples.chime import CHIME
-from timeit import default_timer
 
 RESOURCES = os.path.join("resources")
 
@@ -278,7 +277,9 @@ class TestHandcoded(unittest.TestCase):
         vars, (parameters, init, dynamics, query) = chime.make_model(
             assign_betas=False
         )
-        for num_timepoints in range(min_num_timepoints, max_num_timepoints + 1):
+        for num_timepoints in range(
+            min_num_timepoints, max_num_timepoints + 1
+        ):
 
             reset_env()
             phi = chime.encode_time_horizon(

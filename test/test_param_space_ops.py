@@ -1,32 +1,34 @@
+import os
 import sys
-from funman.search import BoxSearch, SearchConfig
+import unittest
+
 from pysmt.shortcuts import (
-    get_model,
-    And,
-    Symbol,
-    FunctionType,
-    Function,
-    Equals,
-    Int,
-    Real,
-    substitute,
-    TRUE,
     FALSE,
-    Iff,
-    Plus,
-    ForAll,
-    LT,
-    simplify,
+    GE,
     GT,
     LE,
-    GE,
+    LT,
+    TRUE,
+    And,
+    Equals,
+    ForAll,
+    Function,
+    FunctionType,
+    Iff,
+    Int,
+    Plus,
+    Real,
+    Symbol,
+    get_model,
+    simplify,
+    substitute,
 )
-from pysmt.typing import INT, REAL, BOOL
-import unittest
-import os
+from pysmt.typing import BOOL, INT, REAL
+
 from funman import Funman
-from funman.model import Parameter, Model
+from funman.model import Model, Parameter
 from funman.scenario.parameter_synthesis import ParameterSynthesisScenario
+from funman.search import BoxSearch, SearchConfig
 
 
 class TestCompilation(unittest.TestCase):

@@ -1,26 +1,27 @@
+import os
+import unittest
 from cmath import inf
+
 from pysmt.shortcuts import (
-    get_model,
-    And,
-    Symbol,
-    FunctionType,
-    Function,
-    Equals,
-    Int,
-    Real,
-    Iff,
-    Plus,
-    ForAll,
-    LT,
-    LE,
     GE,
+    LE,
+    LT,
+    And,
+    Equals,
+    ForAll,
+    Function,
+    FunctionType,
+    Iff,
+    Int,
+    Plus,
+    Real,
+    Symbol,
+    get_model,
     is_sat,
     write_smtlib,
 )
-from pysmt.typing import INT, REAL, BOOL
+from pysmt.typing import BOOL, INT, REAL
 
-import unittest
-import os
 from funman.examples.chime import CHIME
 
 RESOURCES = os.path.join("resources")

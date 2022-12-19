@@ -1,10 +1,12 @@
 import os
 import unittest
+
 from funman_dreal.solver import run_dreal
+
 from funman.examples.chime import CHIME
 from funman.util import (
-    smtlibscript_from_formula_list,
     smtlibscript_from_formula,
+    smtlibscript_from_formula_list,
 )
 
 # from pysmt.smtlib.script import smtlibscript_from_formula

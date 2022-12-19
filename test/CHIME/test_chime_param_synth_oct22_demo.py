@@ -2,16 +2,18 @@ import os
 import tempfile
 import unittest
 
-from funman import Funman
-from funman.model import Parameter, Model, QueryLE
-from funman.model.chime import ChimeModel
-from funman.scenario.parameter_synthesis import ParameterSynthesisScenario
-from funman.scenario.parameter_synthesis import ParameterSynthesisScenarioResult
-from funman.examples.chime import CHIME
-from funman.search_utils import ResultCombinedHandler, SearchConfig
 from funman_demo.handlers import ResultCacheWriter
-
 from model2smtlib.chime.translate import ChimeEncoder
+
+from funman import Funman
+from funman.examples.chime import CHIME
+from funman.model import Model, Parameter, QueryLE
+from funman.model.chime import ChimeModel
+from funman.scenario.parameter_synthesis import (
+    ParameterSynthesisScenario,
+    ParameterSynthesisScenarioResult,
+)
+from funman.search_utils import ResultCombinedHandler, SearchConfig
 
 RESOURCES = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "..", "..", "resources"

@@ -1,19 +1,20 @@
 import unittest
+
+import funman_dreal  # Needed to use dreal with pysmt
+from pysmt.logics import QF_NRA
 from pysmt.shortcuts import (
-    get_model,
+    LE,
+    REAL,
     And,
+    Equals,
     Not,
+    Plus,
+    Pow,
+    Real,
     Solver,
     Symbol,
-    Real,
-    REAL,
-    LE,
-    Pow,
-    Equals,
-    Plus,
+    get_model,
 )
-from pysmt.logics import QF_NRA
-import funman_dreal  # Needed to use dreal with pysmt
 
 # from pysmt.smtlib.script import smtlibscript_from_formula
 

@@ -2,17 +2,15 @@
 This submodule defines the representations for episodes (single executions) of
 one of the search algorithms supported by FUNMAN.
 """
+import logging
+import multiprocessing as mp
 from abc import ABC
-from typing import List, Union
 from datetime import datetime
+from multiprocessing.managers import SyncManager
 from queue import Queue as SQueue
+from typing import List, Union
 
 from funman.search_utils import Box, Point, SearchConfig, SearchStatistics
-
-import multiprocessing as mp
-from multiprocessing.managers import SyncManager
-
-import logging
 
 l = logging.getLogger(__file__)
 l.setLevel(logging.INFO)
@@ -116,7 +114,9 @@ class BoxSearchEpisode(SearchEpisode):
 
     def add_false_point(self, point: Point):
         if point in self.true_points:
-            l.error(f"Point: {point} is marked false, but already marked true.")
+            l.error(
+                f"Point: {point} is marked false, but already marked true."
+            )
         self.false_points.add(point)
 
     def add_true(self, box: Box):
@@ -127,7 +127,9 @@ class BoxSearchEpisode(SearchEpisode):
 
     def add_true_point(self, point: Point):
         if point in self.false_points:
-            l.error(f"Point: {point} is marked true, but already marked false.")
+            l.error(
+                f"Point: {point} is marked true, but already marked false."
+            )
         self.true_points.add(point)
 
     def get_unknown(self):

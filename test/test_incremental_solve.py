@@ -1,35 +1,33 @@
-from pysmt.shortcuts import (
-    get_model,
-    And,
-    Symbol,
-    FunctionType,
-    Function,
-    Equals,
-    Int,
-    Real,
-    substitute,
-    TRUE,
-    FALSE,
-    Iff,
-    Plus,
-    ForAll,
-    LT,
-    simplify,
-    GT,
-    LE,
-    GE,
-    Solver,
-    Ite,
-    reset_env as pysmt_reset_env,
-)
-from pysmt.logics import QF_NRA, QF_LRA, QF_UFLIRA, QF_UFNRA
-from pysmt.typing import INT, REAL, BOOL
-
+import logging
 import random
 import time
 import unittest
 
-import logging
+from pysmt.logics import QF_LRA, QF_NRA, QF_UFLIRA, QF_UFNRA
+from pysmt.shortcuts import (
+    FALSE,
+    GE,
+    GT,
+    LE,
+    LT,
+    TRUE,
+    And,
+    Equals,
+    ForAll,
+    Function,
+    FunctionType,
+    Iff,
+    Int,
+    Ite,
+    Plus,
+    Real,
+    Solver,
+    Symbol,
+    get_model,
+)
+from pysmt.shortcuts import reset_env as pysmt_reset_env
+from pysmt.shortcuts import simplify, substitute
+from pysmt.typing import BOOL, INT, REAL
 
 l = logging.getLogger(__file__)
 l.setLevel(logging.ERROR)
@@ -77,7 +75,9 @@ class TestIncrementalSolver(unittest.TestCase):
 
         for i in range(timesteps):
             formulas.append(
-                And([Equals(x[i + 1], x[i] * y[i]), Equals(y[i + 1], x[i] + 1)])
+                And(
+                    [Equals(x[i + 1], x[i] * y[i]), Equals(y[i + 1], x[i] + 1)]
+                )
             )
         return formulas
 
@@ -90,7 +90,9 @@ class TestIncrementalSolver(unittest.TestCase):
 
         for i in range(timesteps):
             formulas.append(
-                And([Equals(x[i + 1], x[i] * x[i]), Equals(y[i + 1], x[i] + 1)])
+                And(
+                    [Equals(x[i + 1], x[i] * x[i]), Equals(y[i + 1], x[i] + 1)]
+                )
             )
         return formulas
 

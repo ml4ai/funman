@@ -1,15 +1,15 @@
 import functools
-from pysmt.solvers.solver import (
-    IncrementalTrackingSolver,
-    UnsatCoreSolver,
-    Model,
-    Converter,
-    SolverOptions,
-)
 
-from pysmt.walkers import DagWalker
 import dreal
 from pysmt.decorators import catch_conversion_error
+from pysmt.solvers.solver import (
+    Converter,
+    IncrementalTrackingSolver,
+    Model,
+    SolverOptions,
+    UnsatCoreSolver,
+)
+from pysmt.walkers import DagWalker
 
 
 class DRealConverter(Converter, DagWalker):

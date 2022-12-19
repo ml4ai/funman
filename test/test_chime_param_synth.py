@@ -1,35 +1,36 @@
+import logging
+import os
 import sys
-from funman.search import BoxSearch, SearchConfig
+import unittest
+
 from pysmt.shortcuts import (
-    get_model,
-    And,
-    Symbol,
-    FunctionType,
-    Function,
-    Equals,
-    Int,
-    Real,
-    substitute,
-    TRUE,
     FALSE,
-    Iff,
-    Plus,
-    ForAll,
-    LT,
-    simplify,
+    GE,
     GT,
     LE,
-    GE,
+    LT,
+    TRUE,
+    And,
+    Equals,
+    ForAll,
+    Function,
+    FunctionType,
+    Iff,
+    Int,
+    Plus,
+    Real,
+    Symbol,
+    get_model,
+    simplify,
+    substitute,
 )
-from pysmt.typing import INT, REAL, BOOL
-import unittest
-import os
-from funman import Funman
-from funman.model import Parameter, EncodedModel
-from funman.scenario.parameter_synthesis import ParameterSynthesisScenario
-from funman.examples.chime import CHIME
+from pysmt.typing import BOOL, INT, REAL
 
-import logging
+from funman import Funman
+from funman.examples.chime import CHIME
+from funman.model import EncodedModel, Parameter
+from funman.scenario.parameter_synthesis import ParameterSynthesisScenario
+from funman.search import BoxSearch, SearchConfig
 
 l = logging.getLogger(__file__)
 l.setLevel(logging.ERROR)

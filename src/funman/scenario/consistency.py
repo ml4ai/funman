@@ -1,16 +1,18 @@
 """
 This submodule defined the Parameter Synthesis scenario.
 """
+from typing import Any, Dict, List, Union
+
+import matplotlib.pyplot as plt
+import pandas as pd
+from pysmt.fnode import FNode
+from pysmt.shortcuts import And, get_free_variables
+from pysmt.solvers.solver import Model as pysmtModel
+
 from funman.model import Query
 from funman.model.bilayer import Bilayer
 from funman.scenario import AnalysisScenario, AnalysisScenarioResult
-from funman.search import SMTCheck, SearchConfig
-from pysmt.fnode import FNode
-from pysmt.shortcuts import get_free_variables, And
-from typing import Any, Dict, List, Union
-from pysmt.solvers.solver import Model as pysmtModel
-import pandas as pd
-import matplotlib.pyplot as plt
+from funman.search import SearchConfig, SMTCheck
 
 
 class ConsistencyScenario(AnalysisScenario):
@@ -32,7 +34,9 @@ class ConsistencyScenario(AnalysisScenario):
         self.model = model
         self.query = query
 
-    def solve(self, config: SearchConfig = None) -> "ConsistencyScenarioResult":
+    def solve(
+        self, config: SearchConfig = None
+    ) -> "ConsistencyScenarioResult":
         """
         Check model consistency.
 
@@ -55,10 +59,10 @@ class ConsistencyScenario(AnalysisScenario):
             search = SMTCheck()
         else:
             search = config.search()
-        
+
         if search not in self.searches:
             self.searches.append(search)
-            
+
         result = search.search(self, config=config)
 
         return ConsistencyScenarioResult(result, self)
@@ -103,11 +107,15 @@ class ConsistencyScenarioResult(AnalysisScenarioResult):
                 df = df.interpolate(method=interpolate)
             return df
         else:
-            raise Exception(f"Cannot plot result for an inconsistent scenario.")
+            raise Exception(
+                f"Cannot plot result for an inconsistent scenario."
+            )
 
     def plot(self, **kwargs):
         if self.consistent:
             self.dataframe().plot(marker="o", **kwargs)
             plt.show(block=False)
         else:
-            raise Exception(f"Cannot plot result for an inconsistent scenario.")
+            raise Exception(
+                f"Cannot plot result for an inconsistent scenario."
+            )

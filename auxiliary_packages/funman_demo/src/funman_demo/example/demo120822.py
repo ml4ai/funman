@@ -1,27 +1,28 @@
-from funman.model.bilayer import Bilayer, BilayerMeasurement, BilayerModel
-from funman.model import Parameter, QueryLE, QueryTrue
+import os
+import tempfile
+
+import matplotlib.pyplot as plt
+import pandas as pd
+from funman_demo.handlers import (
+    NotebookImageRefresher,
+    RealtimeResultPlotter,
+    ResultCacheWriter,
+)
 from IPython.display import Markdown as md
+from matplotlib.ticker import FormatStrFormatter
 from model2smtlib.bilayer.translate import (
     BilayerEncoder,
     BilayerEncodingOptions,
 )
+
+from funman import Funman
+from funman.model import Parameter, QueryLE, QueryTrue
+from funman.model.bilayer import Bilayer, BilayerMeasurement, BilayerModel
 from funman.scenario.consistency import ConsistencyScenario
 from funman.scenario.parameter_synthesis import ParameterSynthesisScenario
-from funman import Funman
-from funman.model.bilayer import Bilayer, BilayerMeasurement, BilayerModel
-from funman_demo.handlers import (
-    ResultCacheWriter,
-    RealtimeResultPlotter,
-    NotebookImageRefresher,
-)
-from funman.search_utils import ResultCombinedHandler, SearchConfig, Point
+from funman.search import BoxSearch, SMTCheck
 from funman.search_episode import DRealSearchEpisode
-from funman.search import SMTCheck, BoxSearch
-import os
-import tempfile
-import pandas as pd
-import matplotlib.pyplot as plt
-from matplotlib.ticker import FormatStrFormatter
+from funman.search_utils import Point, ResultCombinedHandler, SearchConfig
 
 # import funman_dreal # Needed to use dreal with pysmt
 
@@ -797,7 +798,9 @@ class Scenario2(object):
 
     def to_md(self, model):
 
-        model.measurements.to_dot().render(filename="measurement", format="png")
+        model.measurements.to_dot().render(
+            filename="measurement", format="png"
+        )
         model.bilayer.to_dot().render(filename="bilayer", format="png")
 
         init_values_md = "\n".join(

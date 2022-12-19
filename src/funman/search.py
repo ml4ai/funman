@@ -1,8 +1,19 @@
 """
 This submodule contains the search algorithms used to run FUNMAN.
 """
+import logging
+import multiprocessing as mp
+import os
 import traceback
+from multiprocessing.synchronize import Condition, Event, Lock
+from queue import Empty
+from queue import Queue as QueueSP
 from typing import List
+
+from pyparsing import abstractmethod
+from pysmt.logics import QF_NRA
+from pysmt.shortcuts import And, Not, Solver, get_model
+
 from funman.search_episode import (
     BoxSearchEpisode,
     DRealSearchEpisode,
@@ -11,26 +22,15 @@ from funman.search_episode import (
 from funman.search_utils import (
     Box,
     Point,
-    SearchConfig,
     ResultHandler,
+    SearchConfig,
     decode_labeled_object,
-    encode_true_box,
     encode_false_box,
-    encode_true_point,
     encode_false_point,
+    encode_true_box,
+    encode_true_point,
     encode_unknown_box,
 )
-from pyparsing import abstractmethod
-from pysmt.logics import QF_NRA
-from pysmt.shortcuts import get_model, And, Not, Solver
-
-import multiprocessing as mp
-from multiprocessing.synchronize import Condition, Event, Lock
-
-from queue import Empty
-from queue import Queue as QueueSP
-import logging
-import os
 
 LOG_LEVEL = logging.WARN
 
@@ -596,7 +596,11 @@ class DrealBoxSearch(BoxSearch):
                     l.info(f"{process_name} claimed work")
                 except Empty:
                     exit = self._handle_empty_queue(
-                        process_name, episode, more_work, idle_mutex, idle_flags
+                        process_name,
+                        episode,
+                        more_work,
+                        idle_mutex,
+                        idle_flags,
                     )
                     if exit:
                         break

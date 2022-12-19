@@ -1,8 +1,8 @@
-from model2smtlib.gromet.translate import QueryableGromet
-from funman_demo.CHIME.CHIME_SIR import main as run_CHIME_SIR
-
 import os
 import unittest
+
+from funman_demo.CHIME.CHIME_SIR import main as run_CHIME_SIR
+from model2smtlib.gromet.translate import QueryableGromet
 
 RESOURCES = os.path.join("resources")
 GROMET_FILE = os.path.join(
@@ -29,7 +29,9 @@ class Test_CHIME_SIR(unittest.TestCase):
 
         # query the gromet file
         gromet = QueryableGromet.from_gromet_file(GROMET_FILE)
-        q_gromet = gromet.query(f"(forall ((t Int)) (<= (I t) {infected_threshold}))")
+        q_gromet = gromet.query(
+            f"(forall ((t Int)) (<= (I t) {infected_threshold}))"
+        )
 
         # assert the both queries returned the same result
         return q_sim == q_gromet
