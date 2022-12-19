@@ -10,3 +10,20 @@ addopts = [
     "--import-mode=importlib",
 ]
 testpaths = ["test"]
+
+[tool.black]
+line-length = 79
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+  | \.venv
+  | _build
+  | build
+  | dist
+)/
+'''
+
+[tool.isort]
+profile = "black"
+filter_files = true

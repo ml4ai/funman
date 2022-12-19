@@ -19,7 +19,7 @@ destroy-dev-env:
 	$(PIPENV) --rm
 	rm Pipfile.lock || true
 
-setup-conda-dev-env: set-conda setup-conda-packages setup-pipenv setup-pysmt 
+setup-conda-dev-env: set-conda setup-conda-packages setup-pipenv setup-pysmt
 
 set-conda:
 	$(PIPENV) --python=$(shell conda run which python) --site-packages
@@ -107,7 +107,7 @@ run-podman-notebook:
 		jupyter notebook --allow-root --ip 0.0.0.0 --no-browser /home/$$USER/funman/notebooks
 
 
-build-docker-dev: 
+build-docker-dev:
 	DOCKER_BUILDKIT=1 docker build \
 		--build-arg UNAME=$$USER \
 		--build-arg UID=$$(id -u) \
@@ -126,6 +126,12 @@ run-docker-dev: rm-docker-dev-container
 		-v $(shell pwd)/..:/code \
 		funman-dev:latest
 
-attach-docker-dev: 
+attach-docker-dev:
 	docker attach funman-dev
 
+install-pre-commit-hooks:
+	@pre-commit install
+
+format:
+	isort --settings-path pyproject.toml .
+	black --config pyproject.toml .
