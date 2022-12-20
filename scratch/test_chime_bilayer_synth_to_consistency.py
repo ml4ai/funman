@@ -3,8 +3,6 @@ import os
 import tempfile
 import unittest
 
-import matplotlib.pyplot as plt
-import pandas as pd
 from funman_demo.handlers import RealtimeResultPlotter, ResultCacheWriter
 from model2smtlib.bilayer.translate import (
     Bilayer,
@@ -13,39 +11,15 @@ from model2smtlib.bilayer.translate import (
     BilayerMeasurement,
     BilayerModel,
 )
-from pysmt.shortcuts import (
-    FALSE,
-    GE,
-    GT,
-    LE,
-    LT,
-    TRUE,
-    And,
-    Equals,
-    ForAll,
-    Function,
-    FunctionType,
-    Iff,
-    Int,
-    Plus,
-    Real,
-    Symbol,
-    get_model,
-    simplify,
-    substitute,
-)
-from pysmt.typing import BOOL, INT, REAL
 
 from funman import Funman
-from funman.model import Model, Parameter, QueryLE
-from funman.scenario.consistency import ConsistencyScenario
+from funman.model import Parameter, QueryLE
 from funman.scenario.parameter_synthesis import (
     ParameterSynthesisScenario,
     ParameterSynthesisScenarioResult,
 )
-from funman.search import BoxSearch, SearchConfig, SMTCheck
-from funman.search_utils import Box, Point, ResultCombinedHandler
-from funman.util import smtlibscript_from_formula
+from funman.search import BoxSearch
+from funman.search_utils import Point, ResultCombinedHandler, SearchConfig
 
 l = logging.getLogger(__file__)
 l.setLevel(logging.ERROR)

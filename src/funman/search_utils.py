@@ -9,7 +9,7 @@ from functools import total_ordering
 from multiprocessing.managers import SyncManager
 from queue import Queue as SQueue
 from statistics import mean as average
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import multiprocess as mp
 from pysmt.shortcuts import GE, LE, LT, TRUE, And, Equals, Real
@@ -28,6 +28,7 @@ class Interval(object):
         self.ub = ub
         self.cached_width = None
 
+    @staticmethod
     def make_interval(p_bounds) -> "Interval":
         b0_bounds = p_bounds[0]
         b1_bounds = p_bounds[1]
@@ -402,6 +403,23 @@ class Box(object):
             ]
         )
 
+    def _get_max_width_point_parameter(self, points):
+        # get the average distance from the center point for each parameter
+        centers = {
+            p: average([pt.values[p] for pt in points]) for p in self.bounds
+        }
+        point_distances = [
+            {p: abs(pt.values[p] - centers[p]) for p in pt.values}
+            for pt in points
+        ]
+        parameter_widths = {
+            p: average([pt[p] for pt in point_distances]) for p in self.bounds
+        }
+        max_width_parameter = max(
+            parameter_widths, key=lambda k: parameter_widths[k]
+        )
+        return max_width_parameter
+
     def _get_max_width_parameter(self):
         widths = [bounds.width() for _, bounds in self.bounds.items()]
         max_width = max(widths)
@@ -655,7 +673,7 @@ class Box(object):
 
 
 class SearchStatistics(object):
-    def __init__(self, manager: SyncManager):
+    def __init__(self, manager: Optional[SyncManager] = None):
         self.multiprocessing = manager is not None
         self.num_true = manager.Value("i", 0) if self.multiprocessing else 0
         self.num_false = manager.Value("i", 0) if self.multiprocessing else 0
@@ -824,8 +842,12 @@ def decode_labeled_point(point: dict):
 
 
 def decode_labeled_object(obj: dict):
+    if not isinstance(obj, dict):
+        raise Exception("obj is not a dict")
+    if "type" not in obj:
+        raise Exception("obj does not specify a 'type' field")
     if obj["type"] == "point":
         return (decode_labeled_point(obj), Point)
     if obj["type"] == "box":
         return (decode_labeled_box(obj), Box)
-    return None
+    raise Exception(f"obj of type {obj['type']}")

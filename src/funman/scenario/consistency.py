@@ -6,13 +6,12 @@ from typing import Any, Dict, Union
 import matplotlib.pyplot as plt
 import pandas as pd
 from pysmt.fnode import FNode
-from pysmt.shortcuts import And, get_free_variables
-from pysmt.solvers.solver import Model as pysmtModel
 
 from funman.model import Query
 from funman.model.bilayer import Bilayer
 from funman.scenario import AnalysisScenario, AnalysisScenarioResult
-from funman.search import SearchConfig, SMTCheck
+from funman.search import SMTCheck
+from funman.search_utils import SearchConfig
 
 
 class ConsistencyScenario(AnalysisScenario):
