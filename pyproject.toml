@@ -21,6 +21,19 @@ exclude = '''
   | _build
   | build
   | dist
+  | .*venv*
+)/
+'''
+
+[tool.pycln]
+exclude = '''
+/(
+    \.git
+  | \.venv
+  | _build
+  | build
+  | dist
+  | .*venv*
 )/
 '''
 

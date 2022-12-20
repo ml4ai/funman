@@ -1,5 +1,5 @@
 import json
-from typing import Dict, List, Union
+from typing import Dict
 
 import graphviz
 from pysmt.shortcuts import (

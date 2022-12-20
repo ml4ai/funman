@@ -1,10 +1,6 @@
-import sys
 import unittest
 
-from funman.model.encoded import EncodedModel
 from model2smtlib.translate import Encoder
-from funman.search import BoxSearch, SearchConfig
-from funman.constants import NEG_INFINITY, POS_INFINITY
 from pysmt.shortcuts import (
     FALSE,
     GE,
@@ -30,9 +26,10 @@ from pysmt.typing import BOOL, INT, REAL
 
 from funman import Funman
 from funman.model import Parameter, QueryTrue
-from funman.scenario.parameter_synthesis import ParameterSynthesisScenario
+from funman.model.encoded import EncodedModel
 from funman.scenario import ParameterSynthesisScenario
-from funman.search import SearchConfig
+from funman.scenario.parameter_synthesis import ParameterSynthesisScenario
+from funman.search import BoxSearch, SearchConfig
 
 
 class TestCompilation(unittest.TestCase):

@@ -1,7 +1,3 @@
-import sys
-
-sys.path.append("/Users/dmosaphir/SIFT/Projects/ASKEM/code/funman/src")
-import os
 import unittest
 
 from pysmt.shortcuts import (
@@ -28,7 +24,6 @@ from pysmt.shortcuts import (
 from pysmt.typing import BOOL, INT, REAL
 
 from funman import Funman
-from funman.constants import NEG_INFINITY, POS_INFINITY
 from funman.model import EncodedModel, Parameter
 from funman.scenario.parameter_synthesis import ParameterSynthesisScenario
 from funman.search import BoxSearch, SearchConfig

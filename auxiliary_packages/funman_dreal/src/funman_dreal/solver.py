@@ -1,9 +1,7 @@
 import io
 import os
-import time
 from functools import partial
 from queue import Queue
-from shutil import copyfile, rmtree
 from typing import Dict, List
 
 import docker

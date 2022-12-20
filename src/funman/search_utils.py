@@ -9,7 +9,7 @@ from functools import total_ordering
 from multiprocessing.managers import SyncManager
 from queue import Queue as SQueue
 from statistics import mean as average
-from typing import Dict, List, Union
+from typing import Dict, List
 
 import multiprocess as mp
 from pysmt.shortcuts import GE, LE, LT, TRUE, And, Equals, Real

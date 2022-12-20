@@ -1,3 +1,4 @@
-black
+black[jupyter]
 isort
 pre-commit
+pycln

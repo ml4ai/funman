@@ -1,7 +1,7 @@
 """
 This submodule defined the Parameter Synthesis scenario.
 """
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, Union
 
 import matplotlib.pyplot as plt
 import pandas as pd
