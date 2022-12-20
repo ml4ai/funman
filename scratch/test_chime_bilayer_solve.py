@@ -6,13 +6,6 @@ import unittest
 import matplotlib.pyplot as plt
 import pandas as pd
 from funman_demo.handlers import RealtimeResultPlotter, ResultCacheWriter
-from model2smtlib.bilayer.translate import (
-    Bilayer,
-    BilayerEncoder,
-    BilayerEncodingOptions,
-    BilayerMeasurement,
-    BilayerModel,
-)
 from pysmt.shortcuts import (
     FALSE,
     GE,
@@ -38,6 +31,13 @@ from pysmt.typing import BOOL, INT, REAL
 
 from funman import Funman
 from funman.model import Model, Parameter, QueryLE
+from funman.model2smtlib.bilayer.translate import (
+    Bilayer,
+    BilayerEncoder,
+    BilayerEncodingOptions,
+    BilayerMeasurement,
+    BilayerModel,
+)
 from funman.scenario.consistency import ConsistencyScenario
 from funman.scenario.parameter_synthesis import ParameterSynthesisScenario
 from funman.search import BoxSearch, SearchConfig, SMTCheck

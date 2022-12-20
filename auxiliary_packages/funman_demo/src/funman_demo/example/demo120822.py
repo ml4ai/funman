@@ -10,13 +10,13 @@ from funman_demo.handlers import (
 )
 from IPython.display import Markdown as md
 from matplotlib.ticker import FormatStrFormatter
-from model2smtlib.bilayer.translate import (
-    BilayerEncoder,
-    BilayerEncodingOptions,
-)
 
 from funman import Funman
 from funman.model import Parameter, QueryLE, QueryTrue
+from funman.model2smtlib.bilayer.translate import (
+    BilayerEncoder,
+    BilayerEncodingOptions,
+)
 from funman.model.bilayer import Bilayer, BilayerMeasurement, BilayerModel
 from funman.scenario.consistency import ConsistencyScenario
 from funman.scenario.parameter_synthesis import ParameterSynthesisScenario

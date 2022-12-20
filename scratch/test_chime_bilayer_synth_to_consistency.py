@@ -4,16 +4,16 @@ import tempfile
 import unittest
 
 from funman_demo.handlers import RealtimeResultPlotter, ResultCacheWriter
-from model2smtlib.bilayer.translate import (
+
+from funman import Funman
+from funman.model import Parameter, QueryLE
+from funman.model2smtlib.bilayer.translate import (
     Bilayer,
     BilayerEncoder,
     BilayerEncodingOptions,
     BilayerMeasurement,
     BilayerModel,
 )
-
-from funman import Funman
-from funman.model import Parameter, QueryLE
 from funman.scenario.parameter_synthesis import (
     ParameterSynthesisScenario,
     ParameterSynthesisScenarioResult,

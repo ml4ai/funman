@@ -1,0 +1,2 @@
+class QueryableModel(object):
+    pass
