@@ -403,6 +403,23 @@ class Box(object):
             ]
         )
 
+    def _get_max_width_point_parameter(self, points):
+        # get the average distance from the center point for each parameter
+        centers = {
+            p: average([pt.values[p] for pt in points]) for p in self.bounds
+        }
+        point_distances = [
+            {p: abs(pt.values[p] - centers[p]) for p in pt.values}
+            for pt in points
+        ]
+        parameter_widths = {
+            p: average([pt[p] for pt in point_distances]) for p in self.bounds
+        }
+        max_width_parameter = max(
+            parameter_widths, key=lambda k: parameter_widths[k]
+        )
+        return max_width_parameter
+
     def _get_max_width_parameter(self):
         widths = [bounds.width() for _, bounds in self.bounds.items()]
         max_width = max(widths)
