@@ -1,36 +1,13 @@
 import unittest
 
 import matplotlib.pyplot as plt
-import numpy as np
 from funman_demo.box_plotter import BoxPlotter
 from matplotlib.lines import Line2D
-from pysmt.shortcuts import (
-    FALSE,
-    GE,
-    GT,
-    LE,
-    LT,
-    TRUE,
-    And,
-    Equals,
-    ForAll,
-    Function,
-    FunctionType,
-    Iff,
-    Int,
-    Plus,
-    Real,
-    Symbol,
-    get_model,
-    simplify,
-    substitute,
-)
-from pysmt.typing import BOOL, INT, REAL
+from pysmt.shortcuts import GE, LE, And, Real, Symbol
+from pysmt.typing import REAL
 
 from funman import Funman
-from funman.math_utils import lt
 from funman.model import EncodedModel, Parameter
-from funman.parameter_space import ParameterSpace
 from funman.scenario.parameter_synthesis import ParameterSynthesisScenario
 from funman.search import BoxSearch, SearchConfig
 from funman.search_utils import Box, Interval
