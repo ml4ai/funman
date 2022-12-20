@@ -10,7 +10,7 @@ from funman import Funman
 from funman.model import EncodedModel, Parameter
 from funman.scenario.parameter_synthesis import ParameterSynthesisScenario
 from funman.search import BoxSearch, SearchConfig
-from funman.search_utils import Box, Interval
+from funman.utils.search_utils import Box, Interval
 
 
 class TestCompilation(unittest.TestCase):

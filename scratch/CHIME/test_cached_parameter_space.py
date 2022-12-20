@@ -12,7 +12,7 @@ from funman.scenario.parameter_synthesis import (
     ParameterSynthesisScenario,
     ParameterSynthesisScenarioResult,
 )
-from funman.search_utils import ResultCombinedHandler, SearchConfig
+from funman.utils.search_utils import ResultCombinedHandler, SearchConfig
 
 RESOURCES = os.path.join("resources")
 CACHED = os.path.join(RESOURCES, "cached")

@@ -30,7 +30,7 @@ from funman.model import Model, Parameter, QueryLE, QueryTrue
 from funman.model2smtlib import QueryableModel
 from funman.model2smtlib.translate import Encoder, Encoding, EncodingOptions
 from funman.model.bilayer import Bilayer, BilayerMeasurement, BilayerModel
-from funman.search_utils import Box
+from funman.utils.search_utils import Box
 
 l = logging.Logger(__name__)
 

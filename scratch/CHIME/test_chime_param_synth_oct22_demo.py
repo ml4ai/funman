@@ -13,7 +13,7 @@ from funman.scenario.parameter_synthesis import (
     ParameterSynthesisScenario,
     ParameterSynthesisScenarioResult,
 )
-from funman.search_utils import ResultCombinedHandler, SearchConfig
+from funman.utils.search_utils import ResultCombinedHandler, SearchConfig
 
 RESOURCES = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "..", "..", "resources"

@@ -6,7 +6,7 @@ from IPython.display import clear_output
 from matplotlib.lines import Line2D
 
 from funman.parameter_space import ParameterSpace
-from funman.search_utils import Box, Point, decode_labeled_object
+from funman.utils.search_utils import Box, Point, decode_labeled_object
 
 from .box_plotter import BoxPlotter
 

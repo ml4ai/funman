@@ -11,7 +11,7 @@ from matplotlib.lines import Line2D
 
 from funman.model import Parameter
 from funman.search_episode import BoxSearchEpisode, SearchEpisode
-from funman.search_utils import Box, Interval, Point
+from funman.utils.search_utils import Box, Interval, Point
 
 l = logging.getLogger(__file__)
 l.setLevel(logging.INFO)

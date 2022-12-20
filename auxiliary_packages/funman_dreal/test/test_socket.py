@@ -9,7 +9,7 @@ from pysmt.shortcuts import GT, Equals, Real, Solver, Symbol, get_env
 from pysmt.typing import REAL
 
 from funman.examples.chime import CHIME
-from funman.util import (
+from funman.utils.smtlib_utils import (
     smtlibscript_from_formula,
     smtlibscript_from_formula_list,
 )

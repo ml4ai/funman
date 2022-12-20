@@ -41,8 +41,8 @@ from funman.model2smtlib.bilayer.translate import (
 from funman.scenario.consistency import ConsistencyScenario
 from funman.scenario.parameter_synthesis import ParameterSynthesisScenario
 from funman.search import BoxSearch, SearchConfig, SMTCheck
-from funman.search_utils import Box, ResultCombinedHandler
-from funman.util import smtlibscript_from_formula
+from funman.utils.search_utils import Box, ResultCombinedHandler
+from funman.utils.smtlib_utils import smtlibscript_from_formula
 
 l = logging.getLogger(__file__)
 l.setLevel(logging.ERROR)

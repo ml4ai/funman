@@ -4,7 +4,7 @@ from pysmt.logics import QF_NRA
 from pysmt.shortcuts import And, Solver
 
 from funman.search_episode import SearchEpisode
-from funman.search_utils import SearchConfig
+from funman.utils.search_utils import SearchConfig
 
 from .search import Search
 

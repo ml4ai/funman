@@ -16,7 +16,7 @@ from funman.model2smtlib.bilayer.translate import (
 from funman.model.bilayer import Bilayer, BilayerMeasurement, BilayerModel
 from funman.scenario.consistency import ConsistencyScenario
 from funman.scenario.parameter_synthesis import ParameterSynthesisScenario
-from funman.search_utils import ResultCombinedHandler, SearchConfig
+from funman.utils.search_utils import ResultCombinedHandler, SearchConfig
 
 
 def run_chime_bilayer_example(output_path):

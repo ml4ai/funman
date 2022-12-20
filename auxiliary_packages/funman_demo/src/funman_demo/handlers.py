@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from IPython.display import Image, display
 
 from funman.model import Parameter
-from funman.search_utils import (
+from funman.utils.search_utils import (
     Box,
     Point,
     ResultHandler,

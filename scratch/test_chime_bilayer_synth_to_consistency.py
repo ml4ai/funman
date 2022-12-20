@@ -19,7 +19,11 @@ from funman.scenario.parameter_synthesis import (
     ParameterSynthesisScenarioResult,
 )
 from funman.search import BoxSearch
-from funman.search_utils import Point, ResultCombinedHandler, SearchConfig
+from funman.utils.search_utils import (
+    Point,
+    ResultCombinedHandler,
+    SearchConfig,
+)
 
 l = logging.getLogger(__file__)
 l.setLevel(logging.ERROR)
