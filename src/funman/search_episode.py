@@ -7,7 +7,7 @@ from abc import ABC
 from datetime import datetime
 from multiprocessing.managers import SyncManager
 from queue import Queue as SQueue
-from typing import List, Union
+from typing import List, Optional, Union
 
 from funman.search_utils import Box, Point, SearchConfig, SearchStatistics
 
@@ -17,7 +17,10 @@ l.setLevel(logging.INFO)
 
 class SearchEpisode(ABC):
     def __init__(
-        self, config: SearchConfig, problem, manager: SyncManager = None
+        self,
+        config: SearchConfig,
+        problem,
+        manager: Optional[SyncManager] = None,
     ) -> None:
         self.config: SearchConfig = config
         self.problem = problem
@@ -32,7 +35,10 @@ class DRealSearchEpisode(SearchEpisode):
 
 class BoxSearchEpisode(SearchEpisode):
     def __init__(
-        self, config: SearchConfig, problem, manager: SyncManager = None
+        self,
+        config: SearchConfig,
+        problem,
+        manager: Optional[SyncManager] = None,
     ) -> None:
         super(BoxSearchEpisode, self).__init__(config, problem, manager)
         self.unknown_boxes = manager.Queue() if manager else SQueue()

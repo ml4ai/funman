@@ -1,6 +1,3 @@
-"""
-This submodule contains the search algorithms used to run FUNMAN.
-"""
 import logging
 import multiprocessing as mp
 import os
@@ -8,17 +5,12 @@ import traceback
 from multiprocessing.synchronize import Condition, Event, Lock
 from queue import Empty
 from queue import Queue as QueueSP
-from typing import List
+from typing import List, Optional
 
-from pyparsing import abstractmethod
 from pysmt.logics import QF_NRA
 from pysmt.shortcuts import And, Not, Solver, get_model
 
-from funman.search_episode import (
-    BoxSearchEpisode,
-    DRealSearchEpisode,
-    SearchEpisode,
-)
+from funman.search_episode import BoxSearchEpisode
 from funman.search_utils import (
     Box,
     Point,
@@ -32,39 +24,9 @@ from funman.search_utils import (
     encode_unknown_box,
 )
 
+from .search import Search
+
 LOG_LEVEL = logging.WARN
-
-
-class Search(object):
-    def __init__(self) -> None:
-        self.episodes = []
-
-    @abstractmethod
-    def search(self, problem, config: SearchConfig = None) -> SearchEpisode:
-        pass
-
-
-class SMTCheck(Search):
-    def search(self, problem, config: SearchConfig = None) -> SearchEpisode:
-        episode = SearchEpisode(config=config, problem=problem)
-        result = self.expand(problem, episode)
-        episode.model = result
-        return result
-
-    def expand(self, problem, episode):
-        with Solver(name=episode.config.solver, logic=QF_NRA) as s:
-            # print(problem.query_encoding.formula)
-            s.add_assertion(
-                And(
-                    problem.model_encoding.formula,
-                    problem.query_encoding.formula,
-                )
-            )
-            result = s.solve()
-            if result:
-                result = s.get_model()
-
-        return result
 
 
 class BoxSearch(Search):
@@ -80,6 +42,8 @@ class BoxSearch(Search):
                 l.name = process_name
             l.setLevel(LOG_LEVEL)
         else:
+            if not process_name:
+                process_name = "BoxSearch"
             l = logging.Logger(process_name)
         return l
 
@@ -183,11 +147,11 @@ class BoxSearch(Search):
         self,
         rval,
         episode: BoxSearchEpisode,
-        idx: int = None,
-        more_work: Condition = None,
-        idle_mutex: Lock = None,
-        idle_flags: List[Event] = None,
-        handler: ResultHandler = None,
+        idx: Optional[int] = None,
+        more_work: Optional[Condition] = None,
+        idle_mutex: Optional[Lock] = None,
+        idle_flags: Optional[List[Event]] = None,
+        handler: Optional[ResultHandler] = None,
         all_results=None,
     ):
         """
@@ -269,8 +233,12 @@ class BoxSearch(Search):
                                 ):
                                     l.info(f"{process_name} produced work")
                                 if episode.config.number_of_processes > 1:
-                                    with more_work:
-                                        more_work.notify_all()
+                                    # FIXME This would only be none when
+                                    # the number of processes is 1. This
+                                    # can be done more cleanly.
+                                    if more_work:
+                                        with more_work:
+                                            more_work.notify_all()
                                 print(f"Split({box})")
                             else:
                                 # box does not intersect f, so it is in t (true region)
@@ -387,7 +355,12 @@ class BoxSearch(Search):
                         break
 
                     # TODO this is a bit of a mess and can likely be cleaned up
-                    ((inst, label), typ) = decode_labeled_object(result)
+                    try:
+                        ((inst, label), typ) = decode_labeled_object(result)
+                    except:
+                        l.error(f"Skipping invalid object")
+                        continue
+
                     if typ is Box:
                         if label == "true":
                             all_results["true_boxes"].append(inst)
@@ -406,6 +379,7 @@ class BoxSearch(Search):
                             l.warn(f"Skipping Point with label: {label}")
                     else:
                         l.error(f"Skipping invalid object type: {typ}")
+                        continue
 
                     try:
                         handler.process(result)
@@ -420,7 +394,7 @@ class BoxSearch(Search):
             # handler.close()
         return all_results
 
-    def search(self, problem, config: SearchConfig = None) -> SearchEpisode:
+    def search(self, problem, config: SearchConfig = None) -> BoxSearchEpisode:
         """
         The BoxSearch.search() creates a BoxSearchEpisode object that stores the
         search progress.  This method is the entry point to the search that

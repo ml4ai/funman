@@ -27,6 +27,11 @@ set-conda:
 setup-conda-packages:
 	$(PIPENV) run conda install scipy pygraphviz scikit-learn lxml Pillow coverage psutil igraph
 
+venv:
+	test -d .venv || python -m venv .venv
+	source .venv/bin/activate && pip install -Ur requirements-dev.txt
+	source .venv/bin/activate && pip install -Ur requirements-dev-extras.txt
+
 docs:
 	sphinx-apidoc -f -o ./docs/source ./src/funman -t ./docs/apidoc_templates --no-toc --module-first
 	mkdir -p ./docs/source/_static

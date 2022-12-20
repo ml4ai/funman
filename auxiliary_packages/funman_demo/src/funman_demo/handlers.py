@@ -86,7 +86,7 @@ class RealtimeResultPlotter(ResultHandler):
 
     def process(self, result: dict) -> None:
         ((inst, label), typ) = decode_labeled_object(result)
-        if typ is Box:
+        if typ is Box and isinstance(inst, Box):
             if label == "unknown":
                 self.plotter.plot_add_patch(
                     inst, color=self.plotter.color_map[label]
@@ -95,7 +95,7 @@ class RealtimeResultPlotter(ResultHandler):
                 self.plotter.plot_add_box(
                     inst, color=self.plotter.color_map[label]
                 )
-        elif typ is Point:
+        elif typ is Point and isinstance(inst, Point):
             if self.plot_points:
                 self.plotter.plot_add_point(
                     inst,
