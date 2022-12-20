@@ -3,7 +3,6 @@ This submodule defines the representations for episodes (single executions) of
 one of the search algorithms supported by FUNMAN.
 """
 import logging
-import multiprocessing as mp
 from abc import ABC
 from datetime import datetime
 from multiprocessing.managers import SyncManager

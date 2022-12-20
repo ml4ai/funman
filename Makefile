@@ -133,5 +133,6 @@ install-pre-commit-hooks:
 	@pre-commit install
 
 format:
+	pycln --config pyproject.toml .
 	isort --settings-path pyproject.toml .
 	black --config pyproject.toml .

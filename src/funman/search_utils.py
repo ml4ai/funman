@@ -9,7 +9,7 @@ from functools import total_ordering
 from multiprocessing.managers import SyncManager
 from queue import Queue as SQueue
 from statistics import mean as average
-from typing import Dict, List, Union
+from typing import Dict, List
 
 import multiprocess as mp
 from pysmt.shortcuts import GE, LE, LT, TRUE, And, Equals, Real
@@ -447,11 +447,11 @@ class Box(object):
         b2 = self._copy()
 
         # b1 is lower half
-        assert b1.bounds[p].lb < mid
+        assert math_utils.lte(b1.bounds[p].lb, mid)
         b1.bounds[p] = Interval(b1.bounds[p].lb, mid)
 
         # b2 is upper half
-        assert mid <= b2.bounds[p].ub
+        assert math_utils.lte(mid, b2.bounds[p].ub)
         b2.bounds[p] = Interval(mid, b2.bounds[p].ub)
 
         return [b2, b1]
@@ -711,6 +711,17 @@ class ResultHandler(ABC):
         pass
 
 
+class NoopResultHandler(ResultHandler):
+    def open(self) -> None:
+        pass
+
+    def process(self, result: dict) -> None:
+        pass
+
+    def close(self) -> None:
+        pass
+
+
 class ResultCombinedHandler(ResultHandler):
     def __init__(self, handlers: List[ResultHandler]) -> None:
         self.handlers = handlers if handlers is not None else []
@@ -744,7 +755,7 @@ class SearchConfig(Config):
         tolerance=1e-2,
         queue_timeout=1,
         number_of_processes=mp.cpu_count(),
-        handler: ResultHandler = None,
+        handler: ResultHandler = NoopResultHandler(),
         wait_timeout=None,
         wait_action=None,
         wait_action_timeout=0.05,

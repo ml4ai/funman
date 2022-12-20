@@ -1,6 +1,4 @@
 import logging
-import os
-import sys
 import unittest
 
 from pysmt.shortcuts import (

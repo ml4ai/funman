@@ -1,6 +1,5 @@
 import logging
 import os
-import sys
 import tempfile
 import unittest
 
@@ -40,12 +39,9 @@ from pysmt.typing import BOOL, INT, REAL
 from funman import Funman
 from funman.model import Model, Parameter, QueryLE
 from funman.scenario.consistency import ConsistencyScenario
-from funman.scenario.parameter_synthesis import (
-    ParameterSynthesisScenario,
-    ParameterSynthesisScenarioResult,
-)
+from funman.scenario.parameter_synthesis import ParameterSynthesisScenario
 from funman.search import BoxSearch, SearchConfig, SMTCheck
-from funman.search_utils import Box, Point, ResultCombinedHandler
+from funman.search_utils import Box, ResultCombinedHandler
 from funman.util import smtlibscript_from_formula
 
 l = logging.getLogger(__file__)
@@ -112,11 +108,36 @@ class TestChimeBilayerSolve(unittest.TestCase):
 
         return model, query, encoder
 
-    def test_chime_bilayer_synthesize(self):
+    @unittest.skip("temporarily remove")
+    def test_chime_bilayer_solve(self):
         model, query, encoder = self.setup(
-            duration=8, transmission_reduction=[-0.05, 0.15]
+            duration=1, transmission_reduction=0.00
         )
 
+        query.ub = 10000
+
+        scenario = ConsistencyScenario(model, query, smt_encoder=encoder)
+
+        result = Funman().solve(
+            scenario, config=SearchConfig(solver="dreal", search=SMTCheck)
+        )
+        assert result
+
+        result.plot(logy=True)
+        print(result.dataframe())
+
+    # @unittest.skip("temporarily remove")
+    def test_chime_bilayer_synthesize(self):
+
+        model, query, encoder = self.setup(
+            duration=10, transmission_reduction=[-0.05, 0.1]
+        )
+        model.init_values = {
+            "S": 7438.567991,
+            "I": 2261.927694,
+            "R": 299.504315,
+        }
+        query.ub = 75
         # The efficacy can be up to 4x that of baseline (i.e., 0.05 - 0.20)
         parameters = [
             Parameter(
@@ -128,13 +149,13 @@ class TestChimeBilayerSolve(unittest.TestCase):
             )
         ]
         tmp_dir_path = tempfile.mkdtemp(prefix="funman-")
-        result: ParameterSynthesisScenarioResult = Funman().solve(
+        result = Funman().solve(
             ParameterSynthesisScenario(
                 parameters, model, query, smt_encoder=encoder
             ),
             config=SearchConfig(
                 number_of_processes=1,
-                tolerance=1e-6,
+                tolerance=1e-8,
                 solver="dreal",
                 search=BoxSearch,
                 handler=ResultCombinedHandler(
@@ -155,24 +176,7 @@ class TestChimeBilayerSolve(unittest.TestCase):
         )
         assert result
 
-        ps = result.parameter_space
-        points = []
-        for tbox in ps.true_boxes:
-            values = {}
-            for p, i in tbox.bounds.items():
-                param_assignment = (i.lb + i.ub) * 0.5
-                values[p.name] = param_assignment
-            points.append(Point.from_dict({"values": values}))
-
-        dfs = result.true_point_timeseries(points=points)
-        for point, df in zip(points, dfs):
-            print("-" * 80)
-            print("Parameter assignments:")
-            for param, value in point.values.items():
-                print(f"    {param.name} = {value}")
-            print("-" * 80)
-            print(df)
-            print("=" * 80)
+        # sample points from true boxes and call
 
 
 if __name__ == "__main__":

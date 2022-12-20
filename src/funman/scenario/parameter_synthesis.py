@@ -8,12 +8,11 @@ from pysmt.fnode import FNode
 from funman.examples.chime import CHIME
 from funman.model import Model, Parameter, Query
 from funman.parameter_space import ParameterSpace
+from funman.scenario import AnalysisScenario, AnalysisScenarioResult
 from funman.scenario.consistency import ConsistencyScenario
 from funman.search import BoxSearch, SearchConfig, SMTCheck
 from funman.search_episode import SearchEpisode
 from funman.search_utils import Point
-
-from . import AnalysisScenario, AnalysisScenarioResult
 
 
 class ParameterSynthesisScenario(AnalysisScenario):

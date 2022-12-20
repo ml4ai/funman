@@ -1,9 +1,6 @@
-import json
 import logging
-import time
 from multiprocessing import Queue
 from queue import Empty
-from queue import Queue as SQueue
 from typing import Dict, List
 
 import matplotlib.patches as patches
@@ -116,8 +113,6 @@ class BoxPlotter(object):
                                 )
                     except Exception as e:
                         print(e)
-                        pass
-                    pass
         finally:
             episode.close()
             if self.out_cache is not None:
@@ -141,7 +136,6 @@ class BoxPlotter(object):
                         )
                 except Exception as e:
                     pass
-                pass
 
     def plot_add_box(self, box: Box, color="r"):
         if self.py:

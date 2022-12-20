@@ -3,7 +3,6 @@ import os
 import unittest
 from cmath import inf
 from contextlib import contextmanager
-from dis import dis
 from timeit import default_timer
 
 from pysmt.logics import QF_LRA, QF_NRA, QF_UFLIRA, QF_UFNRA

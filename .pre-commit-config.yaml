@@ -10,7 +10,6 @@ repos:
     hooks:
       - id: black
         args: ["--config", "pyproject.toml", "--check"]
-        language_version: python3.11
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v2.3.0
     hooks:

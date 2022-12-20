@@ -1,5 +1,3 @@
-import os
-import sys
 import unittest
 
 import matplotlib.pyplot as plt
@@ -30,7 +28,6 @@ from pysmt.shortcuts import (
 from pysmt.typing import BOOL, INT, REAL
 
 from funman import Funman
-from funman.constants import NEG_INFINITY, POS_INFINITY
 from funman.math_utils import lt
 from funman.model import EncodedModel, Parameter
 from funman.parameter_space import ParameterSpace
