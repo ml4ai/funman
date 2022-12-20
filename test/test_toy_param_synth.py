@@ -1,35 +1,14 @@
 import unittest
 
 from model2smtlib.translate import Encoder
-from pysmt.shortcuts import (
-    FALSE,
-    GE,
-    GT,
-    LE,
-    LT,
-    TRUE,
-    And,
-    Equals,
-    ForAll,
-    Function,
-    FunctionType,
-    Iff,
-    Int,
-    Plus,
-    Real,
-    Symbol,
-    get_model,
-    simplify,
-    substitute,
-)
-from pysmt.typing import BOOL, INT, REAL
+from pysmt.shortcuts import GE, LE, And, Real, Symbol
+from pysmt.typing import REAL
 
 from funman import Funman
 from funman.model import Parameter, QueryTrue
 from funman.model.encoded import EncodedModel
-from funman.scenario import ParameterSynthesisScenario
 from funman.scenario.parameter_synthesis import ParameterSynthesisScenario
-from funman.search import BoxSearch, SearchConfig
+from funman.search import SearchConfig
 
 
 class TestCompilation(unittest.TestCase):
