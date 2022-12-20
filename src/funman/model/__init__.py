@@ -16,11 +16,6 @@ class Model(object):
         self.parameter_bounds = parameter_bounds
 
 
-class EncodedModel(Model):
-    def __init__(self, formula) -> None:
-        self.formula = formula
-
-
 class CannedModel(Model):
     pass
 
