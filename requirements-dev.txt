@@ -2,3 +2,4 @@ black[jupyter]
 isort
 pre-commit
 pycln
+pytest-cov

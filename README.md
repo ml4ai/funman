@@ -212,6 +212,15 @@ To autoformat the entire repo you can use:
 make format
 ```
 
+### Code coverage
+Pytest is configured to generate code coverage, and requires the `pytest-cov`
+package to be installed.  The `pytest-cov` package is included in the
+`requirements-dev.txt` (see above) and will be installed with the other dev
+dependencies.  The code coverage will be displayed in the pytest output (i.e.,
+`term`) and saved to the `coverage.xml` file.  The `Coverage Gutters` VSCode
+plugin will use the `coverage.xml` to display code coverage highlighting over
+the source files. 
+
 ### Development Setup: Ubuntu 20.04
 ```bash
 # install python 3.9
