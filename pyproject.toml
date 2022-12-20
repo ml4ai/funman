@@ -9,7 +9,6 @@ build-backend = "setuptools.build_meta"
 addopts = [
     "--import-mode=importlib",
     "--cov=funman",
-    "--cov=model2smtlib",
     "--cov-report=xml",
     "--cov-report=term"
 ]
