@@ -24,7 +24,7 @@ from pysmt.solvers.smtlib import SmtLibBasicSolver, SmtLibIgnoreMixin
 from pysmt.solvers.solver import Solver, SolverOptions
 from tenacity import retry
 
-from funman.util import FUNMANSmtPrinter
+from funman.utils.smtlib_utils import FUNMANSmtPrinter
 
 # def setup(smt2_file, benchmark_path, out_dir):
 #     print("setting up docker")

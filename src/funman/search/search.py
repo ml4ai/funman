@@ -5,7 +5,7 @@ from abc import abstractmethod
 from typing import Optional
 
 from funman.search_episode import SearchEpisode
-from funman.search_utils import SearchConfig
+from funman.utils.search_utils import SearchConfig
 
 
 class Search(object):

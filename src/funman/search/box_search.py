@@ -11,7 +11,7 @@ from pysmt.logics import QF_NRA
 from pysmt.shortcuts import And, Not, Solver, get_model
 
 from funman.search_episode import BoxSearchEpisode
-from funman.search_utils import (
+from funman.utils.search_utils import (
     Box,
     Point,
     ResultHandler,

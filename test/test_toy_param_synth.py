@@ -8,7 +8,7 @@ from funman.model import Parameter, QueryTrue
 from funman.model2smtlib.translate import Encoder
 from funman.model.encoded import EncodedModel
 from funman.scenario.parameter_synthesis import ParameterSynthesisScenario
-from funman.search_utils import SearchConfig
+from funman.utils.search_utils import SearchConfig
 
 
 class TestCompilation(unittest.TestCase):

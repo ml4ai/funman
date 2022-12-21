@@ -9,7 +9,7 @@ from funman.scenario import AnalysisScenario, AnalysisScenarioResult
 from funman.scenario.consistency import ConsistencyScenario
 from funman.search import BoxSearch, SMTCheck
 from funman.search_episode import SearchEpisode
-from funman.search_utils import Point, SearchConfig
+from funman.utils.search_utils import Point, SearchConfig
 
 
 class ParameterSynthesisScenario(AnalysisScenario):

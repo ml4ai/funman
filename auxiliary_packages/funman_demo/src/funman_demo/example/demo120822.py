@@ -22,7 +22,11 @@ from funman.scenario.consistency import ConsistencyScenario
 from funman.scenario.parameter_synthesis import ParameterSynthesisScenario
 from funman.search import BoxSearch, SMTCheck
 from funman.search_episode import DRealSearchEpisode
-from funman.search_utils import Point, ResultCombinedHandler, SearchConfig
+from funman.utils.search_utils import (
+    Point,
+    ResultCombinedHandler,
+    SearchConfig,
+)
 
 # import funman_dreal # Needed to use dreal with pysmt
 

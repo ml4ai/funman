@@ -9,7 +9,12 @@ from multiprocessing.managers import SyncManager
 from queue import Queue as SQueue
 from typing import List, Optional, Union
 
-from funman.search_utils import Box, Point, SearchConfig, SearchStatistics
+from funman.utils.search_utils import (
+    Box,
+    Point,
+    SearchConfig,
+    SearchStatistics,
+)
 
 l = logging.getLogger(__file__)
 l.setLevel(logging.INFO)

@@ -6,7 +6,7 @@ known to be false.
 """
 from typing import List
 
-from funman.search_utils import Box, Point
+from funman.utils.search_utils import Box, Point
 
 
 class ParameterSpace(object):

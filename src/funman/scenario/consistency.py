@@ -11,7 +11,7 @@ from funman.model import Query
 from funman.model.bilayer import Bilayer
 from funman.scenario import AnalysisScenario, AnalysisScenarioResult
 from funman.search import SMTCheck
-from funman.search_utils import SearchConfig
+from funman.utils.search_utils import SearchConfig
 
 
 class ConsistencyScenario(AnalysisScenario):

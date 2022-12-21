@@ -14,7 +14,7 @@ from typing import Dict, List, Optional
 import multiprocess as mp
 from pysmt.shortcuts import GE, LE, LT, TRUE, And, Equals, Real
 
-import funman.math_utils as math_utils
+import funman.utils.math_utils as math_utils
 from funman.config import Config
 from funman.constants import BIG_NUMBER, NEG_INFINITY, POS_INFINITY
 from funman.model import Parameter
