@@ -10,7 +10,9 @@ addopts = [
     "--import-mode=importlib",
     "--cov=funman",
     "--cov-report=xml",
-    "--cov-report=term"
+    "--cov-report=term",
+    "--log_cli=true",
+    "--log_cli_level=DEBUG"
 ]
 testpaths = ["test"]
 
