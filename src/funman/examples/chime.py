@@ -283,12 +283,16 @@ class CHIME(object):
             if horizon > 0
             else TRUE()
         )
+        query_t = self.encode_query_time_horizon(query, horizon)
+        return And(And(parameters), init, dynamics_t, query_t)
+
+    def encode_query_time_horizon(self, query, horizon):
         query_t = (
             And([q_t for q_t in query[0 : horizon + 1]])
             if horizon > 0
             else TRUE()
         )
-        return And(And(parameters), init, dynamics_t, query_t)
+        return query_t
 
     def encode_time_horizon_layered(
         self, parameters, init, dynamics, query, num_timepoints
