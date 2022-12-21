@@ -54,6 +54,9 @@ class Encoder(object):
                 symbols[var_name][timepoint] = var
         return symbols
 
+    def encode_model(self, model: "EncodedModel"):
+        return model.encoding
+
     def encode_query(self, model_encoding, query):
         query_handlers = {
             QueryLE: self._encode_query_le,
