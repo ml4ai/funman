@@ -1,31 +1,9 @@
-PIPENV=PIPENV_VENV_IN_PROJECT=1 pipenv
-DOCS_REMOTE?=origin
+DOCS_REMOTE ?= origin
+DEV_CONTAINER ?= funman-dev
+DEV_TAG ?= funman-dev
+DEPLOY_TAG ?= funman
 
-.PHONY: setup-dev-env destroy-dev-env docs build-docker, run-docker
-setup-dev-env: setup-pipenv setup-pysmt
-
-setup-pipenv:
-	# Initializing virtual environment
-	$(PIPENV) install --dev
-
-setup-pysmt:
-	# Installing Z3
-	$(PIPENV) run pysmt-install --z3 \
-		--confirm-agreement \
-		--install-path ./.smt-solvers
-	$(PIPENV) run pysmt-install --check
-
-destroy-dev-env:
-	$(PIPENV) --rm
-	rm Pipfile.lock || true
-
-setup-conda-dev-env: set-conda setup-conda-packages setup-pipenv setup-pysmt
-
-set-conda:
-	$(PIPENV) --python=$(shell conda run which python) --site-packages
-
-setup-conda-packages:
-	$(PIPENV) run conda install scipy pygraphviz scikit-learn lxml Pillow coverage psutil igraph
+USING_PODMAN := $(shell docker --version | grep -q podman && echo 1 || echo 0)
 
 venv:
 	test -d .venv || python -m venv .venv
@@ -71,65 +49,52 @@ build-docker: build-docker-dreal
 		--build-arg UNAME=$$USER \
 		--build-arg UID=$$(id -u) \
 		--build-arg GID=$$(id -g) \
-		-t funman -f ./Dockerfile .
+		-t ${DEV_TAG} -f ./Dockerfile .
+
+build:
+	make build-docker
+
+build-for-deployment: build-docker-dreal
+	DOCKER_BUILDKIT=1 docker build \
+		-t ${DEPLOY_TAG} -f ./Dockerfile.deploy .
+
+run-deployment-image:
+	docker run -it --rm -p 127.0.0.1:8888:8888 ${DEPLOY_TAG}:latest
+
+run:
+	@test "${USING_PODMAN}" == "1" && make run-podman || make run-docker
 
 run-docker:
 	docker run \
 		-d \
 		-it \
 		--cpus=8 \
-		--name funman \
-                -p 8888:8888 \
+		--name ${DEV_CONTAINER} \
+    -p 127.0.0.1:8888:8888 \
 		-v $$PWD:/home/$$USER/funman \
-		funman:latest
+		${DEV_TAG}:latest
 
 run-podman:
 	podman run \
 		-d \
 		-it \
 		--cpus=8 \
-		--name funman \
+		--name ${DEV_CONTAINER} \
 		--user $$USER \
 		-p 127.0.0.1:8888:8888 \
 		-v $$PWD:/home/$$USER/funman \
 		--userns=keep-id \
-		funman:latest
+		${DEV_TAG}:latest
 
-run-podman-notebook:
-	podman run \
-		--rm \
-		-it \
-		--cpus=8 \
-		--name funman-notebook \
-		--user $$USER \
-		-p 127.0.0.1:8888:8888 \
-		-v $$PWD:/home/$$USER/funman \
-		--userns=keep-id \
-		funman:latest \
-		jupyter notebook --allow-root --ip 0.0.0.0 --no-browser /home/$$USER/funman/notebooks
+launch-dev-container:
+	@docker container inspect ${DEV_CONTAINER} > /dev/null 2>&1 \
+		|| make run
+	@test $(shell docker container inspect -f '{{.State.Running}}' ${DEV_CONTAINER}) == 'true' > /dev/null 2>&1 \
+		|| docker start ${DEV_CONTAINER}
+	@docker attach ${DEV_CONTAINER}
 
-
-build-docker-dev:
-	DOCKER_BUILDKIT=1 docker build \
-		--build-arg UNAME=$$USER \
-		--build-arg UID=$$(id -u) \
-		--build-arg GID=$$(id -g) \
-		-t funman-dev -f ./Dockerfile.dev .
-
-rm-docker-dev-container:
-	docker rm funman-dev || echo "" > /dev/null
-
-run-docker-dev: rm-docker-dev-container
-	docker run \
-		-d \
-		-it \
-		--cpus=5 \
-		--name funman-dev \
-		-v $(shell pwd)/..:/code \
-		funman-dev:latest
-
-attach-docker-dev:
-	docker attach funman-dev
+rm-dev-container:
+	@docker container rm ${DEV_CONTAINER}
 
 install-pre-commit-hooks:
 	@pre-commit install
