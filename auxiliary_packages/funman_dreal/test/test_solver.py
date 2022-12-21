@@ -1,6 +1,6 @@
 import unittest
 
-import funman_dreal  # Needed to use dreal with pysmt
+import funman_dreal
 from pysmt.logics import QF_NRA
 from pysmt.shortcuts import (
     LE,
@@ -21,8 +21,8 @@ from pysmt.shortcuts import (
 
 class TestRunDrealNative(unittest.TestCase):
     def test_dreal(self):
-
-        # from dreal import *
+        # Needed to use dreal with pysmt
+        funman_dreal.ensure_dreal_in_pysmt()
 
         # x = Variable("x")
         # y = Variable("y")

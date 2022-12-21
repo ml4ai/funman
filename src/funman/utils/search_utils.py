@@ -794,7 +794,14 @@ class SearchConfig(Config):
         self.search = search
         self.solver = solver
         if self.solver == "dreal":
-            import funman_dreal  # Needed to add dreal to pysmt solver list
+            try:
+                import funman_dreal
+            except:
+                raise Exception(
+                    "The funman_dreal package failed to import. Do you have it installed?"
+                )
+            else:
+                funman_dreal.ensure_dreal_in_pysmt()
 
 
 def _encode_labeled_box(box: Box, label: str):
