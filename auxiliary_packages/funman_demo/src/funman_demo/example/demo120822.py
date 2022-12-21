@@ -28,8 +28,6 @@ from funman.utils.search_utils import (
     SearchConfig,
 )
 
-# import funman_dreal # Needed to use dreal with pysmt
-
 
 class Scenario1(object):
     def __init__(

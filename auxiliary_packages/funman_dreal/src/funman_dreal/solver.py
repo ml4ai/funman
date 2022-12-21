@@ -97,6 +97,13 @@ def add_dreal_to_pysmt():
     env.factory.solver_preference_list.append(name)
 
 
+def ensure_dreal_in_pysmt():
+    try:
+        add_dreal_to_pysmt()
+    except SolverRedefinitionError:
+        pass
+
+
 class DReal(SmtLibSolver):
     LOGICS = [QF_NRA]
     OptionsClass = SmtLibOptions
