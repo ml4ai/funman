@@ -1,6 +1,7 @@
 import logging
 import unittest
 
+from funman_demo.example.chime import CHIME
 from pysmt.shortcuts import (
     FALSE,
     GE,
@@ -25,8 +26,8 @@ from pysmt.shortcuts import (
 from pysmt.typing import BOOL, INT, REAL
 
 from funman import Funman
-from funman.examples.chime import CHIME
-from funman.model import Parameter, QueryEncoded
+from funman_demo.example.chime import CHIME
+from funman.model import Parameter
 from funman.model.encoded import EncodedModel
 from funman.scenario.parameter_synthesis import ParameterSynthesisScenario
 from funman.search import BoxSearch

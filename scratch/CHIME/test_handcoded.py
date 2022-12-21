@@ -2,6 +2,7 @@ import os
 import unittest
 from cmath import inf
 
+from funman_demo.example.chime import CHIME
 from pysmt.shortcuts import (
     GE,
     LE,
@@ -21,8 +22,6 @@ from pysmt.shortcuts import (
     write_smtlib,
 )
 from pysmt.typing import BOOL, INT, REAL
-
-from funman.examples.chime import CHIME
 
 RESOURCES = os.path.join("resources")
 
