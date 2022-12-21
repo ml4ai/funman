@@ -25,7 +25,6 @@ setup(
     install_requires=[
         "funman_dreal",
         "graphviz",
-        "model2smtlib",
         "multiprocess",
         "tenacity",
         "pyparsing",

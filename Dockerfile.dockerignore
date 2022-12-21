@@ -1,10 +1,22 @@
 # Assumes running from ASKEM/code
 *
 
-!funman
-!model2smtlib
+!LICENSE
+!Makefile
+!README.md
+!auxiliary_packages
+!docs
+!notebooks
+!pyproject.toml
+!resources
+!scratch
+!setup.py
+!src
+!test
 
 **/.*
 **/build
 **/dist
+
 !**/.git*
+

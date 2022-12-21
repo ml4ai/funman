@@ -2,11 +2,11 @@ import os
 import unittest
 
 from funman_demo.handlers import RealtimeResultPlotter, ResultCacheWriter
-from model2smtlib.chime.translate import ChimeEncoder
 
 from funman import Funman
 from funman.examples.chime import CHIME
 from funman.model import Parameter, QueryLE
+from funman.model2smtlib.chime.translate import ChimeEncoder
 from funman.model.chime import ChimeModel
 from funman.scenario.parameter_synthesis import (
     ParameterSynthesisScenario,

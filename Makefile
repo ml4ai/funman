@@ -71,7 +71,7 @@ build-docker: build-docker-dreal
 		--build-arg UNAME=$$USER \
 		--build-arg UID=$$(id -u) \
 		--build-arg GID=$$(id -g) \
-		-t funman -f ./Dockerfile ..
+		-t funman -f ./Dockerfile .
 
 run-docker:
 	docker run \
@@ -80,7 +80,6 @@ run-docker:
 		--cpus=8 \
 		--name funman \
                 -p 8888:8888 \
-		-v $$PWD/../model2smtlib:/home/$$USER/model2smtlib \
 		-v $$PWD:/home/$$USER/funman \
 		funman:latest
 
@@ -92,7 +91,6 @@ run-podman:
 		--name funman \
 		--user $$USER \
 		-p 127.0.0.1:8888:8888 \
-		-v $$PWD/../model2smtlib:/home/$$USER/model2smtlib \
 		-v $$PWD:/home/$$USER/funman \
 		--userns=keep-id \
 		funman:latest
@@ -105,7 +103,6 @@ run-podman-notebook:
 		--name funman-notebook \
 		--user $$USER \
 		-p 127.0.0.1:8888:8888 \
-		-v $$PWD/../model2smtlib:/home/$$USER/model2smtlib \
 		-v $$PWD:/home/$$USER/funman \
 		--userns=keep-id \
 		funman:latest \
@@ -117,7 +114,7 @@ build-docker-dev:
 		--build-arg UNAME=$$USER \
 		--build-arg UID=$$(id -u) \
 		--build-arg GID=$$(id -g) \
-		-t funman-dev -f ./Dockerfile.dev ..
+		-t funman-dev -f ./Dockerfile.dev .
 
 rm-docker-dev-container:
 	docker rm funman-dev || echo "" > /dev/null

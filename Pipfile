@@ -5,7 +5,6 @@ name = "pypi"
 
 [packages]
 automates = {editable = true, ref = "e5fb635757aa57007615a75371f55dd4a24851e0", git = "https://github.com/danbryce/automates.git"}
-model2smtlib = {editable = true, path = "./../model2smtlib"}
 funman = {editable = true, path = "."}
 funman_demo = {editable = true, path = "./auxiliary_packages/funman_demo"}
 funman_dreal = {editable = true, path = "./auxiliary_packages/funman_dreal"}
