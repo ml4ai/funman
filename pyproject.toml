@@ -56,5 +56,6 @@ extend_skip =  '''
   | _build
   | build
   | dist
+  | .*venv*
 )/
 '''

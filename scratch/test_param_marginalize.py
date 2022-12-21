@@ -7,10 +7,11 @@ from pysmt.shortcuts import GE, LE, And, Real, Symbol
 from pysmt.typing import REAL
 
 from funman import Funman
-from funman.model import EncodedModel, Parameter
+from funman.model import Parameter
+from funman.model.encoded import EncodedModel
 from funman.scenario.parameter_synthesis import ParameterSynthesisScenario
-from funman.search import BoxSearch, SearchConfig
-from funman.utils.search_utils import Box, Interval
+from funman.search import BoxSearch
+from funman.utils.search_utils import Box, Interval, SearchConfig
 
 
 class TestCompilation(unittest.TestCase):
