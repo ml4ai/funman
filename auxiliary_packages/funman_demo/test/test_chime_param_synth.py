@@ -26,14 +26,14 @@ from pysmt.typing import BOOL, INT, REAL
 
 from funman import Funman
 from funman.examples.chime import CHIME
-from funman.model import Parameter
+from funman.model import Parameter, QueryEncoded
 from funman.model.encoded import EncodedModel
 from funman.scenario.parameter_synthesis import ParameterSynthesisScenario
 from funman.search import BoxSearch
 from funman.utils.search_utils import SearchConfig
 
 l = logging.getLogger(__file__)
-l.setLevel(logging.ERROR)
+l.setLevel(logging.INFO)
 
 
 class TestCompilation(unittest.TestCase):
@@ -42,7 +42,7 @@ class TestCompilation(unittest.TestCase):
         vars, (parameters, init, dynamics, query) = chime.make_model(
             assign_betas=False
         )
-        num_timepoints = 5
+        num_timepoints = 2
         phi = chime.encode_time_horizon(
             parameters, init, dynamics, [], num_timepoints
         )
@@ -66,7 +66,9 @@ class TestCompilation(unittest.TestCase):
         scenario = ParameterSynthesisScenario(
             parameters,
             model,
-            chime.encode_query_time_horizon(query, num_timepoints),
+            QueryEncoded(
+                chime.encode_query_time_horizon(query, num_timepoints)
+            ),
             search=BoxSearch(),
         )
         funman = Funman()

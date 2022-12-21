@@ -25,7 +25,7 @@ from pysmt.shortcuts import (
     substitute,
 )
 
-from funman.model import QueryLE, QueryTrue
+from funman.model import QueryEncoded, QueryLE, QueryTrue
 
 
 class Encoding(object):
@@ -62,7 +62,7 @@ class Encoder(object):
         query_handlers = {
             QueryLE: self._encode_query_le,
             QueryTrue: self._encode_query_true,
-            FNode: self._return_encoded_query,
+            QueryEncoded: self._return_encoded_query,
         }
 
         if type(query) in query_handlers:
