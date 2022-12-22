@@ -26,7 +26,7 @@ from funman.utils.search_utils import (
 
 from .search import Search
 
-LOG_LEVEL = logging.WARN
+LOG_LEVEL = logging.INFO
 
 
 class BoxSearch(Search):
