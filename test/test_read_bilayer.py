@@ -3,7 +3,9 @@ import unittest
 
 from funman.model2smtlib.bilayer.translate import Bilayer
 
-DATA = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../data")
+DATA = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "../resources/bilayer"
+)
 
 
 class TestCompilation(unittest.TestCase):
