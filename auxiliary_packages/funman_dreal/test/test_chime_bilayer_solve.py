@@ -40,15 +40,19 @@ from funman.model2smtlib.bilayer.translate import (
 )
 from funman.scenario.consistency import ConsistencyScenario
 from funman.scenario.parameter_synthesis import ParameterSynthesisScenario
-from funman.search import BoxSearch, SearchConfig, SMTCheck
-from funman.utils.search_utils import Box, ResultCombinedHandler
+from funman.search import BoxSearch, SMTCheck
+from funman.utils.search_utils import (
+    Point,
+    ResultCombinedHandler,
+    SearchConfig,
+)
 from funman.utils.smtlib_utils import smtlibscript_from_formula
 
 l = logging.getLogger(__file__)
 l.setLevel(logging.ERROR)
 
 DATA = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)), "../resources/bilayer"
+    os.path.dirname(os.path.abspath(__file__)), "../../../resources/bilayer"
 )
 
 
@@ -108,7 +112,7 @@ class TestChimeBilayerSolve(unittest.TestCase):
 
         return model, query, encoder
 
-    @unittest.skip("temporarily remove")
+    # @unittest.skip("temporarily remove")
     def test_chime_bilayer_solve(self):
         model, query, encoder = self.setup(
             duration=1, transmission_reduction=0.00
@@ -177,6 +181,24 @@ class TestChimeBilayerSolve(unittest.TestCase):
         assert result
 
         # sample points from true boxes and call
+        ps = result.parameter_space
+        points = []
+        for tbox in ps.true_boxes:
+            values = {}
+            for p, i in tbox.bounds.items():
+                param_assignment = (i.lb + i.ub) * 0.5
+                values[p.name] = param_assignment
+            points.append(Point.from_dict({"values": values}))
+
+        dfs = result.true_point_timeseries(points=points)
+        for point, df in zip(points, dfs):
+            print("-" * 80)
+            print("Parameter assignments:")
+            for param, value in point.values.items():
+                print(f"    {param.name} = {value}")
+            print("-" * 80)
+            print(df)
+            print("=" * 80)
 
 
 if __name__ == "__main__":
