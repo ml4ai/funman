@@ -10,8 +10,7 @@ from pysmt.fnode import FNode
 from funman.model import Query
 from funman.model.bilayer import Bilayer
 from funman.scenario import AnalysisScenario, AnalysisScenarioResult
-from funman.search import SMTCheck
-from funman.utils.search_utils import SearchConfig
+from funman.search import SearchConfig, SMTCheck
 
 
 class ConsistencyScenario(AnalysisScenario):

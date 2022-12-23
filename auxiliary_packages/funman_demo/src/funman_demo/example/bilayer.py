@@ -9,14 +9,14 @@ from funman_demo.handlers import (
 
 from funman import Funman
 from funman.model import Parameter, QueryLE, QueryTrue
-from funman.model2smtlib.bilayer.translate import (
-    BilayerEncoder,
-    BilayerEncodingOptions,
-)
 from funman.model.bilayer import Bilayer, BilayerMeasurement, BilayerModel
 from funman.scenario.consistency import ConsistencyScenario
 from funman.scenario.parameter_synthesis import ParameterSynthesisScenario
-from funman.utils.search_utils import ResultCombinedHandler, SearchConfig
+from funman.search.representation import ResultCombinedHandler, SearchConfig
+from funman.translate.bilayer.bilayer import (
+    BilayerEncoder,
+    BilayerEncodingOptions,
+)
 
 
 def run_chime_bilayer_example(output_path):

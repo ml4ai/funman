@@ -8,13 +8,15 @@ CMD_UPDATE_VERSION = sed -i -E 's/^__version__ = \"[0-9]+\.[0-9]+\.[0-9]+((a|b|r
 
 USING_PODMAN := $(shell docker --version | grep -q podman && echo 1 || echo 0)
 
+.PHONY: docs
+
 venv:
 	test -d .venv || python -m venv .venv
 	source .venv/bin/activate && pip install -Ur requirements-dev.txt
 	source .venv/bin/activate && pip install -Ur requirements-dev-extras.txt
 
 docs:
-	sphinx-apidoc -f -o ./docs/source ./src/funman -t ./docs/apidoc_templates --no-toc --module-first
+	sphinx-apidoc -f -o ./docs/source ./src/funman -t ./docs/apidoc_templates --no-toc --module-first 
 	mkdir -p ./docs/source/_static
 	mkdir -p ./docs/source/_templates
 	pyreverse \

@@ -3,19 +3,14 @@ This submodule contains definitions for the behaviors used
 during the configuration and execution of a search.
 """
 import logging
-import traceback
-from abc import ABC, abstractmethod
 from functools import total_ordering
 from multiprocessing.managers import SyncManager
-from queue import Queue as SQueue
 from statistics import mean as average
-from typing import Dict, List, Optional
+from typing import Dict, List
 
-import multiprocess as mp
 from pysmt.shortcuts import GE, LE, LT, TRUE, And, Equals, Real
 
 import funman.utils.math_utils as math_utils
-from funman.config import Config
 from funman.constants import BIG_NUMBER, NEG_INFINITY, POS_INFINITY
 from funman.model import Parameter
 
@@ -237,13 +232,13 @@ class Interval(object):
 
     def to_smt(self, p: Parameter, closed_upper_bound=False):
         lower = (
-            GE(p.symbol(), Real(self.lb))
+            GE(p._symbol(), Real(self.lb))
             if self.lb != NEG_INFINITY
             else TRUE()
         )
         upper_ineq = LE if closed_upper_bound else LT
         upper = (
-            upper_ineq(p.symbol(), Real(self.ub))
+            upper_ineq(p._symbol(), Real(self.ub))
             if self.ub != POS_INFINITY
             else TRUE()
         )
@@ -297,6 +292,28 @@ class Point(object):
         return And(
             [Equals(p.symbol, Real(value)) for p, value in self.values.items()]
         )
+
+    @staticmethod
+    def _encode_labeled_point(point: "Point", label: str):
+        return {"label": label, "type": "point", "value": point.to_dict()}
+
+    @staticmethod
+    def encode_true_point(point: "Point"):
+        return Point._encode_labeled_point(point, "true")
+
+    @staticmethod
+    def encode_false_point(point: "Point"):
+        return Point._encode_labeled_point(point, "false")
+
+    @staticmethod
+    def encode_unknown_point(point: "Point"):
+        return Point._encode_labeled_point(point, "unkown")
+
+    @staticmethod
+    def decode_labeled_point(point: dict):
+        if point["type"] != "point":
+            return None
+        return (Point.from_dict(point["value"]), point["label"])
 
 
 @total_ordering
@@ -473,6 +490,28 @@ class Box(object):
         b2.bounds[p] = Interval(mid, b2.bounds[p].ub)
 
         return [b2, b1]
+
+    @staticmethod
+    def _encode_labeled_box(box: "Box", label: str):
+        return {"label": label, "type": "box", "value": box.to_dict()}
+
+    @staticmethod
+    def encode_true_box(box: "Box"):
+        return Box._encode_labeled_box(box, "true")
+
+    @staticmethod
+    def encode_false_box(box: "Box"):
+        return Box._encode_labeled_box(box, "false")
+
+    @staticmethod
+    def encode_unknown_box(box: "Box"):
+        return Box._encode_labeled_box(box, "unknown")
+
+    @staticmethod
+    def decode_labeled_box(box: dict):
+        if box["type"] != "box":
+            return None
+        return (Box.from_dict(box["value"]), box["label"])
 
     def intersection(a: Interval, b: Interval) -> Interval:
         """Given 2 intervals with a = [a0,a1] and b=[b0,b1], check whether they intersect.  If they do, return interval with their intersection."""
@@ -672,189 +711,136 @@ class Box(object):
         return result
 
 
-class SearchStatistics(object):
-    def __init__(self, manager: Optional[SyncManager] = None):
-        self.multiprocessing = manager is not None
-        self.num_true = manager.Value("i", 0) if self.multiprocessing else 0
-        self.num_false = manager.Value("i", 0) if self.multiprocessing else 0
-        self.num_unknown = manager.Value("i", 0) if self.multiprocessing else 0
-        self.residuals = manager.Queue() if self.multiprocessing else SQueue()
-        self.current_residual = (
-            manager.Value("d", 0.0) if self.multiprocessing else 0.0
-        )
-        self.last_time = manager.Array("u", "") if self.multiprocessing else []
-        self.iteration_time = (
-            manager.Queue() if self.multiprocessing else SQueue()
-        )
-        self.iteration_operation = (
-            manager.Queue() if self.multiprocessing else SQueue()
-        )
+class ParameterSpace(object):
+    """
+    This class defines the representation of the parameter space that can be
+    returned by the parameter synthesis feature of FUNMAN. These parameter spaces
+    are represented as a collection of boxes that are either known to be true or
+    known to be false.
+    """
 
-    # def close(self):
-    #     self.residuals.close()
-    #     self.iteration_time.close()
-    #     self.iteration_operation.close()
-
-
-class WaitAction(ABC):
-    def __init__(self) -> None:
-        pass
-
-    @abstractmethod
-    def run(self) -> None:
-        pass
-
-
-class ResultHandler(ABC):
-    def __init__(self) -> None:
-        pass
-
-    def __enter__(self) -> "ResultHandler":
-        self.open()
-        return self
-
-    def __exit__(self) -> None:
-        self.close()
-
-    @abstractmethod
-    def open(self) -> None:
-        pass
-
-    @abstractmethod
-    def process(self, result: dict) -> None:
-        pass
-
-    @abstractmethod
-    def close(self) -> None:
-        pass
-
-
-class NoopResultHandler(ResultHandler):
-    def open(self) -> None:
-        pass
-
-    def process(self, result: dict) -> None:
-        pass
-
-    def close(self) -> None:
-        pass
-
-
-class ResultCombinedHandler(ResultHandler):
-    def __init__(self, handlers: List[ResultHandler]) -> None:
-        self.handlers = handlers if handlers is not None else []
-
-    def open(self) -> None:
-        for h in self.handlers:
-            try:
-                h.open()
-            except Exception as e:
-                l.error(traceback.format_exc())
-
-    def process(self, result: dict) -> None:
-        for h in self.handlers:
-            try:
-                h.process(result)
-            except Exception as e:
-                l.error(traceback.format_exc())
-
-    def close(self) -> None:
-        for h in self.handlers:
-            try:
-                h.close()
-            except Exception as e:
-                l.error(traceback.format_exc())
-
-
-class SearchConfig(Config):
     def __init__(
         self,
-        *,  # non-positional keywords
-        tolerance=1e-2,
-        queue_timeout=1,
-        number_of_processes=mp.cpu_count(),
-        handler: ResultHandler = NoopResultHandler(),
-        wait_timeout=None,
-        wait_action=None,
-        wait_action_timeout=0.05,
-        read_cache=None,
-        episode_type=None,
-        search=None,
-        solver="z3",
+        true_boxes: List[Box],
+        false_boxes: List[Box],
+        true_points: List[Point],
+        false_points: List[Point],
     ) -> None:
-        self.tolerance = tolerance
-        self.queue_timeout = queue_timeout
-        self.number_of_processes = number_of_processes
-        self.handler: ResultHandler = handler
-        self.wait_timeout = wait_timeout
-        self.wait_action = wait_action
-        self.wait_action_timeout = wait_action_timeout
-        self.read_cache = read_cache
-        self.episode_type = episode_type
-        self.search = search
-        self.solver = solver
-        if self.solver == "dreal":
-            try:
-                import funman_dreal
-            except:
-                raise Exception(
-                    "The funman_dreal package failed to import. Do you have it installed?"
-                )
-            else:
-                funman_dreal.ensure_dreal_in_pysmt()
+        self.true_boxes = true_boxes
+        self.false_boxes = false_boxes
+        self.true_points = true_points
+        self.false_points = false_points
 
+    # STUB project parameter space onto a parameter
+    @staticmethod
+    def project() -> "ParameterSpace":
+        raise NotImplementedError()
+        return ParameterSpace()
 
-def _encode_labeled_box(box: Box, label: str):
-    return {"label": label, "type": "box", "value": box.to_dict()}
+    @staticmethod
+    def _union_boxes(b1s):
+        results_list = []
+        for i1 in range(len(b1s)):
+            for i2 in range(i1 + 1, len(b1s)):
+                ans = Box.check_bounds_disjoint_equal(b1s[i1], b1s[i2])
+                print(ans)
+        return results_list
 
+    @staticmethod
+    def _intersect_boxes(b1s, b2s):
+        results_list = []
+        for box1 in b1s:
+            for box2 in b2s:
+                subresult = Box.intersect_two_boxes(box1, box2)
+                if subresult != None:
+                    results_list.append(subresult)
+        return results_list
 
-def encode_true_box(box: Box):
-    return _encode_labeled_box(box, "true")
+    # STUB intersect parameters spaces
+    @staticmethod
+    def intersect(ps1, ps2):
+        return ParameterSpace(
+            ParameterSpace._intersect_boxes(ps1.true_boxes, ps2.true_boxes),
+            ParameterSpace._intersect_boxes(ps1.false_boxes, ps2.false_boxes),
+        )
 
+    @staticmethod
+    def symmetric_difference(ps1: "ParameterSpace", ps2: "ParameterSpace"):
+        return ParameterSpace(
+            ParameterSpace._symmetric_difference(
+                ps1.true_boxes, ps2.true_boxes
+            ),
+            ParameterSpace._symmetric_difference(
+                ps1.false_boxes, ps2.false_boxes
+            ),
+        )
 
-def encode_false_box(box: Box):
-    return _encode_labeled_box(box, "false")
+    @staticmethod
+    def _symmetric_difference(ps1: List[Box], ps2: List[Box]) -> List[Box]:
+        results_list = []
 
+        for box2 in ps2:
+            box2_results = []
+            should_extend = True
+            for box1 in ps1:
+                subresult = Box.symmetric_difference_two_boxes(box2, box1)
+                if subresult != None:
+                    box2_results.extend(subresult)
+                else:
+                    should_extend = False
+                    break
+            if should_extend:
+                results_list.extend(box2_results)
 
-def encode_unknown_box(box: Box):
-    return _encode_labeled_box(box, "unknown")
+        for box1 in ps1:
+            box1_results = []
+            should_extend = True
+            for box2 in ps2:
+                subresult = Box.symmetric_difference_two_boxes(box1, box2)
+                if subresult != None:
+                    box1_results.extend(subresult)
+                else:
+                    should_extend = False
+                    break
+            if should_extend:
+                results_list.extend(box1_results)
 
+        return results_list
 
-def decode_labeled_box(box: dict):
-    if box["type"] != "box":
-        return None
-    return (Box.from_dict(box["value"]), box["label"])
+    # STUB construct space where all parameters are equal
+    @staticmethod
+    def construct_all_equal(ps) -> "ParameterSpace":
+        raise NotImplementedError()
+        return ParameterSpace()
 
+    # STUB compare parameter spaces for equality
+    @staticmethod
+    def compare(ps1, ps2) -> bool:
+        raise NotImplementedError()
 
-def _encode_labeled_point(point: Point, label: str):
-    return {"label": label, "type": "point", "value": point.to_dict()}
+    def plot(self, color="b", alpha=0.2):
+        custom_lines = [
+            Line2D([0], [0], color="g", lw=4, alpha=alpha),
+            Line2D([0], [0], color="r", lw=4, alpha=alpha),
+        ]
+        plt.title("Parameter Space")
+        plt.xlabel("beta_0")
+        plt.ylabel("beta_1")
+        plt.legend(custom_lines, ["true", "false"])
+        for b1 in self.true_boxes:
+            BoxPlotter.plot2DBoxList(b1, color="g")
+        for b1 in self.false_boxes:
+            BoxPlotter.plot2DBoxList(b1, color="r")
+        # plt.show(block=True)
 
-
-def encode_true_point(point: Point):
-    return _encode_labeled_point(point, "true")
-
-
-def encode_false_point(point: Point):
-    return _encode_labeled_point(point, "false")
-
-
-def encode_unknown_point(point: Point):
-    return _encode_labeled_point(point, "unkown")
-
-
-def decode_labeled_point(point: dict):
-    if point["type"] != "point":
-        return None
-    return (Point.from_dict(point["value"]), point["label"])
-
-
-def decode_labeled_object(obj: dict):
-    if not isinstance(obj, dict):
-        raise Exception("obj is not a dict")
-    if "type" not in obj:
-        raise Exception("obj does not specify a 'type' field")
-    if obj["type"] == "point":
-        return (decode_labeled_point(obj), Point)
-    if obj["type"] == "box":
-        return (decode_labeled_box(obj), Box)
-    raise Exception(f"obj of type {obj['type']}")
+    @staticmethod
+    def decode_labeled_object(obj: dict):
+        if not isinstance(obj, dict):
+            raise Exception("obj is not a dict")
+        if "type" not in obj:
+            raise Exception("obj does not specify a 'type' field")
+        if obj["type"] == "point":
+            return (Point.decode_labeled_point(obj), Point)
+        if obj["type"] == "box":
+            return (Box.decode_labeled_box(obj), Box)
+        raise Exception(f"obj of type {obj['type']}")

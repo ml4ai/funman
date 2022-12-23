@@ -3,7 +3,8 @@ import unittest
 
 from pysmt.shortcuts import get_model
 
-from funman.model2smtlib.bilayer.translate import Bilayer, BilayerEncoder
+from funman.model import Bilayer
+from funman.translate import BilayerEncoder
 
 DATA = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "../resources/bilayer"

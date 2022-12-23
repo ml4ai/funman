@@ -5,7 +5,7 @@
 {%- endfor %}
 {%- endmacro %}
 
-{%- macro toctree(docnames) -%}
+{%- macro toctree(docnames, maxdepth) -%}
 .. toctree::
    :maxdepth: {{ maxdepth }}
 {% for docname in docnames %}
@@ -31,8 +31,12 @@
 Subpackages
 -----------
 
-{{ toctree(subpackages) }}
-{% endif %}
+{{ toctree(subpackages, maxdepth=2) }}
+{% for subpackage in subpackages %}
+{{- subpackage | e | heading(3) }}
+{{ automodule(subpackage, automodule_options)  }}
+{% endfor %}
+{%- endif %}
 
 {%- if submodules %}
 Submodules

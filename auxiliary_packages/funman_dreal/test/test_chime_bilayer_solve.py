@@ -31,20 +31,20 @@ from pysmt.typing import BOOL, INT, REAL
 
 from funman import Funman
 from funman.model import Model, Parameter, QueryLE
-from funman.model2smtlib.bilayer.translate import (
+from funman.scenario.consistency import ConsistencyScenario
+from funman.scenario.parameter_synthesis import ParameterSynthesisScenario
+from funman.search import BoxSearch, SMTCheck
+from funman.search.representation import (
+    Point,
+    ResultCombinedHandler,
+    SearchConfig,
+)
+from funman.translate.bilayer.bilayer import (
     Bilayer,
     BilayerEncoder,
     BilayerEncodingOptions,
     BilayerMeasurement,
     BilayerModel,
-)
-from funman.scenario.consistency import ConsistencyScenario
-from funman.scenario.parameter_synthesis import ParameterSynthesisScenario
-from funman.search import BoxSearch, SMTCheck
-from funman.utils.search_utils import (
-    Point,
-    ResultCombinedHandler,
-    SearchConfig,
 )
 from funman.utils.smtlib_utils import smtlibscript_from_formula
 

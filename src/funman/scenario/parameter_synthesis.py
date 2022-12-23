@@ -4,13 +4,20 @@ This submodule defined the Parameter Synthesis scenario.
 from typing import Dict, List, Union
 
 from funman.model import Model, Parameter, Query
-from funman.model2smtlib.translate import Encoder
-from funman.parameter_space import ParameterSpace
-from funman.scenario import AnalysisScenario, AnalysisScenarioResult
-from funman.scenario.consistency import ConsistencyScenario
-from funman.search import BoxSearch, SMTCheck
-from funman.search_episode import SearchEpisode
-from funman.utils.search_utils import Point, SearchConfig
+from funman.scenario import (
+    AnalysisScenario,
+    AnalysisScenarioResult,
+    ConsistencyScenario,
+)
+from funman.search import (
+    BoxSearch,
+    ParameterSpace,
+    Point,
+    SearchConfig,
+    SearchEpisode,
+    SMTCheck,
+)
+from funman.translate import EncodedEncoder
 
 
 class ParameterSynthesisScenario(AnalysisScenario):
@@ -28,7 +35,7 @@ class ParameterSynthesisScenario(AnalysisScenario):
         model: Model,
         query: Query,
         search=None,
-        smt_encoder=Encoder(),
+        smt_encoder=EncodedEncoder(),
         config: Dict = None,
     ) -> None:
         super().__init__()

@@ -10,8 +10,8 @@ from funman import Funman
 from funman.model import Parameter, QueryEncoded
 from funman.model.encoded import EncodedModel
 from funman.scenario.parameter_synthesis import ParameterSynthesisScenario
-from funman.search import BoxSearch
-from funman.utils.search_utils import Box, Interval, SearchConfig
+from funman.search import BoxSearch, SearchConfig
+from funman.search.representation import Box, Interval
 
 
 def subset_of_box_variables(b, vars_list):

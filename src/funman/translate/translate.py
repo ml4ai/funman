@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 from typing import Dict, List, Union
 
 import pysmt
@@ -25,7 +26,7 @@ from pysmt.shortcuts import (
     substitute,
 )
 
-from funman.model import QueryEncoded, QueryLE, QueryTrue
+from funman.model import Model, QueryEncoded, QueryLE, QueryTrue
 
 
 class Encoding(object):
@@ -39,7 +40,7 @@ class EncodingOptions(object):
         self.max_steps = max_steps
 
 
-class Encoder(object):
+class Encoder(ABC):
     def __init__(self, config: EncodingOptions = EncodingOptions()) -> None:
         self.config = config
 
@@ -55,8 +56,9 @@ class Encoder(object):
                 symbols[var_name][timepoint] = var
         return symbols
 
-    def encode_model(self, model: "EncodedModel"):
-        return model.encoding
+    @abstractmethod
+    def encode_model(self, model: Model):
+        pass
 
     def encode_query(self, model_encoding, query):
         query_handlers = {

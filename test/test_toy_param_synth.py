@@ -4,11 +4,10 @@ from pysmt.shortcuts import GE, LE, And, Real, Symbol
 from pysmt.typing import REAL
 
 from funman import Funman
-from funman.model import Parameter, QueryTrue
-from funman.model2smtlib.translate import Encoder
-from funman.model.encoded import EncodedModel
-from funman.scenario.parameter_synthesis import ParameterSynthesisScenario
-from funman.utils.search_utils import SearchConfig
+from funman.model import EncodedModel, Parameter, QueryTrue
+from funman.scenario import ParameterSynthesisScenario
+from funman.search import SearchConfig
+from funman.translate import EncodedEncoder
 
 
 class TestCompilation(unittest.TestCase):
@@ -21,7 +20,7 @@ class TestCompilation(unittest.TestCase):
         model = EncodedModel(And(LE(x, Real(5.0)), GE(x, Real(0.0))))
 
         scenario = ParameterSynthesisScenario(
-            parameters, model, QueryTrue(), smt_encoder=Encoder()
+            parameters, model, QueryTrue(), smt_encoder=EncodedEncoder()
         )
         funman = Funman()
         config = SearchConfig()
@@ -44,7 +43,7 @@ class TestCompilation(unittest.TestCase):
         )
 
         scenario = ParameterSynthesisScenario(
-            parameters, model, QueryTrue(), smt_encoder=Encoder()
+            parameters, model, QueryTrue(), smt_encoder=EncodedEncoder()
         )
         funman = Funman()
         config = SearchConfig(tolerance=1e-1)

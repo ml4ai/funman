@@ -13,19 +13,19 @@ from matplotlib.ticker import FormatStrFormatter
 
 from funman import Funman
 from funman.model import Parameter, QueryLE, QueryTrue
-from funman.model2smtlib.bilayer.translate import (
-    BilayerEncoder,
-    BilayerEncodingOptions,
-)
 from funman.model.bilayer import Bilayer, BilayerMeasurement, BilayerModel
 from funman.scenario.consistency import ConsistencyScenario
 from funman.scenario.parameter_synthesis import ParameterSynthesisScenario
 from funman.search import BoxSearch, SMTCheck
-from funman.search_episode import DRealSearchEpisode
-from funman.utils.search_utils import (
+from funman.search.representation import (
     Point,
     ResultCombinedHandler,
     SearchConfig,
+)
+from funman.search.search_episode import DRealSearchEpisode
+from funman.translate.bilayer.bilayer import (
+    BilayerEncoder,
+    BilayerEncodingOptions,
 )
 
 

@@ -28,13 +28,24 @@ from pysmt.shortcuts import (
 )
 from pysmt.typing import BOOL, INT, REAL
 
-from funman.model2smtlib import QueryableModel
+from funman.model import GrometModel, Model
+from funman.translate import Encoder, EncodingOptions
 
 # TODO more descriptive name
 
 
-class QueryableGromet(QueryableModel):
-    def __init__(self, gromet_fn) -> None:
+class GrometEncodingOptions(EncodingOptions):
+    def __init__(self) -> None:
+        super().__init__()
+
+
+class GrometEncoder(Encoder):
+    def __init__(
+        self,
+        gromet_fn,
+        config: GrometEncodingOptions = GrometEncodingOptions(),
+    ) -> None:
+        super().__init__(config)
         self._gromet_fn = gromet_fn
         self.gromet_encoding_handlers = {
             str(GrometFNModule): self._gromet_fnmodule_to_smtlib,
@@ -45,7 +56,7 @@ class QueryableGromet(QueryableModel):
             str(LiteralValue): self._gromet_literal_value_to_smtlib,
         }
 
-    def to_smtlib(self):
+    def encode_model(self, model: Model):
         """Convert the self._gromet_fn into a set of smtlib constraints.
 
         Returns:

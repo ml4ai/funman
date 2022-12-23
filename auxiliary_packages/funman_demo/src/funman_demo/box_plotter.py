@@ -10,8 +10,8 @@ from IPython.display import clear_output
 from matplotlib.lines import Line2D
 
 from funman.model import Parameter
-from funman.search_episode import BoxSearchEpisode, SearchEpisode
-from funman.utils.search_utils import Box, Interval, Point
+from funman.search import SearchEpisode
+from funman.search.representation import Box, Interval, Point
 
 l = logging.getLogger(__file__)
 l.setLevel(logging.INFO)

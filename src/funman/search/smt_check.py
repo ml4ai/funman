@@ -3,17 +3,15 @@ from typing import Optional
 from pysmt.logics import QF_NRA
 from pysmt.shortcuts import And, Solver
 
-from funman.search_episode import SearchEpisode
-from funman.utils.search_utils import SearchConfig
-
-from .search import Search
+# import funman.search as search
+from . import search
 
 
-class SMTCheck(Search):
+class SMTCheck(search.Search):
     def search(
-        self, problem, config: Optional[SearchConfig] = None
-    ) -> SearchEpisode:
-        episode = SearchEpisode(config=config, problem=problem)
+        self, problem, config: Optional[search.SearchConfig] = None
+    ) -> search.SearchEpisode:
+        episode = search.SearchEpisode(config=config, problem=problem)
         result = self.expand(problem, episode)
         episode.model = result
         return result

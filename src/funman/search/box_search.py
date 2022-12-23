@@ -2,31 +2,162 @@ import logging
 import multiprocessing as mp
 import os
 import traceback
+from datetime import datetime
+from multiprocessing.managers import SyncManager
 from multiprocessing.synchronize import Condition, Event, Lock
 from queue import Empty
 from queue import Queue as QueueSP
-from typing import List, Optional
+from queue import Queue as SQueue
+from typing import List, Optional, Union
 
 from pysmt.logics import QF_NRA
 from pysmt.shortcuts import And, Not, Solver, get_model
 
-from funman.search_episode import BoxSearchEpisode
-from funman.utils.search_utils import (
+from funman.search import (
     Box,
     Point,
     ResultHandler,
+    Search,
     SearchConfig,
-    decode_labeled_object,
-    encode_false_box,
-    encode_false_point,
-    encode_true_box,
-    encode_true_point,
-    encode_unknown_box,
+    SearchEpisode,
+    SearchStatistics,
 )
 
-from .search import Search
-
 LOG_LEVEL = logging.INFO
+
+l = logging.getLogger(__file__)
+l.setLevel(LOG_LEVEL)
+
+
+class BoxSearchEpisode(SearchEpisode):
+    def __init__(
+        self,
+        config: SearchConfig,
+        problem,
+        manager: Optional[SyncManager] = None,
+    ) -> None:
+        super(BoxSearchEpisode, self).__init__(config, problem)
+        self.statistics = SearchStatistics(manager=manager)
+        self.unknown_boxes = manager.Queue() if manager else SQueue()
+        self.true_boxes = []
+        self.false_boxes = []
+        self.true_points = set({})
+        self.false_points = set({})
+
+        self.iteration = manager.Value("i", 0) if manager else 0
+
+    def initialize_boxes(self, expander_count):
+        initial_box = self.initial_box()
+        # if not self.add_unknown(initial_box):
+        #     l.exception(
+        #         f"Did not add an initial box (of width {initial_box.width()}), try reducing config.tolerance, currently {self.config.tolerance}"
+        #     )
+        initial_boxes = SQueue()
+        initial_boxes.put(self.initial_box())
+        num_boxes = 1
+        while num_boxes < expander_count:
+            b1, b2 = initial_boxes.get().split()
+            initial_boxes.put(b1)
+            initial_boxes.put(b2)
+            num_boxes += 1
+        for i in range(num_boxes):
+            b = initial_boxes.get()
+            if not self.add_unknown(b):
+                l.exception(
+                    f"Did not add an initial box (of width {initial_box.width()}), try reducing config.tolerance, currently {self.config.tolerance}"
+                )
+            l.debug(f"Initial box: {b}")
+
+    def initial_box(self) -> Box:
+        return Box(self.problem.parameters)
+
+    def on_start(self):
+        if self.config.number_of_processes > 1:
+            self.statistics.last_time.value = str(datetime.now())
+        else:
+            self.statistics.last_time = str(datetime.now())
+
+    # def close(self):
+    #     if self.multiprocessing:
+    #         self.unknown_boxes.close()
+    #         self.statistics.close()
+    #         self.boxes_to_plot.close()
+
+    def on_iteration(self):
+        if self.config.number_of_processes > 1:
+            self.iteration.value = self.iteration.value + 1
+        else:
+            self.iteration = self.iteration + 1
+
+    def _add_unknown_box(self, box: Box) -> bool:
+        if box.width() > self.config.tolerance:
+            self.unknown_boxes.put(box)
+            if self.config.number_of_processes > 1:
+                self.statistics.num_unknown.value += 1
+            else:
+                self.statistics.num_unknown += 1
+            return True
+        return False
+
+    def add_unknown(self, box: Union[Box, List[Box]]):
+        did_add = False
+        if isinstance(box, list):
+            for b in box:
+                did_add |= self._add_unknown_box(b)
+        else:
+            did_add = self._add_unknown_box(box)
+        return did_add
+
+    def add_false(self, box: Box):
+        self.false_boxes.append(box)
+        # with self.statistics.num_false.get_lock():
+        #     self.statistics.num_false.value += 1
+        # self.statistics.iteration_operation.put("f")
+
+    def add_false_point(self, point: Point):
+        if point in self.true_points:
+            l.error(
+                f"Point: {point} is marked false, but already marked true."
+            )
+        self.false_points.add(point)
+
+    def add_true(self, box: Box):
+        self.true_boxes.append(box)
+        # with self.statistics.num_true.get_lock():
+        #     self.statistics.num_true.value += 1
+        # self.statistics.iteration_operation.put("t")
+
+    def add_true_point(self, point: Point):
+        if point in self.false_points:
+            l.error(
+                f"Point: {point} is marked true, but already marked false."
+            )
+        self.true_points.add(point)
+
+    def get_unknown(self):
+        box = self.unknown_boxes.get(timeout=self.config.queue_timeout)
+        if self.config.number_of_processes > 1:
+            self.statistics.num_unknown.value = (
+                self.statistics.num_unknown.value - 1
+            )
+            self.statistics.current_residual.value = box.width()
+        else:
+            self.statistics.num_unknown += 1
+            self.statistics.current_residual = box.width()
+        self.statistics.residuals.put(box.width())
+        this_time = datetime.now()
+        # FIXME self.statistics.iteration_time.put(this_time - self.statistics.last_time.value)
+        # FIXME self.statistics.last_time[:] = str(this_time)
+        return box
+
+    def get_box_to_plot(self):
+        return self.boxes_to_plot.get(timeout=self.config.queue_timeout)
+
+    def extract_point(self, model):
+        point = Point(self.problem.parameters)
+        for p in self.problem.parameters:
+            point.values[p] = float(model[p.symbol()].constant_value())
+        return point
 
 
 class BoxSearch(Search):

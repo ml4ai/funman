@@ -10,10 +10,22 @@ Subpackages
 -----------
 
 .. toctree::
-   :maxdepth: 4
+   :maxdepth: 2
 
    funman.model2smtlib.bilayer
    funman.model2smtlib.gromet
+funman.model2smtlib.bilayer
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: funman.model2smtlib.bilayer
+   :members:
+   :undoc-members:
+   :show-inheritance:
+funman.model2smtlib.gromet
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: funman.model2smtlib.gromet
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 Submodules
 ----------

@@ -27,8 +27,6 @@ from pysmt.shortcuts import (
 from pysmt.typing import BOOL, INT, REAL
 
 from funman.model import Model, Parameter, QueryLE, QueryTrue
-from funman.model2smtlib import QueryableModel
-from funman.model2smtlib.translate import Encoder, Encoding, EncodingOptions
 from funman.model.bilayer import (
     Bilayer,
     BilayerEdge,
@@ -38,24 +36,10 @@ from funman.model.bilayer import (
     BilayerNode,
     BilayerStateNode,
 )
-from funman.utils.search_utils import Box
+from funman.search.representation import Box
+from funman.translate import Encoder, Encoding, EncodingOptions
 
 l = logging.Logger(__name__)
-
-
-class QueryableBilayer(QueryableModel):
-    def __init__(self):
-        pass
-
-    # STUB This is where we will read in and process the bilayer file
-    def query(query_str):
-        return False
-
-    # STUB Read the bilayer file into some object
-    @staticmethod
-    def from_bilayer_file(bilayer_path):
-
-        return QueryableBilayer(Bilayer.from_json(bilayer_path))
 
 
 class BilayerEncodingOptions(EncodingOptions):

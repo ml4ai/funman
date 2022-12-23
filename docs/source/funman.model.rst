@@ -28,3 +28,13 @@ funman.model.encoded
    :members:
    :undoc-members:
    :show-inheritance:
+
+funman.model.query
+------------------
+.. inheritance-diagram:: funman.model.query
+   :parts: 1
+
+.. automodule:: funman.model.query
+   :members:
+   :undoc-members:
+   :show-inheritance:

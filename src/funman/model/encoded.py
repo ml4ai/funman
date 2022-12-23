@@ -1,5 +1,5 @@
 from funman.model import Model
-from funman.model2smtlib.translate import Encoding
+from funman.translate import Encoding
 
 
 class EncodedModel(Model):
