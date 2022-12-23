@@ -124,7 +124,7 @@ dist: update-versions
 check-test-release: dist
 	@echo -e "\nReleasing the following packages to TestPyPI:"
 	@ls -1 dist | sed -e 's/^/    /'
-	@echo -n -e "\n\nAre you sure? [y/N] " && read ans && [ $${ans:-N} = y ]
+	@echo -n -e "\nAre you sure? [y/N] " && read ans && [ $${ans:-N} = y ]
 
 test-release: check-test-release
 	python3 -m twine upload --repository testpypi dist/*
@@ -132,7 +132,7 @@ test-release: check-test-release
 check-release: dist
 	@echo -e "\nReleasing the following packages to PyPI:"
 	@ls -1 dist | sed -e 's/^/    /'
-	@echo -n -e "\n\nAre you sure? [y/N] " && read ans && [ $${ans:-N} = y ]
+	@echo -n -e "\nAre you sure? [y/N] " && read ans && [ $${ans:-N} = y ]
 
 release: check-release
 	python3 -m twine upload dist/*
