@@ -1,9 +1,13 @@
 import os
 import unittest
 
-from funman.model2smtlib.bilayer.translate import Bilayer
+from pysmt.shortcuts import get_model
 
-DATA = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../data")
+from funman.model2smtlib.bilayer.translate import Bilayer, BilayerEncoder
+
+DATA = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "../resources/bilayer"
+)
 
 
 class TestCompilation(unittest.TestCase):
@@ -15,10 +19,13 @@ class TestCompilation(unittest.TestCase):
         assert bilayer
 
         #        encoding = bilayer.to_smtlib_timepoint(2) ## encoding at the single timepoint 2
-        encoding = bilayer.to_smtlib(
-            [2.5, 3, 4, 6]
+        encoder = BilayerEncoder()
+        encoding = encoder._encode_bilayer(
+            bilayer, [2.5, 3, 4, 6]
         )  ## encoding at the list of timepoints [2,3]
         assert encoding
+        model = get_model(encoding)
+        assert model
 
 
 if __name__ == "__main__":

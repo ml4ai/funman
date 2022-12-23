@@ -258,7 +258,7 @@ class QueryableGromet(QueryableModel):
             the replacement box
         in_place:
             flag on whether or not to return a new object or edit the current
-        object in place.
+            object in place.
         """
         return self
 

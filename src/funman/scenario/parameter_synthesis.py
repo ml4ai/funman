@@ -4,6 +4,7 @@ This submodule defined the Parameter Synthesis scenario.
 from typing import Dict, List, Union
 
 from funman.model import Model, Parameter, Query
+from funman.model2smtlib.translate import Encoder
 from funman.parameter_space import ParameterSpace
 from funman.scenario import AnalysisScenario, AnalysisScenarioResult
 from funman.scenario.consistency import ConsistencyScenario
@@ -27,7 +28,7 @@ class ParameterSynthesisScenario(AnalysisScenario):
         model: Model,
         query: Query,
         search=None,
-        smt_encoder=None,
+        smt_encoder=Encoder(),
         config: Dict = None,
     ) -> None:
         super().__init__()

@@ -5,6 +5,7 @@ from cmath import inf
 from contextlib import contextmanager
 from timeit import default_timer
 
+from funman_demo.example.chime import CHIME
 from pysmt.logics import QF_LRA, QF_NRA, QF_UFLIRA, QF_UFNRA
 from pysmt.shortcuts import (
     BOOL,
@@ -24,8 +25,6 @@ from pysmt.shortcuts import reset_env as pysmt_reset_env
 from pysmt.shortcuts import substitute, write_smtlib
 from pysmt.simplifier import BddSimplifier
 from pysmt.typing import BOOL, INT, REAL
-
-from funman.examples.chime import CHIME
 
 RESOURCES = os.path.join("resources")
 

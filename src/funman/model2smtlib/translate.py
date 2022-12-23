@@ -1,6 +1,7 @@
 from typing import Dict, List, Union
 
 import pysmt
+from pysmt.formula import FNode
 from pysmt.shortcuts import (
     FALSE,
     GE,
@@ -24,7 +25,7 @@ from pysmt.shortcuts import (
     substitute,
 )
 
-from funman.model import QueryLE, QueryTrue
+from funman.model import QueryEncoded, QueryLE, QueryTrue
 
 
 class Encoding(object):
@@ -61,6 +62,7 @@ class Encoder(object):
         query_handlers = {
             QueryLE: self._encode_query_le,
             QueryTrue: self._encode_query_true,
+            QueryEncoded: self._return_encoded_query,
         }
 
         if type(query) in query_handlers:
@@ -69,6 +71,9 @@ class Encoder(object):
             raise NotImplementedError(
                 f"Do not know how to encode query of type {type(query)}"
             )
+
+    def _return_encoded_query(self, model_encoding, query):
+        return query
 
     def _encode_query_le(self, model_encoding, query):
         timepoints = model_encoding.symbols[query.variable]

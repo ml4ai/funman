@@ -29,7 +29,15 @@ from pysmt.typing import BOOL, INT, REAL
 from funman.model import Model, Parameter, QueryLE, QueryTrue
 from funman.model2smtlib import QueryableModel
 from funman.model2smtlib.translate import Encoder, Encoding, EncodingOptions
-from funman.model.bilayer import Bilayer, BilayerMeasurement, BilayerModel
+from funman.model.bilayer import (
+    Bilayer,
+    BilayerEdge,
+    BilayerFluxNode,
+    BilayerMeasurement,
+    BilayerModel,
+    BilayerNode,
+    BilayerStateNode,
+)
 from funman.utils.search_utils import Box
 
 l = logging.Logger(__name__)
@@ -82,13 +90,14 @@ class BilayerEncoder(Encoder):
         init = And(
             [
                 Equals(
-                    node.to_smtlib(0), Real(model.init_values[node.parameter])
+                    self._encode_bilayer_state_node(node, 0),
+                    Real(model.init_values[node.parameter]),
                 )
                 for idx, node in model.bilayer.state.items()
             ]
         )
 
-        encoding = model.bilayer.to_smtlib(state_timepoints)
+        encoding = self._encode_bilayer(model.bilayer, state_timepoints)
 
         if model.parameter_bounds:
             parameters = [
@@ -160,12 +169,112 @@ class BilayerEncoder(Encoder):
         observable_defs = And(
             [
                 Equals(
-                    o.to_smtlib(t), self._observable_defn(measurements, o, t)
+                    self._encode_bilayer_state_node(o, t),
+                    self._observable_defn(measurements, o, t),
                 )
                 for o in measurements.observable.values()
             ]
         )
         return observable_defs
+
+    def _encode_bilayer(self, bilayer, timepoints):
+        ans = simplify(
+            And(
+                [
+                    self._encode_bilayer_timepoint(
+                        bilayer, timepoints[i], timepoints[i + 1]
+                    )
+                    for i in range(len(timepoints) - 1)
+                ]
+            )
+        )
+        return ans
+
+    def _encode_bilayer_timepoint(self, bilayer, timepoint, next_timepoint):
+        ## Calculate time step size
+        time_step_size = next_timepoint - timepoint
+        eqns = (
+            []
+        )  ## List of SMT equations for a given timepoint. These will be
+        ## joined by an "And" command and returned
+
+        for t in bilayer.tangent:  ## Loop over tangents (derivatives)
+            derivative_expr = 0
+            ## Get tangent variable and translate it to SMT form tanvar_smt
+            tanvar = bilayer.tangent[t].parameter
+            tanvar_smt = self._encode_bilayer_state_node(
+                bilayer.tangent[t], timepoint
+            )
+            state_var_next_step = bilayer.state[t].parameter
+            state_var_smt = self._encode_bilayer_state_node(
+                bilayer.state[t], timepoint
+            )
+            state_var_next_step_smt = self._encode_bilayer_state_node(
+                bilayer.state[t], next_timepoint
+            )
+
+            relevant_output_edges = [
+                (val, val.src.index)
+                for val in bilayer.output_edges
+                if val.tgt.index == bilayer.tangent[t].index
+            ]
+            for flux_sign_index in relevant_output_edges:
+                flux_term = bilayer.flux[flux_sign_index[1]]
+                output_edge = bilayer.output_edges[flux_sign_index[1]]
+                expr = self._encode_bilayer_flux_node(flux_term, timepoint)
+                ## Check which state vars go to that param
+                relevant_input_edges = [
+                    self._encode_bilayer_state_node(
+                        bilayer.state[val2.src.index], timepoint
+                    )
+                    for val2 in bilayer.input_edges
+                    if val2.tgt.index == flux_sign_index[1]
+                ]
+                for state_var in relevant_input_edges:
+                    expr = Times(expr, state_var)
+                if (
+                    self._encode_bilayer_edge(flux_sign_index[0], timepoint)
+                    == "positive"
+                ):
+                    derivative_expr += expr
+                elif (
+                    self._encode_bilayer_edge(flux_sign_index[0], timepoint)
+                    == "negative"
+                ):
+                    derivative_expr -= expr
+            # Assemble into equation of the form f(t + delta t) approximately =
+            # f(t) + (delta t) f'(t)
+            eqn = simplify(
+                Equals(
+                    state_var_next_step_smt,
+                    Plus(state_var_smt, time_step_size * derivative_expr),
+                )
+            )
+            # print(eqn)
+            eqns.append(eqn)
+        return And(eqns)
+
+    def _encode_bilayer_node(self, node, timepoint):
+        if not isinstance(node, BilayerNode):
+            raise Exception("Node is not a BilayerNode")
+        param = node.parameter
+        ans = Symbol(f"{param}_{timepoint}", REAL)
+        return ans
+
+    def _encode_bilayer_state_node(self, node, timepoint):
+        if not isinstance(node, BilayerStateNode):
+            raise Exception("Node is not a BilayerStateNode")
+        return self._encode_bilayer_node(node, timepoint)
+
+    def _encode_bilayer_flux_node(self, node, timepoint):
+        if not isinstance(node, BilayerFluxNode):
+            raise Exception("Node is not a BilayerFluxNode")
+        return self._encode_bilayer_node(node, timepoint)
+
+    def _encode_bilayer_edge(self, edge, timepoint):
+        if not isinstance(edge, BilayerEdge):
+            raise Exception("Edge is not a BilayerEdge")
+        return edge.get_label()
 
     def _observable_defn(self, measurements, obs, t):
         # flux * incoming1 * incoming2 ...
@@ -173,9 +282,10 @@ class BilayerEncoder(Encoder):
         result = Real(0.0)
         for src in obs_in_edges:
             # src is a flux
-            f_t = src.to_smtlib(t)
+            f_t = self._encode_bilayer_flux_node(src, t)
             src_srcs = [
-                s.to_smtlib(t) for s in measurements.node_incoming_edges[src]
+                self._encode_bilayer_edge(s, t)
+                for s in measurements.node_incoming_edges[src]
             ]
             result = Plus(result, Times([f_t] + src_srcs)).simplify()
         # flux = next([measurements.output_edges])

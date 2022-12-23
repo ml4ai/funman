@@ -10,7 +10,7 @@ addopts = [
     "--import-mode=importlib",
     "--cov=funman",
     "--cov-report=xml",
-    "--cov-report=term"
+    "--cov-report=term",
 ]
 testpaths = ["test"]
 
@@ -56,5 +56,6 @@ extend_skip =  '''
   | _build
   | build
   | dist
+  | .*venv*
 )/
 '''

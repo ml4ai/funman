@@ -19,12 +19,12 @@ funman.model.bilayer
    :undoc-members:
    :show-inheritance:
 
-funman.model.chime
-------------------
-.. inheritance-diagram:: funman.model.chime
+funman.model.encoded
+--------------------
+.. inheritance-diagram:: funman.model.encoded
    :parts: 1
 
-.. automodule:: funman.model.chime
+.. automodule:: funman.model.encoded
    :members:
    :undoc-members:
    :show-inheritance:

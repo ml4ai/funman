@@ -31,7 +31,6 @@ class SearchEpisode(ABC):
         self.problem = problem
         self.num_parameters: int = len(self.problem.parameters)
         self.statistics = SearchStatistics(manager)
-        self.manager = manager
 
 
 class DRealSearchEpisode(SearchEpisode):
@@ -80,7 +79,7 @@ class BoxSearchEpisode(SearchEpisode):
         return Box(self.problem.parameters)
 
     def on_start(self):
-        if self.manager:
+        if self.config.number_of_processes > 1:
             self.statistics.last_time.value = str(datetime.now())
         else:
             self.statistics.last_time = str(datetime.now())
@@ -92,7 +91,7 @@ class BoxSearchEpisode(SearchEpisode):
     #         self.boxes_to_plot.close()
 
     def on_iteration(self):
-        if self.manager:
+        if self.config.number_of_processes > 1:
             self.iteration.value = self.iteration.value + 1
         else:
             self.iteration = self.iteration + 1
@@ -100,7 +99,7 @@ class BoxSearchEpisode(SearchEpisode):
     def _add_unknown_box(self, box: Box) -> bool:
         if box.width() > self.config.tolerance:
             self.unknown_boxes.put(box)
-            if self.manager:
+            if self.config.number_of_processes > 1:
                 self.statistics.num_unknown.value += 1
             else:
                 self.statistics.num_unknown += 1
@@ -144,7 +143,7 @@ class BoxSearchEpisode(SearchEpisode):
 
     def get_unknown(self):
         box = self.unknown_boxes.get(timeout=self.config.queue_timeout)
-        if self.manager:
+        if self.config.number_of_processes > 1:
             self.statistics.num_unknown.value = (
                 self.statistics.num_unknown.value - 1
             )
