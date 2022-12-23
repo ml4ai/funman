@@ -3,9 +3,10 @@ DEV_CONTAINER ?= funman-dev
 DEV_TAG ?= funman-dev
 DEPLOY_TAG ?= funman
 
-USING_PODMAN := $(shell docker --version 2> /dev/null | grep -q podman && echo 1 || echo 0)
+FUNMAN_VERSION ?= 0.0.0
+CMD_UPDATE_VERSION = sed -i -E 's/^__version__ = \"[0-9]+\.[0-9]+\.[0-9]+((a|b|rc)[0-9]*)?\"/__version__ = \"${FUNMAN_VERSION}\"/g'
 
-.PHONY: docs
+USING_PODMAN := $(shell docker --version | grep -q podman && echo 1 || echo 0)
 
 venv:
 	test -d .venv || python -m venv .venv
@@ -105,3 +106,33 @@ format:
 	pycln --config pyproject.toml .
 	isort --settings-path pyproject.toml .
 	black --config pyproject.toml .
+
+update-versions:
+	@test "${FUNMAN_VERSION}" != "0.0.0" || (echo "ERROR: FUNMAN_VERSION must be set" && exit 1)
+	@${CMD_UPDATE_VERSION} auxiliary_packages/funman_demo/src/funman_demo/_version.py
+	@${CMD_UPDATE_VERSION} auxiliary_packages/funman_dreal/src/funman_dreal/_version.py
+	@${CMD_UPDATE_VERSION} src/funman/_version.py
+
+dist: update-versions
+	mkdir -p dist
+	mkdir -p dist.bkp
+	rsync -av --ignore-existing --remove-source-files dist/ dist.bkp/
+	python -m build --outdir ./dist .
+	python -m build --outdir ./dist auxiliary_packages/funman_demo
+	python -m build --outdir ./dist auxiliary_packages/funman_dreal
+
+check-test-release: dist
+	@echo -e "\nReleasing the following packages to TestPyPI:"
+	@ls -1 dist | sed -e 's/^/    /'
+	@echo -n -e "\nAre you sure? [y/N] " && read ans && [ $${ans:-N} = y ]
+
+test-release: check-test-release
+	python3 -m twine upload --repository testpypi dist/*
+
+check-release: dist
+	@echo -e "\nReleasing the following packages to PyPI:"
+	@ls -1 dist | sed -e 's/^/    /'
+	@echo -n -e "\nAre you sure? [y/N] " && read ans && [ $${ans:-N} = y ]
+
+release: check-release
+	python3 -m twine upload dist/*
