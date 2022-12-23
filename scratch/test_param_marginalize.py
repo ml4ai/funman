@@ -3,11 +3,11 @@ import unittest
 import matplotlib.pyplot as plt
 from funman_demo.box_plotter import BoxPlotter
 from matplotlib.lines import Line2D
-from pysmt.shortcuts import GE, LE, And, Real, Symbol
+from pysmt.shortcuts import GE, LE, TRUE, And, Real, Symbol
 from pysmt.typing import REAL
 
 from funman import Funman
-from funman.model import Parameter
+from funman.model import Parameter, QueryEncoded
 from funman.model.encoded import EncodedModel
 from funman.scenario.parameter_synthesis import ParameterSynthesisScenario
 from funman.search import BoxSearch
@@ -32,7 +32,7 @@ class TestCompilation(unittest.TestCase):
 
         x = Symbol("x", REAL)
         y = Symbol("y", REAL)
-        parameters = [Parameter("x", x), Parameter("y", y)]
+        parameters = [Parameter("x", symbol=x), Parameter("y", symbol=y)]
 
         # 0.0 < x < 5.0, 10.0 < y < 12.0
         model = EncodedModel(
@@ -44,7 +44,9 @@ class TestCompilation(unittest.TestCase):
             )
         )
 
-        scenario = ParameterSynthesisScenario(parameters, model, BoxSearch())
+        scenario = ParameterSynthesisScenario(
+            parameters, model, QueryEncoded(TRUE()), BoxSearch()
+        )
         funman = Funman()
         config = SearchConfig(tolerance=1e-1)
         result = funman.solve(scenario, config=config)
@@ -64,8 +66,8 @@ class TestCompilation(unittest.TestCase):
         #                print(Box.union(b1,b2))
         #        print(ParameterSpace._union_boxes(boxes_of_interest))
         boxes_of_interest = result.parameter_space.true_boxes
-        for b1 in boxes_of_interest:
-            print(Box.union)
+        # for b1 in boxes_of_interest:
+        #     print(Box.union)
         for i1 in range(len(boxes_of_interest)):
             for i2 in range(i1 + 1, len(boxes_of_interest)):
                 ans = Box.check_bounds_disjoint_equal(
@@ -174,11 +176,11 @@ class TestCompilation(unittest.TestCase):
             for i1 in range(len(vars_list)):
                 for i2 in range(i1 + 1, len(vars_list)):
                     subset_of_variables = [vars_list[i1], vars_list[i2]]
-                    BoxPlotter.plot2DBoxesTemp(
+                    BoxPlotter.plot2DBoxes_temp(
                         [box1, box2],
-                        subset_of_variables[0],
-                        subset_of_variables[1],
-                        colors=["y", "b"],
+                        # subset_of_variables[0],
+                        # subset_of_variables[1],
+                        # colors=["y", "b"],
                     )
                     custom_lines = [
                         Line2D([0], [0], color="y", alpha=0.2, lw=4),
@@ -191,11 +193,11 @@ class TestCompilation(unittest.TestCase):
                 if b.name != var:
                     desired_vars_list.append(b.name)
             ## Visualize marginalized spaces
-            BoxPlotter.plot2DBoxesTemp(
+            BoxPlotter.plot2DBoxes_temp(
                 [b1, b2],
-                desired_vars_list[0],
-                desired_vars_list[1],
-                colors=["y", "b"],
+                # desired_vars_list[0],
+                # desired_vars_list[1],
+                # colors=["y", "b"],
             )
             custom_lines = [
                 Line2D([0], [0], color="y", alpha=0.2, lw=4),
@@ -250,14 +252,16 @@ class TestCompilation(unittest.TestCase):
             ## Fix true box values and plot
             for b in list(true_boxes):
                 b = subset_of_box_variables(b, desired_vars_list)
-                BoxPlotter.plot2DBoxTemp(
-                    b, desired_vars_list[0], desired_vars_list[1], color="g"
+                BoxPlotter.plot2DBox_temp(
+                    b,
+                    # desired_vars_list[0], desired_vars_list[1], color="g"
                 )
             ## Fix false box values and plot
             for b in list(false_boxes):
                 b = subset_of_box_variables(b, desired_vars_list)
-                BoxPlotter.plot2DBoxTemp(
-                    b, desired_vars_list[0], desired_vars_list[1], color="r"
+                BoxPlotter.plot2DBox_temp(
+                    b,
+                    # desired_vars_list[0], desired_vars_list[1], color="r"
                 )
             custom_lines = [
                 Line2D([0], [0], color="r", alpha=0.2, lw=4),
