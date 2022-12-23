@@ -3,7 +3,9 @@ DEV_CONTAINER ?= funman-dev
 DEV_TAG ?= funman-dev
 DEPLOY_TAG ?= funman
 
-USING_PODMAN := $(shell docker --version | grep -q podman && echo 1 || echo 0)
+USING_PODMAN := $(shell docker --version 2> /dev/null | grep -q podman && echo 1 || echo 0)
+
+.PHONY: docs
 
 venv:
 	test -d .venv || python -m venv .venv

@@ -1,7 +1,7 @@
 import os
 import unittest
 
-from funman_demo.CHIME.CHIME_SIR import main as run_CHIME_SIR
+from funman_demo.sim.CHIME.CHIME_SIR import main as run_CHIME_SIR
 
 from funman.model2smtlib.gromet.translate import QueryableGromet
 
