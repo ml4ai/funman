@@ -4,7 +4,7 @@ DEV_TAG ?= funman-dev
 DEPLOY_TAG ?= funman
 
 FUNMAN_VERSION ?= 0.0.0
-CMD_UPDATE_VERSION = sed -i 's/^__version__ = \"[0-9]\+\.[0-9]\+\.[0-9]\+\"/__version__ = \"${FUNMAN_VERSION}\"/g'
+CMD_UPDATE_VERSION = sed -i -E 's/^__version__ = \"[0-9]+\.[0-9]+\.[0-9]+((a|b|rc)[0-9]*)?\"/__version__ = \"${FUNMAN_VERSION}\"/g'
 
 USING_PODMAN := $(shell docker --version | grep -q podman && echo 1 || echo 0)
 
