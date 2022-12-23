@@ -4,6 +4,9 @@
 
 Pipfile.lock
 
+dist/
+dist.bkp/
+
 # locally stored virtual envionment defined by pipenv
 .venv/
 

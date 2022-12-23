@@ -113,3 +113,26 @@ update-versions:
 	@${CMD_UPDATE_VERSION} auxiliary_packages/funman_dreal/src/funman_dreal/_version.py
 	@${CMD_UPDATE_VERSION} src/funman/_version.py
 
+dist: update-versions
+	mkdir -p dist
+	mkdir -p dist.bkp
+	rsync -av --ignore-existing --remove-source-files dist/ dist.bkp/
+	python -m build --outdir ./dist .
+	python -m build --outdir ./dist auxiliary_packages/funman_demo
+	python -m build --outdir ./dist auxiliary_packages/funman_dreal
+
+check-test-release: dist
+	@echo -e "\nReleasing the following packages to TestPyPI:"
+	@ls -1 dist | sed -e 's/^/    /'
+	@echo -n -e "\n\nAre you sure? [y/N] " && read ans && [ $${ans:-N} = y ]
+
+test-release: check-test-release
+	python3 -m twine upload --repository testpypi dist/*
+
+check-release: dist
+	@echo -e "\nReleasing the following packages to PyPI:"
+	@ls -1 dist | sed -e 's/^/    /'
+	@echo -n -e "\n\nAre you sure? [y/N] " && read ans && [ $${ans:-N} = y ]
+
+release: check-release
+	python3 -m twine upload dist/*
