@@ -192,8 +192,8 @@ class Interval(object):
         if math_utils.gte(
             minInterval.ub, maxInterval.lb
         ):  ## intervals intersect.
-            ans = Interval.make_interval([minInterval.lb, maxInterval.ub])
-            total_height = Interval.width(ans)
+            ans = [Interval.make_interval([minInterval.lb, maxInterval.ub])]
+            total_height = [Interval.width(i) for i in ans]
             return ans, total_height
         elif math_utils.lt(
             minInterval.ub, maxInterval.lb
