@@ -11,8 +11,6 @@ addopts = [
     "--cov=funman",
     "--cov-report=xml",
     "--cov-report=term",
-    "--log_cli=true",
-    "--log_cli_level=INFO"
 ]
 testpaths = ["test"]
 

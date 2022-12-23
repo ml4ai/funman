@@ -257,7 +257,7 @@ class BilayerEncoder(Encoder):
     def _encode_bilayer_node(self, node, timepoint):
         if not isinstance(node, BilayerNode):
             raise Exception("Node is not a BilayerNode")
-        param = self.parameter
+        param = node.parameter
         ans = Symbol(f"{param}_{timepoint}", REAL)
         return ans
 
