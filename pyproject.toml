@@ -37,6 +37,7 @@ exclude = '''
   | build
   | dist
   | .*venv*
+  | __init__.py
 )/
 '''
 
@@ -56,6 +57,6 @@ extend_skip =  '''
   | _build
   | build
   | dist
-  | .*venv*
 )/
 '''
+skip_glob = ["**/__init__.py", "*venv"]

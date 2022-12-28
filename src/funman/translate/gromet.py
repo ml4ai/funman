@@ -28,7 +28,7 @@ from pysmt.shortcuts import (
 )
 from pysmt.typing import BOOL, INT, REAL
 
-from funman.model import GrometModel, Model
+from funman.model import Model
 from funman.translate import Encoder, EncodingOptions
 
 # TODO more descriptive name
