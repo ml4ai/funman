@@ -1,4 +1,4 @@
-from abc import abstractclassmethod
+from abc import ABC, abstractclassmethod
 
 
 class Config(object):
@@ -16,19 +16,19 @@ class AnalysisScenario(object):
         self.parameters = []
 
     @abstractclassmethod
-    def simulate():
-        pass
-
-    @abstractclassmethod
     def solve(self, config: Config):
         pass
 
+    @abstractclassmethod
+    def _encode(self, config: Config):
+        pass
 
-class AnalysisScenarioResult(object):
+
+class AnalysisScenarioResult(ABC):
     """
     Abstract class for AnalysisScenario result data.
     """
 
     @abstractclassmethod
-    def plot(self):
+    def plot(self, **kwargs):
         pass

@@ -1,19 +1,38 @@
+"""
+This module represents the abstract base classes for models.
+"""
+from abc import ABC
 from copy import deepcopy
 from typing import Union
 
-from pysmt.shortcuts import LE, REAL, And, Real, Symbol, get_free_variables
+from pysmt.shortcuts import REAL, Symbol
 
 from funman.constants import NEG_INFINITY, POS_INFINITY
 from funman.model.query import *
 
 
-class Model(object):
+class Model(ABC):
+    """
+    The abstract base class for Models.
+    """
+
     def __init__(self, init_values=None, parameter_bounds=None) -> None:
         self.init_values = init_values
         self.parameter_bounds = parameter_bounds
 
 
 class Parameter(object):
+    """
+    A parameter is a free variable for a Model.  It has the following attributes:
+
+    * lb: lower bound
+
+    * ub: upper bound
+
+    * symbol: a pysmt FNode corresponding to the parameter variable
+
+    """
+
     def __init__(
         self,
         name,
@@ -33,7 +52,20 @@ class Parameter(object):
             self.__symbol = Symbol(self.name, REAL)
         return self.__symbol
 
-    def timed_copy(self, timepoint):
+    def timed_copy(self, timepoint: int):
+        """
+        Create a time-stamped copy of a parameter.  E.g., beta becomes beta_t for a timepoint t
+
+        Parameters
+        ----------
+        timepoint : int
+            Integer timepoint
+
+        Returns
+        -------
+        Parameter
+            A time-stamped copy of self.
+        """
         timed_parameter = deepcopy(self)
         timed_parameter.name = f"{timed_parameter.name}_{timepoint}"
         return timed_parameter

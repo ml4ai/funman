@@ -5,7 +5,7 @@ from pysmt.typing import REAL
 
 from funman import Funman
 from funman.model import EncodedModel, Parameter, QueryTrue
-from funman.scenario import ParameterSynthesisScenario
+from funman.scenario.parameter_synthesis import ParameterSynthesisScenario
 from funman.search import SearchConfig
 from funman.translate import EncodedEncoder
 

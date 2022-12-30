@@ -1,9 +1,16 @@
+"""
+The handlers module includes several search handlers that deal with search episode data, such as plotting and writing results to a file.
+"""
 import traceback
 from abc import ABC, abstractmethod
 from typing import List
 
 
 class WaitAction(ABC):
+    """
+    The WaitAction abstract class allows search processes to handle waiting for additional work.
+    """
+
     def __init__(self) -> None:
         pass
 
@@ -13,6 +20,10 @@ class WaitAction(ABC):
 
 
 class ResultHandler(ABC):
+    """
+    The ResultHandler abstract class handles data produced by search processes.
+    """
+
     def __init__(self) -> None:
         pass
 
@@ -25,18 +36,36 @@ class ResultHandler(ABC):
 
     @abstractmethod
     def open(self) -> None:
+        """
+        Listener interface for starting handling.
+        """
         pass
 
     @abstractmethod
     def process(self, result: dict) -> None:
+        """
+        Listener interface for processing data in result.
+
+        Parameters
+        ----------
+        result : dict
+            data to process
+        """
         pass
 
     @abstractmethod
     def close(self) -> None:
+        """
+        Listener interface for ending handling.
+        """
         pass
 
 
 class NoopResultHandler(ResultHandler):
+    """
+    The NoopResultHandler is used in the absence of other handlers and performs no (i.e., noop) handling.
+    """
+
     def open(self) -> None:
         pass
 
@@ -48,6 +77,10 @@ class NoopResultHandler(ResultHandler):
 
 
 class ResultCombinedHandler(ResultHandler):
+    """
+    The ResultCombinedHandler combines multiple sub-handlers by iteratively invoking the sub-handler listener interfaces.
+    """
+
     def __init__(self, handlers: List[ResultHandler]) -> None:
         self.handlers = handlers if handlers is not None else []
 

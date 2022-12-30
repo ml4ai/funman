@@ -1,9 +1,20 @@
+from pysmt.formula import FNode
+
 from funman.model import Model
-from funman.translate import Encoding
 
 
 class EncodedModel(Model):
-    def __init__(self, formula) -> None:
-        self.encoding = Encoding(
-            formula=formula, symbols=list(formula.get_free_variables())
-        )
+    """
+    Model that holds an SMT formula encoding a model.  This class is meant to wrap hand-coded SMT formulas.
+    """
+
+    def __init__(self, formula: FNode) -> None:
+        """
+        Create an EncodedModel from a pysmt formula.
+
+        Parameters
+        ----------
+        formula : pysmt.formula.FNode
+            formula object
+        """
+        self.formula = formula

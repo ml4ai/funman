@@ -78,9 +78,7 @@ def marginalize(b1, b2, var):
     # plt.legend(custom_lines, ['PS 1', 'PS 2'])
     # plt.show()
     ## Find the intersection (if it exists)
-    intersection_marginal = Box.intersect_two_boxes_selected_parameters(
-        b1, b2, desired_vars_list
-    )
+    intersection_marginal = b1.intersect(b2, param_list=desired_vars_list)
     ## Form versions of boxes minus the part that we're marginalizing: named box1_x_y and box2_x_y
     box1_x_y = subset_of_box_variables(b1, desired_vars_list)
     box2_x_y = subset_of_box_variables(b2, desired_vars_list)
@@ -142,17 +140,15 @@ def marginalize(b1, b2, var):
                 marg_var_0 = bound.name
                 marg_var_lb_0 = bound.lb
                 marg_var_ub_0 = bound.ub
-                bounds_0 = Interval.make_interval(
-                    [marg_var_lb_0, marg_var_ub_0]
-                )
+                bounds_0 = Interval(marg_var_lb_0, marg_var_ub_0)
+
         for bound in intersecting_boxes[1].bounds:
             if bound.name == var:
                 marg_var_1 = bound.name
                 marg_var_lb_1 = bound.lb
                 marg_var_ub_1 = bound.ub
-                bounds_1 = Interval.make_interval(
-                    [marg_var_lb_1, marg_var_ub_1]
-                )
+                bounds_1 = Interval(marg_var_lb_1, marg_var_ub_1)
+
         interval_union_result = Interval.union(bounds_0, bounds_1)[0]
         print(interval_union_result)
         interval_union_height = Interval.union(bounds_0, bounds_1)[1]

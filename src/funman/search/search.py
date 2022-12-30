@@ -5,6 +5,7 @@ from typing import Optional
 
 import multiprocess as mp
 
+from funman.scenario import AnalysisScenario
 from funman.search.handlers import NoopResultHandler, ResultHandler
 
 
@@ -66,19 +67,21 @@ class SearchConfig(ABC):
 
 
 class SearchEpisode(object):
-    def __init__(self, config: SearchConfig, problem) -> None:
+    def __init__(
+        self, config: SearchConfig, problem: "AnalysisScenario"
+    ) -> None:
         self.config: SearchConfig = config
         self.problem = problem
         self.num_parameters: int = len(self.problem.parameters)
         self.statistics = SearchStatistics()
 
 
-class Search(object):
+class Search(ABC):
     def __init__(self) -> None:
         self.episodes = []
 
     @abstractmethod
     def search(
-        self, problem, config: Optional[SearchConfig] = None
+        self, problem: AnalysisScenario, config: Optional[SearchConfig] = None
     ) -> SearchEpisode:
         pass

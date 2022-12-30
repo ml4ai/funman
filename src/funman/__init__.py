@@ -4,6 +4,8 @@ The funman package implements multiple simulator model analysis methods.  Curren
 - Simulation: running original simulator and querying the results.
 
 - Parameter Synthesis: Generating feasible values for model parameters.
+
+- Consistency: Check that a parameterized model is self-consistent.
 """
 
 

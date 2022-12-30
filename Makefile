@@ -16,7 +16,7 @@ venv:
 	source .venv/bin/activate && pip install -Ur requirements-dev-extras.txt
 
 docs:
-	sphinx-apidoc -f -o ./docs/source ./src/funman -t ./docs/apidoc_templates --no-toc --module-first 
+	sphinx-apidoc -f -o ./docs/source ./src/funman -t ./docs/apidoc_templates --no-toc  
 	mkdir -p ./docs/source/_static
 	mkdir -p ./docs/source/_templates
 	pyreverse \

@@ -39,7 +39,7 @@ from funman.search.representation import (
     ResultCombinedHandler,
     SearchConfig,
 )
-from funman.translate.bilayer.bilayer import (
+from funman.translate.bilayer import (
     Bilayer,
     BilayerEncoder,
     BilayerEncodingOptions,

@@ -1,7 +1,9 @@
 """
-This submodule defined the Parameter Synthesis scenario.
+This module defines the Parameter Synthesis scenario.
 """
-from typing import Dict, List, Union
+from typing import List, Union
+
+from pandas import DataFrame
 
 from funman.model import Model, Parameter, Query
 from funman.scenario import (
@@ -9,14 +11,10 @@ from funman.scenario import (
     AnalysisScenarioResult,
     ConsistencyScenario,
 )
-from funman.search import (
-    BoxSearch,
-    ParameterSpace,
-    Point,
-    SearchConfig,
-    SearchEpisode,
-    SMTCheck,
-)
+from funman.search.box_search import BoxSearch
+from funman.search.representation import ParameterSpace, Point
+from funman.search.search import SearchConfig, SearchEpisode
+from funman.search.smt_check import SMTCheck
 from funman.translate import EncodedEncoder
 
 
@@ -34,9 +32,8 @@ class ParameterSynthesisScenario(AnalysisScenario):
         parameters: List[Parameter],
         model: Model,
         query: Query,
-        search=None,
+        search: BoxSearch = BoxSearch(),
         smt_encoder=EncodedEncoder(),
-        config: Dict = None,
     ) -> None:
         super().__init__()
         self.parameters = parameters
@@ -71,11 +68,11 @@ class ParameterSynthesisScenario(AnalysisScenario):
         if config is None:
             config = SearchConfig()
 
-        self.encode()
+        self._encode()
         result = self.search.search(self, config=config)
         return ParameterSynthesisScenarioResult(result, self)
 
-    def encode(self):
+    def _encode(self):
         self.model_encoding = self.smt_encoder.encode_model(self.model)
         self.query_encoding = self.smt_encoder.encode_query(
             self.model_encoding, self.query
@@ -102,6 +99,19 @@ class ParameterSynthesisScenarioResult(AnalysisScenarioResult):
             episode.false_points,
         )
 
+    def plot(self, **kwargs):
+        """
+        Plot the results
+
+        Raises
+        ------
+        NotImplementedError
+            TODO
+        """
+        raise NotImplementedError(
+            "ParameterSynthesisScenario.plot() is not implemented"
+        )
+
     # points are of the form (see Point.to_dict())
     # [
     #     {"values": {"beta": 0.1}}
@@ -109,8 +119,26 @@ class ParameterSynthesisScenarioResult(AnalysisScenarioResult):
     # Or
     # List[Point]
     def true_point_timeseries(
-        self, points: Union[List[Point], List[dict]] = None
+        self, points: Union[List[Point], List[dict]] = List[DataFrame]
     ):
+        """
+        Get a timeseries for each of the points, assuming that the points are in the parameter space.
+
+        Parameters
+        ----------
+        points : Union[List[Point], List[dict]], optional
+            points to use to genrate a timeseries, by default None
+
+        Returns
+        -------
+        List[Dataframe]
+            a list of dataframes that list a timeseries of values for each model variable.
+
+        Raises
+        ------
+        Exception
+            malformed points
+        """
         # for each true box
         dfs = []
         for point in points:

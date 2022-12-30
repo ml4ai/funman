@@ -1,50 +1,51 @@
+"""
+This module defines the abstract base classes for the model encoder classes in funman.translate package.
+"""
+
 from abc import ABC, abstractmethod
 from typing import Dict, List, Union
 
 import pysmt
 from pysmt.formula import FNode
-from pysmt.shortcuts import (
-    FALSE,
-    GE,
-    GT,
-    LE,
-    LT,
-    TRUE,
-    And,
-    Equals,
-    ForAll,
-    Function,
-    FunctionType,
-    Iff,
-    Int,
-    Plus,
-    Real,
-    Symbol,
-    Times,
-    get_model,
-    simplify,
-    substitute,
-)
+from pysmt.shortcuts import LE, TRUE, And, Real
 
-from funman.model import Model, QueryEncoded, QueryLE, QueryTrue
+from funman.model import Model, Query, QueryEncoded, QueryLE, QueryTrue
 
 
 class Encoding(object):
-    def __init__(self, formula=None, symbols=None) -> None:
+    """
+    An encoding comprises a formula over a set of symbols.
+
+    """
+
+    def __init__(
+        self,
+        formula: FNode = None,
+        symbols: Dict[str, Dict[str, FNode]] = None,
+    ) -> None:
         self.formula = formula
         self.symbols = symbols
 
 
 class EncodingOptions(object):
+    """
+    EncodingOptions
+    """
+
     def __init__(self, max_steps=2) -> None:
         self.max_steps = max_steps
 
 
 class Encoder(ABC):
+    """
+    An Encoder translates a Model into an SMTLib formula.
+
+    """
+
     def __init__(self, config: EncodingOptions = EncodingOptions()) -> None:
         self.config = config
 
-    def _symbols(self, formula):
+    def _symbols(self, formula: FNode) -> Dict[str, Dict[str, FNode]]:
         symbols = {}
         vars = list(formula.get_free_variables())
         # vars.sort(key=lambda x: x.symbol_name())
@@ -57,10 +58,36 @@ class Encoder(ABC):
         return symbols
 
     @abstractmethod
-    def encode_model(self, model: Model):
+    def encode_model(self, model: Model) -> Encoding:
+        """
+        Encode a model into an SMTLib formula.
+
+        Parameters
+        ----------
+        model : Model
+            model to encode
+
+        Returns
+        -------
+        Encoding
+            formula and symbols for the encoding
+        """
         pass
 
-    def encode_query(self, model_encoding, query):
+    def encode_query(self, model_encoding: Encoding, query: Query) -> Encoding:
+        """
+        Encode a query into an SMTLib formula.
+
+        Parameters
+        ----------
+        model : Model
+            model to encode
+
+        Returns
+        -------
+        Encoding
+            formula and symbols for the encoding
+        """
         query_handlers = {
             QueryLE: self._encode_query_le,
             QueryTrue: self._encode_query_true,

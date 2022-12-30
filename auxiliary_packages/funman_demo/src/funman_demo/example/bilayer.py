@@ -9,14 +9,14 @@ from funman_demo.handlers import (
 
 from funman import Funman
 from funman.model import Parameter, QueryLE, QueryTrue
-from funman.model.bilayer import Bilayer, BilayerMeasurement, BilayerModel
-from funman.scenario.consistency import ConsistencyScenario
-from funman.scenario.parameter_synthesis import ParameterSynthesisScenario
-from funman.search.representation import ResultCombinedHandler, SearchConfig
-from funman.translate.bilayer.bilayer import (
-    BilayerEncoder,
-    BilayerEncodingOptions,
+from funman.model.bilayer import (
+    BilayerDynamics,
+    BilayerMeasurement,
+    BilayerModel,
 )
+from funman.scenario.consistency import ConsistencyScenario
+from funman.search.representation import ResultCombinedHandler, SearchConfig
+from funman.translate.bilayer import BilayerEncoder, BilayerEncodingOptions
 
 
 def run_chime_bilayer_example(output_path):
@@ -34,7 +34,7 @@ def run_chime_bilayer_example(output_path):
         "Wn": [{"efflux": 1, "effusion": 1}, {"efflux": 2, "effusion": 2}],
     }
 
-    chime_bilayer = Bilayer.from_json(chime_bilayer_src)
+    chime_bilayer = BilayerDynamics.from_json(chime_bilayer_src)
 
     # Define the measurements made of the bilayer variables
     measurements = {
