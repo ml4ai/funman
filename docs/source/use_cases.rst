@@ -1,8 +1,162 @@
 Use Cases
 =========
 
+.. _test use cases: https://github.com/ml4ai/funman/tree/main/test/test_use_cases.py
+
+The following use cases reside in `test use cases`_.  The use cases listed under :ref:`Future Cases (below) <future-cases>` are use cases identified in previous versions that are work in progress.
+
+Compare Bilayer Model to Simulator:
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This use case involves the simulator and FUNMAN reasoning about the CHIME
+SIR bilayer model.  See test `test_use_case_bilayer_consistency` in the `test use cases`_.
+
+It first uses a SimulationScenario to execute the input simulator
+function and evaluate the input query function using the simulation results.
+In the example below this results in the run_CHIME_SIR simulator function and
+evaluating whether or not the number of infected crosses the provided threshold with a custom QueryFunction referencing the `does_not_cross_threshold` function.
+
+It then constructs an instance of the ConsistencyScenario class to evaluate whether a BilayerModel will satisfy the given query. The query asks whether the
+number of infected at any time point exceeds a specified threshold.
+
+Once each of these steps is executed the results are compared. The test will
+succeed if the SimulatorScenario and ConsistencyScenario agree on the response to the query.
+
+.. code-block:: py
+
+    def compare_against_CHIME_Sim(
+        self, bilayer_path, init_values, infected_threshold
+    ):
+        # query the simulator
+        def does_not_cross_threshold(sim_results):
+            i = sim_results[2]
+            return all(i_t <= infected_threshold for i_t in i)
+
+        query = QueryLE("I", infected_threshold)
+
+        funman = Funman()
+
+        sim_result: SimulationScenarioResult = funman.solve(
+            SimulationScenario(
+                model=SimulatorModel(run_CHIME_SIR),
+                query=QueryFunction(does_not_cross_threshold),
+            )
+        )
+
+        consistency_result: ConsistencyScenarioResult = funman.solve(
+            ConsistencyScenario(
+                model=BilayerModel(
+                    BilayerDynamics.from_json(bilayer_path),
+                    init_values=init_values,
+                ),
+                query=query,
+            )
+        )
+
+        # assert the both queries returned the same result
+        return sim_result.query_satisfied == consistency_result.query_satisfied
+
+    def test_use_case_bilayer_consistency(self):
+        """
+        This test compares a BilayerModel against a SimulatorModel to
+        determine whether their response to a query is identical.
+        """
+        bilayer_path = os.path.join(
+            RESOURCES, "bilayer", "CHIME_SIR_dynamics_BiLayer.json"
+        )
+        infected_threshold = 130
+        init_values = {"S": 9998, "I": 1, "R": 1}
+        assert self.compare_against_CHIME_Sim(
+            bilayer_path, init_values, infected_threshold
+        )
+
+Parameter Synthesis
+-------------------
+
+See tests `test_use_case_simple_parameter_synthesis` and `test_use_case_bilayer_parameter_synthesis` in the `test use cases`_.
+
+The base set of types used during Parameter Synthesis include:
+
+- a list of Parameters representing variables to be assigned
+- a Model to be encoded as an SMTLib formula 
+- a Scenario container representing a set of parameters and model
+- a SearchConfig to configure search behavior
+- the Funman interface that runs analysis using scenarios and configuration data
+
+In the following example two parameters, x and y, are constructed. A model is 
+also constructed that says 0.0 < x < 5.0 and 10.0 < y < 12.0. These parameters
+and model are used to define a scenario that will use BoxSearch to synthesize
+the parameters. The Funman interface and a search configuration are also 
+defined. All that remains is to have Funman solve the scenario using the defined
+configuration.
+
+.. code-block:: py
+    
+    def test_use_case_simple_parameter_synthesis(self):
+        x = Symbol("x", REAL)
+        y = Symbol("y", REAL)
+
+        formula = And(
+            LE(x, Real(5.0)),
+            GE(x, Real(0.0)),
+            LE(y, Real(12.0)),
+            GE(y, Real(10.0)),
+        )
+
+        funman = Funman()
+        result: ParameterSynthesisScenarioResult = funman.solve(
+            ParameterSynthesisScenario(
+                [
+                    Parameter("x", symbol=x),
+                    Parameter("y", symbol=y),
+                ],
+                EncodedModel(formula),
+            )
+        )
+        assert result
+
+As an additional parameter synthesis example, the following test case demonstrates how to perform parameter synthesis for a bilayer model.  The configuration differs from the example above by introducing bilayer-specific constraints on the initial conditions (`init_values` assignments), parameter bounds (`parameter_bounds` intervals) and a model query.
+
+.. code-block:: py
+
+    def test_use_case_bilayer_parameter_synthesis(self):
+        bilayer_path = os.path.join(
+            RESOURCES, "bilayer", "CHIME_SIR_dynamics_BiLayer.json"
+        )
+        infected_threshold = 3
+        init_values = {"S": 9998, "I": 1, "R": 1}
+
+        lb = 0.000067 * (1 - 0.5)
+        ub = 0.000067 * (1 + 0.5)
+
+        funman = Funman()
+        result: ParameterSynthesisScenarioResult = funman.solve(
+            ParameterSynthesisScenario(
+                parameters=[Parameter("beta", lb=lb, ub=ub)],
+                model=BilayerModel(
+                    BilayerDynamics.from_json(bilayer_path),
+                    init_values=init_values,
+                    parameter_bounds={
+                        "beta": [lb, ub],
+                        "gamma": [1.0 / 14.0, 1.0 / 14.0],
+                    },
+                ),
+                query=QueryLE("I", infected_threshold),
+            ),
+            config=SearchConfig(tolerance=1e-8),
+        )
+        assert len(result.parameter_space.true_boxes) > 0 
+        assert len(result.parameter_space.false_boxes) > 0 
+
+
+
+.. _future-cases:
+
+Future Cases
+------------
+
 Compare Translated FN to Simulator:
------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 This use case involves the simulator and FUNMAN reasoning about the CHIME
 SIR model.
@@ -137,48 +291,3 @@ query.
     infected_threshold = 130
     assert compare_against_CHIME_bilayer(bilayer_file, infected_threshold)
 
-Parameter Synthesis
--------------------
-
-The base set of types used during Parameter Synthesis:
-
-- a list of Parameters representing variables to be assigned
-- a Model containing some formula 
-- a Search instance representing the type of search to use during parameter synthesis
-- a Scenario container representing a set of parameters, model, and search value
-- a SearchConfig to configure search behavior
-- the Funman interface that runs analysis using scenarios and configuration data
-
-In the following example two parameters, x and y, are constructed. A model is 
-also constructed that says 0.0 < x < 5.0 and 10.0 < y < 12.0. These parameters
-and model are used to define a scenario that will use BoxSearch to synthesize
-the parameters. The Funman interface and a search configuration are also 
-defined. All that remains is to have Funman solve the scenario using the defined
-configuration.
-
-.. code-block::
-    
-    def test_parameter_synthesis_2d():
-        # construct variables
-        x = Symbol("x", REAL)
-        y = Symbol("y", REAL)
-        parameters = [Parameter("x", x), Parameter("y", y)]
-
-        # construct model
-        # 0.0 < x < 5.0, 10.0 < y < 12.0
-        model = Model(
-            And(
-                LE(x, Real(5.0)), GE(x, Real(0.0)), LE(y, Real(12.0)), GE(y, Real(10.0))
-            )
-        )
-
-        # define scenario
-        scenario = ParameterSynthesisScenario(parameters, model, BoxSearch())
-
-        # create Funman instance and configuration
-        funman = Funman()
-        config = SearchConfig(tolerance=1e-1)
-
-        # ask Funman to solve the scenario
-        result = funman.solve(scenario, config=config)
-        assert result

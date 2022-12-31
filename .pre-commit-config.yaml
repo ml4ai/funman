@@ -1,0 +1,26 @@
+repos:
+  - repo: https://github.com/pycqa/isort
+    rev: 5.11.3
+    hooks:
+      - id: isort
+        args: ["--settings-path", "pyproject.toml", "--check"]
+        name: isort (python)
+  - repo: https://github.com/psf/black
+    rev: 22.12.0
+    hooks:
+      - id: black
+        args: ["--config", "pyproject.toml", "--check"]
+  - repo: https://github.com/hadialqattan/pycln
+    rev: v2.1.2 # Possible releases: https://github.com/hadialqattan/pycln/releases
+    hooks:
+      - id: pycln
+        args: ["--config", "pyproject.toml"]
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v2.3.0
+    hooks:
+    - id: check-added-large-files
+      args: ["--maxkb=2000"]
+    - id: check-yaml
+    - id: check-json
+    - id: debug-statements
+ 

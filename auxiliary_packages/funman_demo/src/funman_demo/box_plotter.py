@@ -1,21 +1,17 @@
-import json
-import time
-from multiprocessing import Queue
-from queue import Queue as SQueue
-from typing import Dict, List
-from funman.model import Parameter
-from funman.search_episode import BoxSearchEpisode, SearchEpisode
-from funman.search_utils import Box, Interval, Point
-
-
-import matplotlib.pyplot as plt
-from matplotlib.lines import Line2D
-import matplotlib.patches as patches
-from IPython.display import clear_output
-import numpy as np
-from queue import Empty
-
 import logging
+from multiprocessing import Queue
+from queue import Empty
+from typing import Dict, List
+
+import matplotlib.patches as patches
+import matplotlib.pyplot as plt
+import numpy as np
+from IPython.display import clear_output
+from matplotlib.lines import Line2D
+
+from funman.model import Parameter
+from funman.search import SearchEpisode
+from funman.search.representation import Box, Interval, Point
 
 l = logging.getLogger(__file__)
 l.setLevel(logging.INFO)
@@ -27,7 +23,11 @@ class BoxPlotter(object):
         parameters: List[Parameter],
         plot_bounds: Box = None,
         title: str = "Feasible Regions",
-        color_map: Dict[str, str] = {"true": "g", "false": "r", "unknown": "b"},
+        color_map: Dict[str, str] = {
+            "true": "g",
+            "false": "r",
+            "unknown": "b",
+        },
         shape_map: Dict[str, str] = {"true": "x", "false": "o"},
         alpha=0.2,
     ) -> None:
@@ -113,8 +113,6 @@ class BoxPlotter(object):
                                 )
                     except Exception as e:
                         print(e)
-                        pass
-                    pass
         finally:
             episode.close()
             if self.out_cache is not None:
@@ -138,7 +136,6 @@ class BoxPlotter(object):
                         )
                 except Exception as e:
                     pass
-                pass
 
     def plot_add_box(self, box: Box, color="r"):
         if self.py:

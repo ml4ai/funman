@@ -1,0 +1,6 @@
+multiprocess
+pysmt
+
+-e ./
+-e ./auxiliary_packages/funman_demo
+

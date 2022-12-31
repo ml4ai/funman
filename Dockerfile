@@ -55,27 +55,14 @@ RUN git clone --depth=1 https://github.com/danbryce/automates.git automates \
     && git fetch --depth=1 origin e5fb635757aa57007615a75371f55dd4a24851e0 \
     && git checkout e5fb635757aa57007615a75371f55dd4a24851e0
 RUN pip install -e automates
-# RUN pip install --no-cache-dir https://github.com/ml4ai/automates/archive/v1.3.0.zip
-# RUN pip install https://github.com/danbryce/automates/archive/e5fb635757aa57007615a75371f55dd4a24851e0.zip
 
 RUN pip install --no-cache-dir z3-solver
 RUN pip install --no-cache-dir graphviz
 
 # Install funman dev packages
-COPY --chown=$UID:$GID ./model2smtlib model2smtlib
-RUN pip install -e model2smtlib
-# RUN --mount=type=bind,source=./model2smtlib,target=/model2smtlib,rw \
-#     pip install -e /model2smtlib
-
-COPY --chown=$UID:$GID ./funman funman
+COPY --chown=$UID:$GID . funman
 RUN pip install -e funman
-# RUN --mount=type=bind,source=./funman,target=/funman,rw \
-#     pip install -e /funman
-
 RUN pip install -e funman/auxiliary_packages/funman_demo
-# RUN --mount=type=bind,source=./funman,target=/funman,rw \
-#     pip install -e /funman/auxiliary_packages/funman_demo
-
 RUN pip install -e funman/auxiliary_packages/funman_dreal
 
 WORKDIR /home/$UNAME/funman

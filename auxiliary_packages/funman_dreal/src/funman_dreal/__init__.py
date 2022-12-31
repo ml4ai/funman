@@ -1,4 +1,3 @@
-from ._version import __version__
-from funman_dreal.solver import add_dreal_to_pysmt
+from funman_dreal.solver import ensure_dreal_in_pysmt
 
-add_dreal_to_pysmt()  # Wire Dreal into pysmt
+from ._version import __version__

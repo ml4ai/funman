@@ -1,33 +1,40 @@
 import json
-import graphviz
+from abc import ABC, abstractmethod
 from typing import Dict, List, Union
-from funman.model import Model
+
+import graphviz
 from pysmt.shortcuts import (
-    get_model,
-    And,
-    Symbol,
-    FunctionType,
-    Function,
-    Equals,
-    Int,
-    Real,
-    substitute,
-    TRUE,
     FALSE,
-    Iff,
-    Plus,
-    Times,
-    ForAll,
-    simplify,
-    LT,
-    LE,
-    GT,
     GE,
+    GT,
+    LE,
+    LT,
+    TRUE,
+    And,
+    Equals,
+    ForAll,
+    Function,
+    FunctionType,
+    Iff,
+    Int,
+    Plus,
+    Real,
+    Symbol,
+    Times,
+    get_model,
+    simplify,
+    substitute,
 )
-from pysmt.typing import INT, REAL, BOOL
+from pysmt.typing import BOOL, INT, REAL
+
+from funman.model import Model
 
 
-class BilayerGraph(object):
+class BilayerGraph(ABC):
+    """
+    Abstract representation of a Bilayer graph.
+    """
+
     def __init__(self):
         self.node_incoming_edges = {}
         self.node_outgoing_edges = {}
@@ -60,6 +67,16 @@ class BilayerGraph(object):
 
 
 class BilayerMeasurement(BilayerGraph):
+    """
+    The BilayerMeasurement class represents measurements taken on the BilayerNode state nodes of a BilayerDynamics object.  The graph consists of:
+
+    * state nodes (current state),
+
+    * observation nodes, and
+
+    * flux nodes (causal relationships).
+    """
+
     def __init__(self) -> None:
         super().__init__()
         self.state: Dict[int, BilayerStateNode] = {}
@@ -72,7 +89,21 @@ class BilayerMeasurement(BilayerGraph):
         )  # Input to observable, defined in Win
         self.output_edges: BilayerEdge = []  # Flux to Output, defined in Wa,Wn
 
-    def from_json(src):
+    @staticmethod
+    def from_json(src: Union[str, Dict]):
+        """
+        Create a BilayerMeasurement object from a JSON formatted bilayer graph.
+
+        Parameters
+        ----------
+        bilayer_src : str (filename) or dictionary
+            The source bilayer representation in a file or dictionary.
+
+        Returns
+        -------
+        BilayerMeasurement
+            The BilayerMeasurement object corresponding to the bilayer_src.
+        """
         measurement = BilayerMeasurement()
         if isinstance(src, dict):
             data = src
@@ -94,7 +125,9 @@ class BilayerMeasurement(BilayerGraph):
         )
 
         # Get the flux nodes
-        blm._get_json_node(blm.flux, BilayerFluxNode, data["rate"], "parameter")
+        blm._get_json_node(
+            blm.flux, BilayerFluxNode, data["rate"], "parameter"
+        )
 
         # Get the input edges
         blm.input_edges += blm._get_json_edge(
@@ -119,6 +152,14 @@ class BilayerMeasurement(BilayerGraph):
         return blm
 
     def to_dot(self):
+        """
+        Create a dot object for visualizing the graph.
+
+        Returns
+        -------
+        graphviz.Digraph
+            The graph represented by self.
+        """
         dot = graphviz.Digraph(
             name=f"bilayer_measurement",
             graph_attr={
@@ -138,6 +179,10 @@ class BilayerMeasurement(BilayerGraph):
 
 
 class BilayerNode(object):
+    """
+    Node in a BilayerGraph.
+    """
+
     def __init__(self, index, parameter):
         self.index = index
         self.parameter = parameter
@@ -145,17 +190,20 @@ class BilayerNode(object):
     def to_dot(self, dot):
         return dot.node(self.parameter)
 
-    def to_smtlib(self, timepoint):
-        param = self.parameter
-        ans = Symbol(f"{param}_{timepoint}", REAL)
-        return ans
-
 
 class BilayerStateNode(BilayerNode):
+    """
+    BilayerNode representing a state variable.
+    """
+
     pass
 
 
 class BilayerFluxNode(BilayerNode):
+    """
+    BilayerNode representing a flux.
+    """
+
     pass
 
 
@@ -164,34 +212,91 @@ class BilayerEdge(object):
         self.src = src
         self.tgt = tgt
 
-    def to_smtlib(self, timepoint):
+    @abstractmethod
+    def get_label(self):
         pass
 
     def to_dot(self, dot):
+        """
+        Create a dot object for visualizing the edge.
+
+
+        Parameters
+        ----------
+        dot : graphviz.Graph
+            Graph to add the edge.
+        """
         dot.edge(self.src.parameter, self.tgt.parameter)
 
 
 class BilayerPositiveEdge(BilayerEdge):
-    def to_smtlib(self, timepoint):
+    """
+    Class representing a positive influence between a FluxNode and a StateNode.
+    """
+
+    def get_label(self):
+        """
+        Edge label
+
+        Returns
+        -------
+        str
+            Label of edge
+        """
         return "positive"
 
 
 class BilayerNegativeEdge(BilayerEdge):
-    def to_smtlib(self, timepoint):
+    """
+    Class representing a positive influence between a FluxNode and a StateNode.
+    """
+
+    def get_label(self):
+        """
+        Edge label
+
+        Returns
+        -------
+        str
+            Label of edge
+        """
         return "negative"
 
     def to_dot(self, dot):
+        """
+        Create a dot object for visualizing the edge.
+
+        Parameters
+        ----------
+        dot : graphviz.Graph
+            Graph to add the edge.
+        """
         dot.edge(self.src.parameter, self.tgt.parameter, style="dashed")
 
 
 class BilayerModel(Model):
+    """
+    A BilayerModel is a complete specification of a Model that uses a BilayerDynamics graph to represent dynamics. It includes the attributes:
+
+    * bilayer: the BilayerDynamics graph
+
+    * measurements: the BilayerMeasurement graph (used to derive additional variables from the state nodes)
+
+    * init_values: a dict mapping from state variables and flux parameters to initial value
+
+    * identical_parameters: a list of lists of flux parameters that have identical values
+
+    * parameter_bounds: a list of lower and upper bounds on parameters
+
+    """
+
     def __init__(
         self,
-        bilayer,
-        measurements=None,
-        init_values=None,
-        identical_parameters=[],
-        parameter_bounds=None,
+        bilayer: "BilayerDynamics",
+        measurements: BilayerMeasurement = None,
+        init_values: Dict[str, float] = None,
+        identical_parameters: List[List[str]] = [],
+        parameter_bounds: Dict[str, List[float]] = None,
     ) -> None:
         super().__init__(
             init_values=init_values, parameter_bounds=parameter_bounds
@@ -200,8 +305,31 @@ class BilayerModel(Model):
         self.measurements = measurements
         self.identical_parameters = identical_parameters
 
+    def default_encoder(self) -> "Encoder":
+        """
+        Return the default Encoder for the model
 
-class Bilayer(BilayerGraph):
+        Returns
+        -------
+        Encoder
+            SMT encoder for model
+        """
+        from funman.translate import BilayerEncoder, BilayerEncodingOptions
+
+        return BilayerEncoder(config=BilayerEncodingOptions())
+
+
+class BilayerDynamics(BilayerGraph):
+    """
+    The BilayerDynamics class represents a state update (dynamics) model for a set of variables.  The graph consists of:
+
+    * state nodes (current state),
+
+    * tangent nodes (next state), and
+
+    * flux nodes (causal relationships).
+    """
+
     def __init__(self):
         super().__init__()
         self.tangent: Dict[
@@ -216,8 +344,22 @@ class Bilayer(BilayerGraph):
         self.input_edges: BilayerEdge = []  # Input to flux, defined in Win
         self.output_edges: BilayerEdge = []  # Flux to Output, defined in Wa,Wn
 
-    def from_json(bilayer_src):
-        bilayer = Bilayer()
+    @staticmethod
+    def from_json(bilayer_src: Union[str, Dict]):
+        """
+        Create a BilayerDynamics object from a JSON formatted bilayer graph.
+
+        Parameters
+        ----------
+        bilayer_src : str (filename) or dictionary
+            The source bilayer representation in a file or dictionary.
+
+        Returns
+        -------
+        BilayerDynamics
+            The BilayerDynamics object corresponding to the bilayer_src.
+        """
+        bilayer = BilayerDynamics()
 
         if isinstance(bilayer_src, dict):
             data = bilayer_src
@@ -281,6 +423,14 @@ class Bilayer(BilayerGraph):
         )
 
     def to_dot(self):
+        """
+        Create a dot object for visualizing the graph.
+
+        Returns
+        -------
+        graphviz.Digraph
+            The graph represented by self.
+        """
         dot = graphviz.Digraph(
             name=f"bilayer",
             graph_attr={
@@ -297,68 +447,3 @@ class Bilayer(BilayerGraph):
         for e in self.input_edges + self.output_edges:
             e.to_dot(dot)
         return dot
-
-    def to_smtlib(self, timepoints):
-        #        ans = simplify(And([self.to_smtlib_timepoint(t) for t in timepoints]))
-        ans = simplify(
-            And(
-                [
-                    self.to_smtlib_timepoint(timepoints[i], timepoints[i + 1])
-                    for i in range(len(timepoints) - 1)
-                ]
-            )
-        )
-        # print(ans)
-        return ans
-
-    def to_smtlib_timepoint(
-        self, timepoint, next_timepoint
-    ):  ## TODO remove prints
-        ## Calculate time step size
-        time_step_size = next_timepoint - timepoint
-        # print("timestep size:", time_step_size)
-        eqns = (
-            []
-        )  ## List of SMT equations for a given timepoint. These will be joined by an "And" command and returned
-        for t in self.tangent:  ## Loop over tangents (derivatives)
-            derivative_expr = 0
-            ## Get tangent variable and translate it to SMT form tanvar_smt
-            tanvar = self.tangent[t].parameter
-            tanvar_smt = self.tangent[t].to_smtlib(timepoint)
-            state_var_next_step = self.state[t].parameter
-            state_var_smt = self.state[t].to_smtlib(timepoint)
-            state_var_next_step_smt = self.state[t].to_smtlib(next_timepoint)
-            #            state_var_next_step_smt = self.state[t].to_smtlib(timepoint + 1)
-            relevant_output_edges = [
-                (val, val.src.index)
-                for val in self.output_edges
-                if val.tgt.index == self.tangent[t].index
-            ]
-            for flux_sign_index in relevant_output_edges:
-                flux_term = self.flux[flux_sign_index[1]]
-                output_edge = self.output_edges[flux_sign_index[1]]
-                expr = flux_term.to_smtlib(timepoint)
-                ## Check which state vars go to that param
-                relevant_input_edges = [
-                    self.state[val2.src.index].to_smtlib(timepoint)
-                    for val2 in self.input_edges
-                    if val2.tgt.index == flux_sign_index[1]
-                ]
-                for state_var in relevant_input_edges:
-                    expr = Times(expr, state_var)
-                if flux_sign_index[0].to_smtlib(timepoint) == "positive":
-                    derivative_expr += expr
-                elif flux_sign_index[0].to_smtlib(timepoint) == "negative":
-                    derivative_expr -= expr
-            ## Assemble into equation of the form f(t + delta t) approximately = f(t) + (delta t) f'(t)
-            eqn = simplify(
-                Equals(
-                    state_var_next_step_smt,
-                    Plus(state_var_smt, time_step_size * derivative_expr),
-                )
-            )
-            # print(eqn)
-            eqns.append(eqn)
-            # is_positive = GE(state_var_next_step_smt, Real(0.0))
-            # eqns.append(is_positive)
-        return And(eqns)

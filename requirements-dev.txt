@@ -1,0 +1,8 @@
+black[jupyter]
+build
+isort
+pre-commit
+pycln
+pytest-cov
+twine
+

@@ -1,24 +1,22 @@
-from imp import reload
 import json
+import os
 from time import sleep
 from typing import Dict, List
 
 import matplotlib.pyplot as plt
-from funman.model import Parameter
+from IPython.display import Image, display
 
-from funman.search_utils import (
+from funman.model import Parameter
+from funman.search.representation import (
     Box,
     Point,
     ResultHandler,
-    decode_labeled_object,
     WaitAction,
+    decode_labeled_object,
 )
 
 from .box_plotter import BoxPlotter
 
-from IPython.display import display, Image
-
-import os
 
 class NotebookImageRefresher(WaitAction):
     def __init__(self, image_path, *, sleep_for=1) -> None:
@@ -57,13 +55,18 @@ class ResultCacheWriter(ResultHandler):
         if self.f is not None:
             self.f.close()
 
+
 class RealtimeResultPlotter(ResultHandler):
     def __init__(
         self,
         parameters: List[Parameter],
         plot_bounds: Box = None,
         title: str = "Feasible Regions",
-        color_map: Dict[str, str] = {"true": "g", "false": "r", "unknown": "b"},
+        color_map: Dict[str, str] = {
+            "true": "g",
+            "false": "r",
+            "unknown": "b",
+        },
         shape_map: Dict[str, str] = {"true": "x", "false": "o"},
         plot_points=False,
         realtime_save_path=None,
@@ -83,7 +86,7 @@ class RealtimeResultPlotter(ResultHandler):
 
     def process(self, result: dict) -> None:
         ((inst, label), typ) = decode_labeled_object(result)
-        if typ is Box:
+        if typ is Box and isinstance(inst, Box):
             if label == "unknown":
                 self.plotter.plot_add_patch(
                     inst, color=self.plotter.color_map[label]
@@ -92,12 +95,12 @@ class RealtimeResultPlotter(ResultHandler):
                 self.plotter.plot_add_box(
                     inst, color=self.plotter.color_map[label]
                 )
-        elif typ is Point:
+        elif typ is Point and isinstance(inst, Point):
             if self.plot_points:
                 self.plotter.plot_add_point(
                     inst,
                     color=self.plotter.color_map[label],
-                    shape=self.plotter.shape_map[label]
+                    shape=self.plotter.shape_map[label],
                 )
         else:
             print(f"Skipping invalid object type: {typ}")

@@ -1,36 +1,32 @@
-import sys
+import unittest
 
-sys.path.append("/Users/dmosaphir/SIFT/Projects/ASKEM/code/funman/src")
-from funman.search import BoxSearch, SearchConfig
-from funman.constants import NEG_INFINITY, POS_INFINITY
 from pysmt.shortcuts import (
-    get_model,
-    And,
-    Symbol,
-    FunctionType,
-    Function,
-    Equals,
-    Int,
-    Real,
-    substitute,
-    TRUE,
     FALSE,
-    Iff,
-    Plus,
-    ForAll,
-    LT,
-    simplify,
+    GE,
     GT,
     LE,
-    GE,
+    LT,
+    TRUE,
+    And,
+    Equals,
+    ForAll,
+    Function,
+    FunctionType,
+    Iff,
+    Int,
+    Plus,
+    Real,
+    Symbol,
+    get_model,
+    simplify,
+    substitute,
 )
-from pysmt.typing import INT, REAL, BOOL
-import unittest
-import os
+from pysmt.typing import BOOL, INT, REAL
+
 from funman import Funman
-from funman.model import Parameter, EncodedModel
-from funman.scenario.parameter_synthesis import ParameterSynthesisScenario
-from funman.search_utils import Box
+from funman.model import EncodedModel, Parameter, QueryEncoded
+from funman.scenario import ParameterSynthesisScenario
+from funman.search import Box, BoxSearch, SearchConfig
 
 
 class TestCompilation(unittest.TestCase):
@@ -38,7 +34,7 @@ class TestCompilation(unittest.TestCase):
 
         x = Symbol("x", REAL)
         y = Symbol("y", REAL)
-        parameters = [Parameter("x", x), Parameter("y", y)]
+        parameters = [Parameter("x", symbol=x), Parameter("y", symbol=y)]
 
         # 0.0 < x < 5.0, 10.0 < y < 12.0
         model = EncodedModel(
@@ -50,7 +46,9 @@ class TestCompilation(unittest.TestCase):
             )
         )
 
-        scenario = ParameterSynthesisScenario(parameters, model, BoxSearch())
+        scenario = ParameterSynthesisScenario(
+            parameters, model, QueryEncoded(TRUE())
+        )
         funman = Funman()
         config = SearchConfig(tolerance=1e-1)
         result = funman.solve(scenario, config=config)

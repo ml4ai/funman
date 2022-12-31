@@ -1,34 +1,22 @@
-PIPENV=PIPENV_VENV_IN_PROJECT=1 pipenv
-DOCS_REMOTE?=origin
+DOCS_REMOTE ?= origin
+DEV_CONTAINER ?= funman-dev
+DEV_TAG ?= funman-dev
+DEPLOY_TAG ?= funman
 
-.PHONY: setup-dev-env destroy-dev-env docs build-docker, run-docker
-setup-dev-env: setup-pipenv setup-pysmt
+FUNMAN_VERSION ?= 0.0.0
+CMD_UPDATE_VERSION = sed -i -E 's/^__version__ = \"[0-9]+\.[0-9]+\.[0-9]+((a|b|rc)[0-9]*)?\"/__version__ = \"${FUNMAN_VERSION}\"/g'
 
-setup-pipenv:
-	# Initializing virtual environment
-	$(PIPENV) install --dev
+USING_PODMAN := $(shell docker --version | grep -q podman && echo 1 || echo 0)
 
-setup-pysmt:
-	# Installing Z3
-	$(PIPENV) run pysmt-install --z3 \
-		--confirm-agreement \
-		--install-path ./.smt-solvers
-	$(PIPENV) run pysmt-install --check
+.PHONY: docs
 
-destroy-dev-env:
-	$(PIPENV) --rm
-	rm Pipfile.lock || true
-
-setup-conda-dev-env: set-conda setup-conda-packages setup-pipenv setup-pysmt 
-
-set-conda:
-	$(PIPENV) --python=$(shell conda run which python) --site-packages
-
-setup-conda-packages:
-	$(PIPENV) run conda install scipy pygraphviz scikit-learn lxml Pillow coverage psutil igraph
+venv:
+	test -d .venv || python -m venv .venv
+	source .venv/bin/activate && pip install -Ur requirements-dev.txt
+	source .venv/bin/activate && pip install -Ur requirements-dev-extras.txt
 
 docs:
-	sphinx-apidoc -f -o ./docs/source ./src/funman -t ./docs/apidoc_templates --no-toc --module-first
+	sphinx-apidoc -f -o ./docs/source ./src/funman -t ./docs/apidoc_templates --no-toc  
 	mkdir -p ./docs/source/_static
 	mkdir -p ./docs/source/_templates
 	pyreverse \
@@ -66,66 +54,87 @@ build-docker: build-docker-dreal
 		--build-arg UNAME=$$USER \
 		--build-arg UID=$$(id -u) \
 		--build-arg GID=$$(id -g) \
-		-t funman -f ./Dockerfile ..
+		-t ${DEV_TAG} -f ./Dockerfile .
+
+build:
+	make build-docker
+
+build-for-deployment: build-docker-dreal
+	DOCKER_BUILDKIT=1 docker build \
+		-t ${DEPLOY_TAG} -f ./Dockerfile.deploy .
+
+run-deployment-image:
+	docker run -it --rm -p 127.0.0.1:8888:8888 ${DEPLOY_TAG}:latest
+
+run:
+	@test "${USING_PODMAN}" == "1" && make run-podman || make run-docker
 
 run-docker:
 	docker run \
 		-d \
 		-it \
 		--cpus=8 \
-		--name funman \
-                -p 8888:8888 \
-		-v $$PWD/../model2smtlib:/home/$$USER/model2smtlib \
+		--name ${DEV_CONTAINER} \
+    -p 127.0.0.1:8888:8888 \
 		-v $$PWD:/home/$$USER/funman \
-		funman:latest
+		${DEV_TAG}:latest
 
 run-podman:
 	podman run \
 		-d \
 		-it \
 		--cpus=8 \
-		--name funman \
+		--name ${DEV_CONTAINER} \
 		--user $$USER \
 		-p 127.0.0.1:8888:8888 \
-		-v $$PWD/../model2smtlib:/home/$$USER/model2smtlib \
 		-v $$PWD:/home/$$USER/funman \
 		--userns=keep-id \
-		funman:latest
+		${DEV_TAG}:latest
 
-run-podman-notebook:
-	podman run \
-		--rm \
-		-it \
-		--cpus=8 \
-		--name funman-notebook \
-		--user $$USER \
-		-p 127.0.0.1:8888:8888 \
-		-v $$PWD/../model2smtlib:/home/$$USER/model2smtlib \
-		-v $$PWD:/home/$$USER/funman \
-		--userns=keep-id \
-		funman:latest \
-		jupyter notebook --allow-root --ip 0.0.0.0 --no-browser /home/$$USER/funman/notebooks
+launch-dev-container:
+	@docker container inspect ${DEV_CONTAINER} > /dev/null 2>&1 \
+		|| make run
+	@test $(shell docker container inspect -f '{{.State.Running}}' ${DEV_CONTAINER}) == 'true' > /dev/null 2>&1 \
+		|| docker start ${DEV_CONTAINER}
+	@docker attach ${DEV_CONTAINER}
 
+rm-dev-container:
+	@docker container rm ${DEV_CONTAINER}
 
-build-docker-dev: 
-	DOCKER_BUILDKIT=1 docker build \
-		--build-arg UNAME=$$USER \
-		--build-arg UID=$$(id -u) \
-		--build-arg GID=$$(id -g) \
-		-t funman-dev -f ./Dockerfile.dev ..
+install-pre-commit-hooks:
+	@pre-commit install
 
-rm-docker-dev-container:
-	docker rm funman-dev || echo "" > /dev/null
+format:
+	pycln --config pyproject.toml .
+	isort --settings-path pyproject.toml .
+	black --config pyproject.toml .
 
-run-docker-dev: rm-docker-dev-container
-	docker run \
-		-d \
-		-it \
-		--cpus=5 \
-		--name funman-dev \
-		-v $(shell pwd)/..:/code \
-		funman-dev:latest
+update-versions:
+	@test "${FUNMAN_VERSION}" != "0.0.0" || (echo "ERROR: FUNMAN_VERSION must be set" && exit 1)
+	@${CMD_UPDATE_VERSION} auxiliary_packages/funman_demo/src/funman_demo/_version.py
+	@${CMD_UPDATE_VERSION} auxiliary_packages/funman_dreal/src/funman_dreal/_version.py
+	@${CMD_UPDATE_VERSION} src/funman/_version.py
 
-attach-docker-dev: 
-	docker attach funman-dev
+dist: update-versions
+	mkdir -p dist
+	mkdir -p dist.bkp
+	rsync -av --ignore-existing --remove-source-files dist/ dist.bkp/
+	python -m build --outdir ./dist .
+	python -m build --outdir ./dist auxiliary_packages/funman_demo
+	python -m build --outdir ./dist auxiliary_packages/funman_dreal
 
+check-test-release: dist
+	@echo -e "\nReleasing the following packages to TestPyPI:"
+	@ls -1 dist | sed -e 's/^/    /'
+	@echo -n -e "\nAre you sure? [y/N] " && read ans && [ $${ans:-N} = y ]
+
+test-release: check-test-release
+	python3 -m twine upload --repository testpypi dist/*
+
+check-release: dist
+	@echo -e "\nReleasing the following packages to PyPI:"
+	@ls -1 dist | sed -e 's/^/    /'
+	@echo -n -e "\nAre you sure? [y/N] " && read ans && [ $${ans:-N} = y ]
+
+release: check-release
+	python3 -m twine upload dist/*

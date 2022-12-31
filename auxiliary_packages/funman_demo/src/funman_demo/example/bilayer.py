@@ -1,15 +1,23 @@
-from model2smtlib.bilayer.translate import BilayerEncoder, BilayerEncodingOptions
-from funman.scenario.consistency import ConsistencyScenario
-from funman.scenario.parameter_synthesis import ParameterSynthesisScenario
+import tempfile
+
+import matplotlib.pyplot as plt
+from funman_demo.handlers import (
+    NotebookImageRefresher,
+    RealtimeResultPlotter,
+    ResultCacheWriter,
+)
+
 from funman import Funman
 from funman.model import Parameter, QueryLE, QueryTrue
-from funman.model.bilayer import Bilayer, BilayerMeasurement, BilayerModel
-from funman.search_utils import SearchConfig
-from funman_demo.handlers import ResultCacheWriter, RealtimeResultPlotter, NotebookImageRefresher
-from funman.search_utils import ResultCombinedHandler, SearchConfig
-import os
-import tempfile
-import matplotlib.pyplot as plt
+from funman.model.bilayer import (
+    BilayerDynamics,
+    BilayerMeasurement,
+    BilayerModel,
+)
+from funman.scenario.consistency import ConsistencyScenario
+from funman.search.representation import ResultCombinedHandler, SearchConfig
+from funman.translate.bilayer import BilayerEncoder, BilayerEncodingOptions
+
 
 def run_chime_bilayer_example(output_path):
     # Define the dynamics with a bilayer
@@ -26,15 +34,15 @@ def run_chime_bilayer_example(output_path):
         "Wn": [{"efflux": 1, "effusion": 1}, {"efflux": 2, "effusion": 2}],
     }
 
-    chime_bilayer = Bilayer.from_json(chime_bilayer_src)
+    chime_bilayer = BilayerDynamics.from_json(chime_bilayer_src)
 
     # Define the measurements made of the bilayer variables
     measurements = {
-        "state" : [{"variable": "I"}],
-        "observable" : [{"observable" : "H"}],
-        "rate" : [{"parameter": "hr"}],
+        "state": [{"variable": "I"}],
+        "observable": [{"observable": "H"}],
+        "rate": [{"parameter": "hr"}],
         "Din": [{"variable": 1, "parameter": 1}],
-        "Dout": [{"parameter": 1, "observable": 1}]
+        "Dout": [{"parameter": 1, "observable": 1}],
     }
     hospital_measurements = BilayerMeasurement.from_json(measurements)
 
@@ -42,16 +50,16 @@ def run_chime_bilayer_example(output_path):
     # - Prescribed reduction in transmission
 
     transmission_reduction = 0.05
-    duration = 120 #days
+    duration = 120  # days
     model = BilayerModel(
         chime_bilayer,
-        measurements = hospital_measurements,
+        measurements=hospital_measurements,
         init_values={"S": 10000, "I": 1, "R": 1},
         parameter_bounds={
             # "beta": [0.00067*(1.0-transmission_reduction), 0.00067*(1.0-transmission_reduction)],
-            "beta" : [0.00005, 0.00007],
-            "gamma": [1.0/14.0, 1.0/14.0],
-            "hr": [0.05, 0.05]
+            "beta": [0.00005, 0.00007],
+            "gamma": [1.0 / 14.0, 1.0 / 14.0],
+            "hr": [0.05, 0.05],
         },
     )
     # query = QueryLE("I", 9000) # TODO change to H after incorporating measurement encoding
@@ -63,7 +71,9 @@ def run_chime_bilayer_example(output_path):
         ConsistencyScenario(
             model,
             query,
-            smt_encoder=BilayerEncoder(config=BilayerEncodingOptions(step_size=10, max_steps=duration)) # four months
+            smt_encoder=BilayerEncoder(
+                config=BilayerEncodingOptions(step_size=10, max_steps=duration)
+            ),  # four months
         )
     )
     if result.consistent:

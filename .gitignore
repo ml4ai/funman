@@ -4,6 +4,9 @@
 
 Pipfile.lock
 
+dist/
+dist.bkp/
+
 # locally stored virtual envionment defined by pipenv
 .venv/
 
@@ -12,8 +15,12 @@ Pipfile.lock
 
 # docs
 # for now exclude these since they are generated
-docs/source/funman.rst
-docs/source/modules.rst
+docs/source/*.rst
+!docs/source/index.rst
+!docs/source/packages.rst
+!docs/source/use_cases.rst
+!docs/source/classes.rst
+
 docs/source/_static/classes.dot
 docs/source/_static/packages.dot
 
