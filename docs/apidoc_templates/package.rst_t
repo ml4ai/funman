@@ -5,7 +5,7 @@
 {%- endfor %}
 {%- endmacro %}
 
-{%- macro toctree(docnames) -%}
+{%- macro toctree(docnames, maxdepth) -%}
 .. toctree::
    :maxdepth: {{ maxdepth }}
 {% for docname in docnames %}
@@ -27,33 +27,42 @@
 {{ automodule(pkgname, automodule_options) }}
 {% endif %}
 
-{%- if subpackages %}
-Subpackages
------------
-
-{{ toctree(subpackages) }}
-{% endif %}
-
-{%- if submodules %}
-Submodules
-----------
-{% if separatemodules %}
-{{ toctree(submodules) }}
-{% else %}
-{%- for submodule in submodules %}
-{% if show_headings %}
-{{- submodule | e | heading(2) }}
-.. inheritance-diagram:: {{submodule}}
-   :parts: 1
-{% endif %}
-{{ automodule(submodule, automodule_options) }}
-{% endfor %}
-{%- endif %}
-{%- endif %}
-
 {%- if not modulefirst and not is_namespace %}
 Module contents
 ---------------
 
 {{ automodule(pkgname, automodule_options) }}
 {% endif %}
+
+
+{%- if submodules %}
+Submodules
+----------
+{% if separatemodules %}
+{{ toctree(submodules, maxdepth=2) }}
+{% else %}
+{%- for submodule in submodules %}
+{% if show_headings %}
+{{ submodule | e | heading(2) }}
+Inheritance diagram 
+^^^^^^^^^^^^^^^^^^^
+.. inheritance-diagram:: {{submodule}}
+   :parts: 1
+{% endif %}
+Module Description 
+^^^^^^^^^^^^^^^^^^
+{{ automodule(submodule, automodule_options) }}
+{% endfor %}
+{%- endif %}
+{%- endif %}
+
+
+{%- if subpackages %}
+Subpackages
+-----------
+{{ toctree(subpackages, maxdepth=2) }}
+{# % for subpackage in subpackages %}
+{{- subpackage | e | heading(3) } #}
+{{ automodule(subpackage, automodule_options)  }}
+{# % endfor % #}
+{%- endif %}`

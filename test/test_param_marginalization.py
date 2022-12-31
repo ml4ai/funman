@@ -24,11 +24,9 @@ from pysmt.shortcuts import (
 from pysmt.typing import BOOL, INT, REAL
 
 from funman import Funman
-from funman.model import Parameter, QueryEncoded
-from funman.model.encoded import EncodedModel
-from funman.scenario.parameter_synthesis import ParameterSynthesisScenario
-from funman.search import BoxSearch
-from funman.utils.search_utils import Box, SearchConfig
+from funman.model import EncodedModel, Parameter, QueryEncoded
+from funman.scenario import ParameterSynthesisScenario
+from funman.search import Box, BoxSearch, SearchConfig
 
 
 class TestCompilation(unittest.TestCase):
@@ -49,7 +47,7 @@ class TestCompilation(unittest.TestCase):
         )
 
         scenario = ParameterSynthesisScenario(
-            parameters, model, QueryEncoded(TRUE()), BoxSearch()
+            parameters, model, QueryEncoded(TRUE())
         )
         funman = Funman()
         config = SearchConfig(tolerance=1e-1)

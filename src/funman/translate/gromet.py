@@ -1,3 +1,7 @@
+"""
+This module encodes Gromet models as SMTLib formulas.
+
+"""
 from automates.model_assembly.gromet.model.function_type import FunctionType
 from automates.model_assembly.gromet.model.gromet_box_function import (
     GrometBoxFunction,
@@ -9,32 +13,35 @@ from automates.model_assembly.gromet.model.gromet_fn_module import (
 from automates.model_assembly.gromet.model.gromet_port import GrometPort
 from automates.model_assembly.gromet.model.literal_value import LiteralValue
 from automates.model_assembly.gromet.model.typed_value import TypedValue
-from automates.program_analysis.JSON2GroMEt.json2gromet import json_to_gromet
-from pysmt.shortcuts import (
-    FALSE,
-    LT,
-    TRUE,
-    And,
-    Equals,
-    ForAll,
-    Iff,
-    Int,
-    Or,
-    Plus,
-    Real,
-    Symbol,
-    get_model,
-    substitute,
-)
-from pysmt.typing import BOOL, INT, REAL
+from pysmt.shortcuts import And, Equals, Int, Symbol
+from pysmt.typing import INT
 
-from funman.model2smtlib import QueryableModel
-
-# TODO more descriptive name
+from funman.model import Model
+from funman.model.gromet import GrometModel
+from funman.translate import Encoder, EncodingOptions
 
 
-class QueryableGromet(QueryableModel):
-    def __init__(self, gromet_fn) -> None:
+class GrometEncodingOptions(EncodingOptions):
+    """
+    Gromet encoding options.
+    """
+
+    def __init__(self) -> None:
+        super().__init__()
+
+
+class GrometEncoder(Encoder):
+    """
+    Encodes Gromet models into SMTLib formulas.
+
+    """
+
+    def __init__(
+        self,
+        gromet_fn,
+        config: GrometEncodingOptions = GrometEncodingOptions(),
+    ) -> None:
+        super().__init__(config)
         self._gromet_fn = gromet_fn
         self.gromet_encoding_handlers = {
             str(GrometFNModule): self._gromet_fnmodule_to_smtlib,
@@ -45,13 +52,18 @@ class QueryableGromet(QueryableModel):
             str(LiteralValue): self._gromet_literal_value_to_smtlib,
         }
 
-    def to_smtlib(self):
+    def encode_model(self, model: Model):
         """Convert the self._gromet_fn into a set of smtlib constraints.
 
         Returns:
             pysmt.Node: SMTLib object for constraints.
         """
-        return self._to_smtlib(self._gromet_fn, stack=[])[0][1]
+        if isinstance(model, GrometModel):
+            return self._to_smtlib(self._gromet_fn, stack=[])[0][1]
+        else:
+            raise Exception(
+                f"GrometEncoder cannot encode a model of type: {type(model)}"
+            )
 
     def _to_smtlib(self, node, stack=[]):
         """Convert the node into a set of smtlib constraints.
@@ -235,34 +247,3 @@ class QueryableGromet(QueryableModel):
         phi = Equals(literal, value)
 
         return [([literal], phi)]
-
-    # STUB This is where we will read in an process the gromet file
-    def query(self, query_str):
-        return True
-
-    # STUB Return the GrometBox based on the name (or path?)
-    def get_box(self, name):
-        # placeholder direct access via attributes list
-        results = [
-            a for a in self._gromet_fn.attributes if a.value.b[0].name == name
-        ]
-        assert len(results) == 1
-        return results[0]
-
-    # STUB Substitute the GrometBox b_sub into b_org's position
-    def substitute_box(self, b_org, b_sub, in_place=False):
-        """
-        b_org:
-            the box to replace
-        b_sub:
-            the replacement box
-        in_place:
-            flag on whether or not to return a new object or edit the current
-            object in place.
-        """
-        return self
-
-    # STUB Read the gromet file into some object
-    @staticmethod
-    def from_gromet_file(gromet_path):
-        return QueryableGromet(json_to_gromet(gromet_path))

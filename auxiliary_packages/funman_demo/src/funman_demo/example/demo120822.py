@@ -13,20 +13,20 @@ from matplotlib.ticker import FormatStrFormatter
 
 from funman import Funman
 from funman.model import Parameter, QueryLE, QueryTrue
-from funman.model2smtlib.bilayer.translate import (
-    BilayerEncoder,
-    BilayerEncodingOptions,
+from funman.model.bilayer import (
+    BilayerDynamics,
+    BilayerMeasurement,
+    BilayerModel,
 )
-from funman.model.bilayer import Bilayer, BilayerMeasurement, BilayerModel
 from funman.scenario.consistency import ConsistencyScenario
 from funman.scenario.parameter_synthesis import ParameterSynthesisScenario
 from funman.search import BoxSearch, SMTCheck
-from funman.search_episode import DRealSearchEpisode
-from funman.utils.search_utils import (
+from funman.search.representation import (
     Point,
     ResultCombinedHandler,
     SearchConfig,
 )
+from funman.translate.bilayer import BilayerEncoder, BilayerEncodingOptions
 
 
 class Scenario1(object):
@@ -52,7 +52,7 @@ class Scenario1(object):
             "Wn": [{"efflux": 1, "effusion": 1}, {"efflux": 2, "effusion": 2}],
         }
 
-        self.chime_bilayer = Bilayer.from_json(self.chime_bilayer_src)
+        self.chime_bilayer = BilayerDynamics.from_json(self.chime_bilayer_src)
 
         self.chime_sviivr_bilayer_src = {
             "Qin": [
@@ -111,7 +111,7 @@ class Scenario1(object):
             ],
         }
 
-        self.chime_sviivr_bilayer = Bilayer.from_json(
+        self.chime_sviivr_bilayer = BilayerDynamics.from_json(
             self.chime_sviivr_bilayer_src
         )
 
@@ -193,7 +193,7 @@ class Scenario1(object):
             ],
         }
 
-        self.bucky_bilayer = Bilayer.from_json(self.bucky_bilayer_src)
+        self.bucky_bilayer = BilayerDynamics.from_json(self.bucky_bilayer_src)
 
         # Define the measurements made of the bilayer variables
         # Hospitalizations (H) are a proportion (hr) of those infected (I)
@@ -723,7 +723,7 @@ class Scenario2(object):
             ],
         }
 
-        self.chime_sviivr_bilayer = Bilayer.from_json(
+        self.chime_sviivr_bilayer = BilayerDynamics.from_json(
             self.chime_sviivr_bilayer_src
         )
 

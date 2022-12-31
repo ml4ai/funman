@@ -2,8 +2,8 @@ import os
 import unittest
 from multiprocessing.heap import Arena
 
-from funman.model2smtlib.gromet.translate import QueryableGromet
 from funman.parameter_space import ParameterSpace
+from funman.translate.gromet.gromet import QueryableGromet
 
 RESOURCES = os.path.join("resources")
 GROMET_FILE_1 = os.path.join(

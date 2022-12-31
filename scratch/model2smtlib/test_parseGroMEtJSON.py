@@ -1,7 +1,7 @@
 import os
 import unittest
 
-from funman.model2smtlib.gromet.translate import QueryableGromet
+from funman.translate.gromet.gromet import QueryableGromet
 
 RESOURCES = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "../resources"

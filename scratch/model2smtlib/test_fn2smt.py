@@ -4,7 +4,7 @@ import unittest
 from pysmt.shortcuts import Symbol, get_model
 from pysmt.typing import INT
 
-from funman.model2smtlib.gromet.translate import QueryableGromet
+from funman.translate.gromet.gromet import QueryableGromet
 
 RESOURCES = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "../resources"

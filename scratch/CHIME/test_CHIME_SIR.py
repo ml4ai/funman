@@ -3,7 +3,7 @@ import unittest
 
 from funman_demo.sim.CHIME.CHIME_SIR import main as run_CHIME_SIR
 
-from funman.model2smtlib.gromet.translate import QueryableGromet
+from funman.translate.gromet.gromet import QueryableGromet
 
 RESOURCES = os.path.join("resources")
 GROMET_FILE = os.path.join(
