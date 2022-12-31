@@ -73,7 +73,7 @@ succeed if the SimulatorScenario and ConsistencyScenario agree on the response t
 Parameter Synthesis
 -------------------
 
-See tests `test_use_case_simple_parameter_synthesis`` and `test_use_case_bilayer_parameter_synthesis` in the `test use cases`_.
+See tests `test_use_case_simple_parameter_synthesis` and `test_use_case_bilayer_parameter_synthesis` in the `test use cases`_.
 
 The base set of types used during Parameter Synthesis include:
 
