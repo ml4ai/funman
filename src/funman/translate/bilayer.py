@@ -121,16 +121,18 @@ class BilayerEncoder(Encoder):
                     for _, node in model.bilayer.flux.items()
                     if node.parameter in model.parameter_bounds
                     and model.parameter_bounds[node.parameter]
-                ] + [
-                    Parameter(
-                        node.parameter,
-                        lb=model.parameter_bounds[node.parameter][0],
-                        ub=model.parameter_bounds[node.parameter][1],
-                    )
-                    for _, node in model.measurements.flux.items()
-                    if node.parameter in model.parameter_bounds
-                    and model.parameter_bounds[node.parameter]
                 ]
+                if model.measurements:
+                    parameters += [
+                        Parameter(
+                            node.parameter,
+                            lb=model.parameter_bounds[node.parameter][0],
+                            ub=model.parameter_bounds[node.parameter][1],
+                        )
+                        for _, node in model.measurements.flux.items()
+                        if node.parameter in model.parameter_bounds
+                        and model.parameter_bounds[node.parameter]
+                    ]
 
                 timed_parameters = [
                     p.timed_copy(timepoint)
@@ -144,9 +146,12 @@ class BilayerEncoder(Encoder):
             else:
                 parameter_constraints = TRUE()
 
-            measurements = self._encode_measurements(
-                model.measurements, state_timepoints
-            )
+            if model.measurements:
+                measurements = self._encode_measurements(
+                    model.measurements, state_timepoints
+                )
+            else:
+                measurements = TRUE()
 
             ## Assume that all parameters are constant
             parameter_constraints = And(
@@ -155,11 +160,18 @@ class BilayerEncoder(Encoder):
                     [v.parameter for v in model.bilayer.flux.values()],
                     encoding,
                 ),
-                self._set_parameters_constant(
-                    [v.parameter for v in model.measurements.flux.values()],
-                    measurements,
-                ),
             )
+            if model.measurements:
+                parameter_constraints = And(
+                    parameter_constraints,
+                    self._set_parameters_constant(
+                        [
+                            v.parameter
+                            for v in model.measurements.flux.values()
+                        ],
+                        measurements,
+                    ),
+                )
 
             formula = And(init, parameter_constraints, encoding, measurements)
             symbols = self._symbols(formula)

@@ -11,9 +11,12 @@ models in FUNMAN.  The submodules include:
 * gromet: classes for GroMet models
 
 * encoded: classes for models (hand) encoded directly as SMT formulas
+
+* simulator: classes to wrap simulators as models
 """
 from .model import *
 from .query import *
 from .bilayer import *
 from .encoded import *
 from .gromet import *
+from .simulator import *

@@ -5,7 +5,7 @@ from typing import List, Union
 
 from pandas import DataFrame
 
-from funman.model import Model, Parameter, Query
+from funman.model import Model, Parameter, Query, QueryTrue
 from funman.scenario import (
     AnalysisScenario,
     AnalysisScenarioResult,
@@ -31,13 +31,15 @@ class ParameterSynthesisScenario(AnalysisScenario):
         self,
         parameters: List[Parameter],
         model: Model,
-        query: Query,
+        query: Query = QueryTrue(),
         search: BoxSearch = BoxSearch(),
-        smt_encoder=EncodedEncoder(),
+        smt_encoder=None,
     ) -> None:
         super().__init__()
         self.parameters = parameters
-        self.smt_encoder = smt_encoder
+        self.smt_encoder = (
+            smt_encoder if smt_encoder else model.default_encoder()
+        )
         self.model_encoding = None
         self.query_encoding = None
 

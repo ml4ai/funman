@@ -5,10 +5,7 @@ from typing import Any
 
 import matplotlib.pyplot as plt
 import pandas as pd
-from pysmt.fnode import FNode
 
-from funman.model import Query
-from funman.model.model import Model
 from funman.scenario import AnalysisScenario, AnalysisScenarioResult
 from funman.search.search import SearchConfig
 from funman.search.smt_check import SMTCheck
@@ -22,8 +19,8 @@ class ConsistencyScenario(AnalysisScenario):
 
     def __init__(
         self,
-        model: Model,
-        query: Query,
+        model: "Model",
+        query: "Query",
         smt_encoder: Encoder = None,
     ) -> None:
         """
@@ -39,7 +36,9 @@ class ConsistencyScenario(AnalysisScenario):
             method to encode the scenario, by default None
         """
         super(ConsistencyScenario, self).__init__()
-        self.smt_encoder = smt_encoder
+        self.smt_encoder = (
+            smt_encoder if smt_encoder else model.default_encoder()
+        )
         self.model_encoding = None
         self.query_encoding = None
 
@@ -98,6 +97,7 @@ class ConsistencyScenarioResult(AnalysisScenarioResult):
         super().__init__()
         self.consistent = result
         self.scenario = scenario
+        self.query_satisfied = result is not None
 
     def _parameters(self):
         if self.consistent:

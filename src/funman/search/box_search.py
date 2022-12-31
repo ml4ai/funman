@@ -174,7 +174,7 @@ class BoxSearchEpisode(SearchEpisode):
     def _extract_point(self, model):
         point = Point(self.problem.parameters)
         for p in self.problem.parameters:
-            point.values[p] = float(model[p.symbol()].constant_value())
+            point.values[p] = float(model[p._symbol()].constant_value())
         return point
 
 
@@ -267,7 +267,7 @@ class BoxSearch(Search):
             if solver.solve():
                 # Record the false point
                 res = solver.get_model()
-                false_points = [episode.extract_point(res)]
+                false_points = [episode._extract_point(res)]
                 map(episode.add_false_point, false_points)
                 map(
                     lambda x: rval.put(Point.encode_false_point(x)),
@@ -287,8 +287,8 @@ class BoxSearch(Search):
             if solver.solve():
                 # Record the true point
                 res1 = solver.get_model()
-                true_points = [episode.extract_point(res1)]
-                map(episode.add_true_point, true_points)
+                true_points = [episode._extract_point(res1)]
+                map(episode._add_true_point, true_points)
                 map(
                     lambda x: rval.put(Point.encode_true_point(x)),
                     true_points,

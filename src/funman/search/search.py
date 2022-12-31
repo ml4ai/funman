@@ -32,7 +32,7 @@ class SearchConfig(ABC):
     def __init__(
         self,
         *,  # non-positional keywords
-        tolerance=1e-2,
+        tolerance=1e-1,
         queue_timeout=1,
         number_of_processes=mp.cpu_count(),
         handler: ResultHandler = NoopResultHandler(),

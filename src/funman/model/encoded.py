@@ -18,3 +18,16 @@ class EncodedModel(Model):
             formula object
         """
         self.formula = formula
+
+    def default_encoder(self) -> "Encoder":
+        """
+        EncodedModel uses EncodedEncoder as the default.
+
+        Returns
+        -------
+        Encoder
+            the EncodedEncoder
+        """
+        from funman.translate.encoded import EncodedEncoder
+
+        return EncodedEncoder()

@@ -9,7 +9,7 @@ import pysmt
 from pysmt.formula import FNode
 from pysmt.shortcuts import LE, TRUE, And, Real
 
-from funman.model import Model, Query, QueryEncoded, QueryLE, QueryTrue
+from funman.model.query import Query, QueryEncoded, QueryLE, QueryTrue
 
 
 class Encoding(object):
@@ -58,7 +58,7 @@ class Encoder(ABC):
         return symbols
 
     @abstractmethod
-    def encode_model(self, model: Model) -> Encoding:
+    def encode_model(self, model: "Model") -> Encoding:
         """
         Encode a model into an SMTLib formula.
 
@@ -137,3 +137,11 @@ class Encoder(ABC):
                 vals[int(t)] = v
             a_series[var] = vals
         return a_series
+
+
+class DefaultEncoder(Encoder):
+    """
+    The DefaultEncoder will not actually encode a model as SMT.  It is used to provide an Encoder for SimulatorModel objects, but the encoder will not be used.
+    """
+
+    pass

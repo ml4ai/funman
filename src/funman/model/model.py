@@ -1,7 +1,7 @@
 """
 This module represents the abstract base classes for models.
 """
-from abc import ABC
+from abc import ABC, abstractmethod
 from copy import deepcopy
 from typing import Union
 
@@ -19,6 +19,18 @@ class Model(ABC):
     def __init__(self, init_values=None, parameter_bounds=None) -> None:
         self.init_values = init_values
         self.parameter_bounds = parameter_bounds
+
+    @abstractmethod
+    def default_encoder(self) -> "Encoder":
+        """
+        Return the default Encoder for the model
+
+        Returns
+        -------
+        Encoder
+            SMT encoder for model
+        """
+        pass
 
 
 class Parameter(object):

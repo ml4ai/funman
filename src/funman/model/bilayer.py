@@ -305,6 +305,19 @@ class BilayerModel(Model):
         self.measurements = measurements
         self.identical_parameters = identical_parameters
 
+    def default_encoder(self) -> "Encoder":
+        """
+        Return the default Encoder for the model
+
+        Returns
+        -------
+        Encoder
+            SMT encoder for model
+        """
+        from funman.translate import BilayerEncoder, BilayerEncodingOptions
+
+        return BilayerEncoder(config=BilayerEncodingOptions())
+
 
 class BilayerDynamics(BilayerGraph):
     """

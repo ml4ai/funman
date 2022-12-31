@@ -2,6 +2,7 @@
 This module defines all Query classes.  Queries are combined with Model objects in Scenarios to determine whether the model satisfies the query.
 """
 from abc import ABC
+from typing import Callable
 
 from pysmt.formula import FNode
 
@@ -12,6 +13,16 @@ class Query(ABC):
     """
 
     pass
+
+
+class QueryFunction(Query):
+    """
+    This query uses a Python function passed to the constructor to evaluate a query on the results of a scenario.
+    """
+
+    def __init__(self, function: Callable) -> None:
+        super().__init__()
+        self.function = function
 
 
 class QueryTrue(Query):
