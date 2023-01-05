@@ -15,13 +15,14 @@ ibex: paths ${INTERVAL_LIB}
 	mkdir -p ${IBEX_INSTALL_PREFIX}
 	patch -p1 -i patches/remove_gdtoa.patch
 	./waf configure \
-		--out=${IBEX_INSTALL_PREFIX}/__build__ \
 		--prefix=${IBEX_INSTALL_PREFIX} \
+		--enable-shared \
 		--interval-lib=${INTERVAL_LIB} \
 		--lp-lib=${LP_LIB} \
 		--gaol-dir=${GAOL_INSTALL_PREFIX} \
 		--mathlib-dir=${MATHLIB_INSTALL_PREFIX}
 	./waf build install clean
+	ldconfig
 
 paths:
 	mkdir -p ${DEPS_WORKSPACE}

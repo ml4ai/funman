@@ -47,7 +47,7 @@ deploy-pages:
 	git branch -D gh-pages
 
 build-docker-ibex:
-	cd ./ibex && make build-ibex-images
+	cd ./ibex && make build-ibex-image
 
 build-docker-dreal:
 	docker build -t funman_dreal4 -f ./Dockerfile.dreal4 .

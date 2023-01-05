@@ -6,7 +6,7 @@ IMAGE_NAME=sift/funman-ibex
 
 build-ibex-image:
 	DOCKER_BUILDKIT=1 docker buildx build \
-		--output "type=image" \
+		--output "type=docker" \
 		--platform $(TARGET_OS)/$(TARGET_ARCH) \
 		--tag $(IMAGE_NAME):$(TARGET_OS)-$(TARGET_ARCH) \
 		-f ./Dockerfile .
