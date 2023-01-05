@@ -1,0 +1,54 @@
+
+INSTALL_PREFIX?=/usr/local
+INTERVAL_LIB?=gaol
+LP_LIB?=none
+
+MATHLIB_INSTALL_PREFIX?=${INSTALL_PREFIX}
+MATHLIB_INCDIR=${MATHLIB_INSTALL_PREFIX}/include
+MATHLIB_LIBDIR=${MATHLIB_INSTALL_PREFIX}/lib
+GAOL_INSTALL_PREFIX?=${INSTALL_PREFIX}
+IBEX_INSTALL_PREFIX?=${INSTALL_PREFIX}
+
+DEPS_WORKSPACE=/tmp/ibex-deps
+
+ibex: paths ${INTERVAL_LIB}
+	mkdir -p ${IBEX_INSTALL_PREFIX}
+	patch -p1 -i patches/remove_gdtoa.patch
+	./waf configure \
+		--out=${IBEX_INSTALL_PREFIX}/__build__ \
+		--prefix=${IBEX_INSTALL_PREFIX} \
+		--interval-lib=${INTERVAL_LIB} \
+		--lp-lib=${LP_LIB} \
+		--gaol-dir=${GAOL_INSTALL_PREFIX} \
+		--mathlib-dir=${MATHLIB_INSTALL_PREFIX}
+	./waf build install clean
+
+paths:
+	mkdir -p ${DEPS_WORKSPACE}
+	touch $@
+
+mathlib: paths
+	cd ${DEPS_WORKSPACE} \
+		&& tar zxf /ibex-lib/interval_lib_wrapper/gaol/3rd/mathlib-2.1.1.tar.gz
+	cd ${DEPS_WORKSPACE}/mathlib-2.1.1 \
+		&& ./configure  --prefix=${MATHLIB_INSTALL_PREFIX} \
+		&& make \
+		&& make check \
+		&& make install
+	touch $@
+
+gaol: paths mathlib
+	git clone https://github.com/jgladwig/GAOL ${DEPS_WORKSPACE}/gaol
+	cd ${DEPS_WORKSPACE}/gaol \
+		&& ./configure \
+		--prefix=${GAOL_INSTALL_PREFIX} \
+		--with-mathlib-include=${MATHLIB_INCDIR} \
+		--with-mathlib-lib=${MATHLIB_LIBDIR} \
+		--disable-preserve-rounding \
+		--enable-optimize \
+		--disable-verbose-mode \
+		&& make \
+		&& make check \
+		&& make install
+	touch $@
+
