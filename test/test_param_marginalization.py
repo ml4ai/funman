@@ -24,9 +24,10 @@ from pysmt.shortcuts import (
 from pysmt.typing import BOOL, INT, REAL
 
 from funman import Funman
-from funman.model import EncodedModel, Parameter, QueryEncoded
+from funman.model import EncodedModel, Parameter, QueryTrue
 from funman.scenario import ParameterSynthesisScenario
-from funman.search import Box, BoxSearch, SearchConfig
+from funman.search import SearchConfig
+from funman.translate import EncodedEncoder
 
 
 class TestCompilation(unittest.TestCase):
@@ -47,7 +48,7 @@ class TestCompilation(unittest.TestCase):
         )
 
         scenario = ParameterSynthesisScenario(
-            parameters, model, QueryEncoded(TRUE())
+            parameters, model, QueryTrue(), smt_encoder=EncodedEncoder()
         )
         funman = Funman()
         config = SearchConfig(tolerance=1e-1)
@@ -61,8 +62,8 @@ class TestCompilation(unittest.TestCase):
         #        print(Box.check_bounds_disjoint_equal(box_0, box_1))
         for i1 in range(len(boxes_of_interest)):
             for i2 in range(i1 + 1, len(boxes_of_interest)):
-                ans = Box.check_bounds_disjoint_equal(
-                    boxes_of_interest[i1], boxes_of_interest[i2]
+                ans = boxes_of_interest[i1].check_bounds_disjoint_equal(
+                    boxes_of_interest[i2]
                 )
                 if ans[0] == False:
                     print(ans)

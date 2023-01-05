@@ -1,9 +1,10 @@
 """
 This module defines the Parameter Synthesis scenario.
 """
-from typing import List, Union
+from typing import Any, Dict, List, Union
 
 from pandas import DataFrame
+from pysmt.shortcuts import Iff, Symbol
 
 from funman.model import Model, Parameter, Query, QueryTrue
 from funman.scenario import (
@@ -75,9 +76,25 @@ class ParameterSynthesisScenario(AnalysisScenario):
         return ParameterSynthesisScenarioResult(result, self)
 
     def _encode(self):
+        """
+        The encoding uses assumption symbols for the model and query so that it is possible to push/pop the (possibly negated) symbols to reason about cases where the model or query must be true or false.
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
+        self.assume_model = Symbol("assume_model")
+        self.assume_query = Symbol("assume_query")
         self.model_encoding = self.smt_encoder.encode_model(self.model)
+        self.model_encoding.formula = Iff(
+            self.assume_model, self.model_encoding.formula
+        )
         self.query_encoding = self.smt_encoder.encode_query(
             self.model_encoding, self.query
+        )
+        self.query_encoding.formula = Iff(
+            self.assume_query, self.query_encoding.formula
         )
         return self.model_encoding, self.query_encoding
 
@@ -168,3 +185,11 @@ class ParameterSynthesisScenarioResult(AnalysisScenarioResult):
             # print(result.dataframe())
             dfs.append(result.dataframe())
         return dfs
+
+    def __repr__(self) -> str:
+        return str(self.to_dict())
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "parameter_space": self.parameter_space,
+        }

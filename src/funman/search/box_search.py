@@ -240,21 +240,64 @@ class BoxSearch(Search):
         else:
             return True
 
-    def _initialize_encoding(self, solver, episode):
+    def _initialize_encoding(self, solver: Solver, episode: BoxSearchEpisode):
+        """
+        The formula encoding the model M is of the form:
+
+        AM <=> M
+
+        where AM is a symbol denoting whether we assume M is true.  With this formula we can push/pop AM or Not(AM) to assert M or Not(M) without popping M.  Similarly we also assert the query as:
+
+        AQ <==> Q
+
+        Parameters
+        ----------
+        solver : Solver
+            pysmt solver object
+        episode : episode
+            data for the current search
+        """
         solver.push(1)
         solver.add_assertion(episode.problem.model_encoding.formula)
+        solver.add_assertion(episode.problem.query_encoding.formula)
 
     def _initialize_box(self, solver, box):
         solver.push(1)
         solver.add_assertion(box.to_smt())
 
     def _setup_false_query(self, solver, episode):
+        """
+        Setup the assumptions so that satisfying the formulas requires that  either the model or the query is false
+
+        Parameters
+        ----------
+        solver : Solver
+            pysmt solver object
+        episode : episode
+            data for the current search
+        """
         solver.push(1)
-        solver.add_assertion(Not(episode.problem.query_encoding.formula))
+        solver.add_assertion(
+            Not(
+                And(episode.problem.assume_model, episode.problem.assume_query)
+            )
+        )
 
     def _setup_true_query(self, solver, episode):
+        """
+        Setup the assumptions so that satisfying the formulas requires that both the model and the query are true
+
+        Parameters
+        ----------
+        solver : Solver
+            pysmt solver object
+        episode : episode
+            data for the current search
+        """
         solver.push(1)
-        solver.add_assertion(episode.problem.query_encoding.formula)
+        solver.add_assertion(
+            And(episode.problem.assume_model, episode.problem.assume_query)
+        )
 
     def _get_false_points(self, solver, episode, box, rval):
         false_points = [
@@ -268,11 +311,9 @@ class BoxSearch(Search):
                 # Record the false point
                 res = solver.get_model()
                 false_points = [episode._extract_point(res)]
-                map(episode.add_false_point, false_points)
-                map(
-                    lambda x: rval.put(Point.encode_false_point(x)),
-                    false_points,
-                )
+                for point in false_points:
+                    episode._add_false_point(point)
+                    rval.put(Point.encode_false_point(point))
             solver.pop(1)  # Remove false query
         return false_points
 
@@ -288,12 +329,10 @@ class BoxSearch(Search):
                 # Record the true point
                 res1 = solver.get_model()
                 true_points = [episode._extract_point(res1)]
-                map(episode._add_true_point, true_points)
-                map(
-                    lambda x: rval.put(Point.encode_true_point(x)),
-                    true_points,
-                )
-            solver.pop(1)  # Remove true query
+                for point in true_points:
+                    episode._add_true_point(point)
+                    rval.put(Point.encode_true_point(point))
+                solver.pop(1)  # Remove true query
         return true_points
 
     def _expand(

@@ -147,27 +147,29 @@ class BoxPlotter(object):
         # plt.show(block=False)
 
     def plot_add_patch(self, box: Box, color="r"):
-        if self.py:  # Don't draw a box unless it is > 1-dimension
-            rect = patches.Rectangle(
-                (box.bounds[self.px].lb, box.bounds[self.py].lb),
-                box.bounds[self.px].width(),
-                box.bounds[self.py].width(),
-                linewidth=1,
-                edgecolor=color,
-                facecolor="none",
-            )
+        lb_y = box.bounds[self.py].lb if self.py else -0.05
+        width_y = box.bounds[self.py].width() if self.py else 1e-1
+        rect = patches.Rectangle(
+            (box.bounds[self.px].lb, lb_y),
+            box.bounds[self.px].width(),
+            width_y,
+            linewidth=1,
+            edgecolor=color,
+            facecolor="none",
+        )
 
-            # Add the patch to the Axes
-            self.ax.add_patch(rect)
+        # Add the patch to the Axes
+        self.ax.add_patch(rect)
 
-            self.fig.canvas.draw()
-            self.fig.canvas.flush_events()
-            # plt.show(block=False)
+        self.fig.canvas.draw()
+        self.fig.canvas.flush_events()
+        # plt.show(block=False)
 
     def plot_add_point(self, point: Point, color="r", shape="x", alpha=0.2):
+        yval = point.values[self.py] if self.py else 0.0
         plt.scatter(
             point.values[self.px],
-            point.values[self.py],
+            yval,
             color=color,
             marker=shape,
             alpha=alpha,
