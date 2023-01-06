@@ -31,7 +31,7 @@ ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 # COPY ./ibex-lib /ibex-lib
 RUN git clone \
   --depth 1 \
-  --branch ibex-2.8.9_using_mathlib-2.1.1 \
+  --branch ibex-2.8.5_using_mathlib-2.1.1 \
   https://github.com/jgladwig/ibex-lib.git
 
 COPY ./Makefile.ibex /ibex-lib/Makefile
@@ -46,8 +46,6 @@ ARG TARGETPLATFORM
 ENV TARGETPLATFOMR=$TARGETPLATFORM
 
 WORKDIR /ibex-lib
-RUN make mathlib
-RUN make gaol
-RUN make ibex
+RUN make ibex INSTALL_PREFIX=/usr LP_LIB=clp
 
 CMD [ "/bin/bash" ]

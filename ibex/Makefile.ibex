@@ -17,6 +17,8 @@ ibex: paths ${INTERVAL_LIB}
 	./waf configure \
 		--prefix=${IBEX_INSTALL_PREFIX} \
 		--enable-shared \
+		--with-optim \
+		--with-affine-extended \
 		--interval-lib=${INTERVAL_LIB} \
 		--lp-lib=${LP_LIB} \
 		--gaol-dir=${GAOL_INSTALL_PREFIX} \
