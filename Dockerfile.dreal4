@@ -1,4 +1,9 @@
-FROM sift/funman-ibex:linux-amd64
+ARG TARGET_OS=linux
+ARG TARGET_ARCH=x86_64
+FROM sift/funman-ibex:${TARGET_OS}-${TARGET_ARCH}
+# reinit with above values
+ARG TARGET_OS
+ARG TARGET_ARCH
 
 RUN apt update && apt install -y --no-install-recommends \
     apt-utils \
@@ -27,17 +32,17 @@ RUN apt update && apt install -y --no-install-recommends \
 # Install bazel
 
 ARG BAZEL_VERSION=6.0.0 
-ARG BAZEL_DEBNAME=bazel_${BAZEL_VERSION}-linux-x86_64.deb
-ARG BAZEL_URL=https://github.com/bazelbuild/bazel/releases/download/${BAZEL_VERSION}/${BAZEL_DEBNAME}
-ARG BAZEL_SHA256=b27749e59d7d57d9cf6ca0edce7fbd26bb677797217429052d62ee0f2d008b35
-RUN wget "${BAZEL_URL}" \
-    && if echo "${BAZEL_SHA256}  ${BAZEL_DEBNAME}" | sha256sum -c; then \
-      dpkg --install --skip-same-version ./"${BAZEL_DEBNAME}" || apt-get -f install -y \
-      && rm "${BAZEL_DEBNAME}" ; \
+ARG BAZEL_TARGET_ARCH=${TARGET_ARCH}
+ARG BAZEL_TARGET_OS=${TARGET_OS}
+ARG BAZEL_RELEASE=bazel-${BAZEL_VERSION}-${BAZEL_TARGET_OS}-${BAZEL_TARGET_ARCH}
+ARG BAZEL_URL=https://github.com/bazelbuild/bazel/releases/download/${BAZEL_VERSION}/${BAZEL_RELEASE}
+RUN wget -q "${BAZEL_URL}.sha256" && wget -q "${BAZEL_URL}" \
+    && if cat "${BAZEL_RELEASE}.sha256" | sha256sum -c; then \
+      chmod 755 ${BAZEL_RELEASE} \
+      && mv ${BAZEL_RELEASE} /usr/local/bin/bazel \
+      && rm "${BAZEL_RELEASE}.sha256"; \
     else \
-      echo "SHA256 does not match ${BAZEL_DEBNAME}:" \
-      echo "    expected: ${BAZEL_SHA256}" \
-      echo "    actual  : $(sha256sum "${BAZEL_DEBNAME}")" \
+      echo "SHA256 does not match for ${BAZEL_RELEASE}:" \
       exit 1 ; \
     fi
 
@@ -52,12 +57,13 @@ WORKDIR /dreal4
 ARG DEBIAN_FRONTEND=noninteractive
 # Build dReal4
 RUN cd /dreal4 \
+      && sed -i -E "s/ClpSimplex\.hpp/coin\/ClpSimplex\.hpp/g" /usr/include/ibex/ibex_LPLibWrapper.h \
       && bazel build //:archive \
       && tar xfz bazel-bin/archive.tar.gz --strip-components 3 -C /usr \
 # Install Python3 Binding
       && pip3 install wheel \
       && python3 setup.py bdist_wheel \
-      && pip3 install ./dist/dreal-*-cp38-none-manylinux1_x86_64.whl \
+      && pip3 install ./dist/dreal-*-cp38-none-manylinux1_${BAZEL_TARGET_ARCH}.whl \
       && bazel clean --expunge \
 # Clean up
       && cd / \

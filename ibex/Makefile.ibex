@@ -1,7 +1,7 @@
 
 INSTALL_PREFIX?=/usr/local
 INTERVAL_LIB?=gaol
-LP_LIB?=none
+LP_LIB?=clp
 
 MATHLIB_INSTALL_PREFIX?=${INSTALL_PREFIX}
 MATHLIB_INCDIR=${MATHLIB_INSTALL_PREFIX}/include
@@ -11,7 +11,18 @@ IBEX_INSTALL_PREFIX?=${INSTALL_PREFIX}
 
 DEPS_WORKSPACE=/tmp/ibex-deps
 
-ibex: paths ${INTERVAL_LIB}
+LP_LIB_ARGS=
+ifeq ($(LP_LIB), clp)
+ LP_LIB_ARGS=--clp-path=/usr
+endif
+
+INTERVAL_LIB_ARGS=
+ifeq ($(INTERVAL_LIB), gaol)
+ INTERVAL_LIB_ARGS+=--gaol-dir=${GAOL_INSTALL_PREFIX}
+ INTERVAL_LIB_ARGS+=--mathlib-dir=${MATHLIB_INSTALL_PREFIX}
+endif
+
+ibex: paths ${INTERVAL_LIB} ${LP_LIB}
 	mkdir -p ${IBEX_INSTALL_PREFIX}
 	patch -p1 -i patches/remove_gdtoa.patch
 	./waf configure \
@@ -19,15 +30,23 @@ ibex: paths ${INTERVAL_LIB}
 		--enable-shared \
 		--with-optim \
 		--with-affine-extended \
-		--interval-lib=${INTERVAL_LIB} \
-		--lp-lib=${LP_LIB} \
-		--gaol-dir=${GAOL_INSTALL_PREFIX} \
-		--mathlib-dir=${MATHLIB_INSTALL_PREFIX}
+		--interval-lib=${INTERVAL_LIB} ${INTERVAL_LIB_ARGS} \
+		--lp-lib=${LP_LIB} ${LIB_LIB_ARGS}
 	./waf build install clean
 	ldconfig
 
 paths:
 	mkdir -p ${DEPS_WORKSPACE}
+	touch $@
+
+none:
+	@echo Building with LP_LIB=none
+	touch $@
+
+clp:
+	@echo Building with LP_LIB=clp
+	apt update
+	apt install -y coinor-clp coinor-libclp-dev
 	touch $@
 
 mathlib: paths

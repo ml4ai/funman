@@ -5,6 +5,7 @@ DEPLOY_TAG ?= funman
 
 FUNMAN_VERSION ?= 0.0.0
 CMD_UPDATE_VERSION = sed -i -E 's/^__version__ = \"[0-9]+\.[0-9]+\.[0-9]+((a|b|rc)[0-9]*)?\"/__version__ = \"${FUNMAN_VERSION}\"/g'
+SHELL_GET_TARGET_ARCH = $(shell test -z $(TARGET_ARCH) && arch || echo $(TARGET_ARCH))
 
 USING_PODMAN := $(shell docker --version | grep -q podman && echo 1 || echo 0)
 
@@ -46,13 +47,17 @@ deploy-pages:
 	git checkout main
 	git branch -D gh-pages
 
-build-docker-ibex:
-	cd ./ibex && make build-ibex-image
+build-ibex:
+	cd ./ibex && make build-ibex-image TARGET_ARCH=$(SHELL_GET_TARGET_ARCH)
 
-build-docker-dreal:
-	docker build -t funman_dreal4 -f ./Dockerfile.dreal4 .
+build-dreal:
+	docker build \
+		-t sift/funman-dreal4 \
+		--build-arg TARGET_OS=linux \
+		--build-arg TARGET_ARCH=$(SHELL_GET_TARGET_ARCH) \
+		-f ./Dockerfile.dreal4 .
 
-build-docker: build-docker-dreal
+build-docker: build-dreal
 	DOCKER_BUILDKIT=1 docker build \
 		--build-arg UNAME=$$USER \
 		--build-arg UID=$$(id -u) \
