@@ -1,11 +1,15 @@
 DOCS_REMOTE ?= origin
 DEV_CONTAINER ?= funman-dev
-DEV_TAG ?= funman-dev
-DEPLOY_TAG ?= funman
+DEV_TAG ?= sift/funman-dev
+DEPLOY_TAG ?= sift/funman
 
 FUNMAN_VERSION ?= 0.0.0
 CMD_UPDATE_VERSION = sed -i -E 's/^__version__ = \"[0-9]+\.[0-9]+\.[0-9]+((a|b|rc)[0-9]*)?\"/__version__ = \"${FUNMAN_VERSION}\"/g'
-SHELL_GET_TARGET_ARCH = $(shell test -z $(TARGET_ARCH) && arch || echo $(TARGET_ARCH))
+SHELL_GET_TARGET_ARCH := $(shell test ! -z $(TARGET_ARCH) && echo $(TARGET_ARCH) || \
+	arch \
+	| sed s/x86_64/amd64/g \
+	| sed s/aarch64/arm64/g \
+)
 
 USING_PODMAN := $(shell docker --version | grep -q podman && echo 1 || echo 0)
 
@@ -51,10 +55,8 @@ build-ibex:
 	cd ./ibex && make build-ibex-image TARGET_ARCH=$(SHELL_GET_TARGET_ARCH)
 
 build-dreal:
-	docker build \
-		-t sift/funman-dreal4 \
-		--build-arg TARGET_OS=linux \
-		--build-arg TARGET_ARCH=$(SHELL_GET_TARGET_ARCH) \
+	DOCKER_BUILDKIT=1 docker build \
+		-t sift/funman-dreal4:linux-$(SHELL_GET_TARGET_ARCH) \
 		-f ./Dockerfile.dreal4 .
 
 build-docker: build-dreal
@@ -87,8 +89,8 @@ run-docker:
 		-v $$PWD:/home/$$USER/funman \
 		${DEV_TAG}:latest
 
-run-podman:
-	podman run \
+run-docker-se:
+	docker run \
 		-d \
 		-it \
 		--cpus=8 \
@@ -96,7 +98,6 @@ run-podman:
 		--user $$USER \
 		-p 127.0.0.1:8888:8888 \
 		-v $$PWD:/home/$$USER/funman \
-		--userns=keep-id \
 		${DEV_TAG}:latest
 
 launch-dev-container:

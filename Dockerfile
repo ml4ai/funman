@@ -1,4 +1,4 @@
-FROM funman_dreal4:latest
+FROM sift/funman-dreal4:${TARGETOS}-${TARGETARCH}
 
 # Install base dependencies
 RUN apt update && apt install -y --no-install-recommends \
