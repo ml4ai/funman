@@ -1,5 +1,7 @@
-FROM sift/funman-ibex:${TARGETOS}-${TARGETARCH}
-# reinit with above values
+ARG SIFT_REGISTRY_ROOT
+FROM ${SIFT_REGISTRY_ROOT}funman-ibex:${TARGETOS}-${TARGETARCH}
+ARG TARGETOS
+ARG TARGETARCH
 
 RUN apt update && apt install -y --no-install-recommends \
     apt-utils \
@@ -33,6 +35,7 @@ ARG BAZEL_TARGET_OS=${TARGETOS}
 RUN BAZEL_TARGET_ARCH=$(echo "$BAZEL_TARGET_ARCH" | sed 's/amd64/x86_64/') \
     && BAZEL_RELEASE=bazel-${BAZEL_VERSION}-${BAZEL_TARGET_OS}-${BAZEL_TARGET_ARCH} \
     && BAZEL_URL=https://github.com/bazelbuild/bazel/releases/download/${BAZEL_VERSION}/${BAZEL_RELEASE} \
+    && echo $BAZEL_RELEASE \
     && wget -q "${BAZEL_URL}.sha256" && wget -q "${BAZEL_URL}" \
     && if cat "${BAZEL_RELEASE}.sha256" | sha256sum -c; then \
       chmod 755 ${BAZEL_RELEASE} \

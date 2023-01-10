@@ -2,15 +2,11 @@
 TARGET_OS?=linux
 TARGET_ARCH?=amd64
 
-IMAGE_NAME=sift/funman-ibex
+IMAGE_NAME=funman-ibex
+IMAGE_TAG=$(TARGET_OS)-$(TARGET_ARCH)
 BUILD_FLAGS?=
 
 build-ibex-image:
-	DOCKER_BUILDKIT=1 docker buildx build $(BUILD_FLAGS) \
-		--output "type=docker" \
-		--platform $(TARGET_OS)/$(TARGET_ARCH) \
-		--tag $(IMAGE_NAME):$(TARGET_OS)-$(TARGET_ARCH) \
-		-f ./Dockerfile .
 
 build-ibex-images:
 	for arch in arm64 amd64 ; do \
