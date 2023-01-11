@@ -18,15 +18,11 @@ RUN apt update && apt install -y --no-install-recommends \
     ninja-build \
     patch \
     pkg-config \
+    python-is-python3 \
     python3-dev \
     python3-pip \
     python3-venv \
     && rm -rf /var/lib/apt/lists/*
-
-# Initialize python virtual environment
-ENV VIRTUAL_ENV="/.ibex_env"
-RUN python3 -m venv $VIRTUAL_ENV
-ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
 # COPY ./ibex-lib /ibex-lib
 RUN git clone \

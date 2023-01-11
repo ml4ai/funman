@@ -156,14 +156,14 @@ run-docker-se:
 		-it \
 		--cpus=8 \
 		--name ${DEV_CONTAINER} \
-		--user $$USER \
 		-p 127.0.0.1:8888:8888 \
-		-v $$PWD:/home/$$USER/funman \
+		-v $$PWD:/home/$$USER/funman:Z \
+		--userns=keep-id \
 		${DEV_NAME}:latest
 
 launch-dev-container:
 	@docker container inspect ${DEV_CONTAINER} > /dev/null 2>&1 \
-		|| make run
+		|| make run-docker
 	@test $(shell docker container inspect -f '{{.State.Running}}' ${DEV_CONTAINER}) == 'true' > /dev/null 2>&1 \
 		|| docker start ${DEV_CONTAINER}
 	@docker attach ${DEV_CONTAINER}
