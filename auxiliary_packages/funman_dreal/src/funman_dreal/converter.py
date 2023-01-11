@@ -33,8 +33,19 @@ class DRealConverter(Converter, DagWalker):
         # self._check_term_result(res)
         return res
 
+    def walk_or(self, formula, args, **kwargs):
+        res = functools.reduce(lambda a, b: dreal.Or(a, b), args)
+        # self._check_term_result(res)
+        return res
+
     def walk_not(self, formula, args, **kwargs):
         res = dreal.Not(args[0])
+        return res
+
+    def walk_forall(self, formula, args, **kwargs):
+        symbols = [self.walk(s) for s in formula._content.payload]
+        res = dreal.forall(symbols, args[0])
+
         return res
 
     def walk_symbol(self, formula, **kwargs):
