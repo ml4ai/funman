@@ -1,5 +1,6 @@
 ARG SIFT_REGISTRY_ROOT
-FROM ${SIFT_REGISTRY_ROOT}funman-dreal4:${TARGETOS}-${TARGETARCH}
+ARG DREAL_TAG=${TARGETOS}-${TARGETARCH}
+FROM ${SIFT_REGISTRY_ROOT}funman-dreal4:${DREAL_TAG}
 
 # Install base dependencies
 RUN apt update && apt install -y --no-install-recommends \

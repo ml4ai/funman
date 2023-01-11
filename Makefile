@@ -23,6 +23,8 @@ TARGET_TAG=$(TARGET_OS)-$(SHELL_GET_TARGET_ARCH)
 IBEX_TAGGED_NAME=$(IBEX_NAME):$(TARGET_TAG)
 DREAL_TAGGED_NAME=$(DREAL_NAME):$(TARGET_TAG)
 
+MULTIPLATFORM_TAG=multiplatform
+
 .PHONY: docs
 
 venv:
@@ -84,6 +86,14 @@ build-ibex: use-docker-driver
 	docker tag $(IBEX_TAGGED_NAME) $(SIFT_REGISTRY_ROOT)$(IBEX_TAGGED_NAME)
 	docker push $(SIFT_REGISTRY_ROOT)$(IBEX_TAGGED_NAME)
 
+multiplatform-build-ibex: use-docker-driver
+	DOCKER_BUILDKIT=1 docker buildx build \
+		--network=host \
+		--output "type=registry" \
+		--platform linux/arm64,linux/amd64 \
+		--tag $(SIFT_REGISTRY_ROOT)$(IBEX_NAME):$(MULTIPLATFORM_TAG) \
+		-f ./ibex/Dockerfile ./ibex
+
 build-dreal: use-docker-driver build-ibex
 	DOCKER_BUILDKIT=1 docker buildx build \
 		--output "type=docker" \
@@ -94,12 +104,32 @@ build-dreal: use-docker-driver build-ibex
 	docker tag $(DREAL_TAGGED_NAME) $(SIFT_REGISTRY_ROOT)$(DREAL_TAGGED_NAME)
 	docker push $(SIFT_REGISTRY_ROOT)$(DREAL_TAGGED_NAME)
 
+multiplatform-build-dreal: use-docker-driver multiplatform-build-ibex
+	DOCKER_BUILDKIT=1 docker buildx build \
+		--network=host \
+		--output "type=registry" \
+		--platform linux/arm64,linux/amd64 \
+		--build-arg SIFT_REGISTRY_ROOT=$(SIFT_REGISTRY_ROOT) \
+		--build-arg IBEX_TAG=$(MULTIPLATFORM_TAG) \
+		--tag $(SIFT_REGISTRY_ROOT)$(DREAL_NAME):$(MULTIPLATFORM_TAG) \
+		-f ./Dockerfile.dreal4 .
+
 build-docker: use-docker-driver build-dreal
 	DOCKER_BUILDKIT=1 docker build \
 		--build-arg UNAME=$$USER \
 		--build-arg UID=$$(id -u) \
 		--build-arg GID=$$(id -g) \
 		-t ${DEV_NAME} -f ./Dockerfile .
+
+multiplatform: use-docker-driver multiplatform-build-dreal
+	DOCKER_BUILDKIT=1 docker buildx build \
+		--network=host \
+		--output "type=registry" \
+		--platform linux/arm64,linux/amd64 \
+		--build-arg SIFT_REGISTRY_ROOT=$(SIFT_REGISTRY_ROOT) \
+		--build-arg DREAL_TAG=$(MULTIPLATFORM_TAG) \
+		--tag $(SIFT_REGISTRY_ROOT)$(DEV_NAME):$(MULTIPLATFORM_TAG) \
+		-f ./Dockerfile .
 
 build: build-docker
 
