@@ -66,7 +66,6 @@ RUN cd /dreal4 \
       && sed -i -E "s/ClpSimplex\.hpp/coin\/ClpSimplex\.hpp/g" /usr/include/ibex/ibex_LPLibWrapper.h \
       && sed -i -E "s/\/usr\/include\/x86_64-linux-gnu/\/usr\/include\/$(arch)-linux-gnu/g" ./tools/gmp_repository.bzl \
       && sed -i -E "s/manylinux1/manylinux_$(ldd --version | grep '^ldd' | sed -E 's/^ldd.*([0-9]+)\.([0-9]+)$/\1_\2/')/" ./setup.py \
-      && cat ./tools/gmp_repository.bzl \
       && bazel build //:archive \
       && tar xfz bazel-bin/archive.tar.gz --strip-components 3 -C /usr \
 # Install Python3 Binding
