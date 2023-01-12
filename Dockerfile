@@ -5,11 +5,12 @@ FROM ${SIFT_REGISTRY_ROOT}funman-dreal4:${DREAL_TAG}
 # Install base dependencies
 RUN apt update && apt install -y --no-install-recommends \
     curl \
-    make \
     git \
+    make \
     python3-dev \
     python3-pip \
     python3-venv \
+    sudo \
     && rm -rf /var/lib/apt/lists/*
 
 # Install automates dependencies
@@ -68,6 +69,15 @@ COPY --chown=$UID:$GID . funman
 RUN pip install -e funman
 RUN pip install -e funman/auxiliary_packages/funman_demo
 RUN pip install -e funman/auxiliary_packages/funman_dreal
+
+# configure a script for updating the local version of dreal
+RUN mkdir -p /home/$UNAME/.local/bin
+RUN echo 'PATH="$HOME/.local/bin:$PATH"' >> /home/$UNAME/.bashrc
+COPY --chmod=755 tools/update-dreal.user /home/$UNAME/.local/bin/update-dreal
+USER root
+COPY --chmod=744 tools/update-dreal.root /usr/local/bin/update-dreal
+RUN echo "%$UNAME ALL=(ALL) NOPASSWD:/usr/local/bin/update-dreal" >> /etc/sudoers
+USER $UNAME
 
 WORKDIR /home/$UNAME/funman
 CMD /bin/bash
