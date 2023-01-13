@@ -3,22 +3,23 @@ This module represents the abstract base classes for models.
 """
 from abc import ABC, abstractmethod
 from copy import deepcopy
-from typing import Union
+from typing import Dict, List, Union
 
+from pydantic import BaseModel
+from pysmt.fnode import FNode
 from pysmt.shortcuts import REAL, Symbol
 
 from funman.constants import NEG_INFINITY, POS_INFINITY
 from funman.model.query import *
 
 
-class Model(ABC):
+class Model(ABC, BaseModel):
     """
     The abstract base class for Models.
     """
 
-    def __init__(self, init_values=None, parameter_bounds=None) -> None:
-        self.init_values = init_values
-        self.parameter_bounds = parameter_bounds
+    init_values: Dict[str, float] = None
+    parameter_bounds: Dict[str, List[float]] = None
 
     @abstractmethod
     def default_encoder(self) -> "Encoder":
@@ -33,7 +34,7 @@ class Model(ABC):
         pass
 
 
-class Parameter(object):
+class Parameter(BaseModel):
     """
     A parameter is a free variable for a Model.  It has the following attributes:
 
@@ -45,19 +46,13 @@ class Parameter(object):
 
     """
 
-    def __init__(
-        self,
-        name,
-        lb: Union[float, str] = NEG_INFINITY,
-        ub: Union[float, str] = POS_INFINITY,
-        symbol=None,
-    ) -> None:
-        self.name = name
-        self.lb = lb
-        self.ub = ub
+    name: str
+    lb: Union[float, str] = NEG_INFINITY
+    ub: Union[float, str] = POS_INFINITY
+    # symbol: FNode = None
 
-        # if the symbol is None, then need to get the symbol from a solver
-        self.__symbol = symbol
+    class Config:
+        arbitrary_types_allowed = True
 
     def _symbol(self):
         if self.__symbol is None:

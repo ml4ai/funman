@@ -1,32 +1,26 @@
 """
 This submodule defines a consistency scenario.  Consistency scenarios specify an existentially quantified model.  If consistent, the solution assigns any unassigned variable, subject to their bounds and other constraints.  
 """
-from typing import Any
+from typing import List
 
 import matplotlib.pyplot as plt
 import pandas as pd
+from pysmt.solvers.solver import Model as pysmt_Model
 
+from funman.model.model import Model
+from funman.model.query import Query
 from funman.scenario import AnalysisScenario, AnalysisScenarioResult
-from funman.search.search import SearchConfig
+from funman.search.search import SearchConfig, SearchEpisode
 from funman.search.smt_check import SMTCheck
 from funman.translate import Encoder
+from funman.translate.translate import Encoding
 
 
 class ConsistencyScenario(AnalysisScenario):
     """
     The ConsistencyScenario class is an Analysis Scenario that analyzes a Model to find assignments to all variables, if consistent.
-    """
 
-    def __init__(
-        self,
-        model: "Model",
-        query: "Query",
-        smt_encoder: Encoder = None,
-    ) -> None:
-        """
-        Create a Consistency Scenario.
-
-        Parameters
+    Parameters
         ----------
         model : Model
             model to check
@@ -34,17 +28,14 @@ class ConsistencyScenario(AnalysisScenario):
             model query
         smt_encoder : Encoder, optional
             method to encode the scenario, by default None
-        """
-        super(ConsistencyScenario, self).__init__()
-        self.smt_encoder = (
-            smt_encoder if smt_encoder else model.default_encoder()
-        )
-        self.model_encoding = None
-        self.query_encoding = None
+    """
 
-        self.searches = []
-        self.model = model
-        self.query = query
+    model: Model
+    query: Query
+    smt_encoder: Encoder = None
+    model_encoding: Encoding = None
+    query_encoding: Encoding = None
+    searches: List[SearchEpisode] = []
 
     def solve(
         self, config: SearchConfig = None
@@ -93,11 +84,16 @@ class ConsistencyScenarioResult(AnalysisScenarioResult):
     search statistics.
     """
 
-    def __init__(self, result: Any, scenario: ConsistencyScenario) -> None:
-        super().__init__()
-        self.consistent = result
-        self.scenario = scenario
-        self.query_satisfied = result is not None
+    consistent: pysmt_Model
+    scenario: ConsistencyScenario
+    _query_satisfied: bool = None
+
+    class Config:
+        arbitrary_types_allowed = True
+
+    def query_satisfied(self):
+        if self._query_satisfied is None:
+            self._query_satisfied = self.consistent is not None
 
     def _parameters(self):
         if self.consistent:

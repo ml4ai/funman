@@ -1,19 +1,23 @@
 from abc import ABC, abstractclassmethod
+from typing import List
+
+from pydantic import BaseModel
+
+from funman.model.model import Parameter
 
 
-class Config(object):
+class Config(BaseModel):
     """
     Base definition of a configuration object
     """
 
 
-class AnalysisScenario(object):
+class AnalysisScenario(BaseModel):
     """
     Abstract class for Analysis Scenarios.
     """
 
-    def __init__(self):
-        self.parameters = []
+    parameters: List[Parameter]
 
     @abstractclassmethod
     def solve(self, config: Config):
@@ -24,7 +28,7 @@ class AnalysisScenario(object):
         pass
 
 
-class AnalysisScenarioResult(ABC):
+class AnalysisScenarioResult(ABC, BaseModel):
     """
     Abstract class for AnalysisScenario result data.
     """

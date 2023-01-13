@@ -1,38 +1,12 @@
-from typing import Dict, List, Optional, Union
+from typing import Optional, Union
 
 import uvicorn
 from fastapi import FastAPI
-from pydantic import BaseModel
 
 from funman import Funman
-from funman.scenario import AnalysisScenario as IAnalysisScenario
-from funman.scenario import AnalysisScenarioResult as IAnalysisScenarioResult
-from funman.scenario import Config as IConfig
-from funman.scenario import ConsistencyScenario as IConsistencyScenario
+from funman.scenario import AnalysisScenario, AnalysisScenarioResult, Config
 
 app = FastAPI()
-
-
-class Parameter(BaseModel):
-    name: str
-    lb: Union[float, str]
-    ub: Union[float, str]
-
-
-class AnalysisScenario(BaseModel):
-    parameters: List[Parameter]
-
-
-class ConsistencyScenario(AnalysisScenario):
-    model: Dict
-
-
-class AnalysisScenarioResult(BaseModel):
-    result: str
-
-
-class Config(BaseModel):
-    pass
 
 
 @app.get("/")
@@ -45,12 +19,8 @@ def solve(
     scenario: AnalysisScenario,
     config: Optional[Config],
 ) -> AnalysisScenarioResult:
-    i_scenario = IAnalysisScenario()
-    i_scenario.parameters = scenario.parameters
-    i_config = IConfig()
     f = Funman()
-    i_result: IAnalysisScenarioResult = f.solve(i_scenario, config=i_config)
-    result: AnalysisScenarioResult = AnalysisScenarioResult(result="bar")
+    result: AnalysisScenarioResult = f.solve(scenario, config=config)
     return result
 
 
