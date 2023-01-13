@@ -3,8 +3,17 @@
 set -e
 
 USER=$(id -un $UID)
-cd /home/$USER/dreal4
-bazel build //:archive
+DREAL_ROOT=/home/$USER/dreal4
+DREAL_WHEEL=dreal-*-cp38-none-manylinux_$(ldd --version | grep '^ldd' | sed -E 's/^ldd.*([0-9]+)\.([0-9]+)$/\1_\2/')_$(arch).whl \
+
+FUNMAN_ENV_PATH=/home/$USER/funman_venv
+FUNMAN_PYTHON=${FUNMAN_ENV_PATH}/bin/python
+FUNMAN_PIP=${FUNMAN_ENV_PATH}/bin/pip
+
+cd "${DREAL_ROOT}"
+bazel build --python_path=${FUNMAN_PYTHON} //:archive
 sudo /usr/local/bin/update-dreal
-python3 setup.py bdist_wheel
+
+${FUNMAN_PYTHON} setup.py bdist_wheel
+${FUNMAN_PIP} install --force-reinstall ${DREAL_ROOT}/dist/${DREAL_WHEEL}
 

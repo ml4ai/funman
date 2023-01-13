@@ -77,6 +77,11 @@ COPY --chmod=755 tools/update-dreal.user /home/$UNAME/.local/bin/update-dreal
 USER root
 COPY --chmod=744 tools/update-dreal.root /usr/local/bin/update-dreal
 RUN echo "%$UNAME ALL=(ALL) NOPASSWD:/usr/local/bin/update-dreal" >> /etc/sudoers
+
+# for debugging
+RUN apt update && apt install -y --no-install-recommends \
+    vim \
+    && rm -rf /var/lib/apt/lists/*
 USER $UNAME
 
 WORKDIR /home/$UNAME/funman
