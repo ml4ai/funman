@@ -198,3 +198,4 @@ test/smtlib/out
 test/out
 .docker_venv
 notebooks/*png
+funman-api-client
