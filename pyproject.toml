@@ -59,4 +59,4 @@ extend_skip =  '''
   | dist
 )/
 '''
-skip_glob = ["**/__init__.py", "*venv"]
+skip_glob = ["**/__init__.py", "*venv*"]

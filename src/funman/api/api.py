@@ -1,12 +1,13 @@
-from typing import Optional, Union
+from typing import Optional
 
 import uvicorn
 from fastapi import FastAPI
 
 from funman import Funman
 from funman.scenario import AnalysisScenario, AnalysisScenarioResult, Config
+from funman.scenario.consistency import ConsistencyScenario
 
-app = FastAPI()
+app = FastAPI(title="funman_api")
 
 
 @app.get("/")
@@ -16,17 +17,12 @@ def read_root():
 
 @app.put("/solve")
 def solve(
-    scenario: AnalysisScenario,
+    scenario: ConsistencyScenario,
     config: Optional[Config],
 ) -> AnalysisScenarioResult:
     f = Funman()
     result: AnalysisScenarioResult = f.solve(scenario, config=config)
     return result
-
-
-@app.get("/items/{item_id}")
-def read_item(item_id: int, q: Union[str, None] = None):
-    return {"item_id": item_id, "q": q}
 
 
 if __name__ == "__main__":

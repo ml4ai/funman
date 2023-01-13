@@ -3,7 +3,7 @@ This module represents the abstract base classes for models.
 """
 from abc import ABC, abstractmethod
 from copy import deepcopy
-from typing import Dict, List, Union
+from typing import Dict, List
 
 from pydantic import BaseModel
 from pysmt.fnode import FNode
@@ -47,8 +47,10 @@ class Parameter(BaseModel):
     """
 
     name: str
-    lb: Union[float, str] = NEG_INFINITY
-    ub: Union[float, str] = POS_INFINITY
+    # lb: Union[float, str] = NEG_INFINITY
+    # ub: Union[float, str] = POS_INFINITY
+    lb: str = NEG_INFINITY
+    ub: str = POS_INFINITY
     # symbol: FNode = None
 
     class Config:
