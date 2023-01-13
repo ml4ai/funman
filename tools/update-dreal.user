@@ -1,0 +1,10 @@
+#!/bin/bash
+
+set -e
+
+USER=$(id -un $UID)
+cd /home/$USER/dreal4
+bazel build //:archive
+sudo /usr/local/bin/update-dreal
+python3 setup.py bdist_wheel
+

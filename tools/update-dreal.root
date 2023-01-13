@@ -1,0 +1,11 @@
+#!/bin/bash
+
+set -e
+
+if [ ! -e 'bazel-bin/archive.tar.gz' ] ; then
+  echo "bazel-bin/archive.tar.gz does not exist"
+  exit 1
+fi
+tar xfz bazel-bin/archive.tar.gz --overwrite --strip-components 3 -C /usr
+echo "Applied dreal archive to /usr"
+

@@ -1,37 +1,84 @@
-FROM ubuntu:20.04
+ARG SIFT_REGISTRY_ROOT
+ARG IBEX_TAG=${TARGETOS}-${TARGETARCH}
+FROM ${SIFT_REGISTRY_ROOT}funman-ibex:${IBEX_TAG}
+ARG TARGETOS
+ARG TARGETARCH
 
 RUN apt update && apt install -y --no-install-recommends \
+    apt-utils \
+    bison \
+    coinor-libclp-dev \
+    g++ \
     git \
+    libfl-dev \
+    libgmp-dev \
+    libnlopt-cxx-dev \
+    libpython3-dev \
+    pkg-config \
+    python-is-python3 \
+    python3-dev \
+    python3-distutils \
+    python3-minimal \
+    python3-pip \
+    python3-setuptools \
+    python3-wheel \
+    unzip \
+    wget \
+    zlib1g-dev \
     && apt install -y --reinstall ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
+# Install bazel
+
+ARG BAZEL_VERSION=6.0.0 
+ARG BAZEL_TARGET_ARCH=${TARGETARCH}
+ARG BAZEL_TARGET_OS=${TARGETOS}
+RUN BAZEL_TARGET_ARCH=$(echo "$BAZEL_TARGET_ARCH" | sed 's/amd64/x86_64/') \
+    && BAZEL_RELEASE=bazel-${BAZEL_VERSION}-${BAZEL_TARGET_OS}-${BAZEL_TARGET_ARCH} \
+    && BAZEL_URL=https://github.com/bazelbuild/bazel/releases/download/${BAZEL_VERSION}/${BAZEL_RELEASE} \
+    && echo $BAZEL_RELEASE \
+    && wget -q "${BAZEL_URL}.sha256" && wget -q "${BAZEL_URL}" \
+    && if cat "${BAZEL_RELEASE}.sha256" | sha256sum -c; then \
+      chmod 755 ${BAZEL_RELEASE} \
+      && mv ${BAZEL_RELEASE} /usr/local/bin/bazel \
+      && rm "${BAZEL_RELEASE}.sha256"; \
+    else \
+      echo "SHA256 does not match for ${BAZEL_RELEASE}:" \
+      exit 1 ; \
+    fi
+
 RUN git clone --depth=1 https://github.com/dreal/dreal4.git /dreal4 \
     && cd /dreal4 \
-    && git fetch --depth=1 origin 7bbd671fb6ccaf5d8809562ff475e19eec51de2e \
-    && git checkout 7bbd671fb6ccaf5d8809562ff475e19eec51de2e
+    && git fetch --depth=1 origin cf35b198bd3e9a9366740c6c9e244955a81bc229 \
+    && git checkout cf35b198bd3e9a9366740c6c9e244955a81bc229
 
 WORKDIR /dreal4
 
+# Initialize python virtual environment
+ENV VIRTUAL_ENV="/.dreal_env"
+RUN python3 -m venv $VIRTUAL_ENV
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+
 # Install prerequisites.
 ARG DEBIAN_FRONTEND=noninteractive
-RUN apt-get update \
-      && yes "Y" | /dreal4/setup/ubuntu/20.04/install_prereqs.sh \
-      && apt-get install -y --no-install-recommends apt-utils python3-dev python3-wheel python3-setuptools python3-pip python-is-python3 \
-      && rm -rf /var/lib/apt/lists/* \
-      && apt-get clean all \
 # Build dReal4
-      && cd /dreal4 \
+RUN cd /dreal4 \
+      && sed -i -E "s/ClpSimplex\.hpp/coin\/ClpSimplex\.hpp/g" /usr/include/ibex/ibex_LPLibWrapper.h \
+      && sed -i -E "s/\/usr\/include\/x86_64-linux-gnu/\/usr\/include\/$(arch)-linux-gnu/g" ./tools/gmp_repository.bzl \
+      && sed -i -E "s/manylinux1/manylinux_$(ldd --version | grep '^ldd' | sed -E 's/^ldd.*([0-9]+)\.([0-9]+)$/\1_\2/')/" ./setup.py \
       && bazel build //:archive \
       && tar xfz bazel-bin/archive.tar.gz --strip-components 3 -C /usr \
 # Install Python3 Binding
+      && pip3 install wheel \
+      && pip3 install --upgrade pip \
       && python3 setup.py bdist_wheel \
-      && pip3 install ./dist/dreal-*-cp38-none-manylinux1_x86_64.whl \
+      && DREAL_WHEEL=dreal-*-cp38-none-manylinux_$(ldd --version | grep '^ldd' | sed -E 's/^ldd.*([0-9]+)\.([0-9]+)$/\1_\2/')_$(arch).whl \
+      && cp ./dist/$DREAL_WHEEL /tmp/$DREAL_WHEEL \
+      && pip3 install ./dist/$DREAL_WHEEL \
       && bazel clean --expunge \
 # Clean up
       && cd / \
-      && rm -rf dreal4 \
-      && rm -rf /root/.cache/bazel \
-      && rm -rf /var/lib/apt/lists/* \
-      && apt-get remove -y bazel bison flex g++ wget \
-      && apt-get autoclean -y \
-      && apt-get autoremove -y
+      && rm -rf dreal4/* \
+      && mv /tmp/$DREAL_WHEEL /dreal4 \
+      && rm -rf /root/.cache/bazel
+
