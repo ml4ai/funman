@@ -1,12 +1,29 @@
 DOCS_REMOTE ?= origin
 DEV_CONTAINER ?= funman-dev
-DEV_TAG ?= funman-dev
-DEPLOY_TAG ?= funman
+DEV_NAME ?= funman-dev
+DEPLOY_NAME ?= funman
+LOCAL_REGISTRY_PORT?=5000
+
+LOCAL_REGISTRY=localhost:$(LOCAL_REGISTRY_PORT)
+SIFT_REGISTRY_ROOT=$(LOCAL_REGISTRY)/sift/
+
+IBEX_NAME=funman-ibex
+DREAL_NAME=funman-dreal4
 
 FUNMAN_VERSION ?= 0.0.0
 CMD_UPDATE_VERSION = sed -i -E 's/^__version__ = \"[0-9]+\.[0-9]+\.[0-9]+((a|b|rc)[0-9]*)?\"/__version__ = \"${FUNMAN_VERSION}\"/g'
+SHELL_GET_TARGET_ARCH := $(shell test ! -z $(TARGET_ARCH) && echo $(TARGET_ARCH) || \
+	arch \
+	| sed s/x86_64/amd64/g \
+	| sed s/aarch64/arm64/g \
+)
+TARGET_OS=linux
 
-USING_PODMAN := $(shell docker --version | grep -q podman && echo 1 || echo 0)
+TARGET_TAG=$(TARGET_OS)-$(SHELL_GET_TARGET_ARCH)
+IBEX_TAGGED_NAME=$(IBEX_NAME):$(TARGET_TAG)
+DREAL_TAGGED_NAME=$(DREAL_NAME):$(TARGET_TAG)
+
+MULTIPLATFORM_TAG=multiplatform
 
 .PHONY: docs
 
@@ -46,28 +63,82 @@ deploy-pages:
 	git checkout main
 	git branch -D gh-pages
 
-build-docker-dreal:
-	docker build -t funman_dreal4 -f ./Dockerfile.dreal4 .
+local-registry:
+	docker start local_registry \
+		|| docker run -d \
+			--name local_registry \
+			--network host \
+			registry:2
 
-build-docker: build-docker-dreal
+use-docker-driver: local-registry
+	docker buildx use funman-builder \
+		|| docker buildx create \
+			--name funman-builder \
+			--use \
+			--driver-opt network=host
+
+build-ibex: use-docker-driver
+	DOCKER_BUILDKIT=1 docker buildx build \
+		--output "type=docker" \
+		--platform $(TARGET_OS)/$(SHELL_GET_TARGET_ARCH) \
+		--tag $(IBEX_TAGGED_NAME) \
+		-f ./ibex/Dockerfile ./ibex
+	docker tag $(IBEX_TAGGED_NAME) $(SIFT_REGISTRY_ROOT)$(IBEX_TAGGED_NAME)
+	docker push $(SIFT_REGISTRY_ROOT)$(IBEX_TAGGED_NAME)
+
+multiplatform-build-ibex: use-docker-driver
+	DOCKER_BUILDKIT=1 docker buildx build \
+		--network=host \
+		--output "type=registry" \
+		--platform linux/arm64,linux/amd64 \
+		--tag $(SIFT_REGISTRY_ROOT)$(IBEX_NAME):$(MULTIPLATFORM_TAG) \
+		-f ./ibex/Dockerfile ./ibex
+
+build-dreal: use-docker-driver build-ibex
+	DOCKER_BUILDKIT=1 docker buildx build \
+		--output "type=docker" \
+		--platform $(TARGET_OS)/$(SHELL_GET_TARGET_ARCH) \
+		--build-arg SIFT_REGISTRY_ROOT=$(SIFT_REGISTRY_ROOT) \
+		-t $(DREAL_TAGGED_NAME) \
+		-f ./Dockerfile.dreal4 .
+	docker tag $(DREAL_TAGGED_NAME) $(SIFT_REGISTRY_ROOT)$(DREAL_TAGGED_NAME)
+	docker push $(SIFT_REGISTRY_ROOT)$(DREAL_TAGGED_NAME)
+
+multiplatform-build-dreal: use-docker-driver multiplatform-build-ibex
+	DOCKER_BUILDKIT=1 docker buildx build \
+		--network=host \
+		--output "type=registry" \
+		--platform linux/arm64,linux/amd64 \
+		--build-arg SIFT_REGISTRY_ROOT=$(SIFT_REGISTRY_ROOT) \
+		--build-arg IBEX_TAG=$(MULTIPLATFORM_TAG) \
+		--tag $(SIFT_REGISTRY_ROOT)$(DREAL_NAME):$(MULTIPLATFORM_TAG) \
+		-f ./Dockerfile.dreal4 .
+
+build-docker: use-docker-driver build-dreal
 	DOCKER_BUILDKIT=1 docker build \
 		--build-arg UNAME=$$USER \
 		--build-arg UID=$$(id -u) \
 		--build-arg GID=$$(id -g) \
-		-t ${DEV_TAG} -f ./Dockerfile .
+		-t ${DEV_NAME} -f ./Dockerfile .
 
-build:
-	make build-docker
+multiplatform: use-docker-driver multiplatform-build-dreal
+	DOCKER_BUILDKIT=1 docker buildx build \
+		--network=host \
+		--output "type=registry" \
+		--platform linux/arm64,linux/amd64 \
+		--build-arg SIFT_REGISTRY_ROOT=$(SIFT_REGISTRY_ROOT) \
+		--build-arg DREAL_TAG=$(MULTIPLATFORM_TAG) \
+		--tag $(SIFT_REGISTRY_ROOT)$(DEV_NAME):$(MULTIPLATFORM_TAG) \
+		-f ./Dockerfile .
 
-build-for-deployment: build-docker-dreal
+build: build-docker
+
+build-for-deployment: use-docker-driver build-dreal
 	DOCKER_BUILDKIT=1 docker build \
-		-t ${DEPLOY_TAG} -f ./Dockerfile.deploy .
+		-t ${DEPLOY_NAME} -f ./Dockerfile.deploy .
 
 run-deployment-image:
-	docker run -it --rm -p 127.0.0.1:8888:8888 ${DEPLOY_TAG}:latest
-
-run:
-	@test "${USING_PODMAN}" == "1" && make run-podman || make run-docker
+	docker run -it --rm -p 127.0.0.1:8888:8888 ${DEPLOY_NAME}:latest
 
 run-docker:
 	docker run \
@@ -77,23 +148,22 @@ run-docker:
 		--name ${DEV_CONTAINER} \
     -p 127.0.0.1:8888:8888 \
 		-v $$PWD:/home/$$USER/funman \
-		${DEV_TAG}:latest
+		${DEV_NAME}:latest
 
-run-podman:
-	podman run \
+run-docker-se:
+	docker run \
 		-d \
 		-it \
 		--cpus=8 \
 		--name ${DEV_CONTAINER} \
-		--user $$USER \
 		-p 127.0.0.1:8888:8888 \
-		-v $$PWD:/home/$$USER/funman \
+		-v $$PWD:/home/$$USER/funman:Z \
 		--userns=keep-id \
-		${DEV_TAG}:latest
+		${DEV_NAME}:latest
 
 launch-dev-container:
 	@docker container inspect ${DEV_CONTAINER} > /dev/null 2>&1 \
-		|| make run
+		|| make run-docker
 	@test $(shell docker container inspect -f '{{.State.Running}}' ${DEV_CONTAINER}) == 'true' > /dev/null 2>&1 \
 		|| docker start ${DEV_CONTAINER}
 	@docker attach ${DEV_CONTAINER}

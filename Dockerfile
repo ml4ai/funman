@@ -1,4 +1,6 @@
-FROM funman_dreal4:latest
+ARG SIFT_REGISTRY_ROOT
+ARG DREAL_TAG=${TARGETOS}-${TARGETARCH}
+FROM ${SIFT_REGISTRY_ROOT}funman-dreal4:${DREAL_TAG}
 
 # Install base dependencies
 RUN apt update && apt install -y --no-install-recommends \
@@ -31,12 +33,12 @@ USER $UNAME
 
 # Initialize python virtual environment
 ENV VIRTUAL_ENV="/home/$UNAME/funman_venv"
-RUN python3 -m venv $VIRTUAL_ENV
+RUN python3 -m venv --system-site-packages $VIRTUAL_ENV
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
 ENV PYTHONPYCACHEPREFIX="/home/$UNAME/.cache/pycache/"
 
-RUN pip install --no-cache-dir --upgrade setuptools
+RUN pip install --no-cache-dir --upgrade setuptools pip
 RUN pip install --no-cache-dir wheel
 
 RUN pip install --no-cache-dir pytest==7.1.2
@@ -58,6 +60,8 @@ RUN pip install -e automates
 
 RUN pip install --no-cache-dir z3-solver
 RUN pip install --no-cache-dir graphviz
+
+RUN pip install /dreal4/dreal-*.whl
 
 # Install funman dev packages
 COPY --chown=$UID:$GID . funman
