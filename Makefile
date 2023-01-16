@@ -29,6 +29,8 @@ DEPLOY_TAGGED_NAME=$(DEPLOY_NAME):$(TARGET_TAG)
 
 MULTIPLATFORM_TAG=multiplatform
 
+MAKE := make --no-print-directory
+
 .PHONY: docs
 
 venv:
@@ -44,7 +46,7 @@ docs:
 		-k \
 		-d ./docs/source/_static \
 		./src/funman
-	cd docs && make clean html
+	cd docs && $(MAKE) clean html
 
 init-pages:
 	@if [ -n "$$(git ls-remote --exit-code $(DOCS_REMOTE) gh-pages)" ]; then echo "GitHub Pages already initialized"; exit 1; fi;
@@ -154,9 +156,8 @@ run-docker:
 		DREAL_LOCAL_VOLUME_ARG=-v ; \
 		DREAL_LOCAL_VOLUME_ARG+=$$(realpath $(DREAL_LOCAL_REPO)):/home/$$USER/dreal4 ; \
 	else \
-		echo "ERROR: Dreal4 repo not found at $(DREAL_LOCAL_REPO)" ; \
+		echo "WARNING: Dreal4 repo not found at $(DREAL_LOCAL_REPO)" ; \
 		DREAL_LOCAL_VOLUME_ARG= ; \
-		exit 1 ; \
 	fi \
 	&& docker run \
 		-d \
@@ -179,10 +180,28 @@ run-docker-se:
 		--userns=keep-id \
 		${DEV_TAGGED_NAME}
 
+delete-dev-container:
+	@echo "Deleting dev container:"
+	docker stop ${DEV_CONTAINER}
+	docker rm ${DEV_CONTAINER}
+
+delete-dev-container-if-out-of-date:
+	@if (docker container inspect ${DEV_CONTAINER} > /dev/null 2>&1) ; then \
+		FUNMAN_CONTAINER_SHA=$$(docker inspect -f '{{.Image}}' ${DEV_CONTAINER}) ; \
+		FUNMAN_IMAGE_SHA=$$(docker images --no-trunc --quiet ${DEV_TAGGED_NAME}) ; \
+		if [ "$$FUNMAN_IMAGE_SHA" != "$$FUNMAN_CONTAINER_SHA" ] ; then \
+		  echo "Dev container out of date:" ; \
+			echo "  Container: $$FUNMAN_CONTAINER_SHA" ; \
+			echo "  Image: $$FUNMAN_IMAGE_SHA" ; \
+		  $(MAKE) delete-dev-container ; \
+		fi \
+	fi
+
 launch-dev-container:
+	@$(MAKE) delete-dev-container-if-out-of-date
 	@docker container inspect ${DEV_CONTAINER} > /dev/null 2>&1 \
-		|| make run-docker TARGET_ARCH=$(SHELL_GET_TARGET_ARCH)
-	@test $(shell docker container inspect -f '{{.State.Running}}' ${DEV_CONTAINER}) == 'true' > /dev/null 2>&1 \
+		|| $(MAKE) run-docker TARGET_ARCH=$(SHELL_GET_TARGET_ARCH)
+	@test $$(docker container inspect -f '{{.State.Running}}' ${DEV_CONTAINER}) == 'true' > /dev/null 2>&1 \
 		|| docker start ${DEV_CONTAINER}
 	@docker attach ${DEV_CONTAINER}
 

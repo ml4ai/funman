@@ -187,9 +187,40 @@ package to be installed.  The `pytest-cov` package is included in the
 dependencies.  The code coverage will be displayed in the pytest output (i.e.,
 `term`) and saved to the `coverage.xml` file.  The `Coverage Gutters` VSCode
 plugin will use the `coverage.xml` to display code coverage highlighting over
-the source files. 
+the source files.
 
-### Development Setup: Ubuntu 20.04
+### Development Setup: Docker dev container
+FUNMAN provides tooling to build a Docker image that can be used as a
+development container. The image builds on either arm64 or amd64 architectures.
+
+The dev container itself is meant to be ephemeral. The `launch-dev-container`
+command will delete the existing dev container if an newer image has been made
+available in the local cache. Any data that is meant to be retained from the
+dev-container must be kept in one of the mounted volumes.
+
+The dev container supports editing and rebuilding of dreal4 as well. This
+requires that a dreal4 repository is cloned as a sibling to the funman
+directory (../dreal4). So long as that directory is present, the next time the
+funman-dev container is created will also result in a bind mount of the dreal4
+directory to the container.
+
+# Build the image:
+```bash
+make build
+```
+
+# Launch the dev container:
+```bash
+make launch-dev-container
+```
+
+# If building a local dreal4 instead of the built-in version:
+```bash
+# from within the container
+update-dreal
+```
+
+### (DEPRECATED) Development Setup: Ubuntu 20.04
 ```bash
 # install python 3.9
 sudo apt install python3.9 python3.9-dev
@@ -202,7 +233,7 @@ sudo apt install graphviz libgraphviz-dev pkg-config
 make setup-dev-env
 ```
 
-### Development Setup: OSX M1
+### (DEPRECATED) Development Setup: OSX M1
 
 ```bash
 # install python 3.9

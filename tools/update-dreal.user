@@ -4,6 +4,12 @@ set -e
 
 USER=$(id -un $UID)
 DREAL_ROOT=/home/$USER/dreal4
+
+if [ ! -d $DREAL_ROOT ] ; then
+  echo "No local dreal4 repo found. Did you forget to mount it?"
+  exit 1
+fi
+
 DREAL_WHEEL=dreal-*-cp38-none-manylinux_$(ldd --version | grep '^ldd' | sed -E 's/^ldd.*([0-9]+)\.([0-9]+)$/\1_\2/')_$(arch).whl \
 
 FUNMAN_ENV_PATH=/home/$USER/funman_venv
