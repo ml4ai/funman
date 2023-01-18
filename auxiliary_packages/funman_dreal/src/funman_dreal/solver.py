@@ -15,7 +15,7 @@ from pysmt.exceptions import (
     UnknownSolverAnswerError,
 )
 from pysmt.logics import QF_NRA
-from pysmt.shortcuts import GT, Real, Symbol, get_env
+from pysmt.shortcuts import Real, get_env
 from pysmt.smtlib.parser import SmtLibParser
 from pysmt.smtlib.script import SmtLibCommand
 from pysmt.smtlib.solver import SmtLibOptions, SmtLibSolver

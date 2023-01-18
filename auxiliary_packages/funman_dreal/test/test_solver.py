@@ -7,13 +7,14 @@ from pysmt.shortcuts import (
     REAL,
     And,
     Equals,
+    ForAll,
     Not,
+    Or,
     Plus,
     Pow,
     Real,
     Solver,
     Symbol,
-    get_model,
 )
 
 # from pysmt.smtlib.script import smtlibscript_from_formula
@@ -80,6 +81,36 @@ class TestRunDrealNative(unittest.TestCase):
             if s.solve():
                 result = s.get_model()
 
+            print(f"Result: {result}")
+
+    def test_ea_dreal(self):
+        # Needed to use dreal with pysmt
+        funman_dreal.ensure_dreal_in_pysmt()
+
+        with Solver(name="dreal", logic=QF_NRA) as s:
+            x = Symbol("x", REAL)
+            x_lb = Symbol("x_lb", REAL)
+            x_ub = Symbol("x_ub", REAL)
+            y = Symbol("y", REAL)
+            z = Symbol("z", REAL)
+
+            ea = ForAll(
+                [x],
+                And(
+                    [
+                        Or(
+                            Not(And(LE(x, x_ub), LE(x_lb, x))),
+                            Equals(x, Plus(y, z)),
+                        )
+                    ]
+                ),
+            )
+
+            s.add_assertion(ea)
+
+            result = None
+            if s.solve():
+                result = s.get_model()
             print(f"Result: {result}")
 
 
