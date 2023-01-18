@@ -98,20 +98,85 @@ class TestRunDrealNative(unittest.TestCase):
                 [x],
                 And(
                     [
+                        And(LE(Real(0.0), x_ub), LE(x_ub, Real(5.0))),
+                        And(LE(Real(0.0), x_lb), LE(x_lb, Real(5.0))),
                         Or(
                             Not(And(LE(x, x_ub), LE(x_lb, x))),
                             Equals(x, Plus(y, z)),
-                        )
+                        ),
                     ]
                 ),
             )
-
+            s.push(1)
             s.add_assertion(ea)
 
             result = None
             if s.solve():
                 result = s.get_model()
-            print(f"Result: {result}")
+                print("Model:")
+                for v in ea.get_free_variables():
+                    print(f"{v} = {float(result.get_py_value(v))}")
+            else:
+                print("Unsat")
+
+            # s.pop(1)
+
+            # ea1 = ForAll(
+            #     [x],
+            #     And(
+            #         [
+            #             # convert interval [x_lb, x_ub] from previous call to no-good
+            #             Not(
+            #                 And(
+            #                     LE(Real(1.2495), x_ub),
+            #                     LE(x_ub, Real(3.7495000000000003)),
+            #                 )
+            #             ),
+            #             Not(
+            #                 And(
+            #                     LE(Real(1.2495), x_lb),
+            #                     LE(x_lb, Real(3.7495000000000003)),
+            #                 )
+            #             ),
+            #             And(LE(Real(0.0), x_ub), LE(x_ub, Real(5.0))),
+            #             And(LE(Real(0.0), x_lb), LE(x_lb, Real(5.0))),
+            #             Or(
+            #                 Not(And(LE(x, x_ub), LE(x_lb, x))),
+            #                 Equals(x, Plus(y, z)),
+            #             ),
+            #         ]
+            #     ),
+            # )
+            ea1 = And(
+                [
+                    # convert interval [x_lb, x_ub] from previous call to no-good
+                    Not(
+                        And(
+                            LE(Real(1.2495), x_ub),
+                            LE(x_ub, Real(3.7495000000000003)),
+                        )
+                    ),
+                    Not(
+                        And(
+                            LE(Real(1.2495), x_lb),
+                            LE(x_lb, Real(3.7495000000000003)),
+                        )
+                    ),
+                ]
+            )
+
+            s.push(1)
+            s.add_assertion(ea1)
+
+            result = None
+            if s.solve():
+                result = s.get_model()
+                print("Model:")
+                for v in ea1.get_free_variables():
+                    print(f"{v} = {float(result.get_py_value(v))}")
+            else:
+                print("Unsat")
+            # print(f"Result: {result}")
 
 
 if __name__ == "__main__":
