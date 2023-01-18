@@ -13,6 +13,7 @@
 !setup.py
 !src
 !test
+!tools
 
 **/.*
 **/build

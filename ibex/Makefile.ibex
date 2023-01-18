@@ -1,0 +1,76 @@
+
+INSTALL_PREFIX?=/usr/local
+INTERVAL_LIB?=gaol
+LP_LIB?=clp
+
+MATHLIB_INSTALL_PREFIX?=${INSTALL_PREFIX}
+MATHLIB_INCDIR=${MATHLIB_INSTALL_PREFIX}/include
+MATHLIB_LIBDIR=${MATHLIB_INSTALL_PREFIX}/lib
+GAOL_INSTALL_PREFIX?=${INSTALL_PREFIX}
+IBEX_INSTALL_PREFIX?=${INSTALL_PREFIX}
+
+DEPS_WORKSPACE=/tmp/ibex-deps
+
+LP_LIB_ARGS=
+ifeq ($(LP_LIB), clp)
+ LP_LIB_ARGS=--clp-path=/usr
+endif
+
+INTERVAL_LIB_ARGS=
+ifeq ($(INTERVAL_LIB), gaol)
+ INTERVAL_LIB_ARGS+=--gaol-dir=${GAOL_INSTALL_PREFIX}
+ INTERVAL_LIB_ARGS+=--mathlib-dir=${MATHLIB_INSTALL_PREFIX}
+endif
+
+ibex: paths ${INTERVAL_LIB} ${LP_LIB}
+	mkdir -p ${IBEX_INSTALL_PREFIX}
+	patch -p1 -i patches/remove_gdtoa.patch
+	./waf configure \
+		--prefix=${IBEX_INSTALL_PREFIX} \
+		--enable-shared \
+		--with-optim \
+		--with-affine-extended \
+		--interval-lib=${INTERVAL_LIB} ${INTERVAL_LIB_ARGS} \
+		--lp-lib=${LP_LIB} ${LIB_LIB_ARGS}
+	./waf build install clean
+	ldconfig
+
+paths:
+	mkdir -p ${DEPS_WORKSPACE}
+	touch $@
+
+none:
+	@echo Building with LP_LIB=none
+	touch $@
+
+clp:
+	@echo Building with LP_LIB=clp
+	apt update
+	apt install -y coinor-clp coinor-libclp-dev
+	touch $@
+
+mathlib: paths
+	cd ${DEPS_WORKSPACE} \
+		&& tar zxf /ibex-lib/interval_lib_wrapper/gaol/3rd/mathlib-2.1.1.tar.gz
+	cd ${DEPS_WORKSPACE}/mathlib-2.1.1 \
+		&& ./configure  --prefix=${MATHLIB_INSTALL_PREFIX} \
+		&& make \
+		&& make check \
+		&& make install
+	touch $@
+
+gaol: paths mathlib
+	git clone https://github.com/jgladwig/GAOL ${DEPS_WORKSPACE}/gaol
+	cd ${DEPS_WORKSPACE}/gaol \
+		&& ./configure \
+		--prefix=${GAOL_INSTALL_PREFIX} \
+		--with-mathlib-include=${MATHLIB_INCDIR} \
+		--with-mathlib-lib=${MATHLIB_LIBDIR} \
+		--disable-preserve-rounding \
+		--enable-optimize \
+		--disable-verbose-mode \
+		&& make \
+		&& make check \
+		&& make install
+	touch $@
+
