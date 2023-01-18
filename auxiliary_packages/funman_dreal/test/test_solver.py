@@ -4,6 +4,7 @@ import funman_dreal
 from pysmt.logics import QF_NRA
 from pysmt.shortcuts import (
     LE,
+    LT,
     REAL,
     And,
     Equals,
@@ -98,10 +99,11 @@ class TestRunDrealNative(unittest.TestCase):
                 [x],
                 And(
                     [
-                        And(LE(Real(0.0), x_ub), LE(x_ub, Real(5.0))),
-                        And(LE(Real(0.0), x_lb), LE(x_lb, Real(5.0))),
+                        And(LE(Real(0.0), x_ub), LT(x_ub, Real(5.0))),
+                        And(LE(Real(0.0), x_lb), LT(x_lb, Real(5.0))),
+                        LT(x_lb, x_ub),
                         Or(
-                            Not(And(LE(x, x_ub), LE(x_lb, x))),
+                            Not(And(LT(x, x_ub), LE(x_lb, x))),
                             Equals(x, Plus(y, z)),
                         ),
                     ]
@@ -116,6 +118,10 @@ class TestRunDrealNative(unittest.TestCase):
                 print("Model:")
                 for v in ea.get_free_variables():
                     print(f"{v} = {float(result.get_py_value(v))}")
+                    if v == x_lb:
+                        old_x_lb = result.get_py_value(v)
+                    if v == x_ub:
+                        old_x_ub = result.get_py_value(v)
             else:
                 print("Unsat")
 
@@ -152,14 +158,14 @@ class TestRunDrealNative(unittest.TestCase):
                     # convert interval [x_lb, x_ub] from previous call to no-good
                     Not(
                         And(
-                            LE(Real(1.2495), x_ub),
-                            LE(x_ub, Real(3.7495000000000003)),
+                            LE(Real(old_x_lb), x_ub),
+                            LT(x_ub, Real(old_x_ub)),
                         )
                     ),
                     Not(
                         And(
-                            LE(Real(1.2495), x_lb),
-                            LE(x_lb, Real(3.7495000000000003)),
+                            LE(Real(old_x_lb), x_lb),
+                            LT(x_lb, Real(old_x_ub)),
                         )
                     ),
                 ]
