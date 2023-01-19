@@ -58,7 +58,7 @@ class TestCompilation(unittest.TestCase):
             n,
             delta,
         ) = vars
-        parameters = [Parameter("beta", lb=1e-6, ub=1e-4, symbol=betas[0])]
+        parameters = [Parameter("beta", lb=1e-6, ub=1e-4, _symbol=betas[0])]
 
         model = EncodedModel(phi)
 
@@ -68,7 +68,7 @@ class TestCompilation(unittest.TestCase):
             QueryEncoded(
                 chime.encode_query_time_horizon(query, num_timepoints)
             ),
-            search=BoxSearch(),
+            _search=BoxSearch(),
         )
         funman = Funman()
         config = SearchConfig(tolerance=1e-7, queue_timeout=10)

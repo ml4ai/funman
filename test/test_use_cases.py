@@ -95,8 +95,8 @@ class TestUseCases(unittest.TestCase):
         result: ParameterSynthesisScenarioResult = funman.solve(
             ParameterSynthesisScenario(
                 [
-                    Parameter("x", symbol=x),
-                    Parameter("y", symbol=y),
+                    Parameter("x", _symbol=x),
+                    Parameter("y", _symbol=y),
                 ],
                 EncodedModel(formula),
             )
@@ -158,6 +158,7 @@ class TestUseCases(unittest.TestCase):
                     ]
                 ),
             ),
+            config=FUNMANConfig(tolerance=1e-8),
         )
         assert len(result.parameter_space.true_boxes) > 0
         assert len(result.parameter_space.false_boxes) > 0

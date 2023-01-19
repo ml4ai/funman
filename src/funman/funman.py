@@ -4,10 +4,48 @@ analysis.
 """
 import logging
 
-from funman.scenario import AnalysisScenario, AnalysisScenarioResult, Config
+import multiprocess as mp
+from pydantic import BaseModel, validator
+
+from funman.utils.handlers import NoopResultHandler, ResultHandler, WaitAction
 
 l = logging.getLogger(__file__)
 l.setLevel(logging.ERROR)
+
+
+class FUNMANConfig(BaseModel):
+    """
+    Base definition of a configuration object
+    """
+
+    class Config:
+        underscore_attrs_are_private = True
+        arbitrary_types_allowed = True
+
+    tolerance: float = 0.1
+
+    queue_timeout: int = 1
+    number_of_processes: int = mp.cpu_count()
+    _handler: ResultHandler = NoopResultHandler()
+    wait_timeout: int = None
+    _wait_action: WaitAction = None
+    wait_action_timeout: float = 0.05
+    _read_cache: ResultHandler = None
+    # episode_type: =None,
+    _search: str = None
+    solver: str = "z3"
+
+    @validator("solver")
+    def import_dreal(cls, v):
+        if v == "dreal":
+            try:
+                import funman_dreal
+            except:
+                raise Exception(
+                    "The funman_dreal package failed to import. Do you have it installed?"
+                )
+            else:
+                funman_dreal.ensure_dreal_in_pysmt()
 
 
 class Funman(object):
@@ -17,8 +55,8 @@ class Funman(object):
     """
 
     def solve(
-        self, problem: AnalysisScenario, config: Config = None
-    ) -> AnalysisScenarioResult:
+        self, problem: "AnalysisScenario", config: FUNMANConfig = None
+    ) -> "AnalysisScenarioResult":
         """
         This method is the main entry point for Funman analysis.  Its inputs
         describe an AnalysisScenario and SearchConfig that setup the problem and

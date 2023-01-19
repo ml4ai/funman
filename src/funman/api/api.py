@@ -1,13 +1,17 @@
-from typing import Optional, Union
+from typing import Optional
 
 import uvicorn
 from fastapi import FastAPI
 
 from funman import Funman
-from funman.scenario import AnalysisScenario, AnalysisScenarioResult, Config
+from funman.funman import FUNMANConfig
 from funman.scenario.consistency import (
     ConsistencyScenario,
     ConsistencyScenarioResult,
+)
+from funman.scenario.parameter_synthesis import (
+    ParameterSynthesisScenario,
+    ParameterSynthesisScenarioResult,
 )
 from funman.scenario.simulation import (
     SimulationScenario,
@@ -22,14 +26,42 @@ def read_root():
     return {"Hello": "World"}
 
 
-@app.put("/solve")
-def solve(
-    scenario: Union[ConsistencyScenario, SimulationScenario],
-    config: Optional[Config] = None,
-) -> Union[ConsistencyScenarioResult, SimulationScenarioResult]:
+@app.put("/solve/consistency")
+def solve_consistency(
+    scenario: ConsistencyScenario,
+    config: Optional[FUNMANConfig] = None,
+) -> ConsistencyScenarioResult:
     try:
         f = Funman()
-        result: AnalysisScenarioResult = f.solve(scenario, config=config)
+        result = f.solve(scenario, config=config)
+    except Exception as e:
+        print(e)
+        raise e
+    return result
+
+
+@app.put("/solve/parameter_synthesis")
+def solve_parameter_synthesis(
+    scenario: ParameterSynthesisScenario,
+    config: Optional[FUNMANConfig] = None,
+) -> ParameterSynthesisScenarioResult:
+    try:
+        f = Funman()
+        result = f.solve(scenario, config=config)
+    except Exception as e:
+        print(e)
+        raise e
+    return result
+
+
+@app.put("/solve/simulation")
+def solve(
+    scenario: SimulationScenario,
+    config: Optional[FUNMANConfig] = None,
+) -> SimulationScenarioResult:
+    try:
+        f = Funman()
+        result = f.solve(scenario, config=config)
     except Exception as e:
         print(e)
         raise e

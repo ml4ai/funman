@@ -7,8 +7,9 @@ import json
 import logging
 from functools import total_ordering
 from statistics import mean as average
-from typing import Dict, List
+from typing import Dict, List, Union
 
+from pydantic import BaseModel
 from pysmt.shortcuts import GE, LE, LT, TRUE, And, Equals, Real
 
 import funman.utils.math_utils as math_utils
@@ -18,15 +19,14 @@ from funman.model import Parameter
 l = logging.getLogger(__name__)
 
 
-class Interval(object):
+class Interval(BaseModel):
     """
     An interval is a pair [lb, ub) that is open (i.e., an interval specifies all points x where lb <= x and ub < x).
     """
 
-    def __init__(self, lb: float, ub: float) -> None:
-        self.lb = lb
-        self.ub = ub
-        self.cached_width = None
+    lb: Union[float, str]
+    ub: Union[float, str]
+    cached_width: float = None
 
     def __hash__(self):
         return int(math_utils.plus(self.lb, self.ub))
@@ -205,10 +205,10 @@ class Interval(object):
         """
 
         if math_utils.lt(self.lb, b.lb):
-            return Interval(self.lb, b.lb)
+            return Interval(lb=self.lb, ub=b.lb)
 
         if math_utils.gt(self.lb, b.lb):
-            return Interval(b.ub, self.ub)
+            return Interval(lb=b.ub, ub=self.ub)
 
         return None
 
@@ -269,7 +269,7 @@ class Interval(object):
         if math_utils.gte(
             minInterval.ub, maxInterval.lb
         ):  ## intervals intersect.
-            ans = Interval(minInterval.lb, maxInterval.ub)
+            ans = Interval(lb=minInterval.lb, ub=maxInterval.ub)
             total_height = ans.width()
             return [ans], total_height
         elif math_utils.lt(
@@ -315,13 +315,13 @@ class Interval(object):
             formula constraining p to the interval
         """
         lower = (
-            GE(p._symbol(), Real(self.lb))
+            GE(p.symbol(), Real(self.lb))
             if self.lb != NEG_INFINITY
             else TRUE()
         )
         upper_ineq = LE if closed_upper_bound else LT
         upper = (
-            upper_ineq(p._symbol(), Real(self.ub))
+            upper_ineq(p._symbol, Real(self.ub))
             if self.ub != POS_INFINITY
             else TRUE()
         )
@@ -339,14 +339,17 @@ class Interval(object):
 
     @staticmethod
     def from_dict(data):
-        res = Interval(data["lb"], data["ub"])
+        res = Interval(lb=data["lb"], ub=data["ub"])
         # res.cached_width = data["cached_width"]
         return res
 
 
-class Point(object):
-    def __init__(self, parameters) -> None:
-        self.values = {p: 0.0 for p in parameters}
+class Point(BaseModel):
+    values: Dict[Parameter, float]
+
+    # def __init__(self, **kw) -> None:
+    #     super().__init__(**kw)
+    #     self.values = kw['values']
 
     def __str__(self):
         return f"Point({self.values})"
@@ -359,8 +362,9 @@ class Point(object):
 
     @staticmethod
     def from_dict(data):
-        res = Point([])
-        res.values = {Parameter(k): v for k, v in data["values"].items()}
+        res = Point(
+            values={Parameter(k): v for k, v in data["values"].items()}
+        )
         return res
 
     def __hash__(self):
@@ -403,16 +407,18 @@ class Point(object):
 
 
 @total_ordering
-class Box(object):
+class Box(BaseModel):
     """
     A Box maps n parameters to intervals, representing an n-dimensional connected open subset of R^n.
     """
 
-    def __init__(self, parameters: List[Parameter]) -> None:
-        self.bounds: Dict[Parameter, Interval] = {
-            p: Interval(p.lb, p.ub) for p in parameters
-        }
-        self.cached_width = None
+    parameters: List[Parameter]
+    bounds: Dict[Parameter, Interval] = {}
+    cached_width: float = None
+
+    def __init__(self, **kw) -> None:
+        super().__init__(**kw)
+        self.bounds = {p: Interval(lb=p.lb, ub=p.ub) for p in self.parameters}
 
     def to_smt(self, closed_upper_bound=False):
         """
@@ -557,7 +563,7 @@ class Box(object):
         Box
             Box object for dict
         """
-        res = Box([])
+        res = Box(parameters=[])
         res.bounds = {
             Parameter(k): Interval.from_dict(v)
             for k, v in data["bounds"].items()
@@ -566,9 +572,9 @@ class Box(object):
         return res
 
     def _copy(self):
-        c = Box(list(self.bounds.keys()))
+        c = Box(parameters=list(self.bounds.keys()))
         for p, b in self.bounds.items():
-            c.bounds[p] = Interval(b.lb, b.ub)
+            c.bounds[p] = Interval(lb=b.lb, ub=b.ub)
         return c
 
     def __lt__(self, other):
@@ -788,11 +794,11 @@ class Box(object):
 
         # b1 is lower half
         assert math_utils.lte(b1.bounds[p].lb, mid)
-        b1.bounds[p] = Interval(b1.bounds[p].lb, mid)
+        b1.bounds[p] = Interval(lb=b1.bounds[p].lb, ub=mid)
 
         # b2 is upper half
         assert math_utils.lte(mid, b2.bounds[p].ub)
-        b2.bounds[p] = Interval(mid, b2.bounds[p].ub)
+        b2.bounds[p] = Interval(lb=mid, ub=b2.bounds[p].ub)
 
         return [b2, b1]
 
@@ -844,16 +850,16 @@ class Box(object):
             # FIXME iterating over dict keys is not efficient
             for b in self.bounds:
                 if b.name == p1:
-                    b1_bounds = Interval(b.lb, b.ub)
+                    b1_bounds = Interval(lb=b.lb, ub=b.ub)
             for b in b2.bounds:
                 if b.name == p1:
-                    b2_bounds = Interval(b.lb, b.ub)
+                    b2_bounds = Interval(lb=b.lb, ub=b.ub)
             intersection_ans = b1_bounds.intersection(b2_bounds)
             dict_element = Parameter(
                 p1, intersection_ans[0], intersection_ans[1]
             )
             result.append(dict_element)
-        return Box({i for i in result})
+        return Box(parameters=[i for i in result])
 
     def __intersect_two_boxes(b1, b2):
         # FIXME subsumed by Box.intersect(), can be removed.
@@ -916,7 +922,7 @@ class Box(object):
             return None
 
         return Box(
-            [
+            parameters=[
                 Parameter(a_params[0], lb=beta_0[0], ub=beta_0[1]),
                 Parameter(a_params[1], lb=beta_1[0], ub=beta_1[1]),
             ]
@@ -947,7 +953,7 @@ class Box(object):
             b0_bounds = p_bounds[0]
             b1_bounds = p_bounds[1]
             b = Box(
-                [
+                parameters=[
                     Parameter(a_params[0], lb=b0_bounds.lb, ub=b0_bounds.ub),
                     Parameter(a_params[1], lb=b1_bounds.lb, ub=b1_bounds.ub),
                 ]
@@ -970,7 +976,7 @@ class Box(object):
         return result
 
 
-class ParameterSpace(object):
+class ParameterSpace(BaseModel):
     """
     This class defines the representation of the parameter space that can be
     returned by the parameter synthesis feature of FUNMAN. These parameter spaces
@@ -978,17 +984,10 @@ class ParameterSpace(object):
     known to be false.
     """
 
-    def __init__(
-        self,
-        true_boxes: List[Box] = [],
-        false_boxes: List[Box] = [],
-        true_points: List[Point] = [],
-        false_points: List[Point] = [],
-    ) -> None:
-        self.true_boxes = true_boxes
-        self.false_boxes = false_boxes
-        self.true_points = true_points
-        self.false_points = false_points
+    true_boxes: List[Box]
+    false_boxes: List[Box]
+    true_points: List[Point]
+    false_points: List[Point]
 
     # STUB project parameter space onto a parameter
     @staticmethod

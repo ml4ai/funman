@@ -3,13 +3,12 @@ This module represents the abstract base classes for models.
 """
 from abc import ABC, abstractmethod
 from copy import deepcopy
-from typing import Dict, List
+from typing import Dict, List, Optional, Union
 
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
 from pysmt.fnode import FNode
 from pysmt.shortcuts import REAL, Symbol
 
-from funman.constants import NEG_INFINITY, POS_INFINITY
 from funman.model.query import *
 
 
@@ -46,20 +45,21 @@ class Parameter(BaseModel):
 
     """
 
-    name: str
-    # lb: Union[float, str] = NEG_INFINITY
-    # ub: Union[float, str] = POS_INFINITY
-    lb: str = NEG_INFINITY
-    ub: str = POS_INFINITY
-    # symbol: FNode = None
-
     class Config:
+        underscore_attrs_are_private = True
         arbitrary_types_allowed = True
 
-    def _symbol(self):
-        if self.__symbol is None:
-            self.__symbol = Symbol(self.name, REAL)
-        return self.__symbol
+    name: str
+    lb: Union[float, str] = 0.0
+    ub: Union[float, str] = 0.0
+    # lb: str = NEG_INFINITY
+    # ub: str = POS_INFINITY
+    _symbol: Optional[FNode] = None
+
+    def symbol(self) -> FNode:
+        if not self._symbol:
+            self._symbol = Symbol(self.name, REAL)
+        return self._symbol
 
     def timed_copy(self, timepoint: int):
         """
@@ -85,8 +85,8 @@ class Parameter(BaseModel):
             return NotImplemented
 
         return self.name == other.name and (
-            not (self.__symbol and other.__symbol)
-            or (self.__symbol.symbol_name() == other.__symbol.symbol_name())
+            not (self.symbol() and other.symbol())
+            or (self.symbol().symbol_name() == other.symbol().symbol_name())
         )
 
     def __hash__(self):

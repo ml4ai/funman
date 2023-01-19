@@ -155,7 +155,7 @@ class TestChimeBilayerSolve(unittest.TestCase):
         tmp_dir_path = tempfile.mkdtemp(prefix="funman-")
         result = Funman().solve(
             ParameterSynthesisScenario(
-                parameters, model, query, smt_encoder=encoder
+                parameters, model, query, _smt_encoder=encoder
             ),
             config=SearchConfig(
                 number_of_processes=1,

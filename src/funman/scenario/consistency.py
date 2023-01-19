@@ -1,7 +1,7 @@
 """
 This submodule defines a consistency scenario.  Consistency scenarios specify an existentially quantified model.  If consistent, the solution assigns any unassigned variable, subject to their bounds and other constraints.  
 """
-from typing import List, Union
+from typing import Union
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -10,11 +10,8 @@ from pysmt.solvers.solver import Model as pysmt_Model
 
 from funman.model.bilayer import BilayerModel
 from funman.model.encoded import EncodedModel
-from funman.model.model import Model
-from funman.model.query import Query, QueryFunction, QueryLE
+from funman.model.query import QueryFunction, QueryLE
 from funman.scenario import AnalysisScenario, AnalysisScenarioResult
-from funman.search.search import Search, SearchConfig, SearchEpisode
-from funman.search.smt_check import SMTCheck
 from funman.translate import Encoder
 from funman.translate.translate import Encoding
 
@@ -41,9 +38,8 @@ class ConsistencyScenario(AnalysisScenario, BaseModel):
     _smt_encoder: Encoder = None
     _model_encoding: Encoding = None
     _query_encoding: Encoding = None
-    _searches: List[SearchEpisode] = []
 
-    def solve(self, config: SearchConfig = None) -> "AnalysisScenarioResult":
+    def solve(self, config: "SearchConfig" = None) -> "AnalysisScenarioResult":
         """
         Check model consistency.
 
@@ -57,18 +53,10 @@ class ConsistencyScenario(AnalysisScenario, BaseModel):
         result
             ConsistencyScenarioResult indicating whether the model is consistent.
         """
-        if config is None:
-            config = SearchConfig()
 
-        if config.search is None:
-            search = SMTCheck()
-        else:
-            search = config.search()
+        search = config._search
 
-        self._encode(search)
-
-        if search not in self._searches:
-            self._searches.append(search)
+        self._encode()
 
         result = search.search(self, config=config)
 
@@ -77,7 +65,7 @@ class ConsistencyScenario(AnalysisScenario, BaseModel):
         )
         return scenario_result
 
-    def _encode(self, search: Search):
+    def _encode(self):
         if self._smt_encoder is None:
             self._smt_encoder = self.model.default_encoder()
         self.model.initialize()
@@ -88,7 +76,7 @@ class ConsistencyScenario(AnalysisScenario, BaseModel):
         return self._model_encoding, self._query_encoding
 
 
-class ConsistencyScenarioResult(AnalysisScenarioResult):
+class ConsistencyScenarioResult(AnalysisScenarioResult, BaseModel):
     """
     ConsistencyScenarioResult result, which includes the consistency flag and
     search statistics.

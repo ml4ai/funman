@@ -624,7 +624,7 @@ SIR Bilayer (left), Hospitalized Measurement (right)
                     parameters,
                     model,
                     self.query,
-                    smt_encoder=BilayerEncoder(config=self.encoding_options),
+                    _smt_encoder=BilayerEncoder(config=self.encoding_options),
                 ),
                 config=SearchConfig(
                     number_of_processes=1,
@@ -880,7 +880,7 @@ SIR Bilayer (left), Infected Measurement (right)
                     parameters,
                     model,
                     self.query,
-                    smt_encoder=BilayerEncoder(config=self.encoding_options),
+                    _smt_encoder=BilayerEncoder(config=self.encoding_options),
                 ),
                 config=SearchConfig(
                     number_of_processes=1,

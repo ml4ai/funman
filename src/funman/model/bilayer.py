@@ -3,7 +3,7 @@ from abc import ABC
 from typing import Dict, List, Union
 
 import graphviz
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
 from pysmt.shortcuts import (
     FALSE,
     GE,
@@ -442,10 +442,18 @@ class BilayerModel(Model):
     measurements: BilayerMeasurement = None
     identical_parameters: List[List[str]] = []
 
-    def initialize(self):
-        self.bilayer.initialize()
-        if self.measurements:
-            self.measurements.initialize()
+    @validator("bilayer")
+    def init_bilayer(cls, v: BilayerDynamics):
+        v.initialize()
+        # cls.bilayer = v
+        return v
+
+    @validator("measurements")
+    def init_measurements(cls, v: BilayerMeasurement):
+        if v:
+            v.initialize()
+            # cls.measurements = v
+        return v
 
     def default_encoder(self) -> "Encoder":
         """

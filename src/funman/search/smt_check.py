@@ -9,7 +9,7 @@ from . import search
 
 class SMTCheck(search.Search):
     def search(
-        self, problem, config: Optional[search.SearchConfig] = None
+        self, problem, config: Optional["FUNMANConfig"] = None
     ) -> search.SearchEpisode:
         episode = search.SearchEpisode(config=config, problem=problem)
         result = self.expand(problem, episode)

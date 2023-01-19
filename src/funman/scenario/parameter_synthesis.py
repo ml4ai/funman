@@ -5,8 +5,12 @@ from typing import Any, Dict, List, Union
 
 from pandas import DataFrame
 from pysmt.shortcuts import Iff, Symbol
+from pydantic import BaseModel
 
-from funman.model import Model, Parameter, Query, QueryTrue
+from funman.model import Parameter, QueryTrue
+from funman.model.bilayer import BilayerModel
+from funman.model.encoded import EncodedModel
+from funman.model.query import QueryFunction, QueryLE
 from funman.scenario import (
     AnalysisScenario,
     AnalysisScenarioResult,
@@ -14,13 +18,11 @@ from funman.scenario import (
 )
 from funman.search.box_search import BoxSearch
 from funman.search.representation import ParameterSpace, Point
-from funman.search.search import SearchConfig, SearchEpisode
 from funman.search.smt_check import SMTCheck
-from funman.translate import EncodedEncoder
 from funman.translate.translate import Encoder, Encoding
 
 
-class ParameterSynthesisScenario(AnalysisScenario):
+class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
     """
     Parameter synthesis problem description that identifies the parameters to
     synthesize for a particular model.  The general problem is to identify
@@ -29,16 +31,19 @@ class ParameterSynthesisScenario(AnalysisScenario):
     (false) parameters.
     """
 
+    class Config:
+        underscore_attrs_are_private = True
+
     parameters: List[Parameter]
-    model: Model
-    query: Query = QueryTrue()
-    search: str = "BoxSearch"
-    smt_encoder: Encoder = None  # TODO set to model.default_encoder()
-    model_encoding: Encoding = None
-    query_encoding: Encoding = None
+    model: Union[BilayerModel, EncodedModel]
+    query: Union[QueryLE, QueryFunction, QueryTrue] = None
+    _search: str = "BoxSearch"
+    _smt_encoder: Encoder = None  # TODO set to model.default_encoder()
+    _model_encoding: Encoding = None
+    _query_encoding: Encoding = None
 
     def solve(
-        self, config: SearchConfig = None
+        self, config: "FUNMANConfig"
     ) -> "ParameterSynthesisScenarioResult":
         """
         Synthesize parameters for a model.  Use the BoxSearch algorithm to
@@ -55,20 +60,18 @@ class ParameterSynthesisScenario(AnalysisScenario):
         ParameterSpace
             The parameter space.
         """
-        if config is None:
-            config = SearchConfig()
+
+        if config._search is None:
+            search = BoxSearch()
+        else:
+            search = config._search()
 
         self._encode()
-        if self.search == "BoxSearch":
-            if not hasattr(self, "_search") and self._search is None:
-                self._search = BoxSearch()
-        else:
-            raise Exception(
-                f"ParameterSynthesisScenarios cannot use search: {self.search}"
-            )
 
-        result = self._search.search(self, config=config)
-        return ParameterSynthesisScenarioResult(result, self)
+        result: ParameterSpace = search.search(self, config=config)
+        return ParameterSynthesisScenarioResult(
+            parameter_space=result, scenario=self
+        )
 
     def _encode(self):
         """
@@ -79,39 +82,35 @@ class ParameterSynthesisScenario(AnalysisScenario):
         _type_
             _description_
         """
+        if self._smt_encoder is None:
+            self._smt_encoder = self.model.default_encoder()
         self.assume_model = Symbol("assume_model")
         self.assume_query = Symbol("assume_query")
-        self.model_encoding = self.smt_encoder.encode_model(self.model)
-        self.model_encoding.formula = Iff(
+        self._model_encoding = self._smt_encoder.encode_model(self.model)
+        self._model_encoding.formula = Iff(
             self.assume_model, self.model_encoding.formula
         )
-        self.query_encoding = self.smt_encoder.encode_query(
+        self._query_encoding = self._smt_encoder.encode_query(
             self.model_encoding, self.query
         )
         self.query_encoding.formula = Iff(
             self.assume_query, self.query_encoding.formula
         )
-        return self.model_encoding, self.query_encoding
+        return self._model_encoding, self._query_encoding
 
 
-class ParameterSynthesisScenarioResult(AnalysisScenarioResult):
+class ParameterSynthesisScenarioResult(AnalysisScenarioResult, BaseModel):
     """
     ParameterSynthesisScenario result, which includes the parameter space and
     search statistics.
     """
 
-    def __init__(
-        self, episode: SearchEpisode, scenario: ParameterSynthesisScenario
-    ) -> None:
-        super().__init__()
-        self.episode = episode
-        self.scenario = scenario
-        self.parameter_space = ParameterSpace(
-            episode.true_boxes,
-            episode.false_boxes,
-            episode.true_points,
-            episode.false_points,
-        )
+    class Config:
+        arbitrary_types_allowed = True
+
+    # episode: SearchEpisode
+    scenario: ParameterSynthesisScenario
+    parameter_space: ParameterSpace
 
     def plot(self, **kwargs):
         """
@@ -169,10 +168,10 @@ class ParameterSynthesisScenarioResult(AnalysisScenarioResult):
             scenario = ConsistencyScenario(
                 self.scenario.model,
                 self.scenario.query,
-                _smt_encoder=self.scenario.smt_encoder,
+                _smt_encoder=self.scenario._smt_encoder,
             )
             result = scenario.solve(
-                config=SearchConfig(solver="dreal", search=SMTCheck)
+                config=FUNMANConfig(solver="dreal", _search=SMTCheck)
             )
             assert result
             # plot the results

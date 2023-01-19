@@ -1,14 +1,9 @@
 from abc import ABC, abstractclassmethod
 
+import multiprocess as mp
 from pydantic import BaseModel
 
-from funman.model.model import Parameter
-
-
-class Config(BaseModel):
-    """
-    Base definition of a configuration object
-    """
+from funman.utils.handlers import NoopResultHandler, ResultHandler
 
 
 class AnalysisScenario(ABC, BaseModel):
@@ -17,15 +12,15 @@ class AnalysisScenario(ABC, BaseModel):
     """
 
     @abstractclassmethod
-    def solve(self, config: Config):
+    def solve(self, config: "FUNMANConfig"):
         pass
 
     @abstractclassmethod
-    def _encode(self, config: Config):
+    def _encode(self, config: "FUNMANConfig"):
         pass
 
 
-class AnalysisScenarioResult(ABC, BaseModel):
+class AnalysisScenarioResult(ABC):
     """
     Abstract class for AnalysisScenario result data.
     """

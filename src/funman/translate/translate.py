@@ -25,6 +25,10 @@ class Encoding(BaseModel):
     formula: FNode = None
     symbols: Dict[str, Dict[str, FNode]] = None
 
+    # @validator("formula")
+    # def set_symbols(cls, v: FNode):
+    #     cls.symbols = Symbol(v, REAL)
+
 
 class EncodingOptions(object):
     """

@@ -1,16 +1,20 @@
 """
 This module wraps a simulator invocation as a Scenario.
 """
+from typing import Any
+
+from pydantic import BaseModel
+
 from funman.model.model import Model, Query, QueryFunction
 from funman.model.simulator import SimulatorModel
-from funman.scenario import AnalysisScenario, AnalysisScenarioResult, Config
+from funman.scenario import AnalysisScenario, AnalysisScenarioResult
 
 
-class SimulationScenario(AnalysisScenario):
+class SimulationScenario(AnalysisScenario, BaseModel):
     model: SimulatorModel
     query: Query
 
-    def solve(self, config: Config):
+    def solve(self, config: "FUNMANConfig"):
         results = self.model.main_fn()
         query_satisfied = self._evaluate_query(results)
         return SimulationScenarioResult(self, results, query_satisfied)
@@ -25,14 +29,10 @@ class SimulationScenario(AnalysisScenario):
         return result
 
 
-class SimulationScenarioResult(AnalysisScenarioResult):
-    def __init__(
-        self, scenario: SimulationScenario, results, query_satisfied: bool
-    ) -> None:
-        super().__init__()
-        self.scenario = scenario
-        self.results = results
-        self.query_satisfied = query_satisfied
+class SimulationScenarioResult(AnalysisScenarioResult, BaseModel):
+    scenario: SimulationScenario
+    results: Any
+    query_satisfied: bool
 
     def plot(self, **kwargs):
         pass

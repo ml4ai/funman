@@ -42,7 +42,7 @@ class TestCachedParameterSpace(unittest.TestCase):
             n,
             delta,
         ) = vars
-        parameters = [Parameter("beta", symbol=betas[0])]
+        parameters = [Parameter("beta", _symbol=betas[0])]
 
         model = EncodedModel(phi)
 
@@ -50,7 +50,7 @@ class TestCachedParameterSpace(unittest.TestCase):
             parameters,
             model,
             chime.encode_query_time_horizon(query, num_timepoints),
-            search=BoxSearch(),
+            _search=BoxSearch(),
         )
         funman = Funman()
         config = SearchConfig(

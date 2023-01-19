@@ -109,7 +109,7 @@ class BilayerEncoder(Encoder):
             if model.parameter_bounds:
                 parameters = [
                     Parameter(
-                        node.parameter,
+                        name=node.parameter,
                         lb=model.parameter_bounds[node.parameter][0],
                         ub=model.parameter_bounds[node.parameter][1],
                     )
@@ -120,7 +120,7 @@ class BilayerEncoder(Encoder):
                 if model.measurements:
                     parameters += [
                         Parameter(
-                            node.parameter,
+                            name=node.parameter,
                             lb=model.parameter_bounds[node.parameter][0],
                             ub=model.parameter_bounds[node.parameter][1],
                         )
@@ -134,7 +134,7 @@ class BilayerEncoder(Encoder):
                     for p in parameters
                     for timepoint in transition_timepoints
                 ]
-                parameter_box = Box(timed_parameters)
+                parameter_box = Box(parameters=timed_parameters)
                 parameter_constraints = parameter_box.to_smt(
                     closed_upper_bound=True
                 )

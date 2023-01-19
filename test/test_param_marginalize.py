@@ -1,16 +1,8 @@
 import unittest
 
-import matplotlib.pyplot as plt
-from funman_demo.box_plotter import BoxPlotter
 from matplotlib.lines import Line2D
-from pysmt.shortcuts import GE, LE, TRUE, And, Real, Symbol
-from pysmt.typing import REAL
 
-from funman import Funman
-from funman.model import Parameter, QueryEncoded
-from funman.model.encoded import EncodedModel
-from funman.scenario.parameter_synthesis import ParameterSynthesisScenario
-from funman.search import BoxSearch, SearchConfig
+from funman.model import Parameter
 from funman.search.representation import Box, Interval
 
 
