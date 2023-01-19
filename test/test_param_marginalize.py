@@ -14,22 +14,6 @@ from funman.search import BoxSearch, SearchConfig
 from funman.search.representation import Box, Interval
 
 
-def subset_of_box_variables(b, vars_list):
-    """Takes a subset of selected variables (vars_list) of a given box (b) and returns another box that is given by b's values for only the selected variables."""
-    param_list = []
-    for i in range(len(list(b.bounds.keys()))):
-        variable_name = list(b.bounds.keys())[i].name
-        variable_values = list(b.bounds.values())[i]
-        if variable_name in vars_list:
-            current_param = Parameter(
-                f"{variable_name}", variable_values.lb, variable_values.ub
-            )
-            param_list.append(current_param)
-    param_list = {i for i in param_list}
-    box1_result = Box(param_list)
-    return box1_result
-
-
 def add_box_variable(b, vars_list, new_var_name, new_bounds_lb, new_bounds_ub):
     """Takes a subset of selected variables (vars_list) of a given box (b) and returns another box that is given by b's values for only the selected variables."""
     param_list = []
@@ -80,8 +64,8 @@ def marginalize(b1, b2, var):
     ## Find the intersection (if it exists)
     intersection_marginal = b1.intersect(b2, param_list=desired_vars_list)
     ## Form versions of boxes minus the part that we're marginalizing: named box1_x_y and box2_x_y
-    box1_x_y = subset_of_box_variables(b1, desired_vars_list)
-    box2_x_y = subset_of_box_variables(b2, desired_vars_list)
+    box1_x_y = b1.project(desired_vars_list)
+    box2_x_y = b2.project(desired_vars_list)
     ## Now form the symmetric difference
     unknown_boxes = [box1_x_y, box2_x_y]
     false_boxes = []
@@ -119,11 +103,11 @@ def marginalize(b1, b2, var):
             true_boxes_full.append(b_full)
     ## Fix true box values and plot
     for b in list(true_boxes):
-        b = subset_of_box_variables(b, desired_vars_list)
+        b = b.project(desired_vars_list)
         # BoxPlotter.plot2DBoxTemp(b,desired_vars_list[0],desired_vars_list[1],color='g')
     ## Fix false box values and plot
     for b in list(false_boxes):
-        b = subset_of_box_variables(b, desired_vars_list)
+        b = b.project(desired_vars_list)
         # BoxPlotter.plot2DBoxTemp(b,desired_vars_list[0],desired_vars_list[1],color='r')
     custom_lines = [
         Line2D([0], [0], color="r", alpha=0.2, lw=4),
@@ -157,9 +141,7 @@ def marginalize(b1, b2, var):
             len(interval_union_result) == 1
         ):  ## intersection along all variables (including marginal): form the union.
             ## Make new result with last bound given by the above interval
-            box_subset = subset_of_box_variables(
-                intersecting_boxes[0], desired_vars_list
-            )
+            box_subset = intersecting_boxes[0].project(desired_vars_list)
             box_result_union = add_box_variable(
                 box_subset,
                 desired_vars_list,

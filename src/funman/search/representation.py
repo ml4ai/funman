@@ -2,6 +2,7 @@
 This submodule contains definitions for the classes used
 during the configuration and execution of a search.
 """
+import copy
 import json
 import logging
 from functools import total_ordering
@@ -436,6 +437,25 @@ class Box(object):
 
     def __hash__(self):
         return int(sum([i.__hash__() for _, i in self.bounds.items()]))
+
+    def project(self, vars: List[str]) -> "Box":
+        """
+        Takes a subset of selected variables (vars_list) of a given box (b) and returns another box that is given by b's values for only the selected variables.
+
+        Parameters
+        ----------
+        vars : List[str]
+            variables to project onto
+
+        Returns
+        -------
+        Box
+            projected box
+
+        """
+        bp = copy.copy(self)
+        bp.bounds = {k: v for k, v in bp.bounds.items() if k.name in vars}
+        return bp
 
     def _merge(self, other: "Box") -> "Box":
         """
@@ -975,15 +995,6 @@ class ParameterSpace(object):
     def project() -> "ParameterSpace":
         raise NotImplementedError()
         return ParameterSpace()
-
-    @staticmethod
-    def _union_boxes(b1s):
-        results_list = []
-        for i1 in range(len(b1s)):
-            for i2 in range(i1 + 1, len(b1s)):
-                ans = Box.check_bounds_disjoint_equal(b1s[i1], b1s[i2])
-                print(ans)
-        return results_list
 
     @staticmethod
     def _intersect_boxes(b1s, b2s):
