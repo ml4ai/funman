@@ -5,8 +5,8 @@ import matplotlib.pyplot as plt
 from IPython.display import clear_output
 from matplotlib.lines import Line2D
 
-from funman.parameter_space import ParameterSpace
-from funman.search.representation import Box, Point, decode_labeled_object
+from funman.scenario import ParameterSpace
+from funman.search.representation import Box, Point
 
 from .box_plotter import BoxPlotter
 
@@ -45,7 +45,7 @@ def plot_cached_search(search_path, alpha: float = 0.2):
             if len(line) == 0:
                 continue
             data = json.loads(line)
-            ((inst, label), typ) = decode_labeled_object(data)
+            ((inst, label), typ) = ParameterSpace.decode_labeled_object(data)
             if typ is Box:
                 if label == "true":
                     true_boxes.append(inst)
