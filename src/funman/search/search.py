@@ -4,6 +4,7 @@ from queue import Queue as SQueue
 from typing import Optional
 
 import multiprocess as mp
+from pydantic import BaseModel
 
 from funman.scenario import AnalysisScenario
 from funman.search.handlers import NoopResultHandler, ResultHandler
@@ -66,7 +67,10 @@ class SearchConfig(ABC):
                 funman_dreal.ensure_dreal_in_pysmt()
 
 
-class SearchEpisode(object):
+class SearchEpisode(BaseModel):
+    class Config:
+        arbitrary_types_allowed = True
+
     def __init__(
         self, config: SearchConfig, problem: "AnalysisScenario"
     ) -> None:

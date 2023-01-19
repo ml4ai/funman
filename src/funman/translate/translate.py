@@ -6,17 +6,21 @@ from abc import ABC, abstractmethod
 from typing import Dict, List, Union
 
 import pysmt
+from pydantic import BaseModel
 from pysmt.formula import FNode
 from pysmt.shortcuts import LE, TRUE, And, Real
 
 from funman.model.query import Query, QueryEncoded, QueryLE, QueryTrue
 
 
-class Encoding(object):
+class Encoding(BaseModel):
     """
     An encoding comprises a formula over a set of symbols.
 
     """
+
+    class Config:
+        arbitrary_types_allowed = True
 
     def __init__(
         self,
@@ -36,11 +40,14 @@ class EncodingOptions(object):
         self.max_steps = max_steps
 
 
-class Encoder(ABC):
+class Encoder(ABC, BaseModel):
     """
     An Encoder translates a Model into an SMTLib formula.
 
     """
+
+    class Config:
+        arbitrary_types_allowed = True
 
     def __init__(self, config: EncodingOptions = EncodingOptions()) -> None:
         self.config = config

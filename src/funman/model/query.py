@@ -4,10 +4,11 @@ This module defines all Query classes.  Queries are combined with Model objects 
 from abc import ABC
 from typing import Callable
 
+from pydantic import BaseModel
 from pysmt.formula import FNode
 
 
-class Query(ABC):
+class Query(ABC, BaseModel):
     """
     Abstract base class for queries.
     """
