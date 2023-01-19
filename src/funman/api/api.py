@@ -27,9 +27,9 @@ def read_root():
 
 
 @app.put("/solve/consistency")
-def solve_consistency(
+async def solve_consistency(
     scenario: ConsistencyScenario,
-    config: Optional[FUNMANConfig] = None,
+    config: Optional[FUNMANConfig] = FUNMANConfig(),
 ) -> ConsistencyScenarioResult:
     try:
         f = Funman()
@@ -41,9 +41,9 @@ def solve_consistency(
 
 
 @app.put("/solve/parameter_synthesis")
-def solve_parameter_synthesis(
+async def solve_parameter_synthesis(
     scenario: ParameterSynthesisScenario,
-    config: Optional[FUNMANConfig] = None,
+    config: Optional[FUNMANConfig] = FUNMANConfig(),
 ) -> ParameterSynthesisScenarioResult:
     try:
         f = Funman()
@@ -55,9 +55,9 @@ def solve_parameter_synthesis(
 
 
 @app.put("/solve/simulation")
-def solve(
+async def solve_simulation(
     scenario: SimulationScenario,
-    config: Optional[FUNMANConfig] = None,
+    config: Optional[FUNMANConfig] = FUNMANConfig(),
 ) -> SimulationScenarioResult:
     try:
         f = Funman()

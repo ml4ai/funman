@@ -14,10 +14,14 @@ def add_box_variable(b, vars_list, new_var_name, new_bounds_lb, new_bounds_ub):
         variable_values = list(b.bounds.values())[i]
         if variable_name in vars_list:
             current_param = Parameter(
-                f"{variable_name}", variable_values.lb, variable_values.ub
+                name=f"{variable_name}",
+                lb=variable_values.lb,
+                ub=variable_values.ub,
             )
             param_list.append(current_param)
-    new_param = Parameter(f"{new_var_name}", new_bounds_lb, new_bounds_ub)
+    new_param = Parameter(
+        name=f"{new_var_name}", lb=new_bounds_lb, ub=new_bounds_ub
+    )
     param_list.append(new_param)
     param_list = {i for i in param_list}
     box1_result = Box(param_list)
@@ -160,14 +164,14 @@ class TestCompilation(unittest.TestCase):
         ## Test: marginalize the boxes box1 and box2 based on the variable w.  This should not work (should raise an exception), since w is not a variable in the set.
         # Manually make boxes for example.
         dict = {
-            Parameter("x", 1, 2),
-            Parameter("y", 1, 2),
-            Parameter("z", 1, 2),
+            Parameter(name="x", lb=1, ub=2),
+            Parameter(name="y", lb=1, ub=2),
+            Parameter(name="z", lb=1, ub=2),
         }
         dict2 = {
-            Parameter("x", 1.5, 2.5),
-            Parameter("y", 1.5, 2.5),
-            Parameter("z", 1.5, 2.5),
+            Parameter(name="x", lb=1.5, ub=2.5),
+            Parameter(name="y", lb=1.5, ub=2.5),
+            Parameter(name="z", lb=1.5, ub=2.5),
         }
         box1 = Box(dict)
         box2 = Box(dict2)
@@ -177,14 +181,14 @@ class TestCompilation(unittest.TestCase):
         ## Test: marginalize the boxes box1 and box2 based on the variable x.  This should not work (should raise an exception), since the boxes are not made up of the same variables (despite both containing x).
         # Manually make boxes for example.
         dict = {
-            Parameter("x", 1, 2),
-            Parameter("y", 1, 2),
-            Parameter("w", 1, 2),
+            Parameter(name="x", lb=1, ub=2),
+            Parameter(name="y", lb=1, ub=2),
+            Parameter(name="z", lb=1, ub=2),
         }
         dict2 = {
-            Parameter("x", 1.5, 2.5),
-            Parameter("y", 1.5, 2.5),
-            Parameter("z", 1.5, 2.5),
+            Parameter(name="x", lb=1.5, ub=2.5),
+            Parameter(name="y", lb=1.5, ub=2.5),
+            Parameter(name="z", lb=1.5, ub=2.5),
         }
         box1 = Box(dict)
         box2 = Box(dict2)
@@ -194,14 +198,14 @@ class TestCompilation(unittest.TestCase):
         ## Test: marginalize the boxes box1 and box2 based on the variable z.
         # Manually make boxes for example.
         dict = {
-            Parameter("x", 1, 2),
-            Parameter("y", 1, 2),
-            Parameter("z", 1, 2),
+            Parameter(name="x", lb=1, ub=2),
+            Parameter(name="y", lb=1, ub=2),
+            Parameter(name="z", lb=1, ub=2),
         }
         dict2 = {
-            Parameter("x", 1.5, 2.5),
-            Parameter("y", 1.5, 2.5),
-            Parameter("z", 5, 6),
+            Parameter(name="x", lb=1.5, ub=2.5),
+            Parameter(name="y", lb=1.5, ub=2.5),
+            Parameter(name="z", lb=5, ub=6),
         }
         box1 = Box(dict)
         box2 = Box(dict2)

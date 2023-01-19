@@ -42,7 +42,7 @@ class TestCachedParameterSpace(unittest.TestCase):
             n,
             delta,
         ) = vars
-        parameters = [Parameter("beta", _symbol=betas[0])]
+        parameters = [Parameter(name="beta", _symbol=betas[0])]
 
         model = EncodedModel(phi)
 

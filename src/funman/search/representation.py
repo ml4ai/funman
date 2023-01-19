@@ -363,7 +363,7 @@ class Point(BaseModel):
     @staticmethod
     def from_dict(data):
         res = Point(
-            values={Parameter(k): v for k, v in data["values"].items()}
+            values={Parameter(name=k): v for k, v in data["values"].items()}
         )
         return res
 
@@ -565,7 +565,7 @@ class Box(BaseModel):
         """
         res = Box(parameters=[])
         res.bounds = {
-            Parameter(k): Interval.from_dict(v)
+            Parameter(name=k): Interval.from_dict(v)
             for k, v in data["bounds"].items()
         }
         # res.cached_width = data["cached_width"]
@@ -710,7 +710,7 @@ class Box(BaseModel):
             ]
         )
 
-    def _get_max_width_point_parameter(self, points: List[Point]):
+    def _get_max_width_point_Parameter(self, points: List[Point]):
         """
         Get the parameter that has the maximum average distance from the center point for each parameter and the value for the parameter assigned by each point.
 
@@ -740,7 +740,7 @@ class Box(BaseModel):
         )
         return max_width_parameter
 
-    def _get_max_width_parameter(self):
+    def _get_max_width_Parameter(self):
         widths = [bounds.width() for _, bounds in self.bounds.items()]
         max_width = max(widths)
         param = list(self.bounds.keys())[widths.index(max_width)]
@@ -756,7 +756,7 @@ class Box(BaseModel):
             Max{p: parameter}(p.ub-p.lb)
         """
         if self.cached_width is None:
-            _, width = self._get_max_width_parameter()
+            _, width = self._get_max_width_Parameter()
             self.cached_width = width
 
         return self.cached_width
@@ -777,16 +777,16 @@ class Box(BaseModel):
         """
 
         if points:
-            p = self._get_max_width_point_parameter(points)
+            p = self._get_max_width_point_Parameter(points)
             mid = self.bounds[p].midpoint(
-                points=[pt.values[p] for pt in points]
+                # points=[pt.values[p] for pt in points]
             )
             if mid == self.bounds[p].lb or mid == self.bounds[p].ub:
                 # Fall back to box midpoint if point-based mid is degenerate
-                p, _ = self._get_max_width_parameter()
+                p, _ = self._get_max_width_Parameter()
                 mid = self.bounds[p].midpoint()
         else:
-            p, _ = self._get_max_width_parameter()
+            p, _ = self._get_max_width_Parameter()
             mid = self.bounds[p].midpoint()
 
         b1 = self._copy()
@@ -856,7 +856,7 @@ class Box(BaseModel):
                     b2_bounds = Interval(lb=b.lb, ub=b.ub)
             intersection_ans = b1_bounds.intersection(b2_bounds)
             dict_element = Parameter(
-                p1, intersection_ans[0], intersection_ans[1]
+                name=p1, lb=intersection_ans[0], ub=intersection_ans[1]
             )
             result.append(dict_element)
         return Box(parameters=[i for i in result])
@@ -923,8 +923,8 @@ class Box(BaseModel):
 
         return Box(
             parameters=[
-                Parameter(a_params[0], lb=beta_0[0], ub=beta_0[1]),
-                Parameter(a_params[1], lb=beta_1[0], ub=beta_1[1]),
+                Parameter(name=a_params[0], lb=beta_0[0], ub=beta_0[1]),
+                Parameter(name=a_params[1], lb=beta_1[0], ub=beta_1[1]),
             ]
         )
 
@@ -954,8 +954,12 @@ class Box(BaseModel):
             b1_bounds = p_bounds[1]
             b = Box(
                 parameters=[
-                    Parameter(a_params[0], lb=b0_bounds.lb, ub=b0_bounds.ub),
-                    Parameter(a_params[1], lb=b1_bounds.lb, ub=b1_bounds.ub),
+                    Parameter(
+                        name=a_params[0], lb=b0_bounds.lb, ub=b0_bounds.ub
+                    ),
+                    Parameter(
+                        name=a_params[1], lb=b1_bounds.lb, ub=b1_bounds.ub
+                    ),
                 ]
             )
             return b

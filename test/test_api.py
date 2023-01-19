@@ -1,3 +1,4 @@
+import asyncio
 import json
 import unittest
 from os import path
@@ -16,7 +17,6 @@ CLIENT_NAME = "funman-api-client"
 
 
 class TestAPI(unittest.TestCase):
-    @unittest.skip(reason="dev")
     def test_api_consistency(self):
         # Start API Server
 
@@ -35,14 +35,16 @@ class TestAPI(unittest.TestCase):
                 API_BASE_PATH, openapi_url=OPENAPI_URL, client_name=CLIENT_NAME
             )
             from funman_api_client import Client
-            from funman_api_client.api.default import solve_solve_put
+            from funman_api_client.api.default import (
+                solve_consistency_solve_consistency_put,
+            )
             from funman_api_client.models import (
-                BodySolveSolvePut,
+                BodySolveConsistencySolveConsistencyPut,
                 ConsistencyScenario,
                 ConsistencyScenarioResult,
             )
 
-            funman_client = Client(OPENAPI_URL)
+            funman_client = Client(SERVER_URL, timeout=None)
 
             bilayer_path = path.join(
                 RESOURCES, "bilayer", "CHIME_SIR_dynamics_BiLayer.json"
@@ -52,23 +54,28 @@ class TestAPI(unittest.TestCase):
             infected_threshold = 130
             init_values = {"S": 9998, "I": 1, "R": 1}
 
-            result: ConsistencyScenarioResult = solve_solve_put.sync_detailed(
-                client=funman_client,
-                json_body=BodySolveSolvePut(
-                    ConsistencyScenario.from_dict(
-                        {
-                            "model": {
-                                "init_values": init_values,
-                                "bilayer": {"json_graph": bilayer_json},
-                            },
-                            "query": {
-                                "variable": "I",
-                                "ub": infected_threshold,
-                                "at_end": False,
-                            },
-                        }
-                    )
-                ),
+            response = asyncio.run(
+                solve_consistency_solve_consistency_put.asyncio_detailed(
+                    client=funman_client,
+                    json_body=BodySolveConsistencySolveConsistencyPut(
+                        ConsistencyScenario.from_dict(
+                            {
+                                "model": {
+                                    "init_values": init_values,
+                                    "bilayer": {"json_graph": bilayer_json},
+                                },
+                                "query": {
+                                    "variable": "I",
+                                    "ub": infected_threshold,
+                                    "at_end": False,
+                                },
+                            }
+                        )
+                    ),
+                )
+            )
+            result = ConsistencyScenarioResult.from_dict(
+                src_dict=json.loads(response.content.decode())
             )
             assert result
 
@@ -100,7 +107,7 @@ class TestAPI(unittest.TestCase):
                 ParameterSynthesisScenarioResult,
             )
 
-            funman_client = Client(SERVER_URL)
+            funman_client = Client(SERVER_URL, timeout=None)
 
             bilayer_path = path.join(
                 RESOURCES, "bilayer", "CHIME_SIR_dynamics_BiLayer.json"
@@ -114,37 +121,39 @@ class TestAPI(unittest.TestCase):
             lb = 0.000067 * (1 - 0.5)
             ub = 0.000067 * (1 + 0.5)
 
-            response = solve_parameter_synthesis_solve_parameter_synthesis_put.sync_detailed(
-                client=funman_client,
-                json_body=BodySolveParameterSynthesisSolveParameterSynthesisPut(
-                    ParameterSynthesisScenario.from_dict(
-                        {
-                            "parameters": [
-                                {
-                                    "name": "beta",
-                                    "lb": lb,
-                                    "ub": ub,
-                                }
-                            ],
-                            "model": {
-                                "init_values": init_values,
-                                "bilayer": {"json_graph": bilayer_json},
-                                "parameter_bounds": {
-                                    "beta": [lb, ub],
-                                    "gamma": [1.0 / 14.0, 1.0 / 14.0],
+            response = asyncio.run(
+                solve_parameter_synthesis_solve_parameter_synthesis_put.asyncio_detailed(
+                    client=funman_client,
+                    json_body=BodySolveParameterSynthesisSolveParameterSynthesisPut(
+                        ParameterSynthesisScenario.from_dict(
+                            {
+                                "parameters": [
+                                    {
+                                        "name": "beta",
+                                        "lb": lb,
+                                        "ub": ub,
+                                    }
+                                ],
+                                "model": {
+                                    "init_values": init_values,
+                                    "bilayer": {"json_graph": bilayer_json},
+                                    "parameter_bounds": {
+                                        "beta": [lb, ub],
+                                        "gamma": [1.0 / 14.0, 1.0 / 14.0],
+                                    },
                                 },
-                            },
-                            "query": {
-                                "variable": "I",
-                                "ub": infected_threshold,
-                                "at_end": False,
-                            },
-                        }
+                                "query": {
+                                    "variable": "I",
+                                    "ub": infected_threshold,
+                                    "at_end": False,
+                                },
+                            }
+                        ),
+                        FUNMANConfig.from_dict(
+                            {"tolerance": 1.0e-8, "number_of_processes": 1}
+                        ),
                     ),
-                    FUNMANConfig.from_dict(
-                        {"tolerance": 1.0e-8, "number_of_processes": 1}
-                    ),
-                ),
+                )
             )
             result = ParameterSynthesisScenarioResult.from_dict(
                 src_dict=json.loads(response.content.decode())

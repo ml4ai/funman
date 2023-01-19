@@ -105,8 +105,8 @@ def test_use_case_simple_parameter_synthesis(self):
         result: ParameterSynthesisScenarioResult = funman.solve(
             ParameterSynthesisScenario(
                 [
-                    Parameter("x", symbol=x),
-                    Parameter("y", symbol=y),
+                    Parameter(name="x", symbol=x),
+                    Parameter(name="y", symbol=y),
                 ],
                 EncodedModel(formula),
             )
@@ -134,7 +134,7 @@ bounds (`parameter_bounds` intervals) and a model query.
         funman = Funman()
         result: ParameterSynthesisScenarioResult = funman.solve(
             ParameterSynthesisScenario(
-                parameters=[Parameter("beta", lb=lb, ub=ub)],
+                parameters=[Parameter(name="beta", lb=lb, ub=ub)],
                 model=BilayerModel(
                     BilayerDynamics.from_json(bilayer_path),
                     init_values=init_values,

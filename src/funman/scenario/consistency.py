@@ -1,17 +1,18 @@
 """
 This submodule defines a consistency scenario.  Consistency scenarios specify an existentially quantified model.  If consistent, the solution assigns any unassigned variable, subject to their bounds and other constraints.  
 """
-from typing import Union
+from typing import Dict, Union
 
 import matplotlib.pyplot as plt
 import pandas as pd
 from pydantic import BaseModel
 from pysmt.solvers.solver import Model as pysmt_Model
 
-from funman.model.bilayer import BilayerModel
+from funman.model.bilayer import BilayerModel, validator
 from funman.model.encoded import EncodedModel
 from funman.model.query import QueryFunction, QueryLE
 from funman.scenario import AnalysisScenario, AnalysisScenarioResult
+from funman.search.smt_check import SMTCheck
 from funman.translate import Encoder
 from funman.translate.translate import Encoding
 
@@ -39,7 +40,7 @@ class ConsistencyScenario(AnalysisScenario, BaseModel):
     _model_encoding: Encoding = None
     _query_encoding: Encoding = None
 
-    def solve(self, config: "SearchConfig" = None) -> "AnalysisScenarioResult":
+    def solve(self, config: "SearchConfig") -> "AnalysisScenarioResult":
         """
         Check model consistency.
 
@@ -54,21 +55,25 @@ class ConsistencyScenario(AnalysisScenario, BaseModel):
             ConsistencyScenarioResult indicating whether the model is consistent.
         """
 
-        search = config._search
+        if config._search is None:
+            search = SMTCheck()
+        else:
+            search = config._search()
 
         self._encode()
 
         result = search.search(self, config=config)
 
+        consistent = result.to_dict() if result else None
+
         scenario_result = ConsistencyScenarioResult(
-            scenario=self, _consistent=result
+            scenario=self, consistent=consistent
         )
         return scenario_result
 
     def _encode(self):
         if self._smt_encoder is None:
             self._smt_encoder = self.model.default_encoder()
-        self.model.initialize()
         self._model_encoding = self._smt_encoder.encode_model(self.model)
         self._query_encoding = self._smt_encoder.encode_query(
             self._model_encoding, self.query
@@ -83,20 +88,15 @@ class ConsistencyScenarioResult(AnalysisScenarioResult, BaseModel):
     """
 
     scenario: ConsistencyScenario
-    _consistent: pysmt_Model
-    _query_satisfied: bool = None
+    consistent: Dict[str, float] = None
 
     class Config:
         arbitrary_types_allowed = True
 
-    def query_satisfied(self):
-        if self._query_satisfied is None:
-            self._query_satisfied = self._consistent is not None
-
     def _parameters(self):
-        if self._consistent:
+        if self.consistent:
             parameters = self.scenario._smt_encoder.parameter_values(
-                self.scenario.model, self._consistent
+                self.scenario.model, self.consistent
             )
             return parameters
         else:

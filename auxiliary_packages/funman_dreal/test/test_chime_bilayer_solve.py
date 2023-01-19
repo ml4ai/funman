@@ -145,7 +145,7 @@ class TestChimeBilayerSolve(unittest.TestCase):
         # The efficacy can be up to 4x that of baseline (i.e., 0.05 - 0.20)
         parameters = [
             Parameter(
-                "beta",
+                name="beta",
                 # lb=0.000001,
                 # ub=0.00001,
                 lb=model.parameter_bounds["beta"][0],

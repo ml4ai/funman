@@ -17,7 +17,9 @@ class SimulationScenario(AnalysisScenario, BaseModel):
     def solve(self, config: "FUNMANConfig"):
         results = self.model.main_fn()
         query_satisfied = self._evaluate_query(results)
-        return SimulationScenarioResult(self, results, query_satisfied)
+        return SimulationScenarioResult(
+            scenario=self, results=results, query_satisfied=query_satisfied
+        )
 
     def _evaluate_query(self, results):
         if isinstance(self.query, QueryFunction):
@@ -27,6 +29,9 @@ class SimulationScenario(AnalysisScenario, BaseModel):
                 f"SimulationScenario cannot evaluate query of type {type(self.query)}"
             )
         return result
+
+    def _encode(self):
+        pass
 
 
 class SimulationScenarioResult(AnalysisScenarioResult, BaseModel):

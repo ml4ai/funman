@@ -55,7 +55,9 @@ class Funman(object):
     """
 
     def solve(
-        self, problem: "AnalysisScenario", config: FUNMANConfig = None
+        self,
+        problem: "AnalysisScenario",
+        config: FUNMANConfig = FUNMANConfig(),
     ) -> "AnalysisScenarioResult":
         """
         This method is the main entry point for Funman analysis.  Its inputs

@@ -3,12 +3,13 @@ This module represents the abstract base classes for models.
 """
 from abc import ABC, abstractmethod
 from copy import deepcopy
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Union
 
 from pydantic import BaseModel, validator
 from pysmt.fnode import FNode
 from pysmt.shortcuts import REAL, Symbol
 
+from funman.constants import NEG_INFINITY, POS_INFINITY
 from funman.model.query import *
 
 
@@ -17,7 +18,7 @@ class Model(ABC, BaseModel):
     The abstract base class for Models.
     """
 
-    init_values: Dict[str, float]
+    init_values: Dict[str, float] = None
     parameter_bounds: Dict[str, List[float]] = {}
 
     @abstractmethod
@@ -47,16 +48,14 @@ class Parameter(BaseModel):
 
     class Config:
         underscore_attrs_are_private = True
-        arbitrary_types_allowed = True
+        # arbitrary_types_allowed = True
 
     name: str
-    lb: Union[float, str] = 0.0
-    ub: Union[float, str] = 0.0
-    # lb: str = NEG_INFINITY
-    # ub: str = POS_INFINITY
-    _symbol: Optional[FNode] = None
+    lb: Union[str, float] = NEG_INFINITY
+    ub: Union[str, float] = POS_INFINITY
+    _symbol: FNode = None
 
-    def symbol(self) -> FNode:
+    def symbol(self):
         if not self._symbol:
             self._symbol = Symbol(self.name, REAL)
         return self._symbol

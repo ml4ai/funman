@@ -12,6 +12,7 @@ from pysmt.smtlib.printers import (
     write_annotations_dag,
 )
 from pysmt.smtlib.script import SmtLibCommand, SmtLibScript
+from pysmt.solvers.solver import Model
 
 
 class FUNMANSmtLibScript(SmtLibScript):
@@ -180,3 +181,16 @@ def smtlibscript_from_formula(formula, logic=None):
     # check-sat
     script.add_command(SmtLibCommand(name=smtcmd.CHECK_SAT, args=[]))
     return script
+
+
+def model_to_dict(self):
+    d = {}
+    for var in self:
+        try:
+            d[var[0].symbol_name()] = float(self.get_py_value(var[0]))
+        except OverflowError as e:
+            raise e
+    return d
+
+
+Model.to_dict = model_to_dict

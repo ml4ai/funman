@@ -1,3 +1,4 @@
+import json
 import os
 import unittest
 
@@ -7,6 +8,7 @@ from pysmt.shortcuts import GE, LE, And, Real, Symbol
 from pysmt.typing import REAL
 
 from funman import Funman
+from funman.funman import FUNMANConfig
 from funman.model import (
     EncodedModel,
     Parameter,
@@ -43,21 +45,24 @@ class TestUseCases(unittest.TestCase):
             i = sim_results[2]
             return all(i_t <= infected_threshold for i_t in i)
 
-        query = QueryLE("I", infected_threshold)
+        query = QueryLE(variable="I", ub=infected_threshold)
 
         funman = Funman()
 
         sim_result: SimulationScenarioResult = funman.solve(
             SimulationScenario(
-                model=SimulatorModel(run_CHIME_SIR),
-                query=QueryFunction(does_not_cross_threshold),
+                model=SimulatorModel(main_fn=run_CHIME_SIR),
+                query=QueryFunction(function=does_not_cross_threshold),
             )
         )
+
+        with open(bilayer_path, "r") as f:
+            bilayer_src = json.load(f)
 
         consistency_result: ConsistencyScenarioResult = funman.solve(
             ConsistencyScenario(
                 model=BilayerModel(
-                    BilayerDynamics.from_json(bilayer_path),
+                    bilayer=BilayerDynamics.from_json(bilayer_src=bilayer_src),
                     init_values=init_values,
                 ),
                 query=query,
@@ -65,7 +70,9 @@ class TestUseCases(unittest.TestCase):
         )
 
         # assert the both queries returned the same result
-        return sim_result.query_satisfied == consistency_result.query_satisfied
+        return sim_result.query_satisfied == (
+            consistency_result.consistent is not None
+        )
 
     def test_use_case_bilayer_consistency(self):
         """
@@ -94,11 +101,12 @@ class TestUseCases(unittest.TestCase):
         funman = Funman()
         result: ParameterSynthesisScenarioResult = funman.solve(
             ParameterSynthesisScenario(
-                [
-                    Parameter("x", _symbol=x),
-                    Parameter("y", _symbol=y),
+                parameters=[
+                    Parameter(name="x", _symbol=x),
+                    Parameter(name="y", _symbol=y),
                 ],
-                EncodedModel(formula),
+                model=EncodedModel(_formula=formula),
+                query=QueryTrue(),
             )
         )
         assert result
@@ -107,6 +115,9 @@ class TestUseCases(unittest.TestCase):
         bilayer_path = os.path.join(
             RESOURCES, "bilayer", "CHIME_SIR_dynamics_BiLayer.json"
         )
+        with open(bilayer_path, "r") as f:
+            bilayer_src = json.load(f)
+
         infected_threshold = 3
         init_values = {"S": 9998, "I": 1, "R": 1}
 
@@ -158,7 +169,7 @@ class TestUseCases(unittest.TestCase):
                     ]
                 ),
             ),
-            config=FUNMANConfig(tolerance=1e-8),
+            config=FUNMANConfig(tolerance=1e-8, number_of_processes=1),
         )
         assert len(result.parameter_space.true_boxes) > 0
         assert len(result.parameter_space.false_boxes) > 0

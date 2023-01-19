@@ -1,6 +1,8 @@
 """
 This module contains defintions of constants used within FUNMAN
 """
-BIG_NUMBER = 1e6
-NEG_INFINITY: str = "-inf"
-POS_INFINITY: str = "inf"
+from typing import Union
+
+BIG_NUMBER: float = 1.0e6
+NEG_INFINITY: Union[float, str] = "-inf"
+POS_INFINITY: Union[float, str] = "inf"

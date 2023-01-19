@@ -23,7 +23,7 @@ class Encoding(BaseModel):
         arbitrary_types_allowed = True
 
     formula: FNode = None
-    symbols: Dict[str, Dict[str, FNode]] = None
+    symbols: Union[List[FNode], Dict[str, Dict[str, FNode]]] = None
 
     # @validator("formula")
     # def set_symbols(cls, v: FNode):

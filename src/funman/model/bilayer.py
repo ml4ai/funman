@@ -208,7 +208,7 @@ class BilayerDynamics(BilayerGraph):
 
     @staticmethod
     def from_json(bilayer_src: Union[str, Dict]):
-        bilayer = BilayerDynamics(bilayer_src)
+        bilayer = BilayerDynamics(json_graph=bilayer_src)
         bilayer.initialize_from_json()
         return bilayer
 
