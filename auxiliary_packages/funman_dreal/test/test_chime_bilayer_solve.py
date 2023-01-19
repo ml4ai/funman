@@ -120,7 +120,7 @@ class TestChimeBilayerSolve(unittest.TestCase):
 
         query.ub = 10000
 
-        scenario = ConsistencyScenario(model, query, smt_encoder=encoder)
+        scenario = ConsistencyScenario(model, query, _smt_encoder=encoder)
 
         result = Funman().solve(
             scenario, config=SearchConfig(solver="dreal", search=SMTCheck)

@@ -22,13 +22,8 @@ class Encoding(BaseModel):
     class Config:
         arbitrary_types_allowed = True
 
-    def __init__(
-        self,
-        formula: FNode = None,
-        symbols: Dict[str, Dict[str, FNode]] = None,
-    ) -> None:
-        self.formula = formula
-        self.symbols = symbols
+    formula: FNode = None
+    symbols: Dict[str, Dict[str, FNode]] = None
 
 
 class EncodingOptions(object):
@@ -46,11 +41,10 @@ class Encoder(ABC, BaseModel):
 
     """
 
+    config: EncodingOptions = EncodingOptions()
+
     class Config:
         arbitrary_types_allowed = True
-
-    def __init__(self, config: EncodingOptions = EncodingOptions()) -> None:
-        self.config = config
 
     def _symbols(self, formula: FNode) -> Dict[str, Dict[str, FNode]]:
         symbols = {}
@@ -114,11 +108,11 @@ class Encoder(ABC, BaseModel):
     def _encode_query_le(self, model_encoding, query):
         timepoints = model_encoding.symbols[query.variable]
         return Encoding(
-            And([LE(s, Real(query.ub)) for s in timepoints.values()])
+            formula=And([LE(s, Real(query.ub)) for s in timepoints.values()])
         )
 
     def _encode_query_true(self, model_encoding, query):
-        return Encoding(TRUE())
+        return Encoding(formula=TRUE())
 
     def symbol_timeseries(
         self, model_encoding, pysmtModel: pysmt.solvers.solver.Model

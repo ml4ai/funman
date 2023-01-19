@@ -55,7 +55,7 @@ class BoxSearchEpisode(SearchEpisode):
         manager: Optional[SyncManager] = None,
     ) -> None:
         super(BoxSearchEpisode, self).__init__(config, problem)
-        self.statistics = SearchStatistics(manager=manager)
+        self.statistics = SearchStatistics.from_manager(manager)
         self.unknown_boxes = manager.Queue() if manager else SQueue()
         self.true_boxes: List[Box] = []
         self.false_boxes: List[Box] = []
@@ -91,9 +91,9 @@ class BoxSearchEpisode(SearchEpisode):
 
     def _on_start(self):
         if self.config.number_of_processes > 1:
-            self.statistics.last_time.value = str(datetime.now())
+            self.statistics._last_time.value = str(datetime.now())
         else:
-            self.statistics.last_time = str(datetime.now())
+            self.statistics._last_time = str(datetime.now())
 
     # def close(self):
     #     if self.multiprocessing:
@@ -111,9 +111,9 @@ class BoxSearchEpisode(SearchEpisode):
         if box.width() > self.config.tolerance:
             self.unknown_boxes.put(box)
             if self.config.number_of_processes > 1:
-                self.statistics.num_unknown.value += 1
+                self.statistics._num_unknown.value += 1
             else:
-                self.statistics.num_unknown += 1
+                self.statistics._num_unknown += 1
             return True
         return False
 
@@ -155,14 +155,14 @@ class BoxSearchEpisode(SearchEpisode):
     def _get_unknown(self):
         box = self.unknown_boxes.get(timeout=self.config.queue_timeout)
         if self.config.number_of_processes > 1:
-            self.statistics.num_unknown.value = (
-                self.statistics.num_unknown.value - 1
+            self.statistics._num_unknown.value = (
+                self.statistics._num_unknown.value - 1
             )
-            self.statistics.current_residual.value = box.width()
+            self.statistics._current_residual.value = box.width()
         else:
-            self.statistics.num_unknown += 1
-            self.statistics.current_residual = box.width()
-        self.statistics.residuals.put(box.width())
+            self.statistics._num_unknown += 1
+            self.statistics._current_residual = box.width()
+        self.statistics._residuals.put(box.width())
         this_time = datetime.now()
         # FIXME self.statistics.iteration_time.put(this_time - self.statistics.last_time.value)
         # FIXME self.statistics.last_time[:] = str(this_time)
@@ -185,7 +185,7 @@ class BoxSearch(Search):
 
     def _split(self, box: Box, episode: BoxSearchEpisode, points=None):
         b1, b2 = box.split(points=points)
-        episode.statistics.iteration_operation.put("s")
+        episode.statistics._iteration_operation.put("s")
         return episode._add_unknown([b1, b2])
 
     def _logger(self, config, process_name=None):

@@ -71,7 +71,7 @@ def run_chime_bilayer_example(output_path):
         ConsistencyScenario(
             model,
             query,
-            smt_encoder=BilayerEncoder(
+            _smt_encoder=BilayerEncoder(
                 config=BilayerEncodingOptions(step_size=10, max_steps=duration)
             ),  # four months
         )

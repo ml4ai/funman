@@ -1,32 +1,55 @@
+import datetime
 from abc import ABC, abstractmethod
+from multiprocessing import Array, Queue, Value
 from multiprocessing.managers import SyncManager
 from queue import Queue as SQueue
-from typing import Optional
+from typing import List, Optional, Union
 
 import multiprocess as mp
+import pysmt
 from pydantic import BaseModel
 
 from funman.scenario import AnalysisScenario
 from funman.search.handlers import NoopResultHandler, ResultHandler
 
 
-class SearchStatistics(object):
-    def __init__(self, manager: Optional[SyncManager] = None):
-        self.multiprocessing = manager is not None
-        self.num_true = manager.Value("i", 0) if self.multiprocessing else 0
-        self.num_false = manager.Value("i", 0) if self.multiprocessing else 0
-        self.num_unknown = manager.Value("i", 0) if self.multiprocessing else 0
-        self.residuals = manager.Queue() if self.multiprocessing else SQueue()
-        self.current_residual = (
-            manager.Value("d", 0.0) if self.multiprocessing else 0.0
+class SearchStatistics(BaseModel):
+    class Config:
+        arbitrary_types_allowed = True
+        underscore_attrs_are_private = True
+
+    _multiprocessing: bool = False
+    _num_true: Union[int, Value] = 0
+    _num_false: Union[int, Value] = 0
+    _num_unknown: Union[int, Value] = 0
+    _residuals: Union[Queue, SQueue] = None
+    _current_residual: Union[float, Value] = 0.0
+    _last_time: Union[List[datetime.datetime], Array] = None
+    _iteration_time: Union[SQueue, Queue] = None
+    _iteration_operation: Union[SQueue, Queue] = None
+
+
+class SearchStaticsMP(SearchStatistics):
+    @staticmethod
+    def from_manager(manager: SyncManager) -> "SearchStatistics":
+        ss = SearchStatistics()
+
+        ss._multiprocessing = manager is not None
+        ss._num_true = manager.Value("i", 0) if ss._multiprocessing else 0
+        ss._num_false = manager.Value("i", 0) if ss._multiprocessing else 0
+        ss._num_unknown = manager.Value("i", 0) if ss._multiprocessing else 0
+        ss._residuals = manager.Queue() if ss._multiprocessing else SQueue()
+        ss._current_residual = (
+            manager.Value("d", 0.0) if ss._multiprocessing else 0.0
         )
-        self.last_time = manager.Array("u", "") if self.multiprocessing else []
-        self.iteration_time = (
-            manager.Queue() if self.multiprocessing else SQueue()
+        ss._last_time = manager.Array("u", "") if ss._multiprocessing else []
+        ss._iteration_time = (
+            manager.Queue() if ss._multiprocessing else SQueue()
         )
-        self.iteration_operation = (
-            manager.Queue() if self.multiprocessing else SQueue()
+        ss._iteration_operation = (
+            manager.Queue() if ss._multiprocessing else SQueue()
         )
+        return ss
 
 
 class SearchConfig(ABC):
@@ -70,14 +93,15 @@ class SearchConfig(ABC):
 class SearchEpisode(BaseModel):
     class Config:
         arbitrary_types_allowed = True
+        underscore_attrs_are_private = True
 
-    def __init__(
-        self, config: SearchConfig, problem: "AnalysisScenario"
-    ) -> None:
-        self.config: SearchConfig = config
-        self.problem = problem
-        self.num_parameters: int = len(self.problem.parameters)
-        self.statistics = SearchStatistics()
+    problem: AnalysisScenario
+    config: SearchConfig
+    statistics: SearchStatistics = SearchStatistics()
+    _model: pysmt.solvers.solver.Model
+
+    def num_parameters(self):
+        return len(self.problem.parameters)
 
 
 class Search(ABC):

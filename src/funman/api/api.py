@@ -1,11 +1,18 @@
-from typing import Optional
+from typing import Optional, Union
 
 import uvicorn
 from fastapi import FastAPI
 
 from funman import Funman
 from funman.scenario import AnalysisScenario, AnalysisScenarioResult, Config
-from funman.scenario.consistency import ConsistencyScenario
+from funman.scenario.consistency import (
+    ConsistencyScenario,
+    ConsistencyScenarioResult,
+)
+from funman.scenario.simulation import (
+    SimulationScenario,
+    SimulationScenarioResult,
+)
 
 app = FastAPI(title="funman_api")
 
@@ -17,11 +24,15 @@ def read_root():
 
 @app.put("/solve")
 def solve(
-    scenario: ConsistencyScenario,
-    config: Optional[Config],
-) -> AnalysisScenarioResult:
-    f = Funman()
-    result: AnalysisScenarioResult = f.solve(scenario, config=config)
+    scenario: Union[ConsistencyScenario, SimulationScenario],
+    config: Optional[Config] = None,
+) -> Union[ConsistencyScenarioResult, SimulationScenarioResult]:
+    try:
+        f = Funman()
+        result: AnalysisScenarioResult = f.solve(scenario, config=config)
+    except Exception as e:
+        print(e)
+        raise e
     return result
 
 

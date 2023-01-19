@@ -13,15 +13,15 @@ class SMTCheck(search.Search):
     ) -> search.SearchEpisode:
         episode = search.SearchEpisode(config=config, problem=problem)
         result = self.expand(problem, episode)
-        episode.model = result
+        episode._model = result
         return result
 
     def expand(self, problem, episode):
         with Solver(name=episode.config.solver, logic=QF_NRA) as s:
             s.add_assertion(
                 And(
-                    problem.model_encoding.formula,
-                    problem.query_encoding.formula,
+                    problem._model_encoding.formula,
+                    problem._query_encoding.formula,
                 )
             )
             result = s.solve()

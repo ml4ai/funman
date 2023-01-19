@@ -17,6 +17,7 @@ from funman.search.representation import ParameterSpace, Point
 from funman.search.search import SearchConfig, SearchEpisode
 from funman.search.smt_check import SMTCheck
 from funman.translate import EncodedEncoder
+from funman.translate.translate import Encoder, Encoding
 
 
 class ParameterSynthesisScenario(AnalysisScenario):
@@ -28,27 +29,13 @@ class ParameterSynthesisScenario(AnalysisScenario):
     (false) parameters.
     """
 
-    def __init__(
-        self,
-        parameters: List[Parameter],
-        model: Model,
-        query: Query = QueryTrue(),
-        search: BoxSearch = BoxSearch(),
-        smt_encoder=None,
-    ) -> None:
-        super().__init__()
-        self.parameters = parameters
-        self.smt_encoder = (
-            smt_encoder if smt_encoder else model.default_encoder()
-        )
-        self.model_encoding = None
-        self.query_encoding = None
-
-        if search is None:
-            search = BoxSearch()
-        self.search = search
-        self.model = model
-        self.query = query
+    parameters: List[Parameter]
+    model: Model
+    query: Query = QueryTrue()
+    search: str = "BoxSearch"
+    smt_encoder: Encoder = None  # TODO set to model.default_encoder()
+    model_encoding: Encoding = None
+    query_encoding: Encoding = None
 
     def solve(
         self, config: SearchConfig = None
@@ -72,7 +59,15 @@ class ParameterSynthesisScenario(AnalysisScenario):
             config = SearchConfig()
 
         self._encode()
-        result = self.search.search(self, config=config)
+        if self.search == "BoxSearch":
+            if not hasattr(self, "_search") and self._search is None:
+                self._search = BoxSearch()
+        else:
+            raise Exception(
+                f"ParameterSynthesisScenarios cannot use search: {self.search}"
+            )
+
+        result = self._search.search(self, config=config)
         return ParameterSynthesisScenarioResult(result, self)
 
     def _encode(self):
@@ -174,7 +169,7 @@ class ParameterSynthesisScenarioResult(AnalysisScenarioResult):
             scenario = ConsistencyScenario(
                 self.scenario.model,
                 self.scenario.query,
-                smt_encoder=self.scenario.smt_encoder,
+                _smt_encoder=self.scenario.smt_encoder,
             )
             result = scenario.solve(
                 config=SearchConfig(solver="dreal", search=SMTCheck)

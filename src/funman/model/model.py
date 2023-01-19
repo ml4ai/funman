@@ -18,8 +18,8 @@ class Model(ABC, BaseModel):
     The abstract base class for Models.
     """
 
-    init_values: Dict[str, float] = None
-    parameter_bounds: Dict[str, List[float]] = None
+    init_values: Dict[str, float]
+    parameter_bounds: Dict[str, List[float]] = {}
 
     @abstractmethod
     def default_encoder(self) -> "Encoder":

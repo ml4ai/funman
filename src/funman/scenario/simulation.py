@@ -2,14 +2,13 @@
 This module wraps a simulator invocation as a Scenario.
 """
 from funman.model.model import Model, Query, QueryFunction
+from funman.model.simulator import SimulatorModel
 from funman.scenario import AnalysisScenario, AnalysisScenarioResult, Config
 
 
 class SimulationScenario(AnalysisScenario):
-    def __init__(self, model: Model, query: Query):
-        super().__init__()
-        self.model = model
-        self.query = query
+    model: SimulatorModel
+    query: Query
 
     def solve(self, config: Config):
         results = self.model.main_fn()

@@ -21,9 +21,7 @@ class QueryFunction(Query):
     This query uses a Python function passed to the constructor to evaluate a query on the results of a scenario.
     """
 
-    def __init__(self, function: Callable) -> None:
-        super().__init__()
-        self.function = function
+    function: Callable
 
 
 class QueryTrue(Query):
@@ -39,30 +37,26 @@ class QueryEncoded(Query):
     Class to contain a formula that is already encoded by a pysmt FNode.
     """
 
-    def __init__(self, fnode: FNode) -> None:
-        super().__init__()
-        self.formula = fnode
+    class Config:
+        arbitrary_types_allowed = True
+
+    formula: FNode
 
 
 class QueryLE(Query):
     """
     Class to represent a query of the form: var <= ub, where var is a variable, and ub is a constant upper bound.
+
+    Parameters
+    ----------
+    variable : str
+        model variable name
+    ub : float
+        upper bound constant
+    at_end : bool, optional
+        apply the constraint to the last timepoint of a scenario only, by default False
     """
 
-    def __init__(self, variable: str, ub: float, at_end: bool = False) -> None:
-        """
-        Create a QueryLE object.
-
-        Parameters
-        ----------
-        variable : str
-            model variable name
-        ub : float
-            upper bound constant
-        at_end : bool, optional
-            apply the constraint to the last timepoint of a scenario only, by default False
-        """
-        super().__init__()
-        self.variable = variable
-        self.ub = ub
-        self.at_end = at_end
+    variable: str
+    ub: float
+    at_end: bool = False

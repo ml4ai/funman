@@ -57,11 +57,6 @@ class BilayerEncoder(Encoder):
     as defined by a Bilayer model.
     """
 
-    def __init__(
-        self, config: BilayerEncodingOptions = BilayerEncodingOptions()
-    ) -> None:
-        super().__init__(config)
-
     def encode_model(self, model: Model):
         """
         Encode the model as an SMTLib formula.
@@ -105,7 +100,7 @@ class BilayerEncoder(Encoder):
                         self._encode_bilayer_state_node(node, 0),
                         Real(model.init_values[node.parameter]),
                     )
-                    for idx, node in model.bilayer.state.items()
+                    for idx, node in model.bilayer._state.items()
                 ]
             )
 
@@ -118,7 +113,7 @@ class BilayerEncoder(Encoder):
                         lb=model.parameter_bounds[node.parameter][0],
                         ub=model.parameter_bounds[node.parameter][1],
                     )
-                    for _, node in model.bilayer.flux.items()
+                    for _, node in model.bilayer._flux.items()
                     if node.parameter in model.parameter_bounds
                     and model.parameter_bounds[node.parameter]
                 ]
@@ -129,7 +124,7 @@ class BilayerEncoder(Encoder):
                             lb=model.parameter_bounds[node.parameter][0],
                             ub=model.parameter_bounds[node.parameter][1],
                         )
-                        for _, node in model.measurements.flux.items()
+                        for _, node in model.measurements._flux.items()
                         if node.parameter in model.parameter_bounds
                         and model.parameter_bounds[node.parameter]
                     ]
@@ -157,7 +152,7 @@ class BilayerEncoder(Encoder):
             parameter_constraints = And(
                 parameter_constraints,
                 self._set_parameters_constant(
-                    [v.parameter for v in model.bilayer.flux.values()],
+                    [v.parameter for v in model.bilayer._flux.values()],
                     encoding,
                 ),
             )
@@ -167,7 +162,7 @@ class BilayerEncoder(Encoder):
                     self._set_parameters_constant(
                         [
                             v.parameter
-                            for v in model.measurements.flux.values()
+                            for v in model.measurements._flux.values()
                         ],
                         measurements,
                     ),
@@ -227,36 +222,36 @@ class BilayerEncoder(Encoder):
         )  ## List of SMT equations for a given timepoint. These will be
         ## joined by an "And" command and returned
 
-        for t in bilayer.tangent:  ## Loop over tangents (derivatives)
+        for t in bilayer._tangent:  ## Loop over _tangents (derivatives)
             derivative_expr = 0
-            ## Get tangent variable and translate it to SMT form tanvar_smt
-            tanvar = bilayer.tangent[t].parameter
+            ## Get _tangent variable and translate it to SMT form tanvar_smt
+            tanvar = bilayer._tangent[t].parameter
             tanvar_smt = self._encode_bilayer_state_node(
-                bilayer.tangent[t], timepoint
+                bilayer._tangent[t], timepoint
             )
-            state_var_next_step = bilayer.state[t].parameter
+            state_var_next_step = bilayer._state[t].parameter
             state_var_smt = self._encode_bilayer_state_node(
-                bilayer.state[t], timepoint
+                bilayer._state[t], timepoint
             )
             state_var_next_step_smt = self._encode_bilayer_state_node(
-                bilayer.state[t], next_timepoint
+                bilayer._state[t], next_timepoint
             )
 
             relevant_output_edges = [
                 (val, val.src.index)
-                for val in bilayer.output_edges
-                if val.tgt.index == bilayer.tangent[t].index
+                for val in bilayer._output_edges
+                if val.tgt.index == bilayer._tangent[t].index
             ]
             for flux_sign_index in relevant_output_edges:
-                flux_term = bilayer.flux[flux_sign_index[1]]
-                output_edge = bilayer.output_edges[flux_sign_index[1]]
+                flux_term = bilayer._flux[flux_sign_index[1]]
+                output_edge = bilayer._output_edges[flux_sign_index[1]]
                 expr = self._encode_bilayer_flux_node(flux_term, timepoint)
                 ## Check which state vars go to that param
                 relevant_input_edges = [
                     self._encode_bilayer_state_node(
-                        bilayer.state[val2.src.index], timepoint
+                        bilayer._state[val2.src.index], timepoint
                     )
-                    for val2 in bilayer.input_edges
+                    for val2 in bilayer._input_edges
                     if val2.tgt.index == flux_sign_index[1]
                 ]
                 for state_var in relevant_input_edges:
@@ -317,7 +312,7 @@ class BilayerEncoder(Encoder):
                 for s in measurements.node_incoming_edges[src]
             ]
             result = Plus(result, Times([f_t] + src_srcs)).simplify()
-        # flux = next([measurements.output_edges])
+        # flux = next([measurements._output_edges])
         return result
 
     def _set_parameters_constant(self, parameters, formula):
@@ -392,7 +387,7 @@ class BilayerEncoder(Encoder):
         try:
             parameters = {
                 node.parameter: pysmtModel[Symbol(node.parameter, REAL)]
-                for _, node in model.bilayer.flux.items()
+                for _, node in model.bilayer._flux.items()
             }
             return parameters
         except OverflowError as e:

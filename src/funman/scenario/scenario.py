@@ -1,5 +1,4 @@
 from abc import ABC, abstractclassmethod
-from typing import List
 
 from pydantic import BaseModel
 
@@ -12,12 +11,10 @@ class Config(BaseModel):
     """
 
 
-class AnalysisScenario(BaseModel):
+class AnalysisScenario(ABC, BaseModel):
     """
     Abstract class for Analysis Scenarios.
     """
-
-    parameters: List[Parameter]
 
     @abstractclassmethod
     def solve(self, config: Config):

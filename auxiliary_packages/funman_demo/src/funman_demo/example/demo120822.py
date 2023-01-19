@@ -439,7 +439,7 @@ SIR Bilayer (left), Hospitalized Measurement (right)
                 ConsistencyScenario(
                     model,
                     self.query,
-                    smt_encoder=BilayerEncoder(config=self.encoding_options),
+                    _smt_encoder=BilayerEncoder(config=self.encoding_options),
                 ),
                 config=SearchConfig(solver="dreal", search=SMTCheck),
             )
