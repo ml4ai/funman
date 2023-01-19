@@ -5,6 +5,7 @@ from typing import List
 
 import matplotlib.pyplot as plt
 import pandas as pd
+from pydantic import BaseModel
 from pysmt.solvers.solver import Model as pysmt_Model
 
 from funman.model.model import Model
@@ -16,7 +17,7 @@ from funman.translate import Encoder
 from funman.translate.translate import Encoding
 
 
-class ConsistencyScenario(AnalysisScenario):
+class ConsistencyScenario(AnalysisScenario, BaseModel):
     """
     The ConsistencyScenario class is an Analysis Scenario that analyzes a Model to find assignments to all variables, if consistent.
 

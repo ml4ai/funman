@@ -162,7 +162,7 @@ run-docker:
 	&& docker run \
 		-d \
 		-it \
-		--cpus=8 \
+		--cpus=5 \
 		--name ${DEV_CONTAINER} \
     -p 127.0.0.1:8888:8888 \
 		-v $$PWD:/home/$$USER/funman $$DREAL_LOCAL_VOLUME_ARG \
@@ -245,3 +245,14 @@ check-release: dist
 
 release: check-release
 	python3 -m twine upload dist/*
+
+generate-api-client:
+	pip install openapi-python-client
+	openapi-python-client --install-completion
+	uvicorn funman.api.api:app --host 0.0.0.0 --port 8190 &
+	sleep 1
+	openapi-python-client generate --url http://0.0.0.0:8190/openapi.json
+	pip install -e funman-api-client
+
+update-api-client:
+	openapi-python-client update --url http://0.0.0.0:8190/openapi.json
