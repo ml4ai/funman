@@ -199,3 +199,4 @@ test/out
 .docker_venv
 notebooks/*png
 funman-api-client
+.vscode

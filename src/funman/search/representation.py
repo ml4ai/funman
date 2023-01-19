@@ -2,9 +2,10 @@
 This submodule contains definitions for the classes used
 during the configuration and execution of a search.
 """
+import copy
+import json
 import logging
 from functools import total_ordering
-from multiprocessing.managers import SyncManager
 from statistics import mean as average
 from typing import Dict, List
 
@@ -26,6 +27,27 @@ class Interval(object):
         self.lb = lb
         self.ub = ub
         self.cached_width = None
+
+    def __hash__(self):
+        return int(math_utils.plus(self.lb, self.ub))
+
+    def disjoint(self, other: "Interval") -> bool:
+        """
+        Is self disjoint (non overlapping) with other?
+
+        Parameters
+        ----------
+        other : Interval
+            other interval
+
+        Returns
+        -------
+        bool
+            are the intervals disjoint?
+        """
+        return math_utils.lte(self.ub, other.lb) or math_utils.gte(
+            self.lb, other.ub
+        )
 
     def width(self):
         """
@@ -58,10 +80,26 @@ class Interval(object):
             return False
 
     def __repr__(self):
-        return f"[{self.lb}, {self.ub}]"
+        return str(self.to_dict())
 
     def __str__(self):
-        return self.__repr__()
+        return f"Interval([{self.lb}, {self.ub}))"
+
+    def meets(self, other: "Interval") -> bool:
+        """
+        Does self meet other?
+
+        Parameters
+        ----------
+        other : Interval
+            another inteval
+
+        Returns
+        -------
+        bool
+            Does self meet other?
+        """
+        return self.ub == other.lb or self.lb == other.ub
 
     def finite(self) -> bool:
         """
@@ -101,17 +139,18 @@ class Interval(object):
         return lhs and rhs
 
     def intersects(self, other: "Interval") -> bool:
-        lhs = (
-            (self.lb == NEG_INFINITY or other.lb != NEG_INFINITY)
-            if (self.lb == NEG_INFINITY or other.lb == NEG_INFINITY)
-            else self.lb <= other.lb
+        return (
+            self.contains_value(other.lb)
+            or other.contains_value(self.lb)
+            or (
+                self.contains_value(other.ub)
+                and math_utils.gt(other.ub, self.lb)
+            )
+            or (
+                other.contains_value(self.ub)
+                and math_utils.gt(self.ub, other.lb)
+            )
         )
-        rhs = (
-            (other.ub != POS_INFINITY or self.ub == POS_INFINITY)
-            if (self.ub == POS_INFINITY or other.ub == POS_INFINITY)
-            else other.ub <= self.ub
-        )
-        return lhs or rhs
 
     def intersection(self, b: "Interval") -> "Interval":
         """
@@ -173,15 +212,23 @@ class Interval(object):
 
         return None
 
-    def midpoint(self):
+    def midpoint(self, points: List["Point"] = None):
         """
         Compute the midpoint of the interval.
+
+        Parameters
+        ----------
+        points : List[Point], optional
+            if specified, compute midpoint as average of points in the interval, by default None
 
         Returns
         -------
         float
             midpoint
         """
+
+        # if points:
+        #     return float(average(points))
 
         if self.lb == NEG_INFINITY and self.ub == POS_INFINITY:
             return 0
@@ -248,9 +295,7 @@ class Interval(object):
         bool
             the value is in the interval
         """
-        lhs = self.lb == NEG_INFINITY or self.lb <= value
-        rhs = self.ub == POS_INFINITY or value <= self.ub
-        return lhs and rhs
+        return math_utils.gte(value, self.lb) and math_utils.lt(value, self.ub)
 
     def to_smt(self, p: Parameter, closed_upper_bound=False):
         # FIXME move this into a translate utility
@@ -304,10 +349,13 @@ class Point(object):
         self.values = {p: 0.0 for p in parameters}
 
     def __str__(self):
-        return f"{self.values.values()}"
+        return f"Point({self.values})"
 
     def to_dict(self):
         return {"values": {k.name: v for k, v in self.values.items()}}
+
+    def __repr__(self) -> str:
+        return str(self.to_dict())
 
     @staticmethod
     def from_dict(data):
@@ -387,6 +435,99 @@ class Box(object):
             ]
         )
 
+    def __hash__(self):
+        return int(sum([i.__hash__() for _, i in self.bounds.items()]))
+
+    def project(self, vars: List[str]) -> "Box":
+        """
+        Takes a subset of selected variables (vars_list) of a given box (b) and returns another box that is given by b's values for only the selected variables.
+
+        Parameters
+        ----------
+        vars : List[str]
+            variables to project onto
+
+        Returns
+        -------
+        Box
+            projected box
+
+        """
+        bp = copy.copy(self)
+        bp.bounds = {k: v for k, v in bp.bounds.items() if k.name in vars}
+        return bp
+
+    def _merge(self, other: "Box") -> "Box":
+        """
+        Merge two boxes.  This function assumes the boxes meet in one dimension and are equal in all others.
+
+        Parameters
+        ----------
+        other : Box
+            other box
+
+        Returns
+        -------
+        Box
+            merge of two boxes that meet in one dimension
+        """
+        merged = Box(self.bounds.keys())
+        for p, i in merged.bounds.items():
+            if self.bounds[p].meets(other.bounds[p]):
+                i.lb = min(self.bounds[p].lb, other.bounds[p].lb)
+                i.ub = max(self.bounds[p].ub, other.bounds[p].ub)
+            else:
+                i.lb = self.bounds[p].lb
+                i.ub = self.bounds[p].ub
+        return merged
+
+    def _get_merge_candidates(self, boxes: Dict[Parameter, List["Box"]]):
+        equals_set = set([])
+        meets_set = set([])
+        disqualified_set = set([])
+        for p in boxes:
+            sorted = boxes[p]
+            # find boxes in sorted that meet or equal self in dimension p
+            self_index = sorted.index(self)
+            # sorted is sorted by upper bound, and candidate boxes are either
+            # before or after self in the list
+            # search backward
+            for r in [
+                reversed(range(self_index)),  # search forward
+                range(self_index + 1, len(boxes[p])),  # search backward
+            ]:
+                for i in r:
+                    if (
+                        sorted[i].bounds[p].meets(self.bounds[p])
+                        and sorted[i] not in disqualified_set
+                    ):
+                        if sorted[i] in meets_set:
+                            # Need exactly one dimension where they meet, so disqualified
+                            meets_set.remove(sorted[i])
+                            disqualified_set.add(sorted[i])
+                        else:
+                            meets_set.add(sorted[i])
+                    elif (
+                        sorted[i].bounds[p] == self.bounds[p]
+                        and sorted[i] not in disqualified_set
+                    ):
+                        equals_set.add(sorted[i])
+                    else:
+                        if sorted[i] in meets_set:
+                            meets_set.remove(sorted[i])
+                        if sorted[i] in equals_set:
+                            equals_set.remove(sorted[i])
+                        disqualified_set.add(sorted[i])
+                    if sorted[i].bounds[p].disjoint(
+                        self.bounds[p]
+                    ) and not sorted[i].bounds[p].meets(self.bounds[p]):
+                        break  # Because sorted, no further checking needed
+        if len(boxes.keys()) == 1:  # 1D
+            candidates = meets_set
+        else:  # > 1D
+            candidates = meets_set.intersection(equals_set)
+        return candidates
+
     def to_dict(self) -> Dict[str, Dict[str, Dict[str, float]]]:
         """
         Covert Box to a dict.
@@ -445,10 +586,10 @@ class Box(object):
             return False
 
     def __repr__(self):
-        return f"{self.bounds}"
+        return str(self.to_dict())
 
     def __str__(self):
-        return f"{self.bounds.values()}"
+        return f"Box({self.bounds})"
 
     def finite(self) -> bool:
         """
@@ -839,10 +980,10 @@ class ParameterSpace(object):
 
     def __init__(
         self,
-        true_boxes: List[Box],
-        false_boxes: List[Box],
-        true_points: List[Point],
-        false_points: List[Point],
+        true_boxes: List[Box] = [],
+        false_boxes: List[Box] = [],
+        true_points: List[Point] = [],
+        false_points: List[Point] = [],
     ) -> None:
         self.true_boxes = true_boxes
         self.false_boxes = false_boxes
@@ -854,15 +995,6 @@ class ParameterSpace(object):
     def project() -> "ParameterSpace":
         raise NotImplementedError()
         return ParameterSpace()
-
-    @staticmethod
-    def _union_boxes(b1s):
-        results_list = []
-        for i1 in range(len(b1s)):
-            for i2 in range(i1 + 1, len(b1s)):
-                ans = Box.check_bounds_disjoint_equal(b1s[i1], b1s[i2])
-                print(ans)
-        return results_list
 
     @staticmethod
     def _intersect_boxes(b1s, b2s):
@@ -962,3 +1094,114 @@ class ParameterSpace(object):
         if obj["type"] == "box":
             return (Box._decode_labeled_box(obj), Box)
         raise Exception(f"obj of type {obj['type']}")
+
+    def __repr__(self) -> str:
+        return str(self.to_dict())
+
+    def to_dict(self) -> Dict[str, Dict]:
+        return {
+            "true_boxes": list(map(lambda x: x.to_dict(), self.true_boxes)),
+            "false_boxes": list(map(lambda x: x.to_dict(), self.false_boxes)),
+        }
+
+    def consistent(self) -> bool:
+        """
+        Check that the parameter space is consistent:
+
+        * All boxes are disjoint
+
+        * All points are in a respective box
+
+        * No point is both true and false
+        """
+        boxes = self.true_boxes + self.false_boxes
+        for i1, b1 in enumerate(boxes):
+            for i2, b2 in enumerate(boxes[i1 + 1 :]):
+                if b1.intersects(b2):
+                    l.exception(f"Parameter Space Boxes intersect: {b1} {b2}")
+                    return False
+        for tp in self.true_points:
+            if not any([b.contains_point(tp) for b in self.true_boxes]):
+                return False
+        for fp in self.false_points:
+            if not any([b.contains_point(fp) for b in self.false_boxes]):
+                return False
+
+        if len(set(self.true_points).intersection(set(self.false_points))) > 0:
+            return False
+        return True
+
+    def _compact(self):
+        """
+        Compact the boxes by joining boxes that can create a box
+        """
+        self.true_boxes = self._box_list_compact(self.true_boxes)
+        self.false_boxes = self._box_list_compact(self.false_boxes)
+
+    def _box_list_compact(self, group: List[Box]) -> List[Box]:
+        """
+        Attempt to union adjacent boxes and remove duplicate points.
+        """
+        # Boxes of dimension N can be merged if they are equal in N-1 dimensions and meet in one dimension.
+        # Sort the boxes in each dimension by upper bound.
+        # Interate through boxes in order wrt. one of the dimensions. For each box, scan the dimensions, counting the number of dimensions that each box meeting in at least one dimension, meets.
+        # Merging a dimension where lb(I) = ub(I'), results in an interval I'' = [lb(I), lb(I')].
+
+        if len(group) > 0:
+            dimensions = group[0].bounds.keys()
+            # keep a sorted list of boxes by dimension based upon the upper bound in the dimension
+            sorted_dimensions = {p: [b for b in group] for p in dimensions}
+            for p, boxes in sorted_dimensions.items():
+                boxes.sort(key=lambda x: x.bounds[p].ub)
+            dim = next(iter(sorted_dimensions.keys()))
+            merged = True
+            while merged:
+                merged = False
+                for b in sorted_dimensions[dim]:
+                    # candidates for merge are all boxes that meet or are equal in a dimension
+                    candidates = b._get_merge_candidates(sorted_dimensions)
+                    # pick first candidate
+                    if len(candidates) > 0:
+                        c = next(iter(candidates))
+                        m = b._merge(c)
+                        sorted_dimensions = {
+                            p: [
+                                box if box != b else m
+                                for box in boxes
+                                if box != c
+                            ]
+                            for p, boxes in sorted_dimensions.items()
+                        }
+                        merged = True
+                        break
+
+            return sorted_dimensions[dim]
+
+    @staticmethod
+    def from_file(filename: str) -> "ParameterSpace":
+        ps = ParameterSpace()
+        with open(filename) as f:
+            for line in f.readlines():
+                if len(line) == 0:
+                    continue
+                data = json.loads(line)
+                ((inst, label), typ) = ParameterSpace.decode_labeled_object(
+                    data
+                )
+                if typ is Box:
+                    if label == "true":
+                        ps.true_boxes.append(inst)
+                    elif label == "false":
+                        ps.false_boxes.append(inst)
+                    else:
+                        l.warn(f"Skipping Box with label: {label}")
+                elif typ is Point:
+                    if label == "true":
+                        ps.true_points.append(inst)
+                    elif label == "false":
+                        ps.false_points.append(inst)
+                    else:
+                        l.warn(f"Skipping Point with label: {label}")
+                else:
+                    l.error(f"Skipping invalid object type: {typ}")
+        return ps

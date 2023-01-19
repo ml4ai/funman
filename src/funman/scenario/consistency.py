@@ -158,3 +158,6 @@ class ConsistencyScenarioResult(AnalysisScenarioResult):
             raise Exception(
                 f"Cannot plot result for an inconsistent scenario."
             )
+
+    def __repr__(self) -> str:
+        return str(self.consistent)
