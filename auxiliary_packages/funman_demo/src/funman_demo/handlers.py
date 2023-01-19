@@ -7,13 +7,8 @@ import matplotlib.pyplot as plt
 from IPython.display import Image, display
 
 from funman.model import Parameter
-from funman.search.representation import (
-    Box,
-    Point,
-    ResultHandler,
-    WaitAction,
-    decode_labeled_object,
-)
+from funman.search import Box, ParameterSpace, Point
+from funman.search.handlers import ResultHandler, WaitAction
 
 from .box_plotter import BoxPlotter
 
@@ -85,7 +80,7 @@ class RealtimeResultPlotter(ResultHandler):
         self.plotter.initialize_figure()
 
     def process(self, result: dict) -> None:
-        ((inst, label), typ) = decode_labeled_object(result)
+        ((inst, label), typ) = ParameterSpace.decode_labeled_object(result)
         if typ is Box and isinstance(inst, Box):
             if label == "unknown":
                 self.plotter.plot_add_patch(

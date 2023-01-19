@@ -1,6 +1,7 @@
 import os
 import unittest
 
+from funman_demo.handlers import RealtimeResultPlotter, ResultCacheWriter
 from funman_demo.sim.CHIME.CHIME_SIR import main as run_CHIME_SIR
 from pysmt.shortcuts import GE, LE, And, Real, Symbol
 from pysmt.typing import REAL
@@ -26,7 +27,7 @@ from funman.scenario.simulation import (
     SimulationScenarioResult,
 )
 from funman.search import SearchConfig
-from funman.translate import BilayerEncoder, BilayerEncodingOptions
+from funman.search.handlers import ResultCombinedHandler
 
 RESOURCES = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "../resources"
@@ -102,34 +103,90 @@ class TestUseCases(unittest.TestCase):
         )
         assert result
 
-    def test_use_case_bilayer_parameter_synthesis(self):
+    def setup_use_case_bilayer_common(self):
         bilayer_path = os.path.join(
             RESOURCES, "bilayer", "CHIME_SIR_dynamics_BiLayer.json"
         )
         infected_threshold = 3
         init_values = {"S": 9998, "I": 1, "R": 1}
 
-        lb = 0.000067 * (1 - 0.5)
-        ub = 0.000067 * (1 + 0.5)
+        scale_factor = 0.75
+        lb = 0.000067 * (1 - scale_factor)
+        ub = 0.000067 * (1 + scale_factor)
 
+        model = BilayerModel(
+            BilayerDynamics.from_json(bilayer_path),
+            init_values=init_values,
+            parameter_bounds={
+                "beta": [lb, ub],
+                "gamma": [1.0 / 14.0, 1.0 / 14.0],
+            },
+        )
+
+        query = QueryLE("I", infected_threshold)
+
+        return model, query
+
+    def setup_use_case_bilayer_parameter_synthesis(self):
+        model, query = self.setup_use_case_bilayer_common()
+        [lb, ub] = model.parameter_bounds["beta"]
+        scenario = ParameterSynthesisScenario(
+            parameters=[Parameter("beta", lb=lb, ub=ub)],
+            model=model,
+            query=query,
+        )
+
+        return scenario
+
+    def test_use_case_bilayer_parameter_synthesis(self):
+        scenario = self.setup_use_case_bilayer_parameter_synthesis()
         funman = Funman()
         result: ParameterSynthesisScenarioResult = funman.solve(
-            ParameterSynthesisScenario(
-                parameters=[Parameter("beta", lb=lb, ub=ub)],
-                model=BilayerModel(
-                    BilayerDynamics.from_json(bilayer_path),
-                    init_values=init_values,
-                    parameter_bounds={
-                        "beta": [lb, ub],
-                        "gamma": [1.0 / 14.0, 1.0 / 14.0],
-                    },
+            scenario,
+            config=SearchConfig(
+                tolerance=1e-8,
+                number_of_processes=1,
+                handler=ResultCombinedHandler(
+                    [
+                        ResultCacheWriter(f"box_search.json"),
+                        RealtimeResultPlotter(
+                            scenario.parameters,
+                            plot_points=True,
+                            title=f"Feasible Regions (beta)",
+                            realtime_save_path=f"box_search.png",
+                        ),
+                    ]
                 ),
-                query=QueryLE("I", infected_threshold),
             ),
-            config=SearchConfig(tolerance=1e-8),
         )
         assert len(result.parameter_space.true_boxes) > 0
         assert len(result.parameter_space.false_boxes) > 0
+
+    def setup_use_case_bilayer_consistency(self):
+        model, query = self.setup_use_case_bilayer_common()
+
+        scenario = ConsistencyScenario(model=model, query=query)
+        return scenario
+
+    def test_use_case_bilayer_consistency(self):
+        scenario = self.setup_use_case_bilayer_consistency()
+
+        funman = Funman()
+
+        # Show that region in parameter space is sat (i.e., there exists a true point)
+        result_sat: ConsistencyScenarioResult = funman.solve(scenario)
+        df = result_sat.dataframe()
+
+        assert abs(df["I"][2] - 2.36) < 0.01
+        assert abs(df["beta"][0] - 0.000061) < 0.000001
+
+        # Show that region in parameter space is unsat/false
+        scenario.model.parameter_bounds["beta"] = [
+            0.000067 * 1.5,
+            0.000067 * 1.75,
+        ]
+        result_unsat: ConsistencyScenarioResult = funman.solve(scenario)
+        assert not result_unsat.consistent
 
 
 if __name__ == "__main__":

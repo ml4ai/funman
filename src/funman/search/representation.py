@@ -58,10 +58,10 @@ class Interval(object):
             return False
 
     def __repr__(self):
-        return f"[{self.lb}, {self.ub}]"
+        return str(self.to_dict())
 
     def __str__(self):
-        return self.__repr__()
+        return f"Interval([{self.lb}, {self.ub}))"
 
     def finite(self) -> bool:
         """
@@ -173,15 +173,23 @@ class Interval(object):
 
         return None
 
-    def midpoint(self):
+    def midpoint(self, points: List["Point"] = None):
         """
         Compute the midpoint of the interval.
+
+        Parameters
+        ----------
+        points : List[Point], optional
+            if specified, compute midpoint as average of points in the interval, by default None
 
         Returns
         -------
         float
             midpoint
         """
+
+        # if points:
+        #     return float(average(points))
 
         if self.lb == NEG_INFINITY and self.ub == POS_INFINITY:
             return 0
@@ -304,10 +312,13 @@ class Point(object):
         self.values = {p: 0.0 for p in parameters}
 
     def __str__(self):
-        return f"{self.values.values()}"
+        return f"Point({self.values})"
 
     def to_dict(self):
         return {"values": {k.name: v for k, v in self.values.items()}}
+
+    def __repr__(self) -> str:
+        return str(self.to_dict())
 
     @staticmethod
     def from_dict(data):
@@ -445,10 +456,10 @@ class Box(object):
             return False
 
     def __repr__(self):
-        return f"{self.bounds}"
+        return str(self.to_dict())
 
     def __str__(self):
-        return f"{self.bounds.values()}"
+        return f"Box({self.bounds})"
 
     def finite(self) -> bool:
         """
@@ -962,3 +973,12 @@ class ParameterSpace(object):
         if obj["type"] == "box":
             return (Box._decode_labeled_box(obj), Box)
         raise Exception(f"obj of type {obj['type']}")
+
+    def __repr__(self) -> str:
+        return str(self.to_dict())
+
+    def to_dict(self) -> Dict[str, Dict]:
+        return {
+            "true_boxes": list(map(lambda x: x.to_dict(), self.true_boxes)),
+            "false_boxes": list(map(lambda x: x.to_dict(), self.false_boxes)),
+        }
