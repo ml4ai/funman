@@ -29,8 +29,7 @@ from funman import Funman
 from funman.model import Parameter, QueryEncoded
 from funman.model.encoded import EncodedModel
 from funman.scenario.parameter_synthesis import ParameterSynthesisScenario
-from funman.search import BoxSearch
-from funman.search.representation import SearchConfig
+from funman.search import BoxSearch, SearchConfig
 
 l = logging.getLogger(__file__)
 l.setLevel(logging.INFO)
