@@ -1,11 +1,11 @@
 DOCS_REMOTE ?= origin
 DEV_CONTAINER ?= funman-dev
 DEV_NAME ?= funman-dev
-DEPLOY_NAME ?= funman
 LOCAL_REGISTRY_PORT?=5000
 
 LOCAL_REGISTRY=localhost:$(LOCAL_REGISTRY_PORT)
 SIFT_REGISTRY_ROOT=$(LOCAL_REGISTRY)/sift/
+FUNMAN_BRANCH=main
 
 IBEX_NAME=funman-ibex
 DREAL_NAME=funman-dreal4
@@ -25,7 +25,16 @@ TARGET_TAG=$(TARGET_OS)-$(SHELL_GET_TARGET_ARCH)
 IBEX_TAGGED_NAME=$(IBEX_NAME):$(TARGET_TAG)
 DREAL_TAGGED_NAME=$(DREAL_NAME):$(TARGET_TAG)
 DEV_TAGGED_NAME=$(DEV_NAME):$(TARGET_TAG)
-DEPLOY_TAGGED_NAME=$(DEPLOY_NAME):$(TARGET_TAG)
+
+DEPLOY_BASE_NAME = funman-base
+DEPLOY_GIT_NAME = funman-git
+DEPLOY_PYPI_NAME = funman-pypi
+DEPLOY_TAGGED_BASE_NAME=$(DEPLOY_BASE_NAME):$(TARGET_TAG)
+DEPLOY_TAGGED_GIT_NAME=$(DEPLOY_GIT_NAME):$(TARGET_TAG)
+DEPLOY_TAGGED_PYPI_NAME=$(DEPLOY_PYPI_NAME):$(TARGET_TAG)
+
+DEPLOY_API_NAME = funman-api-server
+DEPLOY_TAGGED_API_NAME=$(DEPLOY_API_NAME):$(TARGET_TAG)
 
 MULTIPLATFORM_TAG=multiplatform
 
@@ -144,9 +153,54 @@ multiplatform: use-docker-driver multiplatform-build-dreal
 
 build: build-docker
 
-build-for-deployment: use-docker-driver build-dreal
-	DOCKER_BUILDKIT=1 docker build \
-		-t ${DEPLOY_TAGGED_NAME} -f ./Dockerfile.deploy .
+build-deploy-base: use-docker-driver build-dreal
+	DOCKER_BUILDKIT=1 docker buildx build \
+		--output "type=docker" \
+		--platform $(TARGET_OS)/$(SHELL_GET_TARGET_ARCH) \
+		--build-arg SIFT_REGISTRY_ROOT=$(SIFT_REGISTRY_ROOT) \
+		-t ${DEPLOY_TAGGED_BASE_NAME} ./deploy/base
+	docker tag $(DEPLOY_TAGGED_BASE_NAME) $(SIFT_REGISTRY_ROOT)$(DEPLOY_TAGGED_BASE_NAME)
+	docker push $(SIFT_REGISTRY_ROOT)$(DEPLOY_TAGGED_BASE_NAME)
+
+build-deploy-git: use-docker-driver build-dreal build-deploy-base
+	DOCKER_BUILDKIT=1 docker buildx build \
+		--output "type=docker" \
+		--platform $(TARGET_OS)/$(SHELL_GET_TARGET_ARCH) \
+		--build-arg SIFT_REGISTRY_ROOT=$(SIFT_REGISTRY_ROOT) \
+		--build-arg FUNMAN_BRANCH=$(FUNMAN_BRANCH) \
+		-t ${DEPLOY_TAGGED_GIT_NAME} ./deploy/git
+	docker tag $(DEPLOY_TAGGED_GIT_NAME) $(SIFT_REGISTRY_ROOT)$(DEPLOY_TAGGED_GIT_NAME)
+	docker push $(SIFT_REGISTRY_ROOT)$(DEPLOY_TAGGED_GIT_NAME)
+
+build-deploy-pypi: use-docker-driver build-dreal build-deploy-base
+	DOCKER_BUILDKIT=1 docker buildx build \
+		--output "type=docker" \
+		--platform $(TARGET_OS)/$(SHELL_GET_TARGET_ARCH) \
+		--build-arg SIFT_REGISTRY_ROOT=$(SIFT_REGISTRY_ROOT) \
+		-t ${DEPLOY_TAGGED_PYPI_NAME} ./deploy/pypi
+	docker tag $(DEPLOY_TAGGED_PYPI_NAME) $(SIFT_REGISTRY_ROOT)$(DEPLOY_TAGGED_PYPI_NAME)
+	docker push $(SIFT_REGISTRY_ROOT)$(DEPLOY_TAGGED_PYPI_NAME)
+
+build-deploy-api-from-git: use-docker-driver build-dreal build-deploy-git
+	DOCKER_BUILDKIT=1 docker buildx build \
+		--output "type=docker" \
+		--platform $(TARGET_OS)/$(SHELL_GET_TARGET_ARCH) \
+		--build-arg SIFT_REGISTRY_ROOT=$(SIFT_REGISTRY_ROOT) \
+		--build-arg FROM_IMAGE=$(DEPLOY_GIT_NAME) \
+		--build-arg FUNMAN_BRANCH=$(FUNMAN_BRANCH) \
+		-t ${DEPLOY_TAGGED_API_NAME} ./deploy/api
+	docker tag $(DEPLOY_TAGGED_API_NAME) $(SIFT_REGISTRY_ROOT)$(DEPLOY_TAGGED_API_NAME)
+	docker push $(SIFT_REGISTRY_ROOT)$(DEPLOY_TAGGED_API_NAME)
+
+build-deploy-api-from-pypi: use-docker-driver build-dreal build-deploy-pypi
+	DOCKER_BUILDKIT=1 docker buildx build \
+		--output "type=docker" \
+		--platform $(TARGET_OS)/$(SHELL_GET_TARGET_ARCH) \
+		--build-arg SIFT_REGISTRY_ROOT=$(SIFT_REGISTRY_ROOT) \
+		--build-arg FROM_IMAGE=$(DEPLOY_PYPI_NAME) \
+		-t ${DEPLOY_TAGGED_API_NAME} ./deploy/api
+	docker tag $(DEPLOY_TAGGED_API_NAME) $(SIFT_REGISTRY_ROOT)$(DEPLOY_TAGGED_API_NAME)
+	docker push $(SIFT_REGISTRY_ROOT)$(DEPLOY_TAGGED_API_NAME)
 
 run-deployment-image:
 	docker run -it --rm -p 127.0.0.1:8888:8888 ${DEPLOY_TAGGED_NAME}

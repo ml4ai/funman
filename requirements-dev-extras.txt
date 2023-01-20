@@ -1,5 +1,8 @@
+fastapi
 multiprocess
+openapi-python-client
 pysmt
+uvicorn
 
 -e ./
 -e ./auxiliary_packages/funman_demo
