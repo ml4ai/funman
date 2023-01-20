@@ -202,8 +202,8 @@ build-deploy-api-from-pypi: use-docker-driver build-dreal build-deploy-pypi
 	docker tag $(DEPLOY_TAGGED_API_NAME) $(SIFT_REGISTRY_ROOT)$(DEPLOY_TAGGED_API_NAME)
 	docker push $(SIFT_REGISTRY_ROOT)$(DEPLOY_TAGGED_API_NAME)
 
-run-deployment-image:
-	docker run -it --rm -p 127.0.0.1:8888:8888 ${DEPLOY_TAGGED_NAME}
+run-api-server:
+	docker run -it --rm -p 127.0.0.1:8190:8190 $(DEPLOY_TAGGED_API_NAME)
 
 run-docker:
 	@if [ -e "$(DREAL_LOCAL_REPO)" ] ; then \
