@@ -1,6 +1,5 @@
-import json
-from abc import ABC
-from typing import Dict, List, Union
+from abc import ABC, abstractmethod
+from typing import Dict, List
 
 import graphviz
 from pydantic import BaseModel, validator
@@ -143,6 +142,15 @@ class BilayerGraph(ABC, BaseModel):
         BilayerNode, Dict[BilayerNode, BilayerEdge]
     ] = {}
 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.json_graph = kwargs["json_graph"]
+        self.initialize_from_json()
+
+    @abstractmethod
+    def initialize_from_json(self):
+        pass
+
     def _get_json_node(self, node_dict, node_type, node_list, node_name):
         for indx, i in enumerate(node_list):
             node_dict[indx + 1] = node_type(
@@ -198,19 +206,19 @@ class BilayerDynamics(BilayerGraph):
     _input_edges: BilayerEdge = []  # Input to flux, defined in Win
     _output_edges: BilayerEdge = []  # Flux to Output, defined in Wa,Wn
 
-    def initialize(self):
-        if self.json_graph:
-            self.initialize_from_json()
-        else:
-            raise Exception(
-                f"Cannot initilize BilayerDynamics without self.json_graph"
-            )
+    # def initialize(self):
+    #     if self.json_graph:
+    #         self.initialize_from_json()
+    #     else:
+    #         raise Exception(
+    #             f"Cannot initilize BilayerDynamics without self.json_graph"
+    #         )
 
-    @staticmethod
-    def from_json(bilayer_src: Union[str, Dict]):
-        bilayer = BilayerDynamics(json_graph=bilayer_src)
-        bilayer.initialize_from_json()
-        return bilayer
+    # @staticmethod
+    # def from_json(bilayer_src: Union[str, Dict]):
+    #     bilayer = BilayerDynamics(json_graph=bilayer_src)
+    #     bilayer.initialize_from_json()
+    #     return bilayer
 
     def initialize_from_json(self):
 
@@ -228,11 +236,11 @@ class BilayerDynamics(BilayerGraph):
             The BilayerDynamics object corresponding to the bilayer_src.
         """
 
-        if isinstance(self.json_graph, dict):
-            data = self.json_graph
-        else:
-            with open(self.json_graph, "r") as f:
-                data = json.load(f)
+        # if isinstance(self.json_graph, dict):
+        data = self.json_graph
+        # else:
+        #     with open(self.json_graph, "r") as f:
+        #         data = json.load(f)
 
         # Get the input state variable nodes
         self._get_json_to_statenodes(data)
@@ -333,8 +341,7 @@ class BilayerMeasurement(BilayerGraph, BaseModel):
     input_edges: BilayerEdge = []  # Input to observable, defined in Win
     output_edges: BilayerEdge = []  # Flux to Output, defined in Wa,Wn
 
-    @staticmethod
-    def from_json(src: Union[str, Dict]):
+    def initialize_from_json(self):
         """
         Create a BilayerMeasurement object from a JSON formatted bilayer graph.
 
@@ -348,52 +355,52 @@ class BilayerMeasurement(BilayerGraph, BaseModel):
         BilayerMeasurement
             The BilayerMeasurement object corresponding to the bilayer_src.
         """
-        measurement = BilayerMeasurement()
-        if isinstance(src, dict):
-            data = src
-        else:
-            with open(src, "r") as f:
-                data = json.load(f)
-
+        # measurement = BilayerMeasurement()
+        # if isinstance(src, dict):
+        #     data = src
+        # else:
+        #     with open(src, "r") as f:
+        #         data = json.load(f)
+        data = self.json_graph
         # TODO extract measurment graph
-        blm = BilayerMeasurement()
+        # blm = BilayerMeasurement()
 
         # Get the input state variable nodes
-        blm._get_json_node(
-            blm.state, BilayerStateNode, data["state"], "variable"
+        self._get_json_node(
+            self.state, BilayerStateNode, data["state"], "variable"
         )
 
         # Get the output state variable nodes (tangent)
-        blm._get_json_node(
-            blm.observable, BilayerStateNode, data["observable"], "observable"
+        self._get_json_node(
+            self.observable, BilayerStateNode, data["observable"], "observable"
         )
 
         # Get the flux nodes
-        blm._get_json_node(
-            blm.flux, BilayerFluxNode, data["rate"], "parameter"
+        self._get_json_node(
+            self.flux, BilayerFluxNode, data["rate"], "parameter"
         )
 
         # Get the input edges
-        blm.input_edges += blm._get_json_edge(
+        self.input_edges += self._get_json_edge(
             BilayerEdge,
             data["Din"],
             "variable",
-            blm.state,
+            self.state,
             "parameter",
-            blm.flux,
+            self.flux,
         )
 
         # Get the output edges
-        blm.output_edges += blm._get_json_edge(
+        self.output_edges += self._get_json_edge(
             BilayerPositiveEdge,
             data["Dout"],
             "parameter",
-            blm.flux,
+            self.flux,
             "observable",
-            blm.observable,
+            self.observable,
         )
 
-        return blm
+        # return blm
 
     def to_dot(self):
         """
@@ -441,19 +448,6 @@ class BilayerModel(Model):
     bilayer: BilayerDynamics
     measurements: BilayerMeasurement = None
     identical_parameters: List[List[str]] = []
-
-    @validator("bilayer")
-    def init_bilayer(cls, v: BilayerDynamics):
-        v.initialize()
-        # cls.bilayer = v
-        return v
-
-    @validator("measurements")
-    def init_measurements(cls, v: BilayerMeasurement):
-        if v:
-            v.initialize()
-            # cls.measurements = v
-        return v
 
     def default_encoder(self) -> "Encoder":
         """

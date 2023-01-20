@@ -16,6 +16,7 @@ from typing import List, Optional, Set, Union
 from pysmt.logics import QF_NRA
 from pysmt.shortcuts import And, Not, Solver, get_model
 
+from funman.representation.representation import Interval
 from funman.search import Box, ParameterSpace, Point, Search, SearchEpisode
 from funman.search.search import SearchStaticsMP, SearchStatistics
 
@@ -95,7 +96,12 @@ class BoxSearchEpisode(SearchEpisode):
             l.debug(f"Initial box: {b}")
 
     def _initial_box(self) -> Box:
-        return Box(parameters=self.problem.parameters)
+        return Box(
+            bounds={
+                p.name: Interval(lb=p.lb, ub=p.ub)
+                for p in self.problem.parameters
+            }
+        )
 
     def _on_start(self):
         if self.config.number_of_processes > 1:
@@ -182,7 +188,7 @@ class BoxSearchEpisode(SearchEpisode):
     def _extract_point(self, model):
         point = Point(
             values={
-                p: float(model[p.symbol()].constant_value())
+                p.name: float(model[p.symbol()].constant_value())
                 for p in self.problem.parameters
             }
         )
@@ -288,9 +294,9 @@ class BoxSearch(Search):
         solver.add_assertion(episode.problem._model_encoding.formula)
         solver.add_assertion(episode.problem._query_encoding.formula)
 
-    def _initialize_box(self, solver, box):
+    def _initialize_box(self, solver, box, episode):
         solver.push(1)
-        solver.add_assertion(box.to_smt())
+        solver.add_assertion(episode.problem._smt_encoder.box_to_smt(box))
 
     def _setup_false_query(self, solver, episode):
         """
@@ -306,7 +312,10 @@ class BoxSearch(Search):
         solver.push(1)
         solver.add_assertion(
             Not(
-                And(episode.problem.assume_model, episode.problem.assume_query)
+                And(
+                    episode.problem._assume_model,
+                    episode.problem._assume_query,
+                )
             )
         )
 
@@ -323,7 +332,7 @@ class BoxSearch(Search):
         """
         solver.push(1)
         solver.add_assertion(
-            And(episode.problem.assume_model, episode.problem.assume_query)
+            And(episode.problem._assume_model, episode.problem._assume_query)
         )
 
     def _get_false_points(self, solver, episode, box, rval):
@@ -423,7 +432,7 @@ class BoxSearch(Search):
                         else:
                             continue
                     else:
-                        self._initialize_box(solver, box)
+                        self._initialize_box(solver, box, episode)
 
                         # Check whether box intersects t (true region)
                         # First see if a cached false point exists in the box

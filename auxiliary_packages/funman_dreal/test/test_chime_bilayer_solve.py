@@ -31,14 +31,14 @@ from pysmt.typing import BOOL, INT, REAL
 
 from funman import Funman
 from funman.model import Model, Parameter, QueryLE
-from funman.scenario.consistency import ConsistencyScenario
-from funman.scenario.parameter_synthesis import ParameterSynthesisScenario
-from funman.search import BoxSearch, SMTCheck
-from funman.search.representation import (
+from funman.representation.representation import (
     Point,
     ResultCombinedHandler,
     SearchConfig,
 )
+from funman.scenario.consistency import ConsistencyScenario
+from funman.scenario.parameter_synthesis import ParameterSynthesisScenario
+from funman.search import BoxSearch, SMTCheck
 from funman.translate.bilayer import (
     Bilayer,
     BilayerEncoder,

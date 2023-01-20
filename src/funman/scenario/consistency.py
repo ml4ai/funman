@@ -69,6 +69,9 @@ class ConsistencyScenario(AnalysisScenario, BaseModel):
         scenario_result = ConsistencyScenarioResult(
             scenario=self, consistent=consistent
         )
+        scenario_result._model = (
+            result  # Constructor won't assign this private attr :(
+        )
         return scenario_result
 
     def _encode(self):
@@ -87,11 +90,13 @@ class ConsistencyScenarioResult(AnalysisScenarioResult, BaseModel):
     search statistics.
     """
 
+    class Config:
+        underscore_attrs_are_private = True
+        arbitrary_types_allowed = True
+
     scenario: ConsistencyScenario
     consistent: Dict[str, float] = None
-
-    class Config:
-        arbitrary_types_allowed = True
+    _model: pysmt_Model = None
 
     def _parameters(self):
         if self.consistent:
@@ -123,9 +128,9 @@ class ConsistencyScenarioResult(AnalysisScenarioResult, BaseModel):
         Exception
             fails if scenario is not consistent
         """
-        if self._consistent:
+        if self.consistent:
             timeseries = self.scenario._smt_encoder.symbol_timeseries(
-                self.scenario._model_encoding, self._consistent
+                self.scenario._model_encoding, self._model
             )
             df = pd.DataFrame.from_dict(timeseries)
             if interpolate:

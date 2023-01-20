@@ -4,14 +4,14 @@ from pysmt.logics import QF_NRA
 from pysmt.shortcuts import And, Solver
 
 # import funman.search as search
-from . import search
+from .search import Search, SearchEpisode
 
 
-class SMTCheck(search.Search):
+class SMTCheck(Search):
     def search(
         self, problem, config: Optional["FUNMANConfig"] = None
-    ) -> search.SearchEpisode:
-        episode = search.SearchEpisode(config=config, problem=problem)
+    ) -> "SearchEpisode":
+        episode = SearchEpisode(config=config, problem=problem)
         result = self.expand(problem, episode)
         episode._model = result
         return result

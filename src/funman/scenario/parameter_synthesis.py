@@ -4,20 +4,22 @@ This module defines the Parameter Synthesis scenario.
 from typing import Any, Dict, List, Union
 
 from pandas import DataFrame
-from pysmt.shortcuts import Iff, Symbol
 from pydantic import BaseModel
+from pysmt.formula import FNode
+from pysmt.shortcuts import Iff, Symbol
 
-from funman.model import Parameter, QueryTrue
+from funman.model import QueryTrue
 from funman.model.bilayer import BilayerModel
 from funman.model.encoded import EncodedModel
 from funman.model.query import QueryFunction, QueryLE
+from funman.representation import Parameter
+from funman.representation.representation import ParameterSpace, Point
 from funman.scenario import (
     AnalysisScenario,
     AnalysisScenarioResult,
     ConsistencyScenario,
 )
 from funman.search.box_search import BoxSearch
-from funman.search.representation import ParameterSpace, Point
 from funman.search.smt_check import SMTCheck
 from funman.translate.translate import Encoder, Encoding
 
@@ -41,6 +43,8 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
     _smt_encoder: Encoder = None  # TODO set to model.default_encoder()
     _model_encoding: Encoding = None
     _query_encoding: Encoding = None
+    _assume_model: FNode = None
+    _assume_query: FNode = None
 
     def solve(
         self, config: "FUNMANConfig"
@@ -84,17 +88,17 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
         """
         if self._smt_encoder is None:
             self._smt_encoder = self.model.default_encoder()
-        self.assume_model = Symbol("assume_model")
-        self.assume_query = Symbol("assume_query")
+        self._assume_model = Symbol("assume_model")
+        self._assume_query = Symbol("assume_query")
         self._model_encoding = self._smt_encoder.encode_model(self.model)
         self._model_encoding.formula = Iff(
-            self.assume_model, self.model_encoding.formula
+            self._assume_model, self._model_encoding.formula
         )
         self._query_encoding = self._smt_encoder.encode_query(
-            self.model_encoding, self.query
+            self._model_encoding, self.query
         )
-        self.query_encoding.formula = Iff(
-            self.assume_query, self.query_encoding.formula
+        self._query_encoding.formula = Iff(
+            self._assume_query, self._query_encoding.formula
         )
         return self._model_encoding, self._query_encoding
 

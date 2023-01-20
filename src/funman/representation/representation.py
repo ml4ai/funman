@@ -10,13 +10,75 @@ from statistics import mean as average
 from typing import Dict, List, Union
 
 from pydantic import BaseModel
-from pysmt.shortcuts import GE, LE, LT, TRUE, And, Equals, Real
+from pysmt.fnode import FNode
+from pysmt.shortcuts import GE, LE, LT, REAL, TRUE, And, Equals, Real, Symbol
 
 import funman.utils.math_utils as math_utils
 from funman.constants import BIG_NUMBER, NEG_INFINITY, POS_INFINITY
-from funman.model import Parameter
 
 l = logging.getLogger(__name__)
+
+
+class Parameter(BaseModel):
+    """
+    A parameter is a free variable for a Model.  It has the following attributes:
+
+    * lb: lower bound
+
+    * ub: upper bound
+
+    * symbol: a pysmt FNode corresponding to the parameter variable
+
+    """
+
+    class Config:
+        underscore_attrs_are_private = True
+        # arbitrary_types_allowed = True
+
+    name: str
+    lb: Union[str, float] = NEG_INFINITY
+    ub: Union[str, float] = POS_INFINITY
+    _symbol: FNode = None
+
+    def symbol(self):
+        if not self._symbol:
+            self._symbol = Symbol(self.name, REAL)
+        return self._symbol
+
+    def timed_copy(self, timepoint: int):
+        """
+        Create a time-stamped copy of a parameter.  E.g., beta becomes beta_t for a timepoint t
+
+        Parameters
+        ----------
+        timepoint : int
+            Integer timepoint
+
+        Returns
+        -------
+        Parameter
+            A time-stamped copy of self.
+        """
+        timed_parameter = copy.deepcopy(self)
+        timed_parameter.name = f"{timed_parameter.name}_{timepoint}"
+        return timed_parameter
+
+    def __eq__(self, other):
+        if not isinstance(other, Parameter):
+            # don't attempt to compare against unrelated types
+            return NotImplemented
+
+        return self.name == other.name and (
+            not (self.symbol() and other.symbol())
+            or (self.symbol().symbol_name() == other.symbol().symbol_name())
+        )
+
+    def __hash__(self):
+        # necessary for instances to behave sanely in dicts and sets.
+        return hash(self.name)
+
+    def __repr__(self) -> str:
+        return f"{self.name}[{self.lb}, {self.ub})"
 
 
 class Interval(BaseModel):
@@ -297,39 +359,6 @@ class Interval(BaseModel):
         """
         return math_utils.gte(value, self.lb) and math_utils.lt(value, self.ub)
 
-    def to_smt(self, p: Parameter, closed_upper_bound=False):
-        # FIXME move this into a translate utility
-        """
-        Convert the interval into contraints on parameter p.
-
-        Parameters
-        ----------
-        p : Parameter
-            parameter to constrain
-        closed_upper_bound : bool, optional
-            interpret interval as closed (i.e., p <= ub), by default False
-
-        Returns
-        -------
-        FNode
-            formula constraining p to the interval
-        """
-        lower = (
-            GE(p.symbol(), Real(self.lb))
-            if self.lb != NEG_INFINITY
-            else TRUE()
-        )
-        upper_ineq = LE if closed_upper_bound else LT
-        upper = (
-            upper_ineq(p._symbol, Real(self.ub))
-            if self.ub != POS_INFINITY
-            else TRUE()
-        )
-        return And(
-            lower,
-            upper,
-        ).simplify()
-
     def to_dict(self):
         return {
             "lb": self.lb,
@@ -345,7 +374,7 @@ class Interval(BaseModel):
 
 
 class Point(BaseModel):
-    values: Dict[Parameter, float]
+    values: Dict[str, float]
 
     # def __init__(self, **kw) -> None:
     #     super().__init__(**kw)
@@ -355,16 +384,14 @@ class Point(BaseModel):
         return f"Point({self.values})"
 
     def to_dict(self):
-        return {"values": {k.name: v for k, v in self.values.items()}}
+        return {"values": {k: v for k, v in self.values.items()}}
 
     def __repr__(self) -> str:
         return str(self.to_dict())
 
     @staticmethod
     def from_dict(data):
-        res = Point(
-            values={Parameter(name=k): v for k, v in data["values"].items()}
-        )
+        res = Point(values={k: v for k, v in data["values"].items()})
         return res
 
     def __hash__(self):
@@ -377,11 +404,6 @@ class Point(BaseModel):
             )
         else:
             return False
-
-    def to_smt(self):
-        return And(
-            [Equals(p.symbol, Real(value)) for p, value in self.values.items()]
-        )
 
     @staticmethod
     def _encode_labeled_point(point: "Point", label: str):
@@ -412,34 +434,8 @@ class Box(BaseModel):
     A Box maps n parameters to intervals, representing an n-dimensional connected open subset of R^n.
     """
 
-    parameters: List[Parameter]
-    bounds: Dict[Parameter, Interval] = {}
+    bounds: Dict[str, Interval] = {}
     cached_width: float = None
-
-    def __init__(self, **kw) -> None:
-        super().__init__(**kw)
-        self.bounds = {p: Interval(lb=p.lb, ub=p.ub) for p in self.parameters}
-
-    def to_smt(self, closed_upper_bound=False):
-        """
-        Compile the interval for each parameter into SMT constraints on the corresponding parameter.
-
-        Parameters
-        ----------
-        closed_upper_bound : bool, optional
-            use closed upper bounds for each interval, by default False
-
-        Returns
-        -------
-        FNode
-            formula representing the box as a conjunction of interval constraints.
-        """
-        return And(
-            [
-                interval.to_smt(p, closed_upper_bound=closed_upper_bound)
-                for p, interval in self.bounds.items()
-            ]
-        )
 
     def __hash__(self):
         return int(sum([i.__hash__() for _, i in self.bounds.items()]))
@@ -460,7 +456,7 @@ class Box(BaseModel):
 
         """
         bp = copy.copy(self)
-        bp.bounds = {k: v for k, v in bp.bounds.items() if k.name in vars}
+        bp.bounds = {k: v for k, v in bp.bounds.items() if k in vars}
         return bp
 
     def _merge(self, other: "Box") -> "Box":
@@ -477,7 +473,9 @@ class Box(BaseModel):
         Box
             merge of two boxes that meet in one dimension
         """
-        merged = Box(self.bounds.keys())
+        merged = Box(
+            bounds={p: Interval(lb=0, ub=0) for p in self.bounds.keys()}
+        )
         for p, i in merged.bounds.items():
             if self.bounds[p].meets(other.bounds[p]):
                 i.lb = min(self.bounds[p].lb, other.bounds[p].lb)
@@ -544,7 +542,7 @@ class Box(BaseModel):
             dictionary representing the box
         """
         return {
-            "bounds": {k.name: v.to_dict() for k, v in self.bounds.items()},
+            "bounds": {k: v.to_dict() for k, v in self.bounds.items()},
             # "cached_width": self.cached_width
         }
 
@@ -563,18 +561,20 @@ class Box(BaseModel):
         Box
             Box object for dict
         """
-        res = Box(parameters=[])
-        res.bounds = {
-            Parameter(name=k): Interval.from_dict(v)
-            for k, v in data["bounds"].items()
-        }
+        res = Box(
+            bounds={
+                k: Interval.from_dict(v) for k, v in data["bounds"].items()
+            }
+        )
         # res.cached_width = data["cached_width"]
         return res
 
     def _copy(self):
-        c = Box(parameters=list(self.bounds.keys()))
-        for p, b in self.bounds.items():
-            c.bounds[p] = Interval(lb=b.lb, ub=b.ub)
+        c = Box(
+            bounds={
+                p: Interval(lb=b.lb, ub=b.ub) for p, b in self.bounds.items()
+            }
+        )
         return c
 
     def __lt__(self, other):
@@ -848,18 +848,18 @@ class Box(BaseModel):
         )
         for p1 in common_params:
             # FIXME iterating over dict keys is not efficient
-            for b in self.bounds:
-                if b.name == p1:
-                    b1_bounds = Interval(lb=b.lb, ub=b.ub)
-            for b in b2.bounds:
-                if b.name == p1:
-                    b2_bounds = Interval(lb=b.lb, ub=b.ub)
+            for b, i in self.bounds.items():
+                if b == p1:
+                    b1_bounds = Interval(lb=i.lb, ub=i.ub)
+            for b, i in b2.bounds.items():
+                if b == p1:
+                    b2_bounds = Interval(lb=i.lb, ub=i.ub)
             intersection_ans = b1_bounds.intersection(b2_bounds)
             dict_element = Parameter(
                 name=p1, lb=intersection_ans[0], ub=intersection_ans[1]
             )
             result.append(dict_element)
-        return Box(parameters=[i for i in result])
+        return Box(bounds={i.name: Interval(lb=i.lb, ub=i.ub) for i in result})
 
     def __intersect_two_boxes(b1, b2):
         # FIXME subsumed by Box.intersect(), can be removed.
@@ -922,10 +922,14 @@ class Box(BaseModel):
             return None
 
         return Box(
-            parameters=[
-                Parameter(name=a_params[0], lb=beta_0[0], ub=beta_0[1]),
-                Parameter(name=a_params[1], lb=beta_1[0], ub=beta_1[1]),
-            ]
+            bounds={
+                Parameter(
+                    name=a_params[0], lb=beta_0[0], ub=beta_0[1]
+                ): Interval(lb=beta_0[0], ub=beta_0[1]),
+                Parameter(
+                    name=a_params[1], lb=beta_1[0], ub=beta_1[1]
+                ): Interval(lb=beta_1[0], ub=beta_1[1]),
+            }
         )
 
     ### WIP - just for 2 dimensions at this point.
@@ -953,14 +957,14 @@ class Box(BaseModel):
             b0_bounds = p_bounds[0]
             b1_bounds = p_bounds[1]
             b = Box(
-                parameters=[
+                bounds={
                     Parameter(
                         name=a_params[0], lb=b0_bounds.lb, ub=b0_bounds.ub
-                    ),
+                    ): Interval(lb=b0_bounds.lb, ub=b0_bounds.ub),
                     Parameter(
                         name=a_params[1], lb=b1_bounds.lb, ub=b1_bounds.ub
-                    ),
-                ]
+                    ): Interval(lb=b1_bounds.lb, ub=b1_bounds.ub),
+                }
             )
             return b
 
@@ -988,10 +992,10 @@ class ParameterSpace(BaseModel):
     known to be false.
     """
 
-    true_boxes: List[Box]
-    false_boxes: List[Box]
-    true_points: List[Point]
-    false_points: List[Point]
+    true_boxes: List[Box] = []
+    false_boxes: List[Box] = []
+    true_points: List[Point] = []
+    false_points: List[Point] = []
 
     # STUB project parameter space onto a parameter
     @staticmethod
@@ -1101,7 +1105,7 @@ class ParameterSpace(BaseModel):
     def __repr__(self) -> str:
         return str(self.to_dict())
 
-    def to_dict(self) -> Dict[str, Dict]:
+    def to_dict(self) -> Dict[str, List[Dict]]:
         return {
             "true_boxes": list(map(lambda x: x.to_dict(), self.true_boxes)),
             "false_boxes": list(map(lambda x: x.to_dict(), self.false_boxes)),

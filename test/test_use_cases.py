@@ -11,13 +11,13 @@ from funman import Funman
 from funman.funman import FUNMANConfig
 from funman.model import (
     EncodedModel,
-    Parameter,
     QueryFunction,
     QueryLE,
     QueryTrue,
     SimulatorModel,
 )
 from funman.model.bilayer import BilayerDynamics, BilayerModel
+from funman.representation.representation import Parameter
 from funman.scenario import (
     ConsistencyScenario,
     ConsistencyScenarioResult,
@@ -28,8 +28,7 @@ from funman.scenario.simulation import (
     SimulationScenario,
     SimulationScenarioResult,
 )
-from funman.search import SearchConfig
-from funman.search.handlers import ResultCombinedHandler
+from funman.utils.handlers import ResultCombinedHandler
 
 RESOURCES = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "../resources"
@@ -126,7 +125,7 @@ class TestUseCases(unittest.TestCase):
         ub = 0.000067 * (1 + scale_factor)
 
         model = BilayerModel(
-            BilayerDynamics.from_json(bilayer_path),
+            bilayer=BilayerDynamics(json_graph=bilayer_src),
             init_values=init_values,
             parameter_bounds={
                 "beta": [lb, ub],
@@ -134,7 +133,7 @@ class TestUseCases(unittest.TestCase):
             },
         )
 
-        query = QueryLE("I", infected_threshold)
+        query = QueryLE(variable="I", ub=infected_threshold)
 
         return model, query
 
@@ -142,7 +141,7 @@ class TestUseCases(unittest.TestCase):
         model, query = self.setup_use_case_bilayer_common()
         [lb, ub] = model.parameter_bounds["beta"]
         scenario = ParameterSynthesisScenario(
-            parameters=[Parameter("beta", lb=lb, ub=ub)],
+            parameters=[Parameter(name="beta", lb=lb, ub=ub)],
             model=model,
             query=query,
         )
@@ -154,10 +153,10 @@ class TestUseCases(unittest.TestCase):
         funman = Funman()
         result: ParameterSynthesisScenarioResult = funman.solve(
             scenario,
-            config=SearchConfig(
+            config=FUNMANConfig(
                 tolerance=1e-8,
                 number_of_processes=1,
-                handler=ResultCombinedHandler(
+                _handler=ResultCombinedHandler(
                     [
                         ResultCacheWriter(f"box_search.json"),
                         RealtimeResultPlotter(
@@ -169,7 +168,6 @@ class TestUseCases(unittest.TestCase):
                     ]
                 ),
             ),
-            config=FUNMANConfig(tolerance=1e-8, number_of_processes=1),
         )
         assert len(result.parameter_space.true_boxes) > 0
         assert len(result.parameter_space.false_boxes) > 0

@@ -8,9 +8,12 @@ from funman_demo.handlers import ResultCacheWriter
 from funman import Funman
 from funman.model import Parameter
 from funman.model.encoded import EncodedModel
+from funman.representation.representation import (
+    ResultCombinedHandler,
+    SearchConfig,
+)
 from funman.scenario.parameter_synthesis import ParameterSynthesisScenario
 from funman.search import BoxSearch
-from funman.search.representation import ResultCombinedHandler, SearchConfig
 
 l = logging.getLogger(__file__)
 l.setLevel(logging.ERROR)

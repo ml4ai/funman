@@ -10,7 +10,7 @@ from funman.scenario.parameter_synthesis import (
     ParameterSynthesisScenario,
     ParameterSynthesisScenarioResult,
 )
-from funman.search import ResultCombinedHandler, SearchConfig
+from funman.search import ResultCombinedHandler
 
 from ..plot import plot_parameter_space
 

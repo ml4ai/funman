@@ -18,7 +18,6 @@ from pysmt.shortcuts import (
 )
 from pysmt.typing import REAL
 
-from funman.model import Parameter
 from funman.model.bilayer import (
     BilayerEdge,
     BilayerFluxNode,
@@ -28,7 +27,8 @@ from funman.model.bilayer import (
     BilayerStateNode,
 )
 from funman.model.model import Model
-from funman.search.representation import Box
+from funman.representation import Parameter
+from funman.representation.representation import Box, Interval
 from funman.translate import Encoder, Encoding, EncodingOptions
 
 l = logging.Logger(__name__)
@@ -134,9 +134,14 @@ class BilayerEncoder(Encoder):
                     for p in parameters
                     for timepoint in transition_timepoints
                 ]
-                parameter_box = Box(parameters=timed_parameters)
-                parameter_constraints = parameter_box.to_smt(
-                    closed_upper_bound=True
+                parameter_box = Box(
+                    bounds={
+                        p.name: Interval(lb=p.lb, ub=p.ub)
+                        for p in timed_parameters
+                    }
+                )
+                parameter_constraints = self.box_to_smt(
+                    parameter_box, closed_upper_bound=True
                 )
             else:
                 parameter_constraints = TRUE()

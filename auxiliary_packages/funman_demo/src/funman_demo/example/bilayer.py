@@ -14,8 +14,11 @@ from funman.model.bilayer import (
     BilayerMeasurement,
     BilayerModel,
 )
+from funman.representation.representation import (
+    ResultCombinedHandler,
+    SearchConfig,
+)
 from funman.scenario.consistency import ConsistencyScenario
-from funman.search.representation import ResultCombinedHandler, SearchConfig
 from funman.translate.bilayer import BilayerEncoder, BilayerEncodingOptions
 
 

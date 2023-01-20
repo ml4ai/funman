@@ -9,9 +9,9 @@ import numpy as np
 from IPython.display import clear_output
 from matplotlib.lines import Line2D
 
-from funman.model import Parameter
+from funman.representation import Parameter
+from funman.representation.representation import Box, Interval, Point
 from funman.search import SearchEpisode
-from funman.search.representation import Box, Interval, Point
 
 l = logging.getLogger(__file__)
 l.setLevel(logging.INFO)
@@ -178,10 +178,8 @@ class BoxPlotter(object):
         self.fig.canvas.flush_events()
         # plt.show(block=False)
 
-    def plotBox(self, interval: Interval = Interval(-2000, 2000)):
-        box = Box(self.parameters)
-        for p, _ in box.bounds.items():
-            box.bounds[p] = interval
+    def plotBox(self, interval: Interval = Interval(lb=-2000, ub=2000)):
+        box = Box(bounds={p.name: interval for p in self.parameters})
         return box
 
     def plot(
