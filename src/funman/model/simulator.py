@@ -2,13 +2,12 @@
 This module defines classes that wrap a simulator to function as a Model.
 """
 
-from typing import Callable
 
 from funman.model.model import Model
 
 
 class SimulatorModel(Model):
-    main_fn: Callable = None
+    main_fn: str = ""
 
     def default_encoder(self) -> "Encoder":
         """

@@ -161,6 +161,75 @@ class TestAPI(unittest.TestCase):
             assert len(result.parameter_space.true_boxes) > 0
             assert len(result.parameter_space.false_boxes) > 0
 
+    def test_api_simulation(self):
+        # Start API Server
+        server = Server(
+            config=ServerConfig(
+                app,
+                host=API_SERVER_HOST,
+                port=API_SERVER_PORT,
+                log_level="info",
+            )
+        )
+        with server.run_in_thread():
+            # Server is started.
+
+            client.make_client(
+                API_BASE_PATH, openapi_url=OPENAPI_URL, client_name=CLIENT_NAME
+            )
+
+            from funman_api_client import Client
+            from funman_api_client.api.default import (
+                solve_simulation_solve_simulation_put,
+            )
+            from funman_api_client.models import (
+                AnalysisScenarioResultException,
+                BodySolveSimulationSolveSimulationPut,
+                FUNMANConfig,
+                SimulationScenario,
+                SimulationScenarioResult,
+            )
+
+            funman_client = Client(SERVER_URL, timeout=None)
+
+            bilayer_path = path.join(
+                RESOURCES, "bilayer", "CHIME_SIR_dynamics_BiLayer.json"
+            )
+            with open(bilayer_path, "r") as bl:
+                bilayer_json = json.load(bl)
+
+            infected_threshold = 3
+
+            response = asyncio.run(
+                solve_simulation_solve_simulation_put.asyncio_detailed(
+                    client=funman_client,
+                    json_body=BodySolveSimulationSolveSimulationPut(
+                        SimulationScenario.from_dict(
+                            {
+                                "model": {
+                                    "main_fn": "funman_demo.sim.CHIME.CHIME_SIR.main"
+                                },
+                                "query": {},
+                            }
+                        )
+                    ),
+                )
+            )
+            try:
+                result = SimulationScenarioResult.from_dict(
+                    src_dict=json.loads(response.content.decode())
+                )
+                assert result.query_satisfied
+
+            except Exception as e:
+                try:
+                    result = AnalysisScenarioResultException.from_dict(
+                        src_dict=json.loads(response.content.decode())
+                    )
+                    assert False
+                except Exception as e1:
+                    assert False
+
 
 if __name__ == "__main__":
     unittest.main()

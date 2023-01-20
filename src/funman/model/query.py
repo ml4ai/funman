@@ -2,7 +2,6 @@
 This module defines all Query classes.  Queries are combined with Model objects in Scenarios to determine whether the model satisfies the query.
 """
 from abc import ABC
-from typing import Callable
 
 from pydantic import BaseModel
 from pysmt.formula import FNode
@@ -21,7 +20,7 @@ class QueryFunction(Query):
     This query uses a Python function passed to the constructor to evaluate a query on the results of a scenario.
     """
 
-    function: Callable
+    function: str
 
 
 class QueryTrue(Query):

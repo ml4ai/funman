@@ -1,6 +1,7 @@
 """
 This module wraps a simulator invocation as a Scenario.
 """
+from importlib import import_module
 from typing import Any
 
 from pydantic import BaseModel
@@ -15,7 +16,15 @@ class SimulationScenario(AnalysisScenario, BaseModel):
     query: Query
 
     def solve(self, config: "FUNMANConfig"):
-        results = self.model.main_fn()
+        try:
+            p, m = self.model.main_fn.rsplit(".", 1)
+            mod = import_module(p)
+            main_fn = getattr(mod, m)
+        except NameError:
+            # print("Not in scope!")
+            pass
+
+        results = main_fn()
         query_satisfied = self._evaluate_query(results)
         return SimulationScenarioResult(
             scenario=self, results=results, query_satisfied=query_satisfied
@@ -24,6 +33,8 @@ class SimulationScenario(AnalysisScenario, BaseModel):
     def _evaluate_query(self, results):
         if isinstance(self.query, QueryFunction):
             result = self.query.function(results)
+        elif isinstance(self.query, Query):
+            result = results is not None  # Return results without query
         else:
             raise Exception(
                 f"SimulationScenario cannot evaluate query of type {type(self.query)}"

@@ -531,14 +531,14 @@ class BoxSearch(Search):
                         elif label == "false":
                             false_boxes.append(inst)
                         else:
-                            l.warn(f"Skipping Box with label: {label}")
+                            l.warning(f"Skipping Box with label: {label}")
                     elif typ is Point:
                         if label == "true":
                             true_points.append(inst)
                         elif label == "false":
                             false_points.append(inst)
                         else:
-                            l.warn(f"Skipping Point with label: {label}")
+                            l.warning(f"Skipping Point with label: {label}")
                     else:
                         l.error(f"Skipping invalid object type: {typ}")
 
@@ -603,14 +603,14 @@ class BoxSearch(Search):
                         elif label == "unknown":
                             pass  # Allow unknown boxes for plotting
                         else:
-                            l.warn(f"Skipping Box with label: {label}")
+                            l.warning(f"Skipping Box with label: {label}")
                     elif typ is Point:
                         if label == "true":
                             all_results["true_points"].append(inst)
                         elif label == "false":
                             all_results["false_points"].append(inst)
                         else:
-                            l.warn(f"Skipping Point with label: {label}")
+                            l.warning(f"Skipping Point with label: {label}")
                     else:
                         l.error(f"Skipping invalid object type: {typ}")
                         continue
@@ -742,7 +742,7 @@ class BoxSearch(Search):
                             config._wait_action.run()
                     starmap_result.wait()
                 except KeyboardInterrupt:
-                    l.warning("--- Received Keyboard Interrupt ---")
+                    l.warninging("--- Received Keyboard Interrupt ---")
 
                 rval.put(None)
                 l.info("Waiting for result handler process")

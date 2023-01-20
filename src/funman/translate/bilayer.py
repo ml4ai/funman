@@ -368,7 +368,7 @@ class BilayerEncoder(Encoder):
                     symbol = vars[var][t]
                     vals[var][t] = float(pysmtModel.get_py_value(symbol))
                 except OverflowError as e:
-                    l.warn(e)
+                    l.warning(e)
         return vals
 
     def parameter_values(
@@ -396,5 +396,5 @@ class BilayerEncoder(Encoder):
             }
             return parameters
         except OverflowError as e:
-            l.warn(e)
+            l.warning(e)
             return {}

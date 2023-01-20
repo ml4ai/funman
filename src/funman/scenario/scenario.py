@@ -28,3 +28,12 @@ class AnalysisScenarioResult(ABC):
     @abstractclassmethod
     def plot(self, **kwargs):
         pass
+
+
+class AnalysisScenarioResultException(BaseModel, AnalysisScenarioResult):
+    exception: str
+
+    def plot(self, **kwargs):
+        raise NotImplemented(
+            "AnalysisScenarioResultException cannot be plotted with plot()"
+        )

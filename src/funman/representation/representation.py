@@ -1201,14 +1201,14 @@ class ParameterSpace(BaseModel):
                     elif label == "false":
                         ps.false_boxes.append(inst)
                     else:
-                        l.warn(f"Skipping Box with label: {label}")
+                        l.warning(f"Skipping Box with label: {label}")
                 elif typ is Point:
                     if label == "true":
                         ps.true_points.append(inst)
                     elif label == "false":
                         ps.false_points.append(inst)
                     else:
-                        l.warn(f"Skipping Point with label: {label}")
+                        l.warning(f"Skipping Point with label: {label}")
                 else:
                     l.error(f"Skipping invalid object type: {typ}")
         return ps

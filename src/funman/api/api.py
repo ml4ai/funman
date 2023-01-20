@@ -1,10 +1,11 @@
-from typing import Optional
+from typing import Optional, Union
 
 import uvicorn
 from fastapi import FastAPI
 
 from funman import Funman
 from funman.funman import FUNMANConfig
+from funman.scenario import AnalysisScenarioResultException
 from funman.scenario.consistency import (
     ConsistencyScenario,
     ConsistencyScenarioResult,
@@ -26,45 +27,69 @@ def read_root():
     return {"Hello": "World"}
 
 
-@app.put("/solve/consistency")
+@app.put(
+    "/solve/consistency",
+    response_model=Union[
+        ConsistencyScenarioResult, AnalysisScenarioResultException
+    ],
+)
 async def solve_consistency(
     scenario: ConsistencyScenario,
     config: Optional[FUNMANConfig] = FUNMANConfig(),
-) -> ConsistencyScenarioResult:
+):
     try:
         f = Funman()
         result = f.solve(scenario, config=config)
     except Exception as e:
-        print(e)
-        raise e
+        # print(e)
+        # raise e
+        return AnalysisScenarioResultException(
+            exception=f"Failed to solve scenario due to internal exception: {e}"
+        )
     return result
 
 
-@app.put("/solve/parameter_synthesis")
+@app.put(
+    "/solve/parameter_synthesis",
+    response_model=Union[
+        ParameterSynthesisScenarioResult, AnalysisScenarioResultException
+    ],
+)
 async def solve_parameter_synthesis(
     scenario: ParameterSynthesisScenario,
     config: Optional[FUNMANConfig] = FUNMANConfig(),
-) -> ParameterSynthesisScenarioResult:
+):
     try:
         f = Funman()
         result = f.solve(scenario, config=config)
     except Exception as e:
-        print(e)
-        raise e
+        # print(e)
+        # raise e
+        return AnalysisScenarioResultException(
+            exception=f"Failed to solve scenario due to internal exception: {e}"
+        )
     return result
 
 
-@app.put("/solve/simulation")
+@app.put(
+    "/solve/simulation",
+    response_model=Union[
+        SimulationScenarioResult, AnalysisScenarioResultException
+    ],
+)
 async def solve_simulation(
     scenario: SimulationScenario,
     config: Optional[FUNMANConfig] = FUNMANConfig(),
-) -> SimulationScenarioResult:
+):
     try:
         f = Funman()
         result = f.solve(scenario, config=config)
     except Exception as e:
-        print(e)
-        raise e
+        # print(e)
+        # raise e
+        return AnalysisScenarioResultException(
+            exception=f"Failed to solve scenario due to internal exception: {e}"
+        )
     return result
 
 
