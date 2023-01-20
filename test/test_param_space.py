@@ -1,7 +1,7 @@
 import os
 import unittest
 
-from funman.search.representation import ParameterSpace
+from funman.representation import ParameterSpace
 
 RESOURCES = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "../resources"

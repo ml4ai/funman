@@ -8,9 +8,12 @@ from funman_demo.handlers import ResultCacheWriter
 from funman import Funman
 from funman.model import Parameter
 from funman.model.encoded import EncodedModel
+from funman.representation.representation import (
+    ResultCombinedHandler,
+    SearchConfig,
+)
 from funman.scenario.parameter_synthesis import ParameterSynthesisScenario
 from funman.search import BoxSearch
-from funman.search.representation import ResultCombinedHandler, SearchConfig
 
 l = logging.getLogger(__file__)
 l.setLevel(logging.ERROR)
@@ -42,7 +45,7 @@ class TestCachedParameterSpace(unittest.TestCase):
             n,
             delta,
         ) = vars
-        parameters = [Parameter("beta", symbol=betas[0])]
+        parameters = [Parameter(name="beta", _symbol=betas[0])]
 
         model = EncodedModel(phi)
 
@@ -50,7 +53,7 @@ class TestCachedParameterSpace(unittest.TestCase):
             parameters,
             model,
             chime.encode_query_time_horizon(query, num_timepoints),
-            search=BoxSearch(),
+            _search=BoxSearch(),
         )
         funman = Funman()
         config = SearchConfig(

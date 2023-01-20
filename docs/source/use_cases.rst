@@ -107,8 +107,8 @@ configuration.
         result: ParameterSynthesisScenarioResult = funman.solve(
             ParameterSynthesisScenario(
                 [
-                    Parameter("x", symbol=x),
-                    Parameter("y", symbol=y),
+                    Parameter(name="x", symbol=x),
+                    Parameter(name="y", symbol=y),
                 ],
                 EncodedModel(formula),
             )
@@ -132,7 +132,7 @@ As an additional parameter synthesis example, the following test case demonstrat
         funman = Funman()
         result: ParameterSynthesisScenarioResult = funman.solve(
             ParameterSynthesisScenario(
-                parameters=[Parameter("beta", lb=lb, ub=ub)],
+                parameters=[Parameter(name="beta", lb=lb, ub=ub)],
                 model=BilayerModel(
                     BilayerDynamics.from_json(bilayer_path),
                     init_values=init_values,

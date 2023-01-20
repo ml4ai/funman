@@ -10,7 +10,7 @@ from funman.scenario.parameter_synthesis import (
     ParameterSynthesisScenario,
     ParameterSynthesisScenarioResult,
 )
-from funman.search import ResultCombinedHandler, SearchConfig
+from funman.search import ResultCombinedHandler
 
 from ..plot import plot_parameter_space
 
@@ -20,8 +20,8 @@ def realtime_plotting_and_caching():
     print(f"FUNMAN: Writing example realtime output to {tmp_dir_path}")
     gromet_file1 = "chime1"
     parameters = [
-        Parameter("beta_0", lb=0.0, ub=0.5),
-        Parameter("beta_1", lb=0.0, ub=0.5),
+        Parameter(name="beta_0", lb=0.0, ub=0.5),
+        Parameter(name="beta_1", lb=0.0, ub=0.5),
     ]
     result1: ParameterSynthesisScenarioResult = Funman().solve(
         ParameterSynthesisScenario(

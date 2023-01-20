@@ -1,3 +1,4 @@
+import json
 import os
 import unittest
 
@@ -16,7 +17,9 @@ class TestCompilation(unittest.TestCase):
         bilayer_json_file = os.path.join(
             DATA, "CHIME_SIR_dynamics_BiLayer.json"
         )
-        bilayer = BilayerDynamics.from_json(bilayer_json_file)
+        with open(bilayer_json_file, "r") as f:
+            bilayer_src = json.load(f)
+        bilayer = BilayerDynamics(json_graph=bilayer_src)
         assert bilayer
 
         #        encoding = bilayer.to_smtlib_timepoint(2) ## encoding at the single timepoint 2

@@ -31,14 +31,14 @@ from pysmt.typing import BOOL, INT, REAL
 
 from funman import Funman
 from funman.model import Model, Parameter, QueryLE
-from funman.scenario.consistency import ConsistencyScenario
-from funman.scenario.parameter_synthesis import ParameterSynthesisScenario
-from funman.search import BoxSearch, SMTCheck
-from funman.search.representation import (
+from funman.representation.representation import (
     Point,
     ResultCombinedHandler,
     SearchConfig,
 )
+from funman.scenario.consistency import ConsistencyScenario
+from funman.scenario.parameter_synthesis import ParameterSynthesisScenario
+from funman.search import BoxSearch, SMTCheck
 from funman.translate.bilayer import (
     Bilayer,
     BilayerEncoder,
@@ -120,7 +120,7 @@ class TestChimeBilayerSolve(unittest.TestCase):
 
         query.ub = 10000
 
-        scenario = ConsistencyScenario(model, query, smt_encoder=encoder)
+        scenario = ConsistencyScenario(model, query, _smt_encoder=encoder)
 
         result = Funman().solve(
             scenario, config=SearchConfig(solver="dreal", search=SMTCheck)
@@ -145,7 +145,7 @@ class TestChimeBilayerSolve(unittest.TestCase):
         # The efficacy can be up to 4x that of baseline (i.e., 0.05 - 0.20)
         parameters = [
             Parameter(
-                "beta",
+                name="beta",
                 # lb=0.000001,
                 # ub=0.00001,
                 lb=model.parameter_bounds["beta"][0],
@@ -155,7 +155,7 @@ class TestChimeBilayerSolve(unittest.TestCase):
         tmp_dir_path = tempfile.mkdtemp(prefix="funman-")
         result = Funman().solve(
             ParameterSynthesisScenario(
-                parameters, model, query, smt_encoder=encoder
+                parameters, model, query, _smt_encoder=encoder
             ),
             config=SearchConfig(
                 number_of_processes=1,

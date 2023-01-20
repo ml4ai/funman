@@ -1,32 +1,27 @@
 """
 This submodule defines a consistency scenario.  Consistency scenarios specify an existentially quantified model.  If consistent, the solution assigns any unassigned variable, subject to their bounds and other constraints.  
 """
-from typing import Any
+from typing import Dict, Union
 
 import matplotlib.pyplot as plt
 import pandas as pd
+from pydantic import BaseModel
+from pysmt.solvers.solver import Model as pysmt_Model
 
+from funman.model.bilayer import BilayerModel, validator
+from funman.model.encoded import EncodedModel
+from funman.model.query import QueryFunction, QueryLE
 from funman.scenario import AnalysisScenario, AnalysisScenarioResult
-from funman.search.search import SearchConfig
 from funman.search.smt_check import SMTCheck
 from funman.translate import Encoder
+from funman.translate.translate import Encoding
 
 
-class ConsistencyScenario(AnalysisScenario):
+class ConsistencyScenario(AnalysisScenario, BaseModel):
     """
     The ConsistencyScenario class is an Analysis Scenario that analyzes a Model to find assignments to all variables, if consistent.
-    """
 
-    def __init__(
-        self,
-        model: "Model",
-        query: "Query",
-        smt_encoder: Encoder = None,
-    ) -> None:
-        """
-        Create a Consistency Scenario.
-
-        Parameters
+    Parameters
         ----------
         model : Model
             model to check
@@ -34,21 +29,18 @@ class ConsistencyScenario(AnalysisScenario):
             model query
         smt_encoder : Encoder, optional
             method to encode the scenario, by default None
-        """
-        super(ConsistencyScenario, self).__init__()
-        self.smt_encoder = (
-            smt_encoder if smt_encoder else model.default_encoder()
-        )
-        self.model_encoding = None
-        self.query_encoding = None
+    """
 
-        self.searches = []
-        self.model = model
-        self.query = query
+    class Config:
+        underscore_attrs_are_private = True
 
-    def solve(
-        self, config: SearchConfig = None
-    ) -> "ConsistencyScenarioResult":
+    model: Union[BilayerModel, EncodedModel]
+    query: Union[QueryLE, QueryFunction]
+    _smt_encoder: Encoder = None
+    _model_encoding: Encoding = None
+    _query_encoding: Encoding = None
+
+    def solve(self, config: "SearchConfig") -> "AnalysisScenarioResult":
         """
         Check model consistency.
 
@@ -62,46 +54,53 @@ class ConsistencyScenario(AnalysisScenario):
         result
             ConsistencyScenarioResult indicating whether the model is consistent.
         """
-        if config is None:
-            config = SearchConfig()
+
+        if config._search is None:
+            search = SMTCheck()
+        else:
+            search = config._search()
 
         self._encode()
 
-        if config.search is None:
-            search = SMTCheck()
-        else:
-            search = config.search()
-
-        if search not in self.searches:
-            self.searches.append(search)
-
         result = search.search(self, config=config)
 
-        return ConsistencyScenarioResult(result, self)
+        consistent = result.to_dict() if result else None
+
+        scenario_result = ConsistencyScenarioResult(
+            scenario=self, consistent=consistent
+        )
+        scenario_result._model = (
+            result  # Constructor won't assign this private attr :(
+        )
+        return scenario_result
 
     def _encode(self):
-        self.model_encoding = self.smt_encoder.encode_model(self.model)
-        self.query_encoding = self.smt_encoder.encode_query(
-            self.model_encoding, self.query
+        if self._smt_encoder is None:
+            self._smt_encoder = self.model.default_encoder()
+        self._model_encoding = self._smt_encoder.encode_model(self.model)
+        self._query_encoding = self._smt_encoder.encode_query(
+            self._model_encoding, self.query
         )
-        return self.model_encoding, self.query_encoding
+        return self._model_encoding, self._query_encoding
 
 
-class ConsistencyScenarioResult(AnalysisScenarioResult):
+class ConsistencyScenarioResult(AnalysisScenarioResult, BaseModel):
     """
     ConsistencyScenarioResult result, which includes the consistency flag and
     search statistics.
     """
 
-    def __init__(self, result: Any, scenario: ConsistencyScenario) -> None:
-        super().__init__()
-        self.consistent = result
-        self.scenario = scenario
-        self.query_satisfied = result is not None
+    class Config:
+        underscore_attrs_are_private = True
+        arbitrary_types_allowed = True
+
+    scenario: ConsistencyScenario
+    consistent: Dict[str, float] = None
+    _model: pysmt_Model = None
 
     def _parameters(self):
         if self.consistent:
-            parameters = self.scenario.smt_encoder.parameter_values(
+            parameters = self.scenario._smt_encoder.parameter_values(
                 self.scenario.model, self.consistent
             )
             return parameters
@@ -130,8 +129,8 @@ class ConsistencyScenarioResult(AnalysisScenarioResult):
             fails if scenario is not consistent
         """
         if self.consistent:
-            timeseries = self.scenario.smt_encoder.symbol_timeseries(
-                self.scenario.model_encoding, self.consistent
+            timeseries = self.scenario._smt_encoder.symbol_timeseries(
+                self.scenario._model_encoding, self._model
             )
             df = pd.DataFrame.from_dict(timeseries)
             if interpolate:
@@ -151,7 +150,7 @@ class ConsistencyScenarioResult(AnalysisScenarioResult):
         Exception
             failure if scenario is not consistent.
         """
-        if self.consistent:
+        if self._consistent:
             self.dataframe().plot(marker="o", **kwargs)
             plt.show(block=False)
         else:

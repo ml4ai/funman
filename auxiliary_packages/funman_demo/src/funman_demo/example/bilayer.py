@@ -14,8 +14,11 @@ from funman.model.bilayer import (
     BilayerMeasurement,
     BilayerModel,
 )
+from funman.representation.representation import (
+    ResultCombinedHandler,
+    SearchConfig,
+)
 from funman.scenario.consistency import ConsistencyScenario
-from funman.search.representation import ResultCombinedHandler, SearchConfig
 from funman.translate.bilayer import BilayerEncoder, BilayerEncodingOptions
 
 
@@ -71,7 +74,7 @@ def run_chime_bilayer_example(output_path):
         ConsistencyScenario(
             model,
             query,
-            smt_encoder=BilayerEncoder(
+            _smt_encoder=BilayerEncoder(
                 config=BilayerEncodingOptions(step_size=10, max_steps=duration)
             ),  # four months
         )

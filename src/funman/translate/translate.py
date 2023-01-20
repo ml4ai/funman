@@ -6,25 +6,31 @@ from abc import ABC, abstractmethod
 from typing import Dict, List, Union
 
 import pysmt
+from pydantic import BaseModel
 from pysmt.formula import FNode
-from pysmt.shortcuts import LE, TRUE, And, Real
+from pysmt.shortcuts import GE, LE, LT, REAL, TRUE, And, Real, Symbol
 
+from funman.constants import NEG_INFINITY, POS_INFINITY
 from funman.model.query import Query, QueryEncoded, QueryLE, QueryTrue
+from funman.representation import Parameter
+from funman.representation.representation import Box, Interval, Point
 
 
-class Encoding(object):
+class Encoding(BaseModel):
     """
     An encoding comprises a formula over a set of symbols.
 
     """
 
-    def __init__(
-        self,
-        formula: FNode = None,
-        symbols: Dict[str, Dict[str, FNode]] = None,
-    ) -> None:
-        self.formula = formula
-        self.symbols = symbols
+    class Config:
+        arbitrary_types_allowed = True
+
+    formula: FNode = None
+    symbols: Union[List[FNode], Dict[str, Dict[str, FNode]]] = None
+
+    # @validator("formula")
+    # def set_symbols(cls, v: FNode):
+    #     cls.symbols = Symbol(v, REAL)
 
 
 class EncodingOptions(object):
@@ -36,14 +42,16 @@ class EncodingOptions(object):
         self.max_steps = max_steps
 
 
-class Encoder(ABC):
+class Encoder(ABC, BaseModel):
     """
     An Encoder translates a Model into an SMTLib formula.
 
     """
 
-    def __init__(self, config: EncodingOptions = EncodingOptions()) -> None:
-        self.config = config
+    config: EncodingOptions = EncodingOptions()
+
+    class Config:
+        arbitrary_types_allowed = True
 
     def _symbols(self, formula: FNode) -> Dict[str, Dict[str, FNode]]:
         symbols = {}
@@ -107,11 +115,11 @@ class Encoder(ABC):
     def _encode_query_le(self, model_encoding, query):
         timepoints = model_encoding.symbols[query.variable]
         return Encoding(
-            And([LE(s, Real(query.ub)) for s in timepoints.values()])
+            formula=And([LE(s, Real(query.ub)) for s in timepoints.values()])
         )
 
     def _encode_query_true(self, model_encoding, query):
-        return Encoding(TRUE())
+        return Encoding(formula=TRUE())
 
     def symbol_timeseries(
         self, model_encoding, pysmtModel: pysmt.solvers.solver.Model
@@ -137,6 +145,66 @@ class Encoder(ABC):
                 vals[int(t)] = v
             a_series[var] = vals
         return a_series
+
+    def interval_to_smt(
+        self, p: Parameter, i: Interval, closed_upper_bound: bool = False
+    ) -> FNode:
+        """
+        Convert the interval into contraints on parameter p.
+
+        Parameters
+        ----------
+        p : Parameter
+            parameter to constrain
+        closed_upper_bound : bool, optional
+            interpret interval as closed (i.e., p <= ub), by default False
+
+        Returns
+        -------
+        FNode
+            formula constraining p to the interval
+        """
+        lower = (
+            GE(Symbol(p, REAL), Real(i.lb)) if i.lb != NEG_INFINITY else TRUE()
+        )
+        upper_ineq = LE if closed_upper_bound else LT
+        upper = (
+            upper_ineq(Symbol(p, REAL), Real(i.ub))
+            if i.ub != POS_INFINITY
+            else TRUE()
+        )
+        return And(
+            lower,
+            upper,
+        ).simplify()
+
+    def point_to_smt(self, pt: Point):
+        return And(
+            [Equals(p.symbol(), Real(value)) for p, value in pt.values.items()]
+        )
+
+    def box_to_smt(self, box: Box, closed_upper_bound: bool = False):
+        """
+        Compile the interval for each parameter into SMT constraints on the corresponding parameter.
+
+        Parameters
+        ----------
+        closed_upper_bound : bool, optional
+            use closed upper bounds for each interval, by default False
+
+        Returns
+        -------
+        FNode
+            formula representing the box as a conjunction of interval constraints.
+        """
+        return And(
+            [
+                self.interval_to_smt(
+                    p, interval, closed_upper_bound=closed_upper_bound
+                )
+                for p, interval in box.bounds.items()
+            ]
+        )
 
 
 class DefaultEncoder(Encoder):

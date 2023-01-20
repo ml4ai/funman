@@ -1,26 +1,22 @@
 from abc import ABC, abstractclassmethod
 
+import multiprocess as mp
+from pydantic import BaseModel
 
-class Config(object):
-    """
-    Base definition of a configuration object
-    """
+from funman.utils.handlers import NoopResultHandler, ResultHandler
 
 
-class AnalysisScenario(object):
+class AnalysisScenario(ABC, BaseModel):
     """
     Abstract class for Analysis Scenarios.
     """
 
-    def __init__(self):
-        self.parameters = []
-
     @abstractclassmethod
-    def solve(self, config: Config):
+    def solve(self, config: "FUNMANConfig"):
         pass
 
     @abstractclassmethod
-    def _encode(self, config: Config):
+    def _encode(self, config: "FUNMANConfig"):
         pass
 
 
@@ -32,3 +28,12 @@ class AnalysisScenarioResult(ABC):
     @abstractclassmethod
     def plot(self, **kwargs):
         pass
+
+
+class AnalysisScenarioResultException(BaseModel, AnalysisScenarioResult):
+    exception: str
+
+    def plot(self, **kwargs):
+        raise NotImplemented(
+            "AnalysisScenarioResultException cannot be plotted with plot()"
+        )

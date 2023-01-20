@@ -6,9 +6,9 @@ from typing import Dict, List
 import matplotlib.pyplot as plt
 from IPython.display import Image, display
 
-from funman.model import Parameter
+from funman.representation import Parameter
 from funman.search import Box, ParameterSpace, Point
-from funman.search.handlers import ResultHandler, WaitAction
+from funman.utils.handlers import ResultHandler, WaitAction
 
 from .box_plotter import BoxPlotter
 
