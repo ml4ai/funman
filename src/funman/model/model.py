@@ -4,11 +4,7 @@ This module represents the abstract base classes for models.
 from abc import ABC, abstractmethod
 from typing import Dict, List
 
-from pydantic import BaseModel, validator
-from pysmt.shortcuts import REAL, Symbol
-
-from funman.constants import NEG_INFINITY, POS_INFINITY
-from funman.model.query import *
+from pydantic import BaseModel
 
 
 class Model(ABC, BaseModel):
