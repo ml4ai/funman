@@ -54,6 +54,7 @@ RUN pip install --no-cache-dir fastapi
 RUN pip install --no-cache-dir openapi-generator
 RUN pip install --no-cache-dir pre-commit
 RUN pip install --no-cache-dir pycln
+RUN pip install --no-cache-dir openapi-python-client
 
 WORKDIR /home/$UNAME
 
