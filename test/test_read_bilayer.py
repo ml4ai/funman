@@ -4,6 +4,7 @@ import unittest
 
 from pysmt.shortcuts import get_model
 
+from funman.funman import FUNMANConfig
 from funman.model import BilayerDynamics
 from funman.translate import BilayerEncoder
 
@@ -23,7 +24,7 @@ class TestCompilation(unittest.TestCase):
         assert bilayer
 
         #        encoding = bilayer.to_smtlib_timepoint(2) ## encoding at the single timepoint 2
-        encoder = BilayerEncoder()
+        encoder = BilayerEncoder(config=FUNMANConfig())
         encoding = encoder._encode_bilayer(
             bilayer, [2.5, 3, 4, 6]
         )  ## encoding at the list of timepoints [2,3]

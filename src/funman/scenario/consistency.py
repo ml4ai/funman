@@ -12,7 +12,6 @@ from funman.model.bilayer import BilayerModel, validator
 from funman.model.encoded import EncodedModel
 from funman.model.query import QueryFunction, QueryLE, QueryTrue
 from funman.scenario import AnalysisScenario, AnalysisScenarioResult
-from funman.search.smt_check import SMTCheck
 from funman.translate import Encoder
 from funman.translate.translate import Encoding
 
@@ -56,6 +55,8 @@ class ConsistencyScenario(AnalysisScenario, BaseModel):
         """
 
         if config._search is None:
+            from funman.search.smt_check import SMTCheck
+
             search = SMTCheck()
         else:
             search = config._search()

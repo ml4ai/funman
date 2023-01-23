@@ -24,7 +24,7 @@ class TestCompilation(unittest.TestCase):
             parameters=parameters,
             model=model,
             query=QueryTrue(),
-            _smt_encoder=EncodedEncoder(),
+            _smt_encoder=EncodedEncoder(config=FUNMANConfig()),
         )
         funman = Funman()
         config = FUNMANConfig()
@@ -53,7 +53,7 @@ class TestCompilation(unittest.TestCase):
             parameters=parameters,
             model=model,
             query=QueryTrue(),
-            _smt_encoder=EncodedEncoder(),
+            _smt_encoder=EncodedEncoder(config=FUNMANConfig()),
         )
         funman = Funman()
         config = FUNMANConfig(tolerance=1e-1)
