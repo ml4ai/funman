@@ -34,20 +34,20 @@ from funman.translate import Encoder, Encoding, EncodingOptions
 l = logging.Logger(__name__)
 
 
-class BilayerEncodingOptions(EncodingOptions):
-    """
-    The BilayerEncodingOptions are:
+# class BilayerEncodingOptions(EncodingOptions):
+#     """
+#     The BilayerEncodingOptions are:
 
-    * step_size: the number of time units separating encoding steps
+#     * step_size: the number of time units separating encoding steps
 
-    * max_steps: the number of encoding steps
+#     * max_steps: the number of encoding steps
 
-    """
+#     """
 
-    def __init__(self, step_size=1, max_steps=2) -> None:
-        super().__init__(max_steps)
-        self.step_size = step_size
-        self.max_steps = max_steps
+#     def __init__(self, step_size=1, max_steps=2) -> None:
+#         super().__init__(max_steps)
+#         self.step_size = step_size
+#         self.max_steps = max_steps
 
 
 class BilayerEncoder(Encoder):

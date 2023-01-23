@@ -34,6 +34,8 @@ class FUNMANConfig(BaseModel):
     # episode_type: =None,
     _search: str = None
     solver: str = "z3"
+    max_steps: int = 2
+    step_size: int = 1
 
     @validator("solver")
     def import_dreal(cls, v):

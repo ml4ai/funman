@@ -449,7 +449,7 @@ class BilayerModel(Model):
     measurements: BilayerMeasurement = None
     identical_parameters: List[List[str]] = []
 
-    def default_encoder(self) -> "Encoder":
+    def default_encoder(self, config: "FUNMANConfig") -> "Encoder":
         """
         Return the default Encoder for the model
 
@@ -458,6 +458,6 @@ class BilayerModel(Model):
         Encoder
             SMT encoder for model
         """
-        from funman.translate import BilayerEncoder, BilayerEncodingOptions
+        from funman.translate import BilayerEncoder
 
-        return BilayerEncoder(config=BilayerEncodingOptions())
+        return BilayerEncoder(config=config)

@@ -10,7 +10,7 @@ from pysmt.solvers.solver import Model as pysmt_Model
 
 from funman.model.bilayer import BilayerModel, validator
 from funman.model.encoded import EncodedModel
-from funman.model.query import QueryFunction, QueryLE
+from funman.model.query import QueryFunction, QueryLE, QueryTrue
 from funman.scenario import AnalysisScenario, AnalysisScenarioResult
 from funman.search.smt_check import SMTCheck
 from funman.translate import Encoder
@@ -35,12 +35,12 @@ class ConsistencyScenario(AnalysisScenario, BaseModel):
         underscore_attrs_are_private = True
 
     model: Union[BilayerModel, EncodedModel]
-    query: Union[QueryLE, QueryFunction]
+    query: Union[QueryLE, QueryFunction, QueryTrue]
     _smt_encoder: Encoder = None
     _model_encoding: Encoding = None
     _query_encoding: Encoding = None
 
-    def solve(self, config: "SearchConfig") -> "AnalysisScenarioResult":
+    def solve(self, config: "FUNMANConfig") -> "AnalysisScenarioResult":
         """
         Check model consistency.
 
@@ -60,7 +60,7 @@ class ConsistencyScenario(AnalysisScenario, BaseModel):
         else:
             search = config._search()
 
-        self._encode()
+        self._encode(config)
 
         result = search.search(self, config=config)
 
@@ -74,9 +74,9 @@ class ConsistencyScenario(AnalysisScenario, BaseModel):
         )
         return scenario_result
 
-    def _encode(self):
+    def _encode(self, config: "FUNMANConfig"):
         if self._smt_encoder is None:
-            self._smt_encoder = self.model.default_encoder()
+            self._smt_encoder = self.model.default_encoder(config)
         self._model_encoding = self._smt_encoder.encode_model(self.model)
         self._query_encoding = self._smt_encoder.encode_query(
             self._model_encoding, self.query
@@ -150,7 +150,7 @@ class ConsistencyScenarioResult(AnalysisScenarioResult, BaseModel):
         Exception
             failure if scenario is not consistent.
         """
-        if self._consistent:
+        if self.consistent:
             self.dataframe().plot(marker="o", **kwargs)
             plt.show(block=False)
         else:

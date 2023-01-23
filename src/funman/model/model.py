@@ -16,7 +16,7 @@ class Model(ABC, BaseModel):
     parameter_bounds: Dict[str, List[float]] = {}
 
     @abstractmethod
-    def default_encoder(self) -> "Encoder":
+    def default_encoder(self, config: "FUNMANConfig") -> "Encoder":
         """
         Return the default Encoder for the model
 
