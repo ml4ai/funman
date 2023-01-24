@@ -81,6 +81,7 @@ RUN pip install -e funman/auxiliary_packages/funman_dreal
 RUN mkdir -p /home/$UNAME/.local/bin
 RUN echo 'PATH="$HOME/.local/bin:$PATH"' >> /home/$UNAME/.bashrc
 COPY --chmod=755 tools/update-dreal.user /home/$UNAME/.local/bin/update-dreal
+COPY --chmod=755 tools/funman-notebook.sh /home/$UNAME/.local/bin/funman-notebook
 USER root
 COPY --chmod=744 tools/update-dreal.root /usr/local/bin/update-dreal
 RUN echo "%$UNAME ALL=(ALL) NOPASSWD:/usr/local/bin/update-dreal" >> /etc/sudoers
