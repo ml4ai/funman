@@ -10,7 +10,7 @@ from pysmt.solvers.solver import Model as pysmt_Model
 
 from funman.model.bilayer import BilayerModel, validator
 from funman.model.encoded import EncodedModel
-from funman.model.query import QueryFunction, QueryLE, QueryTrue
+from funman.model.query import QueryEncoded, QueryFunction, QueryLE, QueryTrue
 from funman.scenario import AnalysisScenario, AnalysisScenarioResult
 from funman.translate import Encoder
 from funman.translate.translate import Encoding
@@ -34,7 +34,7 @@ class ConsistencyScenario(AnalysisScenario, BaseModel):
         underscore_attrs_are_private = True
 
     model: Union[BilayerModel, EncodedModel]
-    query: Union[QueryLE, QueryFunction, QueryTrue]
+    query: Union[QueryLE, QueryFunction, QueryTrue, QueryEncoded]
     _smt_encoder: Encoder = None
     _model_encoding: Encoding = None
     _query_encoding: Encoding = None
@@ -142,7 +142,7 @@ class ConsistencyScenarioResult(AnalysisScenarioResult, BaseModel):
                 f"Cannot create dataframe for an inconsistent scenario."
             )
 
-    def plot(self, **kwargs):
+    def plot(self, variables=None, **kwargs):
         """
         Plot the results in a matplotlib plot.
 
@@ -152,7 +152,10 @@ class ConsistencyScenarioResult(AnalysisScenarioResult, BaseModel):
             failure if scenario is not consistent.
         """
         if self.consistent:
-            self.dataframe().plot(marker="o", **kwargs)
+            if variables is not None:
+                self.dataframe()[variables].plot(marker="o", **kwargs)
+            else:
+                self.dataframe().plot(marker="o", **kwargs)
             plt.show(block=False)
         else:
             raise Exception(

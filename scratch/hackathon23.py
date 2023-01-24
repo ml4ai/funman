@@ -1,7 +1,9 @@
 import os
+import textwrap
 import unittest
 
 import matplotlib.pyplot as plt
+from pysmt.shortcuts import GE, GT, LE, LT, REAL, And, Equals, Real, Symbol
 
 from funman import Funman
 from funman.funman import FUNMANConfig
@@ -9,7 +11,7 @@ from funman.funman import FUNMANConfig
 # from funman.funman import FUNMANConfig
 from funman.model import QueryLE
 from funman.model.bilayer import BilayerDynamics, BilayerModel
-from funman.model.query import QueryTrue
+from funman.model.query import QueryEncoded, QueryTrue
 from funman.scenario import ConsistencyScenario, ConsistencyScenarioResult
 
 # from funman_demo.handlers import RealtimeResultPlotter, ResultCacheWriter
@@ -23,8 +25,7 @@ RESOURCES = os.path.join(
 
 
 class TestUseCases(unittest.TestCase):
-    def setup_use_case_bilayer_common(self):
-
+    def initial_bilayer(self):
         bilayer_src1 = {
             "Wa": [
                 {"influx": 1, "infusion": 2},  # (beta_1, E')
@@ -48,7 +49,14 @@ class TestUseCases(unittest.TestCase):
                 {"arg": 4, "call": 6},  # (R, mu_r)
             ],
             "Box": [
-                {"parameter": "beta_1"},  # 1
+                {
+                    "parameter": "beta_1",
+                    "metadata": {
+                        "ref": "http://34.230.33.149:8772/askemo:0000008",
+                        "type": "float",
+                        "lb": "0.0",
+                    },
+                },  # 1
                 {"parameter": "gamma"},  # 2
                 {"parameter": "mu_s"},  # 3
                 {"parameter": "mu_e"},  # 4
@@ -58,7 +66,12 @@ class TestUseCases(unittest.TestCase):
                 {"parameter": "epsilon"},  # 8
             ],
             "Qin": [
-                {"variable": "S"},
+                {
+                    "variable": "S",
+                    "metadata": {
+                        "ref": "http://34.230.33.149:8772/askemo:0000001"
+                    },
+                },
                 {"variable": "E"},
                 {"variable": "I"},
                 {"variable": "R"},
@@ -82,55 +95,106 @@ class TestUseCases(unittest.TestCase):
                 {"efflux": 7, "effusion": 3},  # (mu_i, I')
             ],
         }
+        return bilayer_src1
 
-        init_values = {"S": 1000, "E": 1, "I": 1, "R": 1, "D": 1003}
+    def initial_state(self):
+        init_values = {"S": 10, "E": 0, "I": 0, "R": 0, "D": 10}
+        return init_values
 
-        mu = [0, 1]
-        paramater_bounds = {
-            "mu_s": mu,
-            "mu_e": mu,
-            "mu_i": mu,
-            "mu_r": mu,
-            "beta_1": [0, 1],
-            "epsilon": [0, 1],
-            "alpha": [0, 1],
-            "gamma": [0, 1],
+    def paramater_bounds(self):
+        default_bounds = [0, 1]
+        bounds = {
+            "mu_s": default_bounds,
+            "mu_e": default_bounds,
+            "mu_i": default_bounds,
+            "mu_r": default_bounds,
+            "beta_1": default_bounds,
+            "epsilon": default_bounds,
+            "alpha": default_bounds,
+            "gamma": default_bounds,
         }
+        return bounds
 
-        bilayer1 = BilayerDynamics(json_graph=bilayer_src1)
-        bilayer1.to_dot().render()
+    def identical_parameters(self):
+        identical_parameters = [["mu_s", "mu_e", "mu_i", "mu_r"]]
+        return identical_parameters
 
+    def make_query(self):
+        # Query for test case 1
+        query = QueryEncoded(
+            formula=And(
+                [
+                    GT(
+                        Symbol("R_80", REAL), Real(9.5)
+                    ),  # R is near 10 at day 80
+                    LT(
+                        Symbol("I_30", REAL), Real(4.0)
+                    ),  # I is less than 4.0 on day 30
+                    LT(
+                        Symbol("S_80", REAL), Real(0.5)
+                    ),  # S is less than 0.5 on day 80
+                ]
+            )
+        )
+        return query
+
+    def make_scenario(
+        self, bilayer, init_values, parameter_bounds, identical_parameters
+    ):
         model = BilayerModel(
-            bilayer=bilayer1,
+            bilayer=bilayer,
             init_values=init_values,
-            parameter_bounds=paramater_bounds,
-            identical_parameters=[["mu_s", "mu_e", "mu_i", "mu_r"]],
+            parameter_bounds=parameter_bounds,
+            identical_parameters=identical_parameters,
         )
 
-        query = QueryTrue()
-
-        return model, query
-
-    def setup_use_case_bilayer_consistency(self):
-        model, query = self.setup_use_case_bilayer_common()
+        query = self.make_query()
 
         scenario = ConsistencyScenario(model=model, query=query)
         return scenario
 
-    def test_use_case_bilayer_consistency(self):
-        scenario = self.setup_use_case_bilayer_consistency()
-
-        funman = Funman()
-
-        # Show that region in parameter space is sat (i.e., there exists a true point)
-        result_sat: ConsistencyScenarioResult = funman.solve(
-            scenario, config=FUNMANConfig(max_steps=10)
+    def report(self, bilayer, result):
+        parameters = result._parameters()
+        print(f"Iteration {self.iteration}: {parameters}")
+        bilayer.to_dot().render(f"bilayer_{self.iteration}")
+        # print(result.dataframe())
+        result.plot(
+            variables=["S", "E", "I", "R"],
+            title="\n".join(textwrap.wrap(str(parameters), width=60)),
         )
-        df = result_sat.dataframe()
-        print(df)
+        plt.savefig(f"bilayer_{self.iteration}.png")
 
-        result_sat.plot()
-        plt.savefig("bilayer.png")
+        self.iteration += 1
+
+    def test_use_case_bilayer_consistency(self):
+        self.iteration = 0
+        bilayer = BilayerDynamics(json_graph=self.initial_bilayer())
+        bounds = self.paramater_bounds()
+        scenario = self.make_scenario(
+            bilayer,
+            self.initial_state(),
+            bounds,
+            self.identical_parameters(),
+        )
+
+        # TODO: Illustrate bilayer mismatch with code version A
+        result_sat = Funman().solve(
+            scenario, config=FUNMANConfig(max_steps=80)
+        )
+        self.report(bilayer, result_sat)
+
+        # Shrink bounds on beta_1 from 0.5 in [0, 1) to [0, 0.1)
+        bounds["beta_1"] = [0, 0.1]
+        scenario = self.make_scenario(
+            bilayer,
+            self.initial_state(),
+            bounds,
+            self.identical_parameters(),
+        )
+        result_sat = Funman().solve(
+            scenario, config=FUNMANConfig(max_steps=80)
+        )
+        self.report(bilayer, result_sat)
 
 
 if __name__ == "__main__":

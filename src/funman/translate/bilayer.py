@@ -391,7 +391,7 @@ class BilayerEncoder(Encoder):
         """
         try:
             parameters = {
-                node.parameter: pysmtModel[Symbol(node.parameter, REAL)]
+                node.parameter: pysmtModel[node.parameter]
                 for _, node in model.bilayer._flux.items()
             }
             return parameters
