@@ -2,6 +2,7 @@ from typing import Optional, Union
 
 import uvicorn
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from funman import Funman
 from funman.funman import FUNMANConfig
@@ -20,6 +21,16 @@ from funman.scenario.simulation import (
 )
 
 app = FastAPI(title="funman_api")
+
+origins = ["*"]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.get("/")
