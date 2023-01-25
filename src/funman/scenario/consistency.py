@@ -34,7 +34,7 @@ class ConsistencyScenario(AnalysisScenario, BaseModel):
         underscore_attrs_are_private = True
 
     model: Union[BilayerModel, EncodedModel]
-    query: Union[QueryLE, QueryFunction, QueryTrue, QueryEncoded]
+    query: Union[QueryEncoded, QueryLE, QueryFunction, QueryTrue]
     _smt_encoder: Encoder = None
     _model_encoding: Encoding = None
     _query_encoding: Encoding = None

@@ -38,8 +38,11 @@ class BilayerNode(BaseModel):
     index: int
     parameter: str
 
-    def to_dot(self, dot):
-        return dot.node(self.parameter)
+    def to_dot(self, dot, values={}):
+        label = values[self.parameter] if self.parameter in values else ""
+        return dot.node(
+            self.parameter, _attributes={"label": f"{self.parameter}: {label}"}
+        )
 
     def __hash__(self):
         return self.index
@@ -295,7 +298,7 @@ class BilayerDynamics(BilayerGraph):
             self._tangent,
         )
 
-    def to_dot(self):
+    def to_dot(self, values={}):
         """
         Create a dot object for visualizing the graph.
 
@@ -316,7 +319,7 @@ class BilayerDynamics(BilayerGraph):
             + list(self._flux.values())
             + list(self._state.values())
         ):
-            n.to_dot(dot)
+            n.to_dot(dot, values=values)
         for e in self._input_edges + self._output_edges:
             e.to_dot(dot)
         return dot
@@ -402,7 +405,7 @@ class BilayerMeasurement(BilayerGraph, BaseModel):
 
         # return blm
 
-    def to_dot(self):
+    def to_dot(self, values={}):
         """
         Create a dot object for visualizing the graph.
 
@@ -423,7 +426,7 @@ class BilayerMeasurement(BilayerGraph, BaseModel):
             + list(self.flux.values())
             + list(self.observable.values())
         ):
-            n.to_dot(dot)
+            n.to_dot(dot, values=values)
         for e in self.input_edges + self.output_edges:
             e.to_dot(dot)
         return dot

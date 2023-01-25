@@ -173,7 +173,24 @@ class BilayerEncoder(Encoder):
                     ),
                 )
 
-            formula = And(init, parameter_constraints, encoding, measurements)
+            # Encode that all of the identical parameters are equal
+            identical_parameters = And(
+                [
+                    Equals(Symbol(var1, REAL), Symbol(var2, REAL))
+                    for group in model.identical_parameters
+                    for var1 in group
+                    for var2 in group
+                    if var1 != var2
+                ]
+            ).simplify()
+
+            formula = And(
+                init,
+                parameter_constraints,
+                encoding,
+                measurements,
+                identical_parameters,
+            )
             symbols = self._symbols(formula)
             return Encoding(formula=formula, symbols=symbols)
         else:

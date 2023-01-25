@@ -48,6 +48,7 @@ class FUNMANConfig(BaseModel):
                 )
             else:
                 funman_dreal.ensure_dreal_in_pysmt()
+        return v
 
 
 class Funman(object):

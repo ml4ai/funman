@@ -10,9 +10,10 @@ from funman.funman import FUNMANConfig
 
 # from funman.funman import FUNMANConfig
 from funman.model import QueryLE
-from funman.model.bilayer import BilayerDynamics, BilayerModel
+from funman.model.bilayer import BilayerDynamics, BilayerGraph, BilayerModel
 from funman.model.query import QueryEncoded, QueryTrue
 from funman.scenario import ConsistencyScenario, ConsistencyScenarioResult
+from funman.scenario.scenario import AnalysisScenario
 
 # from funman_demo.handlers import RealtimeResultPlotter, ResultCacheWriter
 
@@ -98,11 +99,11 @@ class TestUseCases(unittest.TestCase):
         return bilayer_src1
 
     def initial_state(self):
-        init_values = {"S": 10, "E": 0, "I": 0, "R": 0, "D": 10}
+        init_values = {"S": 1000, "E": 1, "I": 1, "R": 1, "D": 10}
         return init_values
 
     def paramater_bounds(self):
-        default_bounds = [0, 1]
+        default_bounds = [0, 0.25]
         bounds = {
             "mu_s": default_bounds,
             "mu_e": default_bounds,
@@ -115,31 +116,65 @@ class TestUseCases(unittest.TestCase):
         }
         return bounds
 
+    def simA_bounds(self, tolerance=0.0):
+
+        bounds = {
+            "mu_s": [0.01, 0.01],
+            "mu_e": [0.01, 0.01],
+            "mu_i": [0.01, 0.01],
+            "mu_r": [0.01, 0.01],
+            "beta_1": [0.35, 0.35],
+            "epsilon": [0.2, 0.2],
+            "alpha": [0.002, 0.002],
+            "gamma": [1.0 / 14.0, 1.0 / 14.0],
+        }
+        bounds = {
+            k: [b[0] * (1.0 - tolerance), b[1] * (1.0 + tolerance)]
+            for k, b in bounds.items()
+        }
+        return bounds
+
     def identical_parameters(self):
         identical_parameters = [["mu_s", "mu_e", "mu_i", "mu_r"]]
         return identical_parameters
 
-    def make_query(self):
+    def make_query(self, steps, init_values):
+        global_bounds = And(
+            [
+                And(
+                    GE(Symbol(f"{v}_{i}", REAL), Real(0.0)),
+                    LE(Symbol(f"{v}_{i}", REAL), Real(1003.0)),
+                )
+                for v in init_values
+                for i in range(steps + 1)
+            ]
+        )
         # Query for test case 1
         query = QueryEncoded(
             formula=And(
                 [
                     GT(
-                        Symbol("R_80", REAL), Real(9.5)
+                        Symbol(f"R_{steps}", REAL), Real(5.0)
                     ),  # R is near 10 at day 80
                     LT(
-                        Symbol("I_30", REAL), Real(4.0)
+                        Symbol(f"I_{steps}", REAL), Real(1000.0)
                     ),  # I is less than 4.0 on day 30
                     LT(
-                        Symbol("S_80", REAL), Real(0.5)
+                        Symbol(f"S_{steps}", REAL), Real(1000.0)
                     ),  # S is less than 0.5 on day 80
+                    global_bounds,
                 ]
             )
         )
         return query
 
     def make_scenario(
-        self, bilayer, init_values, parameter_bounds, identical_parameters
+        self,
+        bilayer,
+        init_values,
+        parameter_bounds,
+        identical_parameters,
+        steps,
     ):
         model = BilayerModel(
             bilayer=bilayer,
@@ -148,53 +183,71 @@ class TestUseCases(unittest.TestCase):
             identical_parameters=identical_parameters,
         )
 
-        query = self.make_query()
+        query = self.make_query(steps, init_values)
 
         scenario = ConsistencyScenario(model=model, query=query)
         return scenario
 
-    def report(self, bilayer, result):
-        parameters = result._parameters()
-        print(f"Iteration {self.iteration}: {parameters}")
-        bilayer.to_dot().render(f"bilayer_{self.iteration}")
-        # print(result.dataframe())
-        result.plot(
-            variables=["S", "E", "I", "R"],
-            title="\n".join(textwrap.wrap(str(parameters), width=60)),
-        )
-        plt.savefig(f"bilayer_{self.iteration}.png")
+    def report(self, result: AnalysisScenario):
+        if result.consistent:
+            parameters = result._parameters()
+            print(f"Iteration {self.iteration}: {parameters}")
+            result.scenario.model.bilayer.to_dot(
+                values=result.scenario.model.variables()
+            ).render(f"bilayer_{self.iteration}")
+            # print(result.dataframe())
+            result.plot(
+                variables=["S", "E", "I", "R"],
+                title="\n".join(textwrap.wrap(str(parameters), width=60)),
+            )
+            plt.savefig(f"bilayer_{self.iteration}.png")
+        else:
+            print(f"Iteration {self.iteration}: is inconsistent")
 
         self.iteration += 1
 
     def test_use_case_bilayer_consistency(self):
+        steps = 3
         self.iteration = 0
+        config = FUNMANConfig(max_steps=steps, solver="dreal")
+
         bilayer = BilayerDynamics(json_graph=self.initial_bilayer())
         bounds = self.paramater_bounds()
+        simA_bounds = self.simA_bounds(tolerance=0.1)
+
+        ###########################################################
+        # Generate results using simA parameters
+        ###########################################################
+        scenario = self.make_scenario(
+            bilayer,
+            self.initial_state(),
+            simA_bounds,
+            self.identical_parameters(),
+            steps,
+        )
+
+        result_sat = Funman().solve(scenario, config=config)
+        self.report(result_sat)
+
+        ###########################################################
+        # Generate results using any parameters
+        ###########################################################
         scenario = self.make_scenario(
             bilayer,
             self.initial_state(),
             bounds,
             self.identical_parameters(),
+            steps,
         )
+        result_sat = Funman().solve(scenario, config=config)
+        self.report(result_sat)
 
-        # TODO: Illustrate bilayer mismatch with code version A
-        result_sat = Funman().solve(
-            scenario, config=FUNMANConfig(max_steps=80)
-        )
-        self.report(bilayer, result_sat)
-
-        # Shrink bounds on beta_1 from 0.5 in [0, 1) to [0, 0.1)
-        bounds["beta_1"] = [0, 0.1]
-        scenario = self.make_scenario(
-            bilayer,
-            self.initial_state(),
-            bounds,
-            self.identical_parameters(),
-        )
-        result_sat = Funman().solve(
-            scenario, config=FUNMANConfig(max_steps=80)
-        )
-        self.report(bilayer, result_sat)
+        ###########################################################
+        # Generate results using any parameters and empty query
+        ###########################################################
+        scenario.query = QueryTrue()
+        result_sat = Funman().solve(scenario, config=config)
+        self.report(result_sat)
 
 
 if __name__ == "__main__":
