@@ -1,0 +1,40 @@
+Summary of Petri Net graphs
+    S: state variable vertices (example: S, I, and R in the SIR epidemiology model), often denoted as a circular node in Petri Net visualizations
+        Fields:
+            S: index (int)
+            sname: name of state variable (str)
+    T: transition vertices (example: infection and recovery in the SIR epidemiology model), often denoted as a square node in Petri Net visualizations
+        Fields:
+            T: index (int)
+            tname: name of transition process (str)
+    I: directed edges into transitions (out of states)
+        Fields:
+            I: index (int)
+            it: index of target transition (int)
+            is: index of source state (int)
+    O: directed edges out of transitions (into states)
+        Fields:
+            O: index (int)
+            ot: index of source transition (int)
+            os: index of target state (int)
+
+     
+Pseudocode for converting a Petri Net graph to the resulting approximations of the derivatives
+
+Loop over state vars.  For each state variable S:
+    Initialize S' = 0 (This will build the derivative of the state variable.)
+    Loop over incoming edges to S (edges O with os = S).  These will correspond to terms getting added to S'.  For each such O:
+        Find the corresponding transition (such that ot = T).  For each such T:
+            Initialize expr = tname.  (This will build one summand.)
+            Loop over incoming edges to T (edges I with it = T).  For each such incoming edge:
+                Find the corresponding state variable (such that is = S).    
+                Multiply the transition rate by that state variable, e.g., expr = Times(expr, sname) 
+            Add the completed summand to the derivative, e.g., S' += expr
+    Loop over outgoing edges to S (edges I with is = S).  For each such outgoing edge O:
+        Find the corresponding transition (such that ot = T).  For each such T:
+            Initialize expr = tname.  (This will build one summand.)
+            Loop over incoming edges to T (edges I with it = T).  For each such incoming edge:
+                Find the corresponding state variable (such that is = S).    
+                Multiply the transition rate by that state variable, e.g., expr = Times(expr, sname) 
+            Subtract the completed summand to the derivative, e.g., S' -= expr
+
