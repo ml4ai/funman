@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Dict, List
+from typing import Dict, List, Literal, Optional, Union
 
 import graphviz
 from pydantic import BaseModel, validator
@@ -30,6 +30,18 @@ from pysmt.typing import BOOL, INT, REAL
 from funman.model import Model
 
 
+class BilayerMetadata(BaseModel):
+    """
+    Metadata for a BilayerNode
+    """
+
+    ref: Optional[str] = None
+    type: Optional[Literal["float", "int"]] = None
+    initial_value: Optional[Union[float, int]] = None
+    lb: Optional[Union[float, int]] = None
+    ub: Optional[Union[float, int]] = None
+
+
 class BilayerNode(BaseModel):
     """
     Node in a BilayerGraph.
@@ -37,6 +49,7 @@ class BilayerNode(BaseModel):
 
     index: int
     parameter: str
+    metadata: Optional[BilayerMetadata] = None
 
     def to_dot(self, dot, values={}):
         label = values[self.parameter] if self.parameter in values else ""
@@ -157,7 +170,9 @@ class BilayerGraph(ABC, BaseModel):
     def _get_json_node(self, node_dict, node_type, node_list, node_name):
         for indx, i in enumerate(node_list):
             node_dict[indx + 1] = node_type(
-                index=indx + 1, parameter=i[node_name]
+                index=indx + 1,
+                parameter=i[node_name],
+                metadata=i.get("metadata"),
             )
 
     def _get_json_edge(
