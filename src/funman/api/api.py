@@ -1,7 +1,9 @@
+import os
 from typing import Optional, Union
 
 import uvicorn
-from fastapi import FastAPI
+from fastapi import Body, Depends, FastAPI, HTTPException, Security, status
+from fastapi.security import APIKeyQuery
 
 from funman import Funman
 from funman.funman import FUNMANConfig
@@ -19,10 +21,34 @@ from funman.scenario.simulation import (
     SimulationScenarioResult,
 )
 
+_FUNMAN_API_TOKEN = os.getenv("FUNMAN_API_TOKEN", None)
+api_key_query = APIKeyQuery(name="token", auto_error=False)
+
+
+def _api_key_auth(api_key: str = Security(api_key_query)):
+    # bypass key auth if no token is provided
+    if _FUNMAN_API_TOKEN is None:
+        print("WARNING: Running without API token")
+        return
+
+    # ensure the token is a non-empty string
+    if not isinstance(_FUNMAN_API_TOKEN, str) or _FUNMAN_API_TOKEN == "":
+        print("ERROR: API token is either empty or not a string")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Internal Server Error",
+        )
+
+    if api_key != _FUNMAN_API_TOKEN:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Forbidden"
+        )
+
+
 app = FastAPI(title="funman_api")
 
 
-@app.get("/")
+@app.get("/", dependencies=[Depends(_api_key_auth)])
 def read_root():
     return {"Hello": "World"}
 
@@ -32,6 +58,7 @@ def read_root():
     response_model=Union[
         ConsistencyScenarioResult, AnalysisScenarioResultException
     ],
+    dependencies=[Depends(_api_key_auth)],
 )
 async def solve_consistency(
     scenario: ConsistencyScenario,
@@ -54,6 +81,7 @@ async def solve_consistency(
     response_model=Union[
         ParameterSynthesisScenarioResult, AnalysisScenarioResultException
     ],
+    dependencies=[Depends(_api_key_auth)],
 )
 async def solve_parameter_synthesis(
     scenario: ParameterSynthesisScenario,
@@ -76,6 +104,7 @@ async def solve_parameter_synthesis(
     response_model=Union[
         SimulationScenarioResult, AnalysisScenarioResultException
     ],
+    dependencies=[Depends(_api_key_auth)],
 )
 async def solve_simulation(
     scenario: SimulationScenario,
