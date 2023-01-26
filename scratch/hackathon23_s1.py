@@ -453,16 +453,16 @@ class TestUseCases(unittest.TestCase):
         bilayer = BilayerDynamics(json_graph=self.initial_bilayer())
         bounds = self.unit_test_1_bounds()
 
-        well_formed_query = self.make_well_formed_query(
-            steps, self.initial_state()
-        )
+        # well_formed_query = self.make_well_formed_query(
+        #     steps, self.initial_state()
+        # )
 
         ###########################################################
         # Unit Test 1, using Paper Parameters
         ###########################################################
         testcase = 0
         # print("Dynamics + simA params + well formed ...")
-        print(f"Bounds: {bounds}")
+        print(f"Bounds: {self.unit_test_1_bounds()}")
         scenario = self.make_scenario(
             bilayer,
             self.initial_state(),
@@ -479,7 +479,7 @@ class TestUseCases(unittest.TestCase):
         # need to check that population is consistent (doesn't exceed N)
         # Generate results using any parameters
         ###########################################################
-        print(f"Bounds: {bounds}")
+        print(f"Bounds: {self.unit_test_1_bounds(mu=mu[testcase])}")
         scenario = self.make_scenario(
             bilayer,
             self.initial_state(),
