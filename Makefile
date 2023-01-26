@@ -219,6 +219,7 @@ run-docker:
 		--cpus=5 \
 		--name ${DEV_CONTAINER} \
     -p 127.0.0.1:8888:8888 \
+    -p 127.0.0.1:8191:8190 \
 		-v $$PWD:/home/$$USER/funman $$DREAL_LOCAL_VOLUME_ARG \
 		${DEV_TAGGED_NAME}
 
