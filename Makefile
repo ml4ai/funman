@@ -38,6 +38,10 @@ DEPLOY_TAGGED_API_NAME=$(DEPLOY_API_NAME):$(TARGET_TAG)
 
 MULTIPLATFORM_TAG=multiplatform
 
+DOCKER_HUB_PLATFORMS=linux/arm64,linux/amd64
+DOCKER_HUB_ORG?=jladwigsift
+DOCKER_HUB_TAG?=hackathon-1
+
 MAKE := make --no-print-directory
 
 .PHONY: docs
@@ -301,6 +305,58 @@ check-release: dist
 release: check-release
 	python3 -m twine upload dist/*
 
+# TODO simplify the targets
+docker-hub:
+	# build ibex
+	DOCKER_BUILDKIT=1 docker buildx build \
+		--network=host \
+		--output "type=registry" \
+		--platform $(DOCKER_HUB_PLATFORMS) \
+		--tag $(DOCKER_HUB_ORG)/$(IBEX_NAME):$(DOCKER_HUB_TAG) \
+		-f ./ibex/Dockerfile ./ibex
+	
+	# build dreal
+	DOCKER_BUILDKIT=1 docker buildx build \
+		--network=host \
+		--output "type=registry" \
+		--platform $(DOCKER_HUB_PLATFORMS) \
+		--build-arg SIFT_REGISTRY_ROOT=$(DOCKER_HUB_ORG)/ \
+		--build-arg IBEX_TAG=$(DOCKER_HUB_TAG) \
+		--tag $(DOCKER_HUB_ORG)/$(DREAL_NAME):$(DOCKER_HUB_TAG) \
+		-f ./Dockerfile.dreal4 .
+	
+	# build funman-base
+	DOCKER_BUILDKIT=1 docker buildx build \
+		--network=host \
+		--output "type=registry" \
+		--platform $(DOCKER_HUB_PLATFORMS) \
+		--build-arg SIFT_REGISTRY_ROOT=$(DOCKER_HUB_ORG)/ \
+		--build-arg DREAL_TAG=$(DOCKER_HUB_TAG) \
+		--tag $(DOCKER_HUB_ORG)/$(DEPLOY_BASE_NAME):$(DOCKER_HUB_TAG) \
+		./deploy/base
+	
+	# build funman-git
+	DOCKER_BUILDKIT=1 docker buildx build \
+		--network=host \
+		--output "type=registry" \
+		--platform $(DOCKER_HUB_PLATFORMS) \
+		--build-arg SIFT_REGISTRY_ROOT=$(DOCKER_HUB_ORG)/ \
+		--build-arg FUNMAN_BRANCH=$(FUNMAN_BRANCH) \
+		--build-arg FROM_TAG=$(DOCKER_HUB_TAG) \
+		--tag $(DOCKER_HUB_ORG)/$(DEPLOY_GIT_NAME):$(DOCKER_HUB_TAG) \
+		./deploy/git
+	
+	# build funman-api-server
+	DOCKER_BUILDKIT=1 docker buildx build \
+		--network=host \
+		--output "type=registry" \
+		--platform $(DOCKER_HUB_PLATFORMS) \
+		--build-arg SIFT_REGISTRY_ROOT=$(DOCKER_HUB_ORG)/ \
+		--build-arg FROM_IMAGE=$(DEPLOY_GIT_NAME) \
+		--build-arg FROM_TAG=$(DOCKER_HUB_TAG) \
+		--tag $(DOCKER_HUB_ORG)/$(DEPLOY_API_NAME):$(DOCKER_HUB_TAG) \
+		./deploy/api
+
 generate-api-client:
 	pip install openapi-python-client
 	openapi-python-client --install-completion
@@ -311,3 +367,4 @@ generate-api-client:
 
 update-api-client:
 	openapi-python-client update --url http://0.0.0.0:8190/openapi.json
+
