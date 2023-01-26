@@ -32,9 +32,11 @@ class ConsistencyScenario(AnalysisScenario, BaseModel):
 
     class Config:
         underscore_attrs_are_private = True
+        smart_union = True
+        extra = "forbid"
 
     model: Union[BilayerModel, EncodedModel]
-    query: Union[QueryEncoded, QueryLE, QueryFunction, QueryTrue]
+    query: Union[QueryLE, QueryEncoded, QueryFunction, QueryTrue]
     _smt_encoder: Encoder = None
     _model_encoding: Encoding = None
     _query_encoding: Encoding = None

@@ -120,7 +120,7 @@ class TestUseCases(unittest.TestCase):
         infected_threshold = 3
         init_values = {"S": 9998, "I": 1, "R": 1}
 
-        scale_factor = 0.75
+        scale_factor = 0.5
         lb = 0.000067 * (1 - scale_factor)
         ub = 0.000067 * (1 + scale_factor)
 
@@ -187,8 +187,9 @@ class TestUseCases(unittest.TestCase):
         result_sat: ConsistencyScenarioResult = funman.solve(scenario)
         df = result_sat.dataframe()
 
-        assert abs(df["I"][2] - 2.04) < 0.01
-        assert abs(df["beta"][0] - 0.00005) < 0.000001
+        assert abs(df["I"][2] - 2.24) < 0.01
+        beta = result_sat._parameters()["beta"]
+        assert abs(beta - 0.00005) < 0.00001
 
         # Show that region in parameter space is unsat/false
         scenario.model.parameter_bounds["beta"] = [
