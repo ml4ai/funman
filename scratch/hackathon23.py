@@ -3,7 +3,21 @@ import textwrap
 import unittest
 
 import matplotlib.pyplot as plt
-from pysmt.shortcuts import GE, GT, LE, LT, REAL, And, Equals, Real, Symbol
+import pandas as pd
+from pysmt.shortcuts import (
+    GE,
+    GT,
+    LE,
+    LT,
+    REAL,
+    And,
+    Equals,
+    Minus,
+    Or,
+    Real,
+    Symbol,
+    Times,
+)
 
 from funman import Funman
 from funman.funman import FUNMANConfig
@@ -26,6 +40,8 @@ RESOURCES = os.path.join(
 
 
 class TestUseCases(unittest.TestCase):
+    results_df = pd.DataFrame()
+
     def initial_bilayer(self):
         bilayer_src1 = {
             "Wa": [
@@ -99,11 +115,14 @@ class TestUseCases(unittest.TestCase):
         return bilayer_src1
 
     def initial_state(self):
-        init_values = {"S": 1000, "E": 1, "I": 1, "R": 1, "D": 10}
+        N0 = 500e3
+        E0, I0, R0 = 100, 1, 0
+        S0 = N0 - E0 - I0
+        init_values = {"S": S0, "E": E0, "I": I0, "R": R0, "D": 0}
         return init_values
 
-    def paramater_bounds(self):
-        default_bounds = [0, 0.25]
+    def parameter_bounds(self):
+        default_bounds = [1e-7, 0.5]
         bounds = {
             "mu_s": default_bounds,
             "mu_e": default_bounds,
@@ -138,33 +157,89 @@ class TestUseCases(unittest.TestCase):
         identical_parameters = [["mu_s", "mu_e", "mu_i", "mu_r"]]
         return identical_parameters
 
-    def make_query(self, steps, init_values):
+    def make_global_bounds(self, steps, init_values):
         global_bounds = And(
             [
                 And(
                     GE(Symbol(f"{v}_{i}", REAL), Real(0.0)),
-                    LE(Symbol(f"{v}_{i}", REAL), Real(1003.0)),
+                    LE(
+                        Symbol(f"{v}_{i}", REAL),
+                        Real(
+                            init_values["S"]
+                            + init_values["E"]
+                            + init_values["I"]
+                            + init_values["R"]
+                            + init_values["D"]
+                        ),
+                    ),
                 )
                 for v in init_values
                 for i in range(steps + 1)
             ]
         )
+        return global_bounds
+
+    def make_basic_query(self, steps, init_values):
+
         # Query for test case 1
-        query = QueryEncoded(
-            formula=And(
-                [
-                    GT(
-                        Symbol(f"R_{steps}", REAL), Real(5.0)
-                    ),  # R is near 10 at day 80
-                    LT(
-                        Symbol(f"I_{steps}", REAL), Real(1000.0)
-                    ),  # I is less than 4.0 on day 30
-                    LT(
-                        Symbol(f"S_{steps}", REAL), Real(1000.0)
-                    ),  # S is less than 0.5 on day 80
-                    global_bounds,
-                ]
-            )
+        query = QueryEncoded()
+        query._formula = self.make_global_bounds(steps, init_values)
+
+        return query
+
+    def make_max_difference_constraint(self, steps, init_values, diff=0.1):
+        # | v_i - v_{i+1} | < diff * v_i, for all v
+        constraints = []
+        for v in init_values:
+            for i in range(steps):
+                vi = Symbol(f"{v}_{i}", REAL)
+                vj = Symbol(f"{v}_{i+1}", REAL)
+                # b = Times(Real(diff), vi)
+                # bm = Times(Real(-diff), vi)
+                b = Real(diff)
+                bm = Real(-diff)
+                constraint = And(LE(Minus(vi, vj), b), LE(bm, Minus(vi, vj)))
+
+                constraints.append(constraint)
+
+        return And(constraints)
+
+    def make_monotone_constraints(self, steps, init_values):
+        # | v_i - v_{i+1} | < diff * v_i, for all v
+        constraints = []
+        for (v, dir) in {("S", "decrease"), ("R", "increase")}:
+            for i in range(steps):
+                vi = Symbol(f"{v}_{i}", REAL)
+                vj = Symbol(f"{v}_{i+1}", REAL)
+
+                if dir == "increase":
+                    constraint = LT(vi, vj)
+                else:
+                    constraint = LT(vj, vi)
+
+                constraints.append(constraint)
+
+        return And(constraints)
+
+    def make_well_formed_query(self, steps, init_values):
+
+        # Query for test case 1
+        query = QueryEncoded()
+        query._formula = And(
+            [
+                # GT(
+                #     Symbol(f"R_{steps}", REAL), Real(5.0)
+                # ),  # R is near 10 at day 80
+                # LT(
+                #     Symbol(f"I_{steps}", REAL), Real(1000.0)
+                # ),  # I is less than 4.0 on day 30
+                # LT(
+                #     Symbol(f"S_{steps}", REAL), Real(1000.0)
+                # ),  # S is less than 0.5 on day 80
+                self.make_global_bounds(steps, init_values),
+                self.make_max_difference_constraint(steps, init_values),
+                self.make_monotone_constraints(steps, init_values),
+            ]
         )
         return query
 
@@ -175,6 +250,7 @@ class TestUseCases(unittest.TestCase):
         parameter_bounds,
         identical_parameters,
         steps,
+        query,
     ):
         model = BilayerModel(
             bilayer=bilayer,
@@ -183,8 +259,6 @@ class TestUseCases(unittest.TestCase):
             identical_parameters=identical_parameters,
         )
 
-        query = self.make_query(steps, init_values)
-
         scenario = ConsistencyScenario(model=model, query=query)
         return scenario
 
@@ -192,6 +266,9 @@ class TestUseCases(unittest.TestCase):
         if result.consistent:
             parameters = result._parameters()
             print(f"Iteration {self.iteration}: {parameters}")
+
+            res = pd.Series(name=self.iteration, data=parameters).to_frame().T
+            self.results_df = pd.concat([self.results_df, res])
             result.scenario.model.bilayer.to_dot(
                 values=result.scenario.model.variables()
             ).render(f"bilayer_{self.iteration}")
@@ -201,53 +278,73 @@ class TestUseCases(unittest.TestCase):
                 title="\n".join(textwrap.wrap(str(parameters), width=60)),
             )
             plt.savefig(f"bilayer_{self.iteration}.png")
+            plt.clf()
         else:
             print(f"Iteration {self.iteration}: is inconsistent")
 
         self.iteration += 1
 
     def test_use_case_bilayer_consistency(self):
-        steps = 3
+        steps = 7
         self.iteration = 0
-        config = FUNMANConfig(max_steps=steps, solver="dreal")
+        config = FUNMANConfig(max_steps=steps, solver="z3")
 
         bilayer = BilayerDynamics(json_graph=self.initial_bilayer())
-        bounds = self.paramater_bounds()
-        simA_bounds = self.simA_bounds(tolerance=0.1)
+        bounds = self.parameter_bounds()
+        simA_bounds = self.simA_bounds(tolerance=1.0)
 
-        ###########################################################
-        # Generate results using simA parameters
-        ###########################################################
-        scenario = self.make_scenario(
-            bilayer,
-            self.initial_state(),
-            simA_bounds,
-            self.identical_parameters(),
-            steps,
+        well_formed_query = self.make_well_formed_query(
+            steps, self.initial_state()
         )
+        basic_query = self.make_basic_query(steps, self.initial_state())
 
-        result_sat = Funman().solve(scenario, config=config)
-        self.report(result_sat)
+        # ###########################################################
+        # # Generate results using simA parameters
+        # ###########################################################
+        # print("Dynamics + simA params + well formed ...")
+        # scenario = self.make_scenario(
+        #     bilayer,
+        #     self.initial_state(),
+        #     simA_bounds,
+        #     self.identical_parameters(),
+        #     steps,
+        #     well_formed_query,
+        # )
+        # result_sat = Funman().solve(scenario, config=config)
+        # self.report(result_sat)
 
         ###########################################################
         # Generate results using any parameters
         ###########################################################
+        print("Dynamics + any params + well formed ...")
         scenario = self.make_scenario(
             bilayer,
             self.initial_state(),
             bounds,
             self.identical_parameters(),
             steps,
+            well_formed_query,
         )
         result_sat = Funman().solve(scenario, config=config)
         self.report(result_sat)
 
-        ###########################################################
-        # Generate results using any parameters and empty query
-        ###########################################################
-        scenario.query = QueryTrue()
-        result_sat = Funman().solve(scenario, config=config)
-        self.report(result_sat)
+        # ###########################################################
+        # # Generate results using any parameters and empty query
+        # ###########################################################
+        # print("Dynamics only ...")
+        # scenario = self.make_scenario(
+        #     bilayer,
+        #     self.initial_state(),
+        #     bounds,
+        #     self.identical_parameters(),
+        #     steps,
+        #     basic_query,
+        # )
+        # result_sat = Funman().solve(scenario, config=config)
+        # self.report(result_sat)
+
+        # print(self.results_df)
+        # self.results_df.boxplot().get_figure().savefig("stats.png")
 
 
 if __name__ == "__main__":

@@ -429,7 +429,7 @@ class DRealNative(Solver, SmtLibBasicSolver, SmtLibIgnoreMixin):
         self.config.precision = 1000
         # self.config.use_worklist_fixpoint = True
         self.model = None
-        # dreal.set_log_level(dreal.LogLevel.DEBUG)
+        dreal.set_log_level(dreal.LogLevel.DEBUG)
         # self.config.number_of_jobs = 4
 
         # self.to = self.environment.typeso

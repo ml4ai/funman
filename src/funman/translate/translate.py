@@ -111,7 +111,7 @@ class Encoder(ABC, BaseModel):
             )
 
     def _return_encoded_query(self, model_encoding, query):
-        return query
+        return Encoding(formula=query._formula)
 
     def _encode_query_le(self, model_encoding, query):
         timepoints = model_encoding.symbols[query.variable]

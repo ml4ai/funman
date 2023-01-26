@@ -63,13 +63,12 @@ class TestCompilation(unittest.TestCase):
         ]
 
         model = EncodedModel(phi)
-
+        query = QueryEncoded()
+        query._formula = chime.encode_query_time_horizon(query, num_timepoints)
         scenario = ParameterSynthesisScenario(
             parameters,
             model,
-            QueryEncoded(
-                chime.encode_query_time_horizon(query, num_timepoints)
-            ),
+            query,
             _search=BoxSearch(),
         )
         funman = Funman()
