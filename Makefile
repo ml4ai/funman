@@ -42,6 +42,11 @@ DOCKER_HUB_PLATFORMS=linux/arm64,linux/amd64
 DOCKER_HUB_ORG?=jladwigsift
 DOCKER_HUB_TAG?=hackathon-1
 
+TERARIUM_HOST_PORT?=8190
+TERARIUM_API_KEY?=
+
+TERARIUM_ENV_ARGS:= $(if $(TERARIUM_API_KEY),-e FUNMAN_API_KEY=$(TERARIUM_API_KEY),)
+
 MAKE := make --no-print-directory
 
 .PHONY: docs
@@ -356,6 +361,14 @@ docker-hub:
 		--build-arg FROM_TAG=$(DOCKER_HUB_TAG) \
 		--tag $(DOCKER_HUB_ORG)/$(DEPLOY_API_NAME):$(DOCKER_HUB_TAG) \
 		./deploy/api
+
+build-terarium:
+	docker build ./deploy/terarium
+
+run-terarium:
+	docker run -it --rm \
+		-p 0.0.0.0:$(TERARIUM_HOST_PORT):8190 $(TERARIUM_ENV_ARGS) \
+		$(DOCKER_HUB_ORG)/$(DEPLOY_API_NAME):$(DOCKER_HUB_TAG)
 
 generate-api-client:
 	pip install openapi-python-client
