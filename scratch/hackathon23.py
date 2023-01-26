@@ -1,3 +1,4 @@
+import math
 import os
 import textwrap
 import unittest
@@ -122,7 +123,7 @@ class TestUseCases(unittest.TestCase):
         return init_values
 
     def parameter_bounds(self):
-        default_bounds = [1e-7, 0.5]
+        default_bounds = [1e-3, 0.35]
         bounds = {
             "mu_s": default_bounds,
             "mu_e": default_bounds,
@@ -135,7 +136,18 @@ class TestUseCases(unittest.TestCase):
         }
         return bounds
 
-    def simA_bounds(self, tolerance=0.0):
+    def simA_bounds(
+        self,
+        tolerance=0.0,
+        relax=[
+            "mu_s",
+            "mu_e",
+            "mu_i",
+            "mu_r",
+            "beta_1",
+            # "epsilon",
+        ],
+    ):
 
         bounds = {
             "mu_s": [0.01, 0.01],
@@ -148,7 +160,11 @@ class TestUseCases(unittest.TestCase):
             "gamma": [1.0 / 14.0, 1.0 / 14.0],
         }
         bounds = {
-            k: [b[0] * (1.0 - tolerance), b[1] * (1.0 + tolerance)]
+            k: (
+                [b[0] * (1.0 - tolerance), b[1] * (1.0 + tolerance)]
+                if k in relax
+                else b
+            )
             for k, b in bounds.items()
         }
         return bounds
@@ -187,7 +203,7 @@ class TestUseCases(unittest.TestCase):
 
         return query
 
-    def make_max_difference_constraint(self, steps, init_values, diff=0.1):
+    def make_max_difference_constraint(self, steps, init_values, diff=1.0e3):
         # | v_i - v_{i+1} | < diff * v_i, for all v
         constraints = []
         for v in init_values:
@@ -221,6 +237,30 @@ class TestUseCases(unittest.TestCase):
 
         return And(constraints)
 
+    def make_peak_constraints(
+        self, steps, init_values, window_factor=0.1, tolerance=0.1
+    ):
+        # peak happens sometime in the middle
+        midpoint = math.ceil(steps / 2)
+        lb = math.floor(midpoint - (midpoint * window_factor))
+        ub = math.ceil(midpoint + (midpoint * window_factor))
+        # | v_i - v_{i+1} | < diff * v_i, for all v
+        constraints = []
+        for v in {"E", "I"}:
+            var_constraints = []
+            for i in range(lb, ub):
+                vi = Symbol(f"{v}_{i}", REAL)
+                vj = Symbol(f"{v}_{i+1}", REAL)
+                b = Real(tolerance)
+                bm = Real(-tolerance)
+
+                constraint = And(LE(Minus(vi, vj), b), LE(bm, Minus(vi, vj)))
+
+                var_constraints.append(constraint)
+            constraints.append(Or(var_constraints))
+
+        return And(constraints)
+
     def make_well_formed_query(self, steps, init_values):
 
         # Query for test case 1
@@ -236,9 +276,16 @@ class TestUseCases(unittest.TestCase):
                 # LT(
                 #     Symbol(f"S_{steps}", REAL), Real(1000.0)
                 # ),  # S is less than 0.5 on day 80
+                LT(
+                    Symbol(f"E_{steps}", REAL), Real(100.0)
+                ),  # S is less than 0.5 on day 80
+                LT(
+                    Symbol(f"D_{steps}", REAL), Real(100.0)
+                ),  # S is less than 0.5 on day 80
                 self.make_global_bounds(steps, init_values),
                 self.make_max_difference_constraint(steps, init_values),
                 self.make_monotone_constraints(steps, init_values),
+                self.make_peak_constraints(steps, init_values),
             ]
         )
         return query
@@ -272,7 +319,7 @@ class TestUseCases(unittest.TestCase):
             result.scenario.model.bilayer.to_dot(
                 values=result.scenario.model.variables()
             ).render(f"bilayer_{self.iteration}")
-            # print(result.dataframe())
+            print(result.dataframe())
             result.plot(
                 variables=["S", "E", "I", "R"],
                 title="\n".join(textwrap.wrap(str(parameters), width=60)),
@@ -285,48 +332,49 @@ class TestUseCases(unittest.TestCase):
         self.iteration += 1
 
     def test_use_case_bilayer_consistency(self):
-        steps = 7
+        steps = 8
         self.iteration = 0
-        config = FUNMANConfig(max_steps=steps, solver="z3")
+        config = FUNMANConfig(max_steps=steps, solver="dreal")
 
         bilayer = BilayerDynamics(json_graph=self.initial_bilayer())
         bounds = self.parameter_bounds()
-        simA_bounds = self.simA_bounds(tolerance=1.0)
+        simA_bounds = self.simA_bounds(tolerance=2.0)
 
         well_formed_query = self.make_well_formed_query(
             steps, self.initial_state()
         )
         basic_query = self.make_basic_query(steps, self.initial_state())
 
-        # ###########################################################
-        # # Generate results using simA parameters
-        # ###########################################################
-        # print("Dynamics + simA params + well formed ...")
-        # scenario = self.make_scenario(
-        #     bilayer,
-        #     self.initial_state(),
-        #     simA_bounds,
-        #     self.identical_parameters(),
-        #     steps,
-        #     well_formed_query,
-        # )
-        # result_sat = Funman().solve(scenario, config=config)
-        # self.report(result_sat)
-
         ###########################################################
-        # Generate results using any parameters
+        # Generate results using simA parameters
         ###########################################################
-        print("Dynamics + any params + well formed ...")
+        print("Dynamics + simA params + well formed ...")
+        print(f"Bounds: {simA_bounds}")
         scenario = self.make_scenario(
             bilayer,
             self.initial_state(),
-            bounds,
+            simA_bounds,
             self.identical_parameters(),
             steps,
             well_formed_query,
         )
         result_sat = Funman().solve(scenario, config=config)
         self.report(result_sat)
+
+        # ###########################################################
+        # # Generate results using any parameters
+        # ###########################################################
+        # print("Dynamics + any params + well formed ...")
+        # scenario = self.make_scenario(
+        #     bilayer,
+        #     self.initial_state(),
+        #     bounds,
+        #     self.identical_parameters(),
+        #     steps,
+        #     well_formed_query,
+        # )
+        # result_sat = Funman().solve(scenario, config=config)
+        # self.report(result_sat)
 
         # ###########################################################
         # # Generate results using any parameters and empty query
