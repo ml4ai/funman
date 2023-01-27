@@ -28,7 +28,9 @@ from funman.funman import FUNMANConfig
 from funman.model import QueryLE
 from funman.model.bilayer import BilayerDynamics, BilayerGraph, BilayerModel
 from funman.model.query import QueryEncoded, QueryTrue
+from funman.representation.representation import Parameter
 from funman.scenario import ConsistencyScenario, ConsistencyScenarioResult
+from funman.scenario.parameter_synthesis import ParameterSynthesisScenario
 from funman.scenario.scenario import AnalysisScenario
 
 # from funman_demo.handlers import RealtimeResultPlotter, ResultCacheWriter
@@ -310,6 +312,30 @@ class TestUseCases(unittest.TestCase):
         scenario = ConsistencyScenario(model=model, query=query)
         return scenario
 
+    def make_ps_scenario(
+        self,
+        bilayer,
+        init_values,
+        parameter_bounds,
+        identical_parameters,
+        steps,
+        query,
+    ):
+        model = BilayerModel(
+            bilayer=bilayer,
+            init_values=init_values,
+            parameter_bounds=parameter_bounds,
+            identical_parameters=identical_parameters,
+        )
+        parameters = [
+            Parameter(name="beta_1", lb=1e-7, ub=2e-1),
+            Parameter(name="mu_s", lb=0.00008, ub=0.191),
+        ]
+        scenario = ParameterSynthesisScenario(
+            parameters=parameters, model=model, query=query
+        )
+        return scenario
+
     def report(self, result: AnalysisScenario):
         if result.consistent:
             parameters = result._parameters()
@@ -445,7 +471,7 @@ class TestUseCases(unittest.TestCase):
         return query
 
     def test_scenario_1_1_a_unit_test_1(self):
-        steps = 10
+        steps = 2
         self.iteration = 0
         mu = [0.00008, 0.078, 0.19]
         config = FUNMANConfig(max_steps=steps, solver="dreal")
@@ -480,10 +506,12 @@ class TestUseCases(unittest.TestCase):
         # Generate results using any parameters
         ###########################################################
         print(f"Bounds: {self.unit_test_1_bounds(mu=mu[testcase])}")
+        bounds = self.unit_test_1_bounds(mu=mu[testcase])
+        # bounds["beta_1"] = [0.0001, 0.0001]
         scenario = self.make_scenario(
             bilayer,
             self.initial_state(),
-            self.unit_test_1_bounds(mu=mu[testcase]),
+            bounds,
             self.identical_parameters(),
             steps,
             self.unit_test_1_well_behaved_query(steps, self.initial_state()),
@@ -494,23 +522,14 @@ class TestUseCases(unittest.TestCase):
         ###########################################################
         # Basic constraints are not satisfied, so relax them
         ###########################################################
+        bounds = self.unit_test_1_bounds(
+            mu=mu[testcase],
+        )
+        bounds["beta_1"] = [1e-6, 2e-1]
         scenario = self.make_scenario(
             bilayer,
             self.initial_state(),
-            self.unit_test_1_bounds(
-                mu=mu[testcase],
-                tolerance=3.0,
-                relax=[
-                    # "mu_s",
-                    # "mu_e",
-                    # "mu_i",
-                    # "mu_r",
-                    # "beta_1",
-                    # "epsilon",
-                    "alpha",
-                    "gamma",
-                ],
-            ),
+            bounds,
             self.identical_parameters(),
             steps,
             self.unit_test_1_well_behaved_query(steps, self.initial_state()),
@@ -642,6 +661,27 @@ class TestUseCases(unittest.TestCase):
 
         print(self.results_df)
         # self.results_df.boxplot().get_figure().savefig("stats.png")
+
+        ###########################################################
+        # Synthesize beta_1
+        ###########################################################
+        bounds = self.unit_test_1_bounds()
+        bounds["beta_1"] = [1e-7, 2e-1]
+        bounds["mu_s"] = [0.00008, 0.19]
+        bounds["mu_i"] = [0.00008, 0.19]
+        bounds["mu_e"] = [0.00008, 0.19]
+        bounds["mu_r"] = [0.00008, 0.19]
+        scenario = self.make_ps_scenario(
+            bilayer,
+            self.initial_state(),
+            bounds,
+            self.identical_parameters(),
+            steps,
+            self.unit_test_1_well_behaved_query(steps, self.initial_state()),
+        )
+        config.tolerance = 1e-3
+        result_sat = Funman().solve(scenario, config=config)
+        self.report(result_sat)
 
 
 if __name__ == "__main__":

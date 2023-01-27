@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Union
 from pandas import DataFrame
 from pydantic import BaseModel
 from pysmt.formula import FNode
-from pysmt.shortcuts import Iff, Symbol
+from pysmt.shortcuts import BOOL, Iff, Symbol
 
 from funman.model import QueryTrue
 from funman.model.bilayer import BilayerModel

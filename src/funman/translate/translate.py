@@ -152,7 +152,7 @@ class Encoder(ABC, BaseModel):
         return a_series
 
     def interval_to_smt(
-        self, p: Parameter, i: Interval, closed_upper_bound: bool = False
+        self, p: str, i: Interval, closed_upper_bound: bool = False
     ) -> FNode:
         """
         Convert the interval into contraints on parameter p.

@@ -188,7 +188,7 @@ class BoxSearchEpisode(SearchEpisode):
     def _extract_point(self, model):
         point = Point(
             values={
-                p.name: float(model[p.symbol()].constant_value())
+                p.name: float(model.get_py_value(p.symbol()))
                 for p in self.problem.parameters
             }
         )

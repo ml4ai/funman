@@ -33,6 +33,11 @@ class DRealConverter(Converter, DagWalker):
         # self._check_term_result(res)
         return res
 
+    def walk_iff(self, formula, args, **kwargs):
+        res = dreal.Iff(args[0], args[1])
+        # self._check_term_result(res)
+        return res
+
     def walk_or(self, formula, args, **kwargs):
         res = functools.reduce(lambda a, b: dreal.Or(a, b), args)
         # self._check_term_result(res)
@@ -51,7 +56,10 @@ class DRealConverter(Converter, DagWalker):
     def walk_symbol(self, formula, **kwargs):
         symbol_type = formula.symbol_type()
         # var_type = self._type_to_dreal(symbol_type)
-        term = dreal.Variable(formula.symbol_name(), dreal.Variable.Real)
+        if symbol_type.is_real_type():
+            term = dreal.Variable(formula.symbol_name(), dreal.Variable.Real)
+        elif symbol_type.is_bool_type():
+            term = dreal.Variable(formula.symbol_name(), dreal.Variable.Bool)
         self.symbol_to_decl[formula] = term
         self.decl_to_symbol[term] = formula
         # yicespy.yices_set_term_name(term, formula.symbol_name())
