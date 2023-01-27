@@ -84,6 +84,8 @@ async def solve_consistency(
         return AnalysisScenarioResultException(
             exception=f"Failed to solve scenario due to internal exception: {e}"
         )
+    if result.consistent:
+        result.assign_response_fields()
     return result
 
 
