@@ -5,6 +5,7 @@ import unittest
 
 import matplotlib.pyplot as plt
 import pandas as pd
+from funman_demo.handlers import RealtimeResultPlotter, ResultCacheWriter
 from pysmt.shortcuts import (
     GE,
     GT,
@@ -32,6 +33,7 @@ from funman.representation.representation import Parameter
 from funman.scenario import ConsistencyScenario, ConsistencyScenarioResult
 from funman.scenario.parameter_synthesis import ParameterSynthesisScenario
 from funman.scenario.scenario import AnalysisScenario
+from funman.utils.handlers import ResultCombinedHandler
 
 # from funman_demo.handlers import RealtimeResultPlotter, ResultCacheWriter
 
@@ -328,7 +330,7 @@ class TestUseCases(unittest.TestCase):
             identical_parameters=identical_parameters,
         )
         parameters = [
-            Parameter(name="beta_1", lb=1e-7, ub=2e-1),
+            Parameter(name="beta_1", lb=1e-7, ub=1e-1),
             Parameter(name="mu_s", lb=0.00008, ub=0.191),
         ]
         scenario = ParameterSynthesisScenario(
@@ -659,14 +661,14 @@ class TestUseCases(unittest.TestCase):
         result_sat = Funman().solve(scenario, config=config)
         self.report(result_sat)
 
-        print(self.results_df)
+        # print(self.results_df)
         # self.results_df.boxplot().get_figure().savefig("stats.png")
 
         ###########################################################
         # Synthesize beta_1
         ###########################################################
         bounds = self.unit_test_1_bounds()
-        bounds["beta_1"] = [1e-7, 2e-1]
+        bounds["beta_1"] = [1e-7, 5e-2]
         bounds["mu_s"] = [0.00008, 0.19]
         bounds["mu_i"] = [0.00008, 0.19]
         bounds["mu_e"] = [0.00008, 0.19]
@@ -679,7 +681,19 @@ class TestUseCases(unittest.TestCase):
             steps,
             self.unit_test_1_well_behaved_query(steps, self.initial_state()),
         )
-        config.tolerance = 1e-3
+        config.tolerance = 1e-2
+        config.number_of_processes = 1
+        config._handler = ResultCombinedHandler(
+            [
+                ResultCacheWriter(f"box_search.json"),
+                RealtimeResultPlotter(
+                    scenario.parameters,
+                    plot_points=True,
+                    title=f"Feasible Regions (beta)",
+                    realtime_save_path=f"box_search.png",
+                ),
+            ]
+        )
         result_sat = Funman().solve(scenario, config=config)
         self.report(result_sat)
 

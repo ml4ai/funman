@@ -10,6 +10,7 @@ from datetime import datetime
 from multiprocessing import Queue, Value
 from multiprocessing.synchronize import Condition, Event, Lock
 from queue import Empty
+from queue import PriorityQueue as PriorityQueueSP
 from queue import Queue as QueueSP
 from typing import List, Optional, Set, Union
 
@@ -19,6 +20,7 @@ from pysmt.shortcuts import And, Not, Solver, get_model
 from funman.representation.representation import Interval
 from funman.search import Box, ParameterSpace, Point, Search, SearchEpisode
 from funman.search.search import SearchStaticsMP, SearchStatistics
+from funman.utils.smtlib_utils import smtlibscript_from_formula_list
 
 LOG_LEVEL = logging.INFO
 
@@ -49,12 +51,12 @@ class BoxSearchEpisode(SearchEpisode):
     _false_boxes: List[Box] = []
     _true_points: Set[Point] = set({})
     _false_points: Set[Point] = set({})
-    _unknown_boxes: QueueSP
+    _unknown_boxes: PriorityQueueSP
     _iteration: int = 0
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self._unknown_boxes = QueueSP()
+        self._unknown_boxes = PriorityQueueSP()
         self.statistics = SearchStatistics()
 
     # def __init__(
@@ -188,7 +190,7 @@ class BoxSearchEpisode(SearchEpisode):
     def _extract_point(self, model):
         point = Point(
             values={
-                p.name: float(model.get_py_value(p.symbol()))
+                p.name: float(model.assignment[p.symbol()].constant_value())
                 for p in self.problem.parameters
             }
         )
@@ -318,6 +320,22 @@ class BoxSearch(Search):
                 )
             )
         )
+        self.store_smtlib(episode)
+
+    def store_smtlib(self, episode):
+        with open("dbg.smt2", "w") as f:
+            smtlibscript_from_formula_list(
+                [
+                    Not(
+                        And(
+                            episode.problem._assume_model,
+                            episode.problem._assume_query,
+                        )
+                    ),
+                    episode.problem._model_encoding.formula,
+                    episode.problem._query_encoding.formula,
+                ]
+            ).serialize(f)
 
     def _setup_true_query(self, solver, episode):
         """
@@ -334,6 +352,7 @@ class BoxSearch(Search):
         solver.add_assertion(
             And(episode.problem._assume_model, episode.problem._assume_query)
         )
+        self.store_smtlib(episode)
 
     def _get_false_points(self, solver, episode, box, rval):
         false_points = [
@@ -368,7 +387,8 @@ class BoxSearch(Search):
                 for point in true_points:
                     episode._add_true_point(point)
                     rval.put(Point.encode_true_point(point))
-                solver.pop(1)  # Remove true query
+            solver.pop(1)  # Remove true query
+
         return true_points
 
     def _expand(
@@ -457,7 +477,7 @@ class BoxSearch(Search):
                                 if self._split(
                                     box,
                                     episode,
-                                    points=true_points + false_points,
+                                    points=[true_points, false_points],
                                 ):
                                     l.info(f"{process_name} produced work")
                                 if episode.config.number_of_processes > 1:

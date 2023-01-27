@@ -274,7 +274,7 @@ class Interval(BaseModel):
 
         return None
 
-    def midpoint(self, points: List["Point"] = None):
+    def midpoint(self, points: List[List["Point"]] = None):
         """
         Compute the midpoint of the interval.
 
@@ -289,8 +289,11 @@ class Interval(BaseModel):
             midpoint
         """
 
-        # if points:
-        #     return float(average(points))
+        if points:
+            # Find mean of groups and mid point bisects the means
+            means = [float(average(grp)) for grp in points]
+            mid = float(average(means))
+            return mid
 
         if self.lb == NEG_INFINITY and self.ub == POS_INFINITY:
             return 0
@@ -579,7 +582,7 @@ class Box(BaseModel):
 
     def __lt__(self, other):
         if isinstance(other, Box):
-            return self.width() > other.width()
+            return self.width() < other.width()
         else:
             raise Exception(f"Cannot compare __lt__() Box to {type(other)}")
 
@@ -595,7 +598,7 @@ class Box(BaseModel):
         return str(self.to_dict())
 
     def __str__(self):
-        return f"Box({self.bounds})"
+        return f"Box({self.bounds}), width = {self.width()}"
 
     def finite(self) -> bool:
         """
@@ -710,7 +713,7 @@ class Box(BaseModel):
             ]
         )
 
-    def _get_max_width_point_Parameter(self, points: List[Point]):
+    def _get_max_width_point_Parameter(self, points: List[List[Point]]):
         """
         Get the parameter that has the maximum average distance from the center point for each parameter and the value for the parameter assigned by each point.
 
@@ -725,15 +728,23 @@ class Box(BaseModel):
             parameter (dimension of box) where points are most distant from the center of the box.
         """
         #
-        centers = {
-            p: average([pt.values[p] for pt in points]) for p in self.bounds
+        group_centers = {
+            p: [average([pt.values[p] for pt in grp]) for grp in points]
+            for p in self.bounds
         }
+        centers = {p: average(grp) for p, grp in group_centers.items()}
         point_distances = [
             {p: abs(pt.values[p] - centers[p]) for p in pt.values}
-            for pt in points
+            for grp in points
+            for pt in grp
         ]
         parameter_widths = {
             p: average([pt[p] for pt in point_distances]) for p in self.bounds
+        }
+        normalized_parameter_widths = {
+            p: average([pt[p] for pt in point_distances])
+            / (self.bounds[p].width())
+            for p in self.bounds
         }
         max_width_parameter = max(
             parameter_widths, key=lambda k: parameter_widths[k]
@@ -761,7 +772,7 @@ class Box(BaseModel):
 
         return self.cached_width
 
-    def split(self, points: List[Point] = None):
+    def split(self, points: List[List[Point]] = None):
         """
         Split box along max width dimension. If points are provided, then pick the axis where the points are maximally distant.
 
@@ -776,10 +787,10 @@ class Box(BaseModel):
             Boxes resulting from the split.
         """
 
-        if points:
+        if False and points:
             p = self._get_max_width_point_Parameter(points)
             mid = self.bounds[p].midpoint(
-                # points=[pt.values[p] for pt in points]
+                points=[[pt.values[p] for pt in grp] for grp in points]
             )
             if mid == self.bounds[p].lb or mid == self.bounds[p].ub:
                 # Fall back to box midpoint if point-based mid is degenerate

@@ -85,12 +85,14 @@ COPY --chmod=755 tools/funman-notebook.sh /home/$UNAME/.local/bin/funman-noteboo
 COPY --chmod=755 tools/funman-api-server.sh /home/$UNAME/.local/bin/funman-api-server
 USER root
 COPY --chmod=744 tools/update-dreal.root /usr/local/bin/update-dreal
+RUN echo "$UNAME ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 RUN echo "$UNAME ALL=(ALL) NOPASSWD:/usr/local/bin/update-dreal" >> /etc/sudoers
 RUN echo "%$UNAME ALL=(ALL) NOPASSWD:/usr/local/bin/update-dreal" >> /etc/sudoers
 
 # for debugging
 RUN apt update && apt install -y --no-install-recommends \
     vim \
+    gdb \
     && rm -rf /var/lib/apt/lists/*
 USER $UNAME
 
