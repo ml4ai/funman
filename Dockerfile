@@ -86,7 +86,7 @@ COPY --chmod=755 tools/funman-api-server.sh /home/$UNAME/.local/bin/funman-api-s
 USER root
 COPY --chmod=744 tools/update-dreal.root /usr/local/bin/update-dreal
 RUN echo "$UNAME ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
-RUN echo "$UNAME ALL=(ALL) NOPASSWD:/usr/local/bin/update-dreal" >> /etc/sudoers
+RUN echo "$UNAME ALL=(ALL) NOPASSWD:/usr/local/bin/update-dreal" >> /etc/sudoerst
 RUN echo "%$UNAME ALL=(ALL) NOPASSWD:/usr/local/bin/update-dreal" >> /etc/sudoers
 
 # for debugging

@@ -46,56 +46,68 @@ class TestUseCases(unittest.TestCase):
 
     def initial_bilayer(self):
         bilayer_src1 = {
-            "Qin":[{"variable":"S"},
-                    {"variable":"V"},
-                    {"variable":"I"},
-                    {"variable":"I_v"},
-                    {"variable":"R"}],
-             "Box":[{"parameter":"beta_1"},
-                    {"parameter":"beta_2"},
-                    {"parameter":"v_r"},
-                    {"parameter":"v_s1"},
-                    {"parameter":"v_s2"},
-                    {"parameter":"gamma_1"},
-                    {"parameter":"gamma_2"}],
-             "Qout":[{"tanvar":"S'"},
-                     {"tanvar":"V'"},
-                     {"tanvar":"I'"},
-                     {"tanvar":"I_v'"},
-                     {"tanvar":"R'"}],
-             "Win":[{"arg":1,"call":1},
-                    {"arg":1,"call":2},
-                    {"arg":1,"call":3},
-                    {"arg":2,"call":4},
-                    {"arg":2,"call":5},
-                    {"arg":3,"call":1},
-                    {"arg":3,"call":4},
-                    {"arg":3,"call":6},
-                    {"arg":4,"call":2},
-                    {"arg":4,"call":5},
-                    {"arg":4,"call":7}],
-             "Wa":[{"influx":1,"infusion":3},
-                   {"influx":2,"infusion":3},
-                   {"influx":3,"infusion":2},
-                   {"influx":4,"infusion":4},
-                   {"influx":5,"infusion":4},
-                   {"influx":6,"infusion":5},
-                   {"influx":7,"infusion":5}],
-             "Wn":[{"efflux":1,"effusion":1},
-                   {"efflux":2,"effusion":1},
-                   {"efflux":3,"effusion":1},
-                   {"efflux":4,"effusion":2},
-                   {"efflux":5,"effusion":2},
-                   {"efflux":6,"effusion":3},
-                   {"efflux":7,"effusion":4}]
+            "Qin": [
+                {"variable": "S"},
+                {"variable": "V"},
+                {"variable": "I"},
+                {"variable": "I_v"},
+                {"variable": "R"},
+            ],
+            "Box": [
+                {"parameter": "beta_1"},
+                {"parameter": "beta_2"},
+                {"parameter": "v_r"},
+                {"parameter": "v_s1"},
+                {"parameter": "v_s2"},
+                {"parameter": "gamma_1"},
+                {"parameter": "gamma_2"},
+            ],
+            "Qout": [
+                {"tanvar": "S'"},
+                {"tanvar": "V'"},
+                {"tanvar": "I'"},
+                {"tanvar": "I_v'"},
+                {"tanvar": "R'"},
+            ],
+            "Win": [
+                {"arg": 1, "call": 1},
+                {"arg": 1, "call": 2},
+                {"arg": 1, "call": 3},
+                {"arg": 2, "call": 4},
+                {"arg": 2, "call": 5},
+                {"arg": 3, "call": 1},
+                {"arg": 3, "call": 4},
+                {"arg": 3, "call": 6},
+                {"arg": 4, "call": 2},
+                {"arg": 4, "call": 5},
+                {"arg": 4, "call": 7},
+            ],
+            "Wa": [
+                {"influx": 1, "infusion": 3},
+                {"influx": 2, "infusion": 3},
+                {"influx": 3, "infusion": 2},
+                {"influx": 4, "infusion": 4},
+                {"influx": 5, "infusion": 4},
+                {"influx": 6, "infusion": 5},
+                {"influx": 7, "infusion": 5},
+            ],
+            "Wn": [
+                {"efflux": 1, "effusion": 1},
+                {"efflux": 2, "effusion": 1},
+                {"efflux": 3, "effusion": 1},
+                {"efflux": 4, "effusion": 2},
+                {"efflux": 5, "effusion": 2},
+                {"efflux": 6, "effusion": 3},
+                {"efflux": 7, "effusion": 4},
+            ],
         }
         return bilayer_src1
 
-    def initial_state(self): 
+    def initial_state(self):
         N0 = 10e7
         V0, I0, I_v0, R0 = 7e7, 1e7, 2e6, 0
         S0 = N0 - V0 - I0 - I_v0 - R0
-        init_values = {"S": S0, "V": V0, "I":I0, "I_v": I_v0, "R":R0}
+        init_values = {"S": S0, "V": V0, "I": I0, "I_v": I_v0, "R": R0}
         return init_values
 
     def parameter_bounds(self):
@@ -111,18 +123,17 @@ class TestUseCases(unittest.TestCase):
         }
         return bounds
 
-    def simA_bounds( 
+    def simA_bounds(
         self,
         tolerance=0.0,
         relax=[
-            "beta_1", 
-            "beta_2", 
-            "gamma_1", 
-            "gamma_2", 
-            "v_r", 
-            "v_s1", 
-            "v_s2", 
-
+            "beta_1",
+            "beta_2",
+            "gamma_1",
+            "gamma_2",
+            "v_r",
+            "v_s1",
+            "v_s2",
         ],
     ):
 
@@ -146,7 +157,11 @@ class TestUseCases(unittest.TestCase):
         return bounds
 
     def identical_parameters(self):
-        identical_parameters = [["beta_1", "beta_2"],["gamma_1", "gamma_2"], ["v_s1","v_s2"]]
+        identical_parameters = [
+            ["beta_1", "beta_2"],
+            ["gamma_1", "gamma_2"],
+            ["v_s1", "v_s2"],
+        ]
         return identical_parameters
 
     def make_global_bounds(self, steps, init_values):
@@ -297,7 +312,7 @@ class TestUseCases(unittest.TestCase):
             ).render(f"bilayer_{self.iteration}")
             print(result.dataframe())
             result.plot(
-                variables=["S", "V", "I","I_v", "R"],
+                variables=["S", "V", "I", "I_v", "R"],
                 title="\n".join(textwrap.wrap(str(parameters), width=75)),
             )
             plt.savefig(f"bilayer_{self.iteration}.png")
@@ -307,7 +322,7 @@ class TestUseCases(unittest.TestCase):
 
         self.iteration += 1
 
-    def unit_test_1_bounds( 
+    def unit_test_1_bounds(
         self,
         tolerance=0.0,
         N=10.0e7,
@@ -330,7 +345,7 @@ class TestUseCases(unittest.TestCase):
             "v_s1": [1.0 / 14.0, 1.0 / 14.0],
             "v_s2": [1.0 / 14.0, 1.0 / 14.0],
             "v_r": [0.75, 0.75],
-        } 
+        }
         bounds = {
             k: (
                 [
@@ -348,7 +363,7 @@ class TestUseCases(unittest.TestCase):
         N0 = 10e7
         V0, I0, I_v0, R0 = 7e7, 1e7, 2e6, 0
         S0 = N0 - V0 - I0 - I_v0 - R0
-        init_values = {"S": S0, "V": V0, "I":I0, "I_v": I_v0, "R":R0}
+        init_values = {"S": S0, "V": V0, "I": I0, "I_v": I_v0, "R": R0}
         return init_values
 
     def unit_test_1_query(self, steps, init_values):
@@ -359,12 +374,8 @@ class TestUseCases(unittest.TestCase):
             [
                 LT(Symbol(f"S_{steps}", REAL), Real(init_values["S"])),
                 GE(Symbol(f"R_{steps}", REAL), Real(init_values["R"])),
-                LT( 
-                    Symbol(f"I_{steps}", REAL), Real(20000.0)
-                ),  
-                LT(
-                    Symbol(f"I_v_{steps}", REAL), Real(10000.0)
-                ),  
+                # LT(Symbol(f"I_{steps}", REAL), Real(20000.0)),
+                # LT(Symbol(f"I_v_{steps}", REAL), Real(10000.0)),
                 # LT(
                 #     Symbol(f"S_{steps}", REAL), Real(1000.0)
                 # ),  # S is less than 0.5 on day 80
@@ -398,7 +409,7 @@ class TestUseCases(unittest.TestCase):
         return query
 
     def test_scenario_1_1_a_unit_test_1(self):
-        steps = 10
+        steps = 3
         self.iteration = 0
         config = FUNMANConfig(max_steps=steps, solver="dreal")
 
@@ -414,14 +425,14 @@ class TestUseCases(unittest.TestCase):
         ###########################################################
         testcase = 0
         # print("Dynamics + simA params + well formed ...")
-        print(f"Bounds: {self.unit_test_1_bounds()}")
+        # print(f"Bounds: {self.unit_test_1_bounds()}")
         scenario = self.make_scenario(
             bilayer,
             self.initial_state(),
-            self.unit_test_1_bounds(mu=mu[testcase]),
+            self.unit_test_1_bounds(),
             self.identical_parameters(),
             steps,
-            self.unit_test_1_query(steps, self.initial_state()),
+            QueryTrue(),
         )
         result_sat = Funman().solve(scenario, config=config)
         self.report(result_sat)
@@ -431,11 +442,11 @@ class TestUseCases(unittest.TestCase):
         # need to check that population is consistent (doesn't exceed N)
         # Generate results using any parameters
         ###########################################################
-        print(f"Bounds: {self.unit_test_1_bounds(mu=mu[testcase])}")
+        # print(f"Bounds: {self.unit_test_1_bounds()}")
         scenario = self.make_scenario(
             bilayer,
             self.initial_state(),
-            self.unit_test_1_bounds(mu=mu[testcase]),
+            self.unit_test_1_bounds(),
             self.identical_parameters(),
             steps,
             self.unit_test_1_well_behaved_query(steps, self.initial_state()),
@@ -446,20 +457,25 @@ class TestUseCases(unittest.TestCase):
         ###########################################################
         # Basic constraints are not satisfied, so relax them
         ###########################################################
+        bounds = self.unit_test_1_bounds()
+        bounds["beta_1"] = [1e-9, 1e-8]
+        bounds["beta_2"] = [1e-9, 1e-8]
+        bounds["v_r"] = [1e-5, 1e-4]
+        bounds["v_s1"] = [1e-8, 1e-7]
+        bounds["v_s2"] = [1e-8, 1e-7]
+        bounds["gamma_1"] = [1e-2, 1e-1]
+        bounds["gamma_2"] = [1e-2, 1e-1]
         scenario = self.make_scenario(
             bilayer,
             self.initial_state(),
-            self.unit_test_1_bounds(
-                tolerance=3.0,
-                relax=[
-                    "v_r",
-                ],
-            ),
+            bounds,
             self.identical_parameters(),
             steps,
-            self.unit_test_1_well_behaved_query(steps, self.initial_state()),
+            self.unit_test_1_query(steps, self.initial_state()),
+            # QueryTrue(),
         )
         result_sat = Funman().solve(scenario, config=config)
+        print(result_sat._parameters())
         self.report(result_sat)
 
         print(self.results_df)
