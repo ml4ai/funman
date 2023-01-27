@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Union
 from pandas import DataFrame
 from pydantic import BaseModel
 from pysmt.formula import FNode
-from pysmt.shortcuts import Iff, Symbol
+from pysmt.shortcuts import BOOL, Iff, Symbol
 
 from funman.model import QueryTrue
 from funman.model.bilayer import BilayerModel
@@ -19,8 +19,6 @@ from funman.scenario import (
     AnalysisScenarioResult,
     ConsistencyScenario,
 )
-from funman.search.box_search import BoxSearch
-from funman.search.smt_check import SMTCheck
 from funman.translate.translate import Encoder, Encoding
 
 
@@ -66,18 +64,20 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
         """
 
         if config._search is None:
+            from funman.search.box_search import BoxSearch
+
             search = BoxSearch()
         else:
             search = config._search()
 
-        self._encode()
+        self._encode(config)
 
-        result: ParameterSpace = search.search(self, config=config)
+        result: ParameterSpace = search.search(self, config)
         return ParameterSynthesisScenarioResult(
             parameter_space=result, scenario=self
         )
 
-    def _encode(self):
+    def _encode(self, config: "FUNMANConfig"):
         """
         The encoding uses assumption symbols for the model and query so that it is possible to push/pop the (possibly negated) symbols to reason about cases where the model or query must be true or false.
 
@@ -87,7 +87,7 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
             _description_
         """
         if self._smt_encoder is None:
-            self._smt_encoder = self.model.default_encoder()
+            self._smt_encoder = self.model.default_encoder(config)
         self._assume_model = Symbol("assume_model")
         self._assume_query = Symbol("assume_query")
         self._model_encoding = self._smt_encoder.encode_model(self.model)
@@ -175,7 +175,7 @@ class ParameterSynthesisScenarioResult(AnalysisScenarioResult, BaseModel):
                 _smt_encoder=self.scenario._smt_encoder,
             )
             result = scenario.solve(
-                config=FUNMANConfig(solver="dreal", _search=SMTCheck)
+                config=FUNMANConfig(solver="dreal", _search="SMTCheck")
             )
             assert result
             # plot the results

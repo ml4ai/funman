@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Dict, List
+from typing import Dict, List, Literal, Optional, Union
 
 import graphviz
 from pydantic import BaseModel, validator
@@ -30,6 +30,18 @@ from pysmt.typing import BOOL, INT, REAL
 from funman.model import Model
 
 
+class BilayerMetadata(BaseModel):
+    """
+    Metadata for a BilayerNode
+    """
+
+    ref: Optional[str] = None
+    type: Optional[Literal["float", "int"]] = None
+    initial_value: Optional[Union[float, int]] = None
+    lb: Optional[Union[float, int]] = None
+    ub: Optional[Union[float, int]] = None
+
+
 class BilayerNode(BaseModel):
     """
     Node in a BilayerGraph.
@@ -37,9 +49,13 @@ class BilayerNode(BaseModel):
 
     index: int
     parameter: str
+    metadata: Optional[BilayerMetadata] = None
 
-    def to_dot(self, dot):
-        return dot.node(self.parameter)
+    def to_dot(self, dot, values={}):
+        label = values[self.parameter] if self.parameter in values else ""
+        return dot.node(
+            self.parameter, _attributes={"label": f"{self.parameter}: {label}"}
+        )
 
     def __hash__(self):
         return self.index
@@ -154,7 +170,9 @@ class BilayerGraph(ABC, BaseModel):
     def _get_json_node(self, node_dict, node_type, node_list, node_name):
         for indx, i in enumerate(node_list):
             node_dict[indx + 1] = node_type(
-                index=indx + 1, parameter=i[node_name]
+                index=indx + 1,
+                parameter=i[node_name],
+                metadata=i.get("metadata"),
             )
 
     def _get_json_edge(
@@ -295,7 +313,7 @@ class BilayerDynamics(BilayerGraph):
             self._tangent,
         )
 
-    def to_dot(self):
+    def to_dot(self, values={}):
         """
         Create a dot object for visualizing the graph.
 
@@ -316,7 +334,7 @@ class BilayerDynamics(BilayerGraph):
             + list(self._flux.values())
             + list(self._state.values())
         ):
-            n.to_dot(dot)
+            n.to_dot(dot, values=values)
         for e in self._input_edges + self._output_edges:
             e.to_dot(dot)
         return dot
@@ -402,7 +420,7 @@ class BilayerMeasurement(BilayerGraph, BaseModel):
 
         # return blm
 
-    def to_dot(self):
+    def to_dot(self, values={}):
         """
         Create a dot object for visualizing the graph.
 
@@ -423,7 +441,7 @@ class BilayerMeasurement(BilayerGraph, BaseModel):
             + list(self.flux.values())
             + list(self.observable.values())
         ):
-            n.to_dot(dot)
+            n.to_dot(dot, values=values)
         for e in self.input_edges + self.output_edges:
             e.to_dot(dot)
         return dot
@@ -449,7 +467,7 @@ class BilayerModel(Model):
     measurements: BilayerMeasurement = None
     identical_parameters: List[List[str]] = []
 
-    def default_encoder(self) -> "Encoder":
+    def default_encoder(self, config: "FUNMANConfig") -> "Encoder":
         """
         Return the default Encoder for the model
 
@@ -458,6 +476,6 @@ class BilayerModel(Model):
         Encoder
             SMT encoder for model
         """
-        from funman.translate import BilayerEncoder, BilayerEncodingOptions
+        from funman.translate import BilayerEncoder
 
-        return BilayerEncoder(config=BilayerEncodingOptions())
+        return BilayerEncoder(config=config)

@@ -38,8 +38,9 @@ class QueryEncoded(Query):
 
     class Config:
         arbitrary_types_allowed = True
+        underscore_attrs_are_private = True
 
-    formula: FNode
+    _formula: FNode
 
 
 class QueryLE(Query):

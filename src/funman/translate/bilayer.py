@@ -3,7 +3,7 @@ This module encodes bilayer models into a SMTLib formula.
 
 """
 import logging
-from typing import Dict, List, Union
+from typing import Dict, List, Set, Union
 
 import pysmt
 from pysmt.shortcuts import (
@@ -34,20 +34,20 @@ from funman.translate import Encoder, Encoding, EncodingOptions
 l = logging.Logger(__name__)
 
 
-class BilayerEncodingOptions(EncodingOptions):
-    """
-    The BilayerEncodingOptions are:
+# class BilayerEncodingOptions(EncodingOptions):
+#     """
+#     The BilayerEncodingOptions are:
 
-    * step_size: the number of time units separating encoding steps
+#     * step_size: the number of time units separating encoding steps
 
-    * max_steps: the number of encoding steps
+#     * max_steps: the number of encoding steps
 
-    """
+#     """
 
-    def __init__(self, step_size=1, max_steps=2) -> None:
-        super().__init__(max_steps)
-        self.step_size = step_size
-        self.max_steps = max_steps
+#     def __init__(self, step_size=1, max_steps=2) -> None:
+#         super().__init__(max_steps)
+#         self.step_size = step_size
+#         self.max_steps = max_steps
 
 
 class BilayerEncoder(Encoder):
@@ -57,7 +57,13 @@ class BilayerEncoder(Encoder):
     as defined by a Bilayer model.
     """
 
-    def encode_model(self, model: Model):
+    class Config:
+        underscore_attrs_are_private = True
+
+    _timed_symbols: Set[str] = set([])
+    _untimed_symbols: Set[str] = set([])
+
+    def encode_model(self, model: Model, time_dependent_parameters=False):
         """
         Encode the model as an SMTLib formula.
 
@@ -94,17 +100,29 @@ class BilayerEncoder(Encoder):
                 0, self.config.max_steps, self.config.step_size
             )
 
+            # All state nodes correspond to timed symbols
+            for idx, node in model.bilayer._state.items():
+                self._timed_symbols.add(node.parameter)
+
+            # All flux nodes correspond to untimed symbols
+            for _, node in model.bilayer._flux.items():
+                self._untimed_symbols.add(node.parameter)
+
             init = And(
                 [
                     Equals(
-                        self._encode_bilayer_state_node(node, 0),
+                        self._encode_bilayer_state_node(node, timepoint=0),
                         Real(model.init_values[node.parameter]),
                     )
                     for idx, node in model.bilayer._state.items()
                 ]
             )
 
-            encoding = self._encode_bilayer(model.bilayer, state_timepoints)
+            encoding = self._encode_bilayer(
+                model.bilayer,
+                state_timepoints,
+                time_dependent_parameters=time_dependent_parameters,
+            )
 
             if model.parameter_bounds:
                 parameters = [
@@ -128,18 +146,25 @@ class BilayerEncoder(Encoder):
                         if node.parameter in model.parameter_bounds
                         and model.parameter_bounds[node.parameter]
                     ]
-
-                timed_parameters = [
-                    p.timed_copy(timepoint)
-                    for p in parameters
-                    for timepoint in transition_timepoints
-                ]
-                parameter_box = Box(
-                    bounds={
-                        p.name: Interval(lb=p.lb, ub=p.ub)
-                        for p in timed_parameters
-                    }
-                )
+                if time_dependent_parameters:
+                    timed_parameters = [
+                        p.timed_copy(timepoint)
+                        for p in parameters
+                        for timepoint in transition_timepoints
+                    ]
+                    parameter_box = Box(
+                        bounds={
+                            p.name: Interval(lb=p.lb, ub=p.ub)
+                            for p in timed_parameters
+                        }
+                    )
+                else:
+                    parameter_box = Box(
+                        bounds={
+                            p.name: Interval(lb=p.lb, ub=p.ub)
+                            for p in parameters
+                        }
+                    )
                 parameter_constraints = self.box_to_smt(
                     parameter_box, closed_upper_bound=True
                 )
@@ -153,27 +178,47 @@ class BilayerEncoder(Encoder):
             else:
                 measurements = TRUE()
 
-            ## Assume that all parameters are constant
-            parameter_constraints = And(
-                parameter_constraints,
-                self._set_parameters_constant(
-                    [v.parameter for v in model.bilayer._flux.values()],
-                    encoding,
-                ),
-            )
-            if model.measurements:
+            if time_dependent_parameters:
+                ## Assume that all parameters are constant
                 parameter_constraints = And(
                     parameter_constraints,
                     self._set_parameters_constant(
-                        [
-                            v.parameter
-                            for v in model.measurements._flux.values()
-                        ],
-                        measurements,
+                        [v.parameter for v in model.bilayer._flux.values()],
+                        encoding,
                     ),
                 )
+                if model.measurements:
+                    parameter_constraints = And(
+                        parameter_constraints,
+                        self._set_parameters_constant(
+                            [
+                                v.parameter
+                                for v in model.measurements._flux.values()
+                            ],
+                            measurements,
+                        ),
+                    )
+            else:
+                pass
 
-            formula = And(init, parameter_constraints, encoding, measurements)
+            # Encode that all of the identical parameters are equal
+            identical_parameters = And(
+                [
+                    Equals(Symbol(var1, REAL), Symbol(var2, REAL))
+                    for group in model.identical_parameters
+                    for var1 in group
+                    for var2 in group
+                    if var1 != var2
+                ]
+            ).simplify()
+
+            formula = And(
+                init,
+                parameter_constraints,
+                encoding,
+                measurements,
+                identical_parameters,
+            )
             symbols = self._symbols(formula)
             return Encoding(formula=formula, symbols=symbols)
         else:
@@ -206,12 +251,17 @@ class BilayerEncoder(Encoder):
         )
         return observable_defs
 
-    def _encode_bilayer(self, bilayer, timepoints):
+    def _encode_bilayer(
+        self, bilayer, timepoints, time_dependent_parameters=False
+    ):
         ans = simplify(
             And(
                 [
                     self._encode_bilayer_timepoint(
-                        bilayer, timepoints[i], timepoints[i + 1]
+                        bilayer,
+                        timepoints[i],
+                        timepoints[i + 1],
+                        time_dependent_parameters=time_dependent_parameters,
                     )
                     for i in range(len(timepoints) - 1)
                 ]
@@ -219,7 +269,13 @@ class BilayerEncoder(Encoder):
         )
         return ans
 
-    def _encode_bilayer_timepoint(self, bilayer, timepoint, next_timepoint):
+    def _encode_bilayer_timepoint(
+        self,
+        bilayer,
+        timepoint,
+        next_timepoint,
+        time_dependent_parameters=False,
+    ):
         ## Calculate time step size
         time_step_size = next_timepoint - timepoint
         eqns = (
@@ -232,14 +288,15 @@ class BilayerEncoder(Encoder):
             ## Get _tangent variable and translate it to SMT form tanvar_smt
             tanvar = bilayer._tangent[t].parameter
             tanvar_smt = self._encode_bilayer_state_node(
-                bilayer._tangent[t], timepoint
+                bilayer._tangent[t],
+                timepoint=timepoint,
             )
             state_var_next_step = bilayer._state[t].parameter
             state_var_smt = self._encode_bilayer_state_node(
-                bilayer._state[t], timepoint
+                bilayer._state[t], timepoint=timepoint
             )
             state_var_next_step_smt = self._encode_bilayer_state_node(
-                bilayer._state[t], next_timepoint
+                bilayer._state[t], timepoint=next_timepoint
             )
 
             relevant_output_edges = [
@@ -250,11 +307,16 @@ class BilayerEncoder(Encoder):
             for flux_sign_index in relevant_output_edges:
                 flux_term = bilayer._flux[flux_sign_index[1]]
                 output_edge = bilayer._output_edges[flux_sign_index[1]]
-                expr = self._encode_bilayer_flux_node(flux_term, timepoint)
+                expr = self._encode_bilayer_flux_node(
+                    flux_term,
+                    timepoint=(
+                        timepoint if time_dependent_parameters else None
+                    ),
+                )
                 ## Check which state vars go to that param
                 relevant_input_edges = [
                     self._encode_bilayer_state_node(
-                        bilayer._state[val2.src.index], timepoint
+                        bilayer._state[val2.src.index], timepoint=timepoint
                     )
                     for val2 in bilayer._input_edges
                     if val2.tgt.index == flux_sign_index[1]
@@ -283,24 +345,27 @@ class BilayerEncoder(Encoder):
             eqns.append(eqn)
         return And(eqns)
 
-    def _encode_bilayer_node(self, node, timepoint):
+    def _encode_bilayer_node(self, node, timepoint=None):
         if not isinstance(node, BilayerNode):
             raise Exception("Node is not a BilayerNode")
         param = node.parameter
-        ans = Symbol(f"{param}_{timepoint}", REAL)
+        if timepoint is not None:
+            ans = Symbol(f"{param}_{timepoint}", REAL)
+        else:
+            ans = Symbol(f"{param}", REAL)
         return ans
 
-    def _encode_bilayer_state_node(self, node, timepoint):
+    def _encode_bilayer_state_node(self, node, timepoint=None):
         if not isinstance(node, BilayerStateNode):
             raise Exception("Node is not a BilayerStateNode")
-        return self._encode_bilayer_node(node, timepoint)
+        return self._encode_bilayer_node(node, timepoint=timepoint)
 
-    def _encode_bilayer_flux_node(self, node, timepoint):
+    def _encode_bilayer_flux_node(self, node, timepoint=None):
         if not isinstance(node, BilayerFluxNode):
             raise Exception("Node is not a BilayerFluxNode")
-        return self._encode_bilayer_node(node, timepoint)
+        return self._encode_bilayer_node(node, timepoint=timepoint)
 
-    def _encode_bilayer_edge(self, edge, timepoint):
+    def _encode_bilayer_edge(self, edge, timepoint=None):
         if not isinstance(edge, BilayerEdge):
             raise Exception("Edge is not a BilayerEdge")
         return edge.get_label()
@@ -335,10 +400,15 @@ class BilayerEncoder(Encoder):
         return all_equal
 
     def _split_symbol(self, symbol):
-        if "_" in symbol.symbol_name():
-            return symbol.symbol_name().rsplit("_", 1)
-        else:
+        if symbol.symbol_name() in self._untimed_symbols:
             return symbol.symbol_name(), None
+        else:
+            s, t = symbol.symbol_name().rsplit("_", 1)
+            if s not in self._timed_symbols or not t.isdigit():
+                raise Exception(
+                    f"Cannot determine if symbol {symbol} is timed."
+                )
+            return s, t
 
     def symbol_values(
         self, model_encoding: Encoding, pysmtModel: pysmt.solvers.solver.Model
@@ -391,7 +461,7 @@ class BilayerEncoder(Encoder):
         """
         try:
             parameters = {
-                node.parameter: pysmtModel[Symbol(node.parameter, REAL)]
+                node.parameter: pysmtModel[node.parameter]
                 for _, node in model.bilayer._flux.items()
             }
             return parameters

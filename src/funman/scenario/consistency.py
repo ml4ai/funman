@@ -10,9 +10,8 @@ from pysmt.solvers.solver import Model as pysmt_Model
 
 from funman.model.bilayer import BilayerModel, validator
 from funman.model.encoded import EncodedModel
-from funman.model.query import QueryFunction, QueryLE
+from funman.model.query import QueryEncoded, QueryFunction, QueryLE, QueryTrue
 from funman.scenario import AnalysisScenario, AnalysisScenarioResult
-from funman.search.smt_check import SMTCheck
 from funman.translate import Encoder
 from funman.translate.translate import Encoding
 
@@ -33,14 +32,16 @@ class ConsistencyScenario(AnalysisScenario, BaseModel):
 
     class Config:
         underscore_attrs_are_private = True
+        smart_union = True
+        extra = "forbid"
 
     model: Union[BilayerModel, EncodedModel]
-    query: Union[QueryLE, QueryFunction]
+    query: Union[QueryLE, QueryEncoded, QueryFunction, QueryTrue]
     _smt_encoder: Encoder = None
     _model_encoding: Encoding = None
     _query_encoding: Encoding = None
 
-    def solve(self, config: "SearchConfig") -> "AnalysisScenarioResult":
+    def solve(self, config: "FUNMANConfig") -> "AnalysisScenarioResult":
         """
         Check model consistency.
 
@@ -56,11 +57,13 @@ class ConsistencyScenario(AnalysisScenario, BaseModel):
         """
 
         if config._search is None:
+            from funman.search.smt_check import SMTCheck
+
             search = SMTCheck()
         else:
             search = config._search()
 
-        self._encode()
+        self._encode(config)
 
         result = search.search(self, config=config)
 
@@ -74,9 +77,9 @@ class ConsistencyScenario(AnalysisScenario, BaseModel):
         )
         return scenario_result
 
-    def _encode(self):
+    def _encode(self, config: "FUNMANConfig"):
         if self._smt_encoder is None:
-            self._smt_encoder = self.model.default_encoder()
+            self._smt_encoder = self.model.default_encoder(config)
         self._model_encoding = self._smt_encoder.encode_model(self.model)
         self._query_encoding = self._smt_encoder.encode_query(
             self._model_encoding, self.query
@@ -141,7 +144,7 @@ class ConsistencyScenarioResult(AnalysisScenarioResult, BaseModel):
                 f"Cannot create dataframe for an inconsistent scenario."
             )
 
-    def plot(self, **kwargs):
+    def plot(self, variables=None, **kwargs):
         """
         Plot the results in a matplotlib plot.
 
@@ -150,8 +153,11 @@ class ConsistencyScenarioResult(AnalysisScenarioResult, BaseModel):
         Exception
             failure if scenario is not consistent.
         """
-        if self._consistent:
-            self.dataframe().plot(marker="o", **kwargs)
+        if self.consistent:
+            if variables is not None:
+                self.dataframe()[variables].plot(marker="o", **kwargs)
+            else:
+                self.dataframe().plot(marker="o", **kwargs)
             plt.show(block=False)
         else:
             raise Exception(

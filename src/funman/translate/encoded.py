@@ -14,7 +14,7 @@ class EncodedEncoder(Encoder):
     encoders.
     """
 
-    def __init__(self, config: EncodingOptions = EncodingOptions()) -> None:
+    def __init__(self, config: "FUNMANConfig") -> None:
         super().__init__(config=config)
 
     def encode_model(self, model: Model):

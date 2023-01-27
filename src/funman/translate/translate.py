@@ -11,6 +11,7 @@ from pysmt.formula import FNode
 from pysmt.shortcuts import GE, LE, LT, REAL, TRUE, And, Real, Symbol
 
 from funman.constants import NEG_INFINITY, POS_INFINITY
+from funman.funman import FUNMANConfig
 from funman.model.query import Query, QueryEncoded, QueryLE, QueryTrue
 from funman.representation import Parameter
 from funman.representation.representation import Box, Interval, Point
@@ -48,7 +49,7 @@ class Encoder(ABC, BaseModel):
 
     """
 
-    config: EncodingOptions = EncodingOptions()
+    config: FUNMANConfig
 
     class Config:
         arbitrary_types_allowed = True
@@ -110,7 +111,7 @@ class Encoder(ABC, BaseModel):
             )
 
     def _return_encoded_query(self, model_encoding, query):
-        return query
+        return Encoding(formula=query._formula)
 
     def _encode_query_le(self, model_encoding, query):
         timepoints = model_encoding.symbols[query.variable]
@@ -135,19 +136,23 @@ class Encoder(ABC, BaseModel):
         series = self.symbol_values(model_encoding, pysmtModel)
         a_series = {}  # timeseries as array/list
         max_t = max(
-            [max([int(k) for k in tps.keys()]) for _, tps in series.items()]
+            [
+                max([int(k) for k in tps.keys() if k.isdigit()] + [0])
+                for _, tps in series.items()
+            ]
         )
         a_series["index"] = list(range(0, max_t + 1))
         for var, tps in series.items():
 
             vals = [None] * (int(max_t) + 1)
             for t, v in tps.items():
-                vals[int(t)] = v
+                if t.isdigit():
+                    vals[int(t)] = v
             a_series[var] = vals
         return a_series
 
     def interval_to_smt(
-        self, p: Parameter, i: Interval, closed_upper_bound: bool = False
+        self, p: str, i: Interval, closed_upper_bound: bool = False
     ) -> FNode:
         """
         Convert the interval into contraints on parameter p.
