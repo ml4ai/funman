@@ -224,25 +224,6 @@ class TestUseCases(unittest.TestCase):
         )
         return query
 
-    def make_scenario(
-        self,
-        bilayer,
-        init_values,
-        parameter_bounds,
-        identical_parameters,
-        steps,
-        query,
-    ):
-        model = BilayerModel(
-            bilayer=bilayer,
-            init_values=init_values,
-            parameter_bounds=parameter_bounds,
-            identical_parameters=identical_parameters,
-        )
-
-        scenario = ConsistencyScenario(model=model, query=query)
-        return scenario
-
     def make_ps_scenario(
         self,
         bilayer,
@@ -287,7 +268,7 @@ class TestUseCases(unittest.TestCase):
             ).render(f"bilayer_{self.iteration}")
             print(result.dataframe())
             result.plot(
-                variables=["S", "E", "I", "R"],
+                variables=["S", "I", "R"],
                 title="\n".join(textwrap.wrap(str(parameters), width=75)),
             )
             plt.savefig(f"bilayer_{self.iteration}.png")
@@ -416,240 +397,81 @@ class TestUseCases(unittest.TestCase):
             bilayer = json.load(f)
         return bilayer
 
-    def test_scenario_1(self):
-        steps = 3
+    def make_scenario(
+        self,
+        bilayer,
+        init_values,
+        parameter_bounds,
+        identical_parameters,
+        steps,
+        query,
+    ):
+        model = BilayerModel(
+            bilayer=bilayer,
+            init_values=init_values,
+            parameter_bounds=parameter_bounds,
+            identical_parameters=identical_parameters,
+        )
+
+        scenario = ConsistencyScenario(model=model, query=query)
+        return scenario
+
+    def sir_bilayer(self):
+        with open(
+            os.path.join(
+                RESOURCES, "bilayer", "CHIME_SIR_dynamics_BiLayer.json"
+            ),
+            "r",
+        ) as f:
+            bilayer = json.load(f)
+
+        return bilayer
+
+    def initial_state_sir(self):
+        population = 6000
+        infected = 3
+        return {"S": population - infected, "I": infected, "R": 0}
+
+    def bounds_sir(self):
+        R0 = 5.0
+        gamma = 1.0 / 14.0
+        beta = R0 * gamma
+        return {"beta": [beta, beta], "gamma": [gamma, gamma]}
+
+    def sir_query(self):
+        return QueryTrue()
+
+    def sir_identical(self):
+        return []
+
+    def test_scenario_1_a(self):
+
         self.iteration = 0
-        config = FUNMANConfig(max_steps=steps, solver="dreal")
-        s_bilayer = BilayerDynamics(json_graph=self.sidarthe_bilayer())
-        s_bilayer.to_dot().render("sidarthe_bilayer")
+
+        case_sir = {
+            "model_fn": self.sir_bilayer,  # TODO Change to SIR-stratified
+            "initial": self.initial_state_sir,
+            "bounds": self.bounds_sir,
+            "identical": self.sir_identical,
+            "steps": 10,
+            "query": self.sir_query,
+            "report": self.report,
+        }
+        case_sir_stratified = {}  # TODO
+        case = case_sir
+
+        scenario = self.make_scenario(
+            BilayerDynamics(json_graph=case["model_fn"]()),
+            case["initial"](),
+            case["bounds"](),
+            case["identical"](),
+            case["steps"],
+            case["query"](),
+        )
+        config = FUNMANConfig(max_steps=case["steps"], solver="dreal")
+        result_sat = Funman().solve(scenario, config=config)
+        case["report"](result_sat)
         pass
-
-    @unittest.skip("fodder")
-    def test_scenario_1_1_a_unit_test_1(self):
-        steps = 3
-        self.iteration = 0
-        mu = [0.00008, 0.078, 0.19]
-        config = FUNMANConfig(max_steps=steps, solver="dreal")
-
-        bilayer = BilayerDynamics(json_graph=self.initial_bilayer())
-        bounds = self.unit_test_1_bounds()
-
-        # well_formed_query = self.make_well_formed_query(
-        #     steps, self.initial_state()
-        # )
-
-        ###########################################################
-        # Unit Test 1, using Paper Parameters
-        ###########################################################
-        testcase = 0
-        # print("Dynamics + simA params + well formed ...")
-        print(f"Bounds: {self.unit_test_1_bounds()}")
-        scenario = self.make_scenario(
-            bilayer,
-            self.initial_state(),
-            self.unit_test_1_bounds(mu=mu[testcase]),
-            self.identical_parameters(),
-            steps,
-            self.unit_test_1_query(steps, self.initial_state()),
-        )
-        result_sat = Funman().solve(scenario, config=config)
-        self.report(result_sat)
-
-        ###########################################################
-        # The basic constraints are satisfied, but output diverges,
-        # need to check that population is consistent (doesn't exceed N)
-        # Generate results using any parameters
-        ###########################################################
-        print(f"Bounds: {self.unit_test_1_bounds(mu=mu[testcase])}")
-        bounds = self.unit_test_1_bounds(mu=mu[testcase])
-        # bounds["beta_1"] = [0.0001, 0.0001]
-        scenario = self.make_scenario(
-            bilayer,
-            self.initial_state(),
-            bounds,
-            self.identical_parameters(),
-            steps,
-            self.unit_test_1_well_behaved_query(steps, self.initial_state()),
-        )
-        result_sat = Funman().solve(scenario, config=config)
-        self.report(result_sat)
-
-        ###########################################################
-        # Basic constraints are not satisfied, so relax them
-        ###########################################################
-        bounds = self.unit_test_1_bounds(
-            mu=mu[testcase],
-        )
-        bounds["beta_1"] = [1e-6, 2e-1]
-        scenario = self.make_scenario(
-            bilayer,
-            self.initial_state(),
-            bounds,
-            self.identical_parameters(),
-            steps,
-            self.unit_test_1_well_behaved_query(steps, self.initial_state()),
-        )
-        result_sat = Funman().solve(scenario, config=config)
-        self.report(result_sat)
-
-        ###########################################################
-        # Unit Test 2, using Paper Parameters
-        ###########################################################
-        testcase = 1
-        # print("Dynamics + simA params + well formed ...")
-        print(f"Bounds: {bounds}")
-        scenario = self.make_scenario(
-            bilayer,
-            self.initial_state(),
-            self.unit_test_1_bounds(mu=mu[testcase]),
-            self.identical_parameters(),
-            steps,
-            self.unit_test_1_query(steps, self.initial_state()),
-        )
-        result_sat = Funman().solve(scenario, config=config)
-        self.report(result_sat)
-
-        ###########################################################
-        # The basic constraints are satisfied, but output diverges,
-        # need to check that population is consistent (doesn't exceed N)
-        # Generate results using any parameters
-        ###########################################################
-        print(f"Bounds: {bounds}")
-        scenario = self.make_scenario(
-            bilayer,
-            self.initial_state(),
-            self.unit_test_1_bounds(mu=mu[testcase]),
-            self.identical_parameters(),
-            steps,
-            self.unit_test_1_well_behaved_query(steps, self.initial_state()),
-        )
-        result_sat = Funman().solve(scenario, config=config)
-        self.report(result_sat)
-
-        ###########################################################
-        # Basic constraints are not satisfied, so relax them
-        ###########################################################
-        scenario = self.make_scenario(
-            bilayer,
-            self.initial_state(),
-            self.unit_test_1_bounds(
-                mu=mu[testcase],
-                tolerance=3.0,
-                relax=[
-                    # "mu_s",
-                    # "mu_e",
-                    # "mu_i",
-                    # "mu_r",
-                    # "beta_1",
-                    # "epsilon",
-                    "alpha",
-                    "gamma",
-                ],
-            ),
-            self.identical_parameters(),
-            steps,
-            self.unit_test_1_well_behaved_query(steps, self.initial_state()),
-        )
-        result_sat = Funman().solve(scenario, config=config)
-        self.report(result_sat)
-
-        ###########################################################
-        # Unit Test 3, using Paper Parameters
-        ###########################################################
-        testcase = 2
-        # print("Dynamics + simA params + well formed ...")
-        print(f"Bounds: {bounds}")
-        scenario = self.make_scenario(
-            bilayer,
-            self.initial_state(),
-            self.unit_test_1_bounds(mu=mu[testcase]),
-            self.identical_parameters(),
-            steps,
-            self.unit_test_1_query(steps, self.initial_state()),
-        )
-        result_sat = Funman().solve(scenario, config=config)
-        self.report(result_sat)
-
-        ###########################################################
-        # The basic constraints are satisfied, but output diverges,
-        # need to check that population is consistent (doesn't exceed N)
-        # Generate results using any parameters
-        ###########################################################
-        print(f"Bounds: {bounds}")
-        scenario = self.make_scenario(
-            bilayer,
-            self.initial_state(),
-            self.unit_test_1_bounds(mu=mu[testcase]),
-            self.identical_parameters(),
-            steps,
-            self.unit_test_1_well_behaved_query(steps, self.initial_state()),
-        )
-        result_sat = Funman().solve(scenario, config=config)
-        self.report(result_sat)
-
-        ###########################################################
-        # Basic constraints are not satisfied, so relax them
-        ###########################################################
-        scenario = self.make_scenario(
-            bilayer,
-            self.initial_state(),
-            self.unit_test_1_bounds(
-                mu=mu[testcase],
-                tolerance=3.0,
-                relax=[
-                    # "mu_s",
-                    # "mu_e",
-                    # "mu_i",
-                    # "mu_r",
-                    # "beta_1",
-                    # "epsilon",
-                    "alpha",
-                    "gamma",
-                ],
-            ),
-            self.identical_parameters(),
-            steps,
-            self.unit_test_1_well_behaved_query(steps, self.initial_state()),
-        )
-        result_sat = Funman().solve(scenario, config=config)
-        self.report(result_sat)
-
-        # print(self.results_df)
-        # self.results_df.boxplot().get_figure().savefig("stats.png")
-
-        ###########################################################
-        # Synthesize beta_1
-        ###########################################################
-        bounds = self.unit_test_1_bounds()
-        bounds["beta_1"] = [1e-8, 3e-3]
-        bounds["mu_s"] = [0.00008, 0.19]
-        bounds["mu_i"] = [0.00008, 0.19]
-        bounds["mu_e"] = [0.00008, 0.19]
-        bounds["mu_r"] = [0.00008, 0.19]
-        scenario = self.make_ps_scenario(
-            bilayer,
-            self.initial_state(),
-            bounds,
-            self.identical_parameters(),
-            steps,
-            self.unit_test_1_well_behaved_query(steps, self.initial_state()),
-        )
-        config.tolerance = 1e-3
-        config.number_of_processes = 1
-        config._handler = ResultCombinedHandler(
-            [
-                ResultCacheWriter(f"box_search.json"),
-                RealtimeResultPlotter(
-                    scenario.parameters,
-                    plot_points=True,
-                    title=f"Feasible Regions (beta)",
-                    realtime_save_path=f"box_search.png",
-                    dpi=600,
-                ),
-            ]
-        )
-        result_sat = Funman().solve(scenario, config=config)
-        # self.report(result_sat)
 
 
 if __name__ == "__main__":
