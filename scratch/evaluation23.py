@@ -559,7 +559,7 @@ class TestUseCases(unittest.TestCase):
             "steps": 2,
             "query": self.sir_strat_query,
             "report": self.report,
-            "noise": 0.12,
+            "noise": 1.0,
             "params_to_synth": ["inf_o_o", "rec_o_o"],
         }
 
