@@ -459,23 +459,23 @@ class TestUseCases(unittest.TestCase):
 
     def bounds_sir_strat(self, population=2000):
         R0 = 5.0
-        gamma = (1.0 / 14.0) / population
+        gamma = 1.0 / 14.0
         groups = ["o", "y", "m"]
         inf_matrix = [
             [
-                (R0 * gamma),
-                (R0 * gamma),
-                (R0 * gamma),
+                (R0 * gamma) / population,
+                (R0 * gamma) / population,
+                (R0 * gamma) / population,
             ],
             [
-                (R0 * gamma),
-                (R0 * gamma),
-                (R0 * gamma),
+                (R0 * gamma) / population,
+                (R0 * gamma) / population,
+                (R0 * gamma) / population,
             ],
             [
-                (R0 * gamma),
-                (R0 * gamma),
-                (R0 * gamma),
+                (R0 * gamma) / population,
+                (R0 * gamma) / population,
+                (R0 * gamma) / population,
             ],
         ]
         params = {
@@ -509,7 +509,7 @@ class TestUseCases(unittest.TestCase):
             "initial": self.initial_state_sir,
             "bounds": self.bounds_sir,
             "identical": self.sir_identical,
-            "steps": 2,
+            "steps": 10,
             "query": self.sir_query,
             "report": self.report,
         }
@@ -518,7 +518,7 @@ class TestUseCases(unittest.TestCase):
             "initial": self.initial_state_sir_strat,
             "bounds": self.bounds_sir_strat,
             "identical": self.sir_identical,
-            "steps": 2,
+            "steps": 1,
             "query": self.sir_strat_query,
             "report": self.report,
         }
@@ -543,7 +543,7 @@ class TestUseCases(unittest.TestCase):
             case["steps"],
             case["query"](),
         )
-        config = FUNMANConfig(max_steps=case["steps"], solver="dreal")
+        config = FUNMANConfig(max_steps=case["steps"], solver="z3")
         result_sat = Funman().solve(scenario, config=config)
         case["report"](result_sat)
 
