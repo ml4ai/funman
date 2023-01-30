@@ -429,9 +429,7 @@ class TestUseCases(unittest.TestCase):
 
     def sir_strata_bilayer(self):
         with open(
-            os.path.join(
-                RESOURCES, "bilayer", "CHIME_SIR_dynamics_BiLayer.json"
-            ),
+            os.path.join(RESOURCES, "bilayer", "CHIME_SIR_three_age.json"),
             "r",
         ) as f:
             bilayer = json.load(f)
@@ -442,6 +440,21 @@ class TestUseCases(unittest.TestCase):
         infected = 3
         return {"S": population - infected, "I": infected, "R": 0}
 
+    def initial_state_sir_strat(self):
+        population = 2000
+        infected = 1
+        return {
+            "So": population - infected,
+            "Io": infected,
+            "Ro": 0,
+            "Sm": population - infected,
+            "Im": infected,
+            "Rm": 0,
+            "Sy": population - infected,
+            "Iy": infected,
+            "Ry": 0,
+        }
+
     def bounds_sir(self):
         R0 = 5.0
         gamma = 1.0 / 14.0
@@ -451,20 +464,29 @@ class TestUseCases(unittest.TestCase):
     def bounds_sir_strat(self):
         R0 = 5.0
         gamma = 1.0 / 14.0
-        beta_matrix = [
+        groups = ["o", "y", "m"]
+        inf_matrix = [
             [R0 * gamma, R0 * gamma, R0 * gamma],
             [R0 * gamma, R0 * gamma, R0 * gamma],
             [R0 * gamma, R0 * gamma, R0 * gamma],
         ]
         params = {
-            f"beta_{i}_{j}": beta[i][j]
-            for i in range(len(beta_matrix))
-            for j in range(len(beta_matrix))
+            f"inf_{groups[i]}_{groups[j]}": [
+                inf_matrix[i][j],
+                inf_matrix[i][j],
+            ]
+            for i in range(len(inf_matrix))
+            for j in range(len(inf_matrix[i]))
         }
-        params["gamma"] = [gamma, gamma]
+        params[f"rec_o"] = [gamma, gamma]
+        params[f"rec_y"] = [gamma, gamma]
+        params[f"rec_m"] = [gamma, gamma]
         return params
 
     def sir_query(self):
+        return QueryTrue()
+
+    def sir_strat_query(self):
         return QueryTrue()
 
     def sir_identical(self):
@@ -475,7 +497,7 @@ class TestUseCases(unittest.TestCase):
         self.iteration = 0
 
         case_sir = {
-            "model_fn": self.sir_bilayer,  # TODO Change to SIR-stratified
+            "model_fn": self.sir_bilayer,
             "initial": self.initial_state_sir,
             "bounds": self.bounds_sir,
             "identical": self.sir_identical,
@@ -483,8 +505,16 @@ class TestUseCases(unittest.TestCase):
             "query": self.sir_query,
             "report": self.report,
         }
-        case_sir_stratified = {"bounds": self.bounds_sir_strat}  # TODO
-        case = case_sir
+        case_sir_stratified = {
+            "model_fn": self.sir_strata_bilayer,
+            "initial": self.initial_state_sir_strat,
+            "bounds": self.bounds_sir_strat,
+            "identical": self.sir_identical,
+            "steps": 1,
+            "query": self.sir_strat_query,
+            "report": self.report,
+        }
+        case = case_sir_stratified
 
         scenario = self.make_scenario(
             BilayerDynamics(json_graph=case["model_fn"]()),
