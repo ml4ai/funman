@@ -65,9 +65,11 @@ class RealtimeResultPlotter(ResultHandler):
         shape_map: Dict[str, str] = {"true": "x", "false": "o"},
         plot_points=False,
         realtime_save_path=None,
+        dpi=300,
     ) -> None:
         self.plot_points = plot_points
         self.realtime_save_path = realtime_save_path
+        self.dpi = dpi
         self.plotter = BoxPlotter(
             parameters=parameters,
             plot_bounds=plot_bounds,
@@ -101,7 +103,7 @@ class RealtimeResultPlotter(ResultHandler):
             print(f"Skipping invalid object type: {typ}")
 
         if self.realtime_save_path is not None:
-            plt.savefig(self.realtime_save_path)
+            plt.savefig(self.realtime_save_path, dpi=self.dpi)
 
     def close(self) -> None:
         pass

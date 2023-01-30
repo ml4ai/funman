@@ -1,9 +1,15 @@
 """
 The handlers module includes several search handlers that deal with search episode data, such as plotting and writing results to a file.
 """
+import logging
 import traceback
 from abc import ABC, abstractmethod
 from typing import List
+
+LOG_LEVEL = logging.INFO
+
+l = logging.getLogger(__file__)
+l.setLevel(LOG_LEVEL)
 
 
 class WaitAction(ABC):

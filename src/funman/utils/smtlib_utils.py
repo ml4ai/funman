@@ -110,7 +110,7 @@ def smtlibscript_from_formula_list(formulas, logic=None):
         ]
     )
 
-    print(types)
+    # print(types)
     for type_ in types:
         script.add(name=smtcmd.DECLARE_SORT, args=[type_.decl])
 

@@ -10,15 +10,18 @@ from datetime import datetime
 from multiprocessing import Queue, Value
 from multiprocessing.synchronize import Condition, Event, Lock
 from queue import Empty
+from queue import PriorityQueue as PriorityQueueSP
 from queue import Queue as QueueSP
 from typing import List, Optional, Set, Union
 
+from pysmt.formula import FNode
 from pysmt.logics import QF_NRA
 from pysmt.shortcuts import And, Not, Solver, get_model
 
 from funman.representation.representation import Interval
 from funman.search import Box, ParameterSpace, Point, Search, SearchEpisode
 from funman.search.search import SearchStaticsMP, SearchStatistics
+from funman.utils.smtlib_utils import smtlibscript_from_formula_list
 
 LOG_LEVEL = logging.INFO
 
@@ -49,12 +52,13 @@ class BoxSearchEpisode(SearchEpisode):
     _false_boxes: List[Box] = []
     _true_points: Set[Point] = set({})
     _false_points: Set[Point] = set({})
-    _unknown_boxes: QueueSP
+    _unknown_boxes: PriorityQueueSP
     _iteration: int = 0
+    _formula_stack: List[FNode] = []
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self._unknown_boxes = QueueSP()
+        self._unknown_boxes = PriorityQueueSP()
         self.statistics = SearchStatistics()
 
     # def __init__(
@@ -188,6 +192,7 @@ class BoxSearchEpisode(SearchEpisode):
     def _extract_point(self, model):
         point = Point(
             values={
+                # p.name: float(model.assignment[p.symbol()].constant_value())
                 p.name: float(model.get_py_value(p.symbol()))
                 for p in self.problem.parameters
             }
@@ -291,12 +296,18 @@ class BoxSearch(Search):
             data for the current search
         """
         solver.push(1)
-        solver.add_assertion(episode.problem._model_encoding.formula)
-        solver.add_assertion(episode.problem._query_encoding.formula)
+        formula = And(
+            episode.problem._model_encoding.formula,
+            episode.problem._query_encoding.formula,
+        )
+        episode._formula_stack.append(formula)
+        solver.add_assertion(formula)
 
     def _initialize_box(self, solver, box, episode):
         solver.push(1)
-        solver.add_assertion(episode.problem._smt_encoder.box_to_smt(box))
+        formula = episode.problem._smt_encoder.box_to_smt(box)
+        episode._formula_stack.append(formula)
+        solver.add_assertion(formula)
 
     def _setup_false_query(self, solver, episode):
         """
@@ -310,14 +321,29 @@ class BoxSearch(Search):
             data for the current search
         """
         solver.push(1)
-        solver.add_assertion(
-            Not(
-                And(
-                    episode.problem._assume_model,
-                    episode.problem._assume_query,
-                )
-            )
+        formula = And(
+            episode.problem._assume_model,
+            Not(episode.problem._assume_query),
         )
+        episode._formula_stack.append(formula)
+        solver.add_assertion(formula)
+
+    def store_smtlib(self, episode, box):
+        with open("dbg.smt2", "w") as f:
+            smtlibscript_from_formula_list(
+                [
+                    episode.problem._model_encoding.formula,
+                    episode.problem._query_encoding.formula,
+                    episode.problem._smt_encoder.box_to_smt(box),
+                    Not(
+                        And(
+                            episode.problem._assume_model,
+                            episode.problem._assume_query,
+                        )
+                    ),
+                ],
+                logic=QF_NRA,
+            ).serialize(f, daggify=False)
 
     def _setup_true_query(self, solver, episode):
         """
@@ -331,9 +357,11 @@ class BoxSearch(Search):
             data for the current search
         """
         solver.push(1)
-        solver.add_assertion(
-            And(episode.problem._assume_model, episode.problem._assume_query)
+        formula = And(
+            episode.problem._assume_model, episode.problem._assume_query
         )
+        episode._formula_stack.append(formula)
+        solver.add_assertion(formula)
 
     def _get_false_points(self, solver, episode, box, rval):
         false_points = [
@@ -343,6 +371,7 @@ class BoxSearch(Search):
             # If no cached point, then attempt to generate one
             # print("Checking false query")
             self._setup_false_query(solver, episode)
+            # self.store_smtlib(episode, box)
             if solver.solve():
                 # Record the false point
                 res = solver.get_model()
@@ -351,6 +380,8 @@ class BoxSearch(Search):
                     episode._add_false_point(point)
                     rval.put(Point.encode_false_point(point))
             solver.pop(1)  # Remove false query
+            episode._formula_stack.pop()
+
         return false_points
 
     def _get_true_points(self, solver, episode, box, rval):
@@ -361,6 +392,7 @@ class BoxSearch(Search):
             # If no cached point, then attempt to generate one
             # print("Checking true query")
             self._setup_true_query(solver, episode)
+            # self.store_smtlib(episode, box)
             if solver.solve():
                 # Record the true point
                 res1 = solver.get_model()
@@ -368,7 +400,9 @@ class BoxSearch(Search):
                 for point in true_points:
                     episode._add_true_point(point)
                     rval.put(Point.encode_true_point(point))
-                solver.pop(1)  # Remove true query
+            solver.pop(1)  # Remove true query
+            episode._formula_stack.pop()
+
         return true_points
 
     def _expand(
@@ -457,7 +491,7 @@ class BoxSearch(Search):
                                 if self._split(
                                     box,
                                     episode,
-                                    points=true_points + false_points,
+                                    points=[true_points, false_points],
                                 ):
                                     l.info(f"{process_name} produced work")
                                 if episode.config.number_of_processes > 1:
@@ -481,6 +515,7 @@ class BoxSearch(Search):
                             rval.put(Box._encode_false_box(box))
                             print(f"--- False({box})")
                         solver.pop(1)  # Remove box from solver
+                        episode._formula_stack.pop()
                         episode._on_iteration()
                         if handler:
                             all_results = handler(
@@ -488,6 +523,7 @@ class BoxSearch(Search):
                             )
                         l.info(f"{process_name} finished work")
                 solver.pop(1)  # Remove the dynamics from the solver
+                episode._formula_stack.pop()
         except KeyboardInterrupt:
             l.info(f"{process_name} Keyboard Interrupt")
         except Exception:

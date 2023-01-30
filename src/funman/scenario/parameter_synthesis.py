@@ -11,7 +11,7 @@ from pysmt.shortcuts import BOOL, Iff, Symbol
 from funman.model import QueryTrue
 from funman.model.bilayer import BilayerModel
 from funman.model.encoded import EncodedModel
-from funman.model.query import QueryFunction, QueryLE
+from funman.model.query import QueryEncoded, QueryFunction, QueryLE
 from funman.representation import Parameter
 from funman.representation.representation import ParameterSpace, Point
 from funman.scenario import (
@@ -33,10 +33,12 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
 
     class Config:
         underscore_attrs_are_private = True
+        smart_union = True
+        extra = "forbid"
 
     parameters: List[Parameter]
     model: Union[BilayerModel, EncodedModel]
-    query: Union[QueryLE, QueryFunction, QueryTrue] = None
+    query: Union[QueryLE, QueryEncoded, QueryFunction, QueryTrue] = None
     _search: str = "BoxSearch"
     _smt_encoder: Encoder = None  # TODO set to model.default_encoder()
     _model_encoding: Encoding = None

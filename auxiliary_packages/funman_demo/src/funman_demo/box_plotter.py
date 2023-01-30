@@ -147,11 +147,11 @@ class BoxPlotter(object):
         # plt.show(block=False)
 
     def plot_add_patch(self, box: Box, color="r"):
-        lb_y = box.bounds[self.py].lb if self.py else -0.05
-        width_y = box.bounds[self.py].width() if self.py else 1e-1
+        lb_y = box.bounds[self.py.name].lb if self.py else -0.05
+        width_y = box.bounds[self.py.name].width() if self.py else 1e-1
         rect = patches.Rectangle(
-            (box.bounds[self.px].lb, lb_y),
-            box.bounds[self.px].width(),
+            (box.bounds[self.px.name].lb, lb_y),
+            box.bounds[self.px.name].width(),
             width_y,
             linewidth=1,
             edgecolor=color,
@@ -166,9 +166,9 @@ class BoxPlotter(object):
         # plt.show(block=False)
 
     def plot_add_point(self, point: Point, color="r", shape="x", alpha=0.2):
-        yval = point.values[self.py] if self.py else 0.0
+        yval = point.values[self.py.name] if self.py else 0.0
         plt.scatter(
-            point.values[self.px],
+            point.values[self.px.name],
             yval,
             color=color,
             marker=shape,
@@ -217,8 +217,8 @@ class BoxPlotter(object):
         plt.plot(x_values, np.zeros(len(x_values)), color, linestyle="-")
 
     def plot2DBox(self, i, p1: Parameter, p2: Parameter, color="g", alpha=0.2):
-        x_limits = i.bounds[p1]
-        y_limits = i.bounds[p2]
+        x_limits = i.bounds[p1.name]
+        y_limits = i.bounds[p2.name]
         if abs(float(x_limits.lb)) < 100 and abs(float(x_limits.ub)) < 100:
             x = np.linspace(float(x_limits.lb), float(x_limits.ub), 1000)
             plt.fill_between(
