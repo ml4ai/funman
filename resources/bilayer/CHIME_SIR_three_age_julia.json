@@ -1,0 +1,356 @@
+{
+  "Qin": [
+    {
+      "variable": "Sy"
+    },
+    {
+      "variable": "Sm"
+    },
+    {
+      "variable": "So"
+    },
+    {
+      "variable": "Iy"
+    },
+    {
+      "variable": "Im"
+    },
+    {
+      "variable": "Io"
+    },
+    {
+      "variable": "Ry"
+    },
+    {
+      "variable": "Rm"
+    },
+    {
+      "variable": "Ro"
+    }
+  ],
+  "Qout": [
+    {
+      "tanvar": "Sy'"
+    },
+    {
+      "tanvar": "Sm'"
+    },
+    {
+      "tanvar": "So'"
+    },
+    {
+      "tanvar": "Iy'"
+    },
+    {
+      "tanvar": "Im'"
+    },
+    {
+      "tanvar": "Io'"
+    },
+    {
+      "tanvar": "Ry'"
+    },
+    {
+      "tanvar": "Rm'"
+    },
+    {
+      "tanvar": "Ro'"
+    }
+  ],
+    "Win": [
+        {
+            "arg": 1,
+            "call": 1
+        },
+        {
+            "arg": 1,
+            "call": 2
+        },
+        {
+            "arg": 1,
+            "call": 3
+        },
+        {
+            "arg": 2,
+            "call": 4
+        },
+        {
+            "arg": 2,
+            "call": 5
+        },
+        {
+            "arg": 2,
+            "call": 6
+        },
+        {
+            "arg": 3,
+            "call": 7
+        },
+        {
+            "arg": 3,
+            "call": 8
+        },
+        {
+            "arg": 3,
+            "call": 9
+        },
+        {
+            "arg": 4,
+            "call": 1
+        },
+        {
+            "arg": 5,
+            "call": 2
+        },
+        {
+            "arg": 6,
+            "call": 3
+        },
+        {
+            "arg": 4,
+            "call": 4
+        },
+        {
+            "arg": 5,
+            "call": 5
+        },
+        {
+            "arg": 6,
+            "call": 6
+        },
+        {
+            "arg": 4,
+            "call": 7
+        },
+        {
+            "arg": 5,
+            "call": 8
+        },
+        {
+            "arg": 6,
+            "call": 9
+        },
+        {
+            "arg": 4,
+            "call": 10
+        },
+        {
+            "arg": 5,
+            "call": 11
+        },
+        {
+            "arg": 6,
+            "call": 12
+        }
+    ],
+    "Wn": [
+        {
+            "efflux": 1,
+            "effusion": 1
+        },
+        {
+            "efflux": 2,
+            "effusion": 1
+        },
+        {
+            "efflux": 3,
+            "effusion": 1
+        },
+        {
+            "efflux": 4,
+            "effusion": 2
+        },
+        {
+            "efflux": 5,
+            "effusion": 2
+        },
+        {
+            "efflux": 6,
+            "effusion": 2
+        },
+        {
+            "efflux": 7,
+            "effusion": 3
+        },
+        {
+            "efflux": 8,
+            "effusion": 3
+        },
+        {
+            "efflux": 9,
+            "effusion": 3
+        },
+        {
+            "efflux": 1,
+            "effusion": 4
+        },
+        {
+            "efflux": 2,
+            "effusion": 5
+        },
+        {
+            "efflux": 3,
+            "effusion": 6
+        },
+        {
+            "efflux": 4,
+            "effusion": 4
+        },
+        {
+            "efflux": 5,
+            "effusion": 5
+        },
+        {
+            "efflux": 6,
+            "effusion": 6
+        },
+        {
+            "efflux": 7,
+            "effusion": 4
+        },
+        {
+            "efflux": 8,
+            "effusion": 5
+        },
+        {
+            "efflux": 9,
+            "effusion": 6
+        },
+        {
+            "efflux": 10,
+            "effusion": 4
+        },
+        {
+            "efflux": 11,
+            "effusion": 5
+        },
+        {
+            "efflux": 12,
+            "effusion": 6
+        }
+    ],
+    "Wa": [
+        {
+            "influx": 1,
+            "infusion": 4
+        },
+        {
+            "influx": 2,
+            "infusion": 4
+        },
+        {
+            "influx": 3,
+            "infusion": 4
+        },
+        {
+            "influx": 4,
+            "infusion": 5
+        },
+        {
+            "influx": 5,
+            "infusion": 5
+        },
+        {
+            "influx": 6,
+            "infusion": 5
+        },
+        {
+            "influx": 7,
+            "infusion": 6
+        },
+        {
+            "influx": 8,
+            "infusion": 6
+        },
+        {
+            "influx": 9,
+            "infusion": 6
+        },
+        {
+            "influx": 1,
+            "infusion": 4
+        },
+        {
+            "influx": 2,
+            "infusion": 5
+        },
+        {
+            "influx": 3,
+            "infusion": 6
+        },
+        {
+            "influx": 4,
+            "infusion": 4
+        },
+        {
+            "influx": 5,
+            "infusion": 5
+        },
+        {
+            "influx": 6,
+            "infusion": 6
+        },
+        {
+            "influx": 7,
+            "infusion": 4
+        },
+        {
+            "influx": 8,
+            "infusion": 5
+        },
+        {
+            "influx": 9,
+            "infusion": 6
+        },
+        {
+            "influx": 10,
+            "infusion": 7
+        },
+        {
+            "influx": 11,
+            "infusion": 8
+        },
+        {
+            "influx": 12,
+            "infusion": 9
+        }
+    ],
+    "Box": [
+    {
+      "parameter": "inf_y_y"
+    },
+    {
+      "parameter": "inf_y_m"
+    },
+    {
+      "parameter": "inf_y_o"
+    },
+    {
+      "parameter": "inf_m_y"
+    },
+    {
+      "parameter": "inf_m_m"
+    },
+    {
+      "parameter": "inf_m_o"
+    },
+    {
+      "parameter": "inf_o_y"
+    },
+    {
+      "parameter": "inf_o_m"
+    },
+    {
+      "parameter": "inf_o_o"
+    },
+    {
+      "parameter": "rec_y_y"
+    },
+    {
+      "parameter": "rec_m_m"
+    },
+    {
+      "parameter": "rec_o_o"
+    }
+  ]
+}
