@@ -182,7 +182,7 @@ class TestUseCases(unittest.TestCase):
         global_bounds = And(
             [
                 And(
-                    GE(Symbol(f"{v}_{i}", REAL), Real(0.0)),
+                    GE(Symbol(f"{v}_{i}", REAL), Real(-1.0)),
                     LE(
                         Symbol(f"{v}_{i}", REAL),
                         Real(
@@ -454,8 +454,8 @@ class TestUseCases(unittest.TestCase):
         query = QueryEncoded()
         query._formula = And(
             [
-                LT(Symbol(f"S_{steps}", REAL), Real(init_values["S"])),
-                GE(Symbol(f"R_{steps}", REAL), Real(init_values["R"])),
+                # LT(Symbol(f"S_{steps}", REAL), Real(init_values["S"])),
+                # GE(Symbol(f"R_{steps}", REAL), Real(init_values["R"])),
                 # GT(
                 #     Symbol(f"R_{steps}", REAL), Real(5.0)
                 # ),  # R is near 10 at day 80
@@ -625,22 +625,22 @@ class TestUseCases(unittest.TestCase):
         result_sat = Funman().solve(scenario, config=config)
         self.report(result_sat)
 
-        # ###########################################################
-        # # The basic constraints are satisfied, but output diverges,
-        # # need to check that population is consistent (doesn't exceed N)
-        # # Generate results using any parameters
-        # ###########################################################
-        # print(f"Bounds: {bounds}")
-        # scenario = self.make_scenario(
-        #     bilayer,
-        #     self.initial_state(),
-        #     self.unit_test_1_bounds(mu=mu[testcase]),
-        #     self.identical_parameters(),
-        #     steps,
-        #     self.unit_test_1_well_behaved_query(steps, self.initial_state()),
-        # )
-        # result_sat = Funman().solve(scenario, config=config)
-        # self.report(result_sat)
+        ###########################################################
+        # The basic constraints are satisfied, but output diverges,
+        # need to check that population is consistent (doesn't exceed N)
+        # Generate results using any parameters
+        ###########################################################
+        print(f"Bounds: {bounds}")
+        scenario = self.make_scenario(
+            bilayer,
+            self.initial_state(),
+            self.unit_test_1_bounds(mu=mu[testcase]),
+            self.identical_parameters(),
+            steps,
+            self.unit_test_1_well_behaved_query(steps, self.initial_state()),
+        )
+        result_sat = Funman().solve(scenario, config=config)
+        self.report(result_sat)
 
         ###########################################################
         # Basic constraints are not satisfied, so relax them
