@@ -453,7 +453,7 @@ class TestUseCases(unittest.TestCase):
 
     def bounds_sir(self, population=6000.0):
         R0 = 5.0
-        gamma = (1.0 / 14.0) / population
+        gamma = 1.0 / 14.0
         beta = (R0 * gamma) / population
         return {"beta": [beta, beta], "gamma": [gamma, gamma]}
 
@@ -486,9 +486,9 @@ class TestUseCases(unittest.TestCase):
             for i in range(len(inf_matrix))
             for j in range(len(inf_matrix[i]))
         }
-        params[f"rec_o"] = [gamma, gamma]
-        params[f"rec_y"] = [gamma, gamma]
-        params[f"rec_m"] = [gamma, gamma]
+        params[f"rec_o_o"] = [gamma, gamma]
+        params[f"rec_y_y"] = [gamma, gamma]
+        params[f"rec_m_m"] = [gamma, gamma]
         return params
 
     def sir_query(self):
