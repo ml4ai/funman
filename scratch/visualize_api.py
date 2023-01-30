@@ -22,6 +22,7 @@ from funman_api_client.models import (
     BodySolveConsistencySolveConsistencyPut,
     ConsistencyScenario,
     ConsistencyScenarioResult,
+    QueryLE,
     QueryTrue,
 )
 
@@ -39,23 +40,23 @@ class TestAPI(unittest.TestCase):
 
     def report(self, result):
         if result.consistent:
-            parameters = result.consistent.to_dict()
+            parameters = result.response_parameters.to_dict()
             print(f"Iteration {self.iteration}: {parameters}")
 
             res = pd.Series(name=self.iteration, data=parameters).to_frame().T
             self.results_df = pd.concat([self.results_df, res])
 
-            df = pd.DataFrame.from_dict(result.timeseries.to_dict())
+            df = pd.DataFrame.from_dict(result.response_timeseries.to_dict())
             df = df.interpolate(method="linear")
             print(df)
 
-            variables = (["S", "E", "I", "R"],)
+            variables = ["S", "E", "I", "R"]
             plt.show(block=False)
             df[variables].plot(
                 marker="o",
                 title="\n".join(textwrap.wrap(str(parameters), width=75)),
             )
-            plt.savefig(f"bilayer_{self.iteration}.png")
+            plt.savefig(f"bilayer_cc_{self.iteration}.png")
             plt.clf()
         else:
             print(f"Iteration {self.iteration}: is inconsistent")
@@ -77,36 +78,30 @@ class TestAPI(unittest.TestCase):
         identical_parameters = self.identical_parameters()
 
         steps = 10
+        infected_threshold = 130e3
 
         response = asyncio.run(
             solve_consistency_solve_consistency_put.asyncio_detailed(
                 client=funman_client,
                 json_body=BodySolveConsistencySolveConsistencyPut(
-                    ConsistencyScenario(
-                        BilayerModel.from_dict(
-                            {
-                                "bilayer": {"json_graph": bilayer_json},
+                    ConsistencyScenario.from_dict(
+                        {
+                            "model": {
                                 "init_values": init_values,
                                 "parameter_bounds": parameter_bounds,
                                 "identical_parameters": identical_parameters,
-                            }
-                        ),
-                        QueryTrue(),
+                                "bilayer": {"json_graph": bilayer_json},
+                            },
+                            "query": {
+                                "variable": "I",
+                                "ub": infected_threshold,
+                                "at_end": False,
+                            },
+                        }
                     )
                 ),
             )
         )
-
-        #  ConsistencyScenario.from_dict({
-        #      "model": {
-        #          "bilayer": {"json_graph": bilayer_json},
-        #          "init_values": init_values,
-        #          "parameter_bounds": parameter_bounds,
-        #          "identical_parameters": identical_parameters,
-        #      },
-        #      "query": {
-        #      },
-        #  })
 
         result = ConsistencyScenarioResult.from_dict(
             src_dict=json.loads(response.content.decode())

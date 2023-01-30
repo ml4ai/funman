@@ -1,7 +1,7 @@
 """
 This submodule defines a consistency scenario.  Consistency scenarios specify an existentially quantified model.  If consistent, the solution assigns any unassigned variable, subject to their bounds and other constraints.  
 """
-from typing import Dict, List, Union
+from typing import Dict, List, Optional, Union
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -99,7 +99,8 @@ class ConsistencyScenarioResult(AnalysisScenarioResult, BaseModel):
 
     scenario: ConsistencyScenario
     consistent: Dict[str, float] = None
-    timeseries: Dict[str, List[Union[float, None]]] = None
+    response_timeseries: Optional[Dict[str, List[Union[float, None]]]] = None
+    response_parameters: Optional[Dict[str, Union[float, None]]] = None
     _model: pysmt_Model = None
 
     def _parameters(self):
@@ -114,9 +115,17 @@ class ConsistencyScenarioResult(AnalysisScenarioResult, BaseModel):
             )
 
     def assign_response_fields(self):
-        self.timeseries = self.scenario._smt_encoder.symbol_timeseries(
-            self.scenario._model_encoding, self._model
+        if not self.consistent:
+            self.response_timeseries = {}
+            self._reponse_parameters = {}
+            return
+
+        self.response_timeseries = (
+            self.scenario._smt_encoder.symbol_timeseries(
+                self.scenario._model_encoding, self._model
+            )
         )
+        self.response_parameters = self._parameters()
 
     def dataframe(self, interpolate="linear"):
         """

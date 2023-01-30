@@ -68,6 +68,9 @@ RUN pip install -e automates
 
 RUN pip install --no-cache-dir z3-solver
 RUN pip install --no-cache-dir graphviz
+RUN pip install --no-cache-dir \
+    jupyterlab \
+    jupyterlab-vim
 
 RUN pip install /dreal4/dreal-*.whl
 
@@ -82,6 +85,7 @@ RUN mkdir -p /home/$UNAME/.local/bin
 RUN echo 'PATH="$HOME/.local/bin:$PATH"' >> /home/$UNAME/.bashrc
 COPY --chmod=755 tools/update-dreal.user /home/$UNAME/.local/bin/update-dreal
 COPY --chmod=755 tools/funman-notebook.sh /home/$UNAME/.local/bin/funman-notebook
+COPY --chmod=755 tools/funman-lab.sh /home/$UNAME/.local/bin/funman-lab
 COPY --chmod=755 tools/funman-api-server.sh /home/$UNAME/.local/bin/funman-api-server
 USER root
 COPY --chmod=744 tools/update-dreal.root /usr/local/bin/update-dreal

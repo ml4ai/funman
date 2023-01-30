@@ -1,0 +1,69 @@
+{
+    "Wa": [
+        {"influx": 1, "infusion": 2},  
+        {"influx": 2, "infusion": 4},  
+        {"influx": 8, "infusion": 3},  
+        {"influx": 3, "infusion": 5},  
+        {"influx": 4, "infusion": 5},  
+        {"influx": 5, "infusion": 5},  
+        {"influx": 6, "infusion": 5},  
+        {"influx": 7, "infusion": 5}
+    ],
+    "Win": [
+        {"arg": 1, "call": 1},  
+        {"arg": 1, "call": 3},  
+        {"arg": 3, "call": 1},  
+        {"arg": 3, "call": 2},  
+        {"arg": 2, "call": 4},  
+        {"arg": 2, "call": 8},  
+        {"arg": 3, "call": 7},  
+        {"arg": 3, "call": 5},  
+        {"arg": 4, "call": 6}
+    ],
+    "Box": [
+        {
+            "parameter": "beta_1",
+            "metadata": {
+                "ref": "http://34.230.33.149:8772/askemo:0000008",
+                "type": "float",
+                "lb": "0.0"
+            }
+        },
+        {"parameter": "gamma"},
+        {"parameter": "mu_s"},
+        {"parameter": "mu_e"},
+        {"parameter": "mu_i"},
+        {"parameter": "mu_r"},
+        {"parameter": "alpha"},
+        {"parameter": "epsilon"}
+    ],
+    "Qin": [
+        {
+            "variable": "S",
+            "metadata": {
+                "ref": "http://34.230.33.149:8772/askemo:0000001"
+            }
+        },
+        {"variable": "E"},
+        {"variable": "I"},
+        {"variable": "R"},
+        {"variable": "D"}
+    ],
+    "Qout": [
+        {"tanvar": "S'"},
+        {"tanvar": "E'"},
+        {"tanvar": "I'"},
+        {"tanvar": "R'"},
+        {"tanvar": "D'"}
+    ],
+    "Wn": [
+        {"efflux": 3, "effusion": 1},  
+        {"efflux": 1, "effusion": 1},  
+        {"efflux": 4, "effusion": 2},  
+        {"efflux": 8, "effusion": 2},  
+        {"efflux": 6, "effusion": 4},  
+        {"efflux": 2, "effusion": 3},  
+        {"efflux": 5, "effusion": 3},  
+        {"efflux": 7, "effusion": 3}
+    ]
+}

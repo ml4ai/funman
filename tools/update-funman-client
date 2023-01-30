@@ -1,0 +1,4 @@
+#!/bin/bash
+
+openapi-python-client update --url http://0.0.0.0:8190/openapi.json
+
