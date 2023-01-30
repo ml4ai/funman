@@ -240,16 +240,8 @@ class TestUseCases(unittest.TestCase):
             identical_parameters=identical_parameters,
         )
         parameters = [
-            Parameter(
-                name="beta_1",
-                lb=parameter_bounds["beta_1"][0],
-                ub=parameter_bounds["beta_1"][1],
-            ),
-            Parameter(
-                name="mu_s",
-                lb=parameter_bounds["mu_s"][0],
-                ub=parameter_bounds["mu_s"][1],
-            ),
+            Parameter(name=k, lb=v[0], ub=v[1])
+            for k, v in parameter_bounds.items()
         ]
         scenario = ParameterSynthesisScenario(
             parameters=parameters, model=model, query=query
@@ -268,10 +260,15 @@ class TestUseCases(unittest.TestCase):
             ).render(f"bilayer_{self.iteration}")
             print(result.dataframe())
             result.plot(
-                variables=["S", "I", "R"],
+                variables=list(result.scenario.model.init_values.keys()),
                 title="\n".join(textwrap.wrap(str(parameters), width=75)),
             )
-            plt.savefig(f"bilayer_{self.iteration}.png")
+            try:
+                plt.savefig(f"bilayer_{self.iteration}.png")
+            except Exception as e:
+                print(
+                    f"Iteration {self.iteration}: Exception while plotting: {e}"
+                )
             plt.clf()
         else:
             print(f"Iteration {self.iteration}: is inconsistent")
@@ -435,8 +432,7 @@ class TestUseCases(unittest.TestCase):
             bilayer = json.load(f)
         return bilayer
 
-    def initial_state_sir(self):
-        population = 6000
+    def initial_state_sir(self, population=6000):
         infected = 3
         return {"S": population - infected, "I": infected, "R": 0}
 
@@ -455,20 +451,32 @@ class TestUseCases(unittest.TestCase):
             "Ry": 0,
         }
 
-    def bounds_sir(self):
+    def bounds_sir(self, population=6000.0):
         R0 = 5.0
-        gamma = 1.0 / 14.0
-        beta = R0 * gamma
+        gamma = (1.0 / 14.0) / population
+        beta = (R0 * gamma) / population
         return {"beta": [beta, beta], "gamma": [gamma, gamma]}
 
-    def bounds_sir_strat(self):
+    def bounds_sir_strat(self, population=2000):
         R0 = 5.0
-        gamma = 1.0 / 14.0
+        gamma = (1.0 / 14.0) / population
         groups = ["o", "y", "m"]
         inf_matrix = [
-            [R0 * gamma, R0 * gamma, R0 * gamma],
-            [R0 * gamma, R0 * gamma, R0 * gamma],
-            [R0 * gamma, R0 * gamma, R0 * gamma],
+            [
+                (R0 * gamma),
+                (R0 * gamma),
+                (R0 * gamma),
+            ],
+            [
+                (R0 * gamma),
+                (R0 * gamma),
+                (R0 * gamma),
+            ],
+            [
+                (R0 * gamma),
+                (R0 * gamma),
+                (R0 * gamma),
+            ],
         ]
         params = {
             f"inf_{groups[i]}_{groups[j]}": [
@@ -501,7 +509,7 @@ class TestUseCases(unittest.TestCase):
             "initial": self.initial_state_sir,
             "bounds": self.bounds_sir,
             "identical": self.sir_identical,
-            "steps": 10,
+            "steps": 2,
             "query": self.sir_query,
             "report": self.report,
         }
@@ -510,10 +518,21 @@ class TestUseCases(unittest.TestCase):
             "initial": self.initial_state_sir_strat,
             "bounds": self.bounds_sir_strat,
             "identical": self.sir_identical,
+            "steps": 2,
+            "query": self.sir_strat_query,
+            "report": self.report,
+        }
+
+        case_sir_stratified_ps = {
+            "model_fn": self.sir_strata_bilayer,
+            "initial": self.initial_state_sir_strat,
+            "bounds": self.bounds_sir_strat,
+            "identical": self.sir_identical,
             "steps": 1,
             "query": self.sir_strat_query,
             "report": self.report,
         }
+
         case = case_sir_stratified
 
         scenario = self.make_scenario(
@@ -527,7 +546,32 @@ class TestUseCases(unittest.TestCase):
         config = FUNMANConfig(max_steps=case["steps"], solver="dreal")
         result_sat = Funman().solve(scenario, config=config)
         case["report"](result_sat)
-        pass
+
+        # Do parameter synth
+        case = case_sir_stratified_ps
+        scenario = self.make_ps_scenario(
+            BilayerDynamics(json_graph=case["model_fn"]()),
+            case["initial"](),
+            case["bounds"](),
+            case["identical"](),
+            case["steps"],
+            case["query"](),
+        )
+        config.tolerance = 1e-3
+        config.number_of_processes = 1
+        config._handler = ResultCombinedHandler(
+            [
+                ResultCacheWriter(f"box_search.json"),
+                RealtimeResultPlotter(
+                    scenario.parameters,
+                    plot_points=True,
+                    title=f"Feasible Regions (beta)",
+                    realtime_save_path=f"box_search.png",
+                    dpi=600,
+                ),
+            ]
+        )
+        result_sat = Funman().solve(scenario, config=config)
 
 
 if __name__ == "__main__":
