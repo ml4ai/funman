@@ -427,6 +427,16 @@ class TestUseCases(unittest.TestCase):
 
         return bilayer
 
+    def sir_strata_bilayer(self):
+        with open(
+            os.path.join(
+                RESOURCES, "bilayer", "CHIME_SIR_dynamics_BiLayer.json"
+            ),
+            "r",
+        ) as f:
+            bilayer = json.load(f)
+        return bilayer
+
     def initial_state_sir(self):
         population = 6000
         infected = 3
@@ -437,6 +447,22 @@ class TestUseCases(unittest.TestCase):
         gamma = 1.0 / 14.0
         beta = R0 * gamma
         return {"beta": [beta, beta], "gamma": [gamma, gamma]}
+
+    def bounds_sir_strat(self):
+        R0 = 5.0
+        gamma = 1.0 / 14.0
+        beta_matrix = [
+            [R0 * gamma, R0 * gamma, R0 * gamma],
+            [R0 * gamma, R0 * gamma, R0 * gamma],
+            [R0 * gamma, R0 * gamma, R0 * gamma],
+        ]
+        params = {
+            f"beta_{i}_{j}": beta[i][j]
+            for i in range(len(beta_matrix))
+            for j in range(len(beta_matrix))
+        }
+        params["gamma"] = [gamma, gamma]
+        return params
 
     def sir_query(self):
         return QueryTrue()
@@ -457,7 +483,7 @@ class TestUseCases(unittest.TestCase):
             "query": self.sir_query,
             "report": self.report,
         }
-        case_sir_stratified = {}  # TODO
+        case_sir_stratified = {"bounds": self.bounds_sir_strat}  # TODO
         case = case_sir
 
         scenario = self.make_scenario(
