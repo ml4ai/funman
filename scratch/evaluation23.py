@@ -500,12 +500,58 @@ class TestUseCases(unittest.TestCase):
 
         return params
 
+    def bounds_sir_strat_fixed(self, noise=0.0):
+        if_lb = 1e-5
+        if_ub = 2e-3  # 1e-1
+        rec_lb = (1.0 / 14.0) / 4.0
+        rec_ub = (1.0 / 14.0) / 3.0  # 4e0
+        params = {
+            "inf_y_y": [if_lb, if_ub],
+            "inf_y_m": [if_lb, if_ub],
+            "inf_y_o": [if_lb, if_ub],
+            "inf_m_y": [if_lb, if_ub],
+            "inf_m_m": [if_lb, if_ub],
+            "inf_m_o": [if_lb, if_ub],
+            "inf_o_y": [if_lb, if_ub],
+            "inf_o_m": [if_lb, if_ub],
+            "inf_o_o": [if_lb, if_ub],
+            "rec_y_y": [rec_lb, rec_ub],
+            "rec_m_m": [rec_lb, rec_ub],
+            "rec_o_o": [rec_lb, rec_ub],
+        }
+        return params
+
     def sir_query(self):
         return QueryTrue()
 
     def sir_strat_query(self, steps, init_values):
         query = QueryEncoded()
-        query._formula = self.make_global_bounds(steps, init_values)
+        query._formula = And(
+            [
+                self.make_global_bounds(steps, init_values),
+                GE(Symbol(f"Ro_{steps}", REAL), Symbol(f"Ro_0", REAL)),
+                GE(Symbol(f"Ry_{steps}", REAL), Symbol(f"Ry_0", REAL)),
+                GE(Symbol(f"Rm_{steps}", REAL), Symbol(f"Rm_0", REAL)),
+                LE(Symbol(f"Ro_{steps}", REAL), Real(0.1)),
+                LE(Symbol(f"Ry_{steps}", REAL), Real(0.1)),
+                LE(Symbol(f"Rm_{steps}", REAL), Real(0.1)),
+                GE(Symbol(f"Io_{steps}", REAL), Symbol(f"Io_0", REAL)),
+                GE(Symbol(f"Iy_{steps}", REAL), Symbol(f"Iy_0", REAL)),
+                GE(Symbol(f"Im_{steps}", REAL), Symbol(f"Im_0", REAL)),
+                LE(Symbol(f"Io_{steps}", REAL), Real(2.0)),
+                LE(Symbol(f"Iy_{steps}", REAL), Real(2.0)),
+                LE(Symbol(f"Im_{steps}", REAL), Real(2.0)),
+                LE(Symbol(f"So_{steps}", REAL), Symbol(f"So_0", REAL)),
+                LE(Symbol(f"Sy_{steps}", REAL), Symbol(f"Sy_0", REAL)),
+                LE(Symbol(f"Sm_{steps}", REAL), Symbol(f"Sm_0", REAL)),
+                GE(Symbol(f"So_{steps}", REAL), Real(1997.0)),
+                GE(Symbol(f"Sy_{steps}", REAL), Real(1997.0)),
+                GE(Symbol(f"Sm_{steps}", REAL), Real(1997.0)),
+                # self.make_max_difference_constraint(
+                #     steps, init_values, diff=100.0
+                # ),
+            ]
+        )
         return query
         # return QueryTrue()
 
@@ -544,9 +590,10 @@ class TestUseCases(unittest.TestCase):
         case_sir_stratified = {
             "model_fn": self.sir_strata_bilayer,
             "initial": self.initial_state_sir_strat,
-            "bounds": self.bounds_sir_strat,
-            "identical": self.sir_identical,
-            "steps": 3,
+            # "bounds": self.bounds_sir_strat,
+            "bounds": self.bounds_sir_strat_fixed,
+            "identical": self.sir_strat_identical,
+            "steps": 1,
             "query": self.sir_strat_query,
             "report": self.report,
         }
@@ -554,21 +601,22 @@ class TestUseCases(unittest.TestCase):
         case_sir_stratified_ps = {
             "model_fn": self.sir_strata_bilayer,
             "initial": self.initial_state_sir_strat,
-            "bounds": self.bounds_sir_strat,
+            "bounds": self.bounds_sir_strat_fixed,
             "identical": self.sir_strat_identical,
-            "steps": 2,
+            "steps": 1,
             "query": self.sir_strat_query,
             "report": self.report,
-            "noise": 1.0,
+            "noise": 10.0,
             "params_to_synth": ["inf_o_o", "rec_o_o"],
         }
 
         case = case_sir_stratified
+        bounds = case["bounds"](noise=0.0)
 
         scenario = self.make_scenario(
             BilayerDynamics(json_graph=case["model_fn"]()),
             case["initial"](),
-            case["bounds"](noise=0.0),
+            bounds,
             case["identical"](),
             case["steps"],
             case["query"](case["steps"], case["initial"]()),
@@ -579,17 +627,19 @@ class TestUseCases(unittest.TestCase):
 
         # Do parameter synth
         case = case_sir_stratified_ps
+        bounds = case["bounds"](noise=case["noise"])
         scenario = self.make_ps_scenario(
             BilayerDynamics(json_graph=case["model_fn"]()),
             case["initial"](),
-            case["bounds"](noise=case["noise"]),
+            bounds,
             case["identical"](),
             case["steps"],
             case["query"](case["steps"], case["initial"]()),
             case["params_to_synth"],
         )
-        config.tolerance = 1e-3
+        config.tolerance = 1e-4
         config.number_of_processes = 1
+        config.num_initial_boxes = 1
         config._handler = ResultCombinedHandler(
             [
                 ResultCacheWriter(f"box_search.json"),

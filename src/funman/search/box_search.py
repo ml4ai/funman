@@ -697,7 +697,7 @@ class BoxSearch(Search):
 
     def _search_sp(self, problem, config: "FUNMANConfig") -> ParameterSpace:
         episode = BoxSearchEpisode(config=config, problem=problem)
-        episode._initialize_boxes(1)
+        episode._initialize_boxes(config.num_initial_boxes)
         rval = QueueSP()
         all_results = {
             "true_boxes": [],
