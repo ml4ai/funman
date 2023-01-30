@@ -108,19 +108,19 @@ class TestUseCases(unittest.TestCase):
         return identical_parameters
 
     def make_global_bounds(self, steps, init_values):
+        upper_bound = max(
+            [
+                sum([init_values[f"{v}"] for v in init_values if g in v])
+                for g in ["o", "y", "m"]
+            ]
+        )
         global_bounds = And(
             [
                 And(
                     GE(Symbol(f"{v}_{i}", REAL), Real(-1.0)),
                     LE(
                         Symbol(f"{v}_{i}", REAL),
-                        Real(
-                            init_values["S"]
-                            + init_values["E"]
-                            + init_values["I"]
-                            + init_values["R"]
-                            + init_values["D"]
-                        ),
+                        Real(upper_bound),
                     ),
                 )
                 for v in init_values
@@ -457,7 +457,7 @@ class TestUseCases(unittest.TestCase):
         beta = (R0 * gamma) / population
         return {"beta": [beta, beta], "gamma": [gamma, gamma]}
 
-    def bounds_sir_strat(self, population=2000):
+    def bounds_sir_strat(self, population=2000, noise=0.5):
         R0 = 5.0
         gamma = 1.0 / 14.0
         groups = ["o", "y", "m"]
@@ -489,13 +489,22 @@ class TestUseCases(unittest.TestCase):
         params[f"rec_o_o"] = [gamma, gamma]
         params[f"rec_y_y"] = [gamma, gamma]
         params[f"rec_m_m"] = [gamma, gamma]
+
+        params = {
+            k: [v[0] + (1.0 - noise), v[1] + (1.0 + noise)]
+            for k, v in params.items()
+        }
+
         return params
 
     def sir_query(self):
         return QueryTrue()
 
-    def sir_strat_query(self):
-        return QueryTrue()
+    def sir_strat_query(self, steps, init_values):
+        query = QueryEncoded()
+        query._formula = self.make_global_bounds(steps, init_values)
+        return query
+        # return QueryTrue()
 
     def sir_identical(self):
         return []
@@ -528,7 +537,7 @@ class TestUseCases(unittest.TestCase):
             "initial": self.initial_state_sir_strat,
             "bounds": self.bounds_sir_strat,
             "identical": self.sir_identical,
-            "steps": 1,
+            "steps": 2,
             "query": self.sir_strat_query,
             "report": self.report,
         }
@@ -541,21 +550,21 @@ class TestUseCases(unittest.TestCase):
             case["bounds"](),
             case["identical"](),
             case["steps"],
-            case["query"](),
+            case["query"](case["steps"], case["initial"]()),
         )
-        config = FUNMANConfig(max_steps=case["steps"], solver="z3")
-        result_sat = Funman().solve(scenario, config=config)
-        case["report"](result_sat)
+        config = FUNMANConfig(max_steps=case["steps"], solver="dreal")
+        # result_sat = Funman().solve(scenario, config=config)
+        # case["report"](result_sat)
 
         # Do parameter synth
         case = case_sir_stratified_ps
         scenario = self.make_ps_scenario(
             BilayerDynamics(json_graph=case["model_fn"]()),
             case["initial"](),
-            case["bounds"](),
+            case["bounds"](noise=0.1),
             case["identical"](),
             case["steps"],
-            case["query"](),
+            case["query"](case["steps"], case["initial"]()),
         )
         config.tolerance = 1e-3
         config.number_of_processes = 1

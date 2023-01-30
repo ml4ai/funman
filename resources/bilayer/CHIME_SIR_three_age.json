@@ -30,31 +30,31 @@
   ],
   "Qout": [
     {
-      "tanvar": "Sy"
+      "tanvar": "Sy'"
     },
     {
-      "tanvar": "Iy"
+      "tanvar": "Iy'"
     },
     {
-      "tanvar": "Ry"
+      "tanvar": "Ry'"
     },
     {
-      "tanvar": "Sm"
+      "tanvar": "Sm'"
     },
     {
-      "tanvar": "Im"
+      "tanvar": "Im'"
     },
     {
-      "tanvar": "Rm"
+      "tanvar": "Rm'"
     },
     {
-      "tanvar": "So"
+      "tanvar": "So'"
     },
     {
-      "tanvar": "Io"
+      "tanvar": "Io'"
     },
     {
-      "tanvar": "Ro"
+      "tanvar": "Ro'"
     }
   ],
   "Win": [
