@@ -232,6 +232,7 @@ class TestUseCases(unittest.TestCase):
         identical_parameters,
         steps,
         query,
+        params_to_synth=["inf_o_o", "rec_o_o"],
     ):
         model = BilayerModel(
             bilayer=bilayer,
@@ -239,9 +240,11 @@ class TestUseCases(unittest.TestCase):
             parameter_bounds=parameter_bounds,
             identical_parameters=identical_parameters,
         )
+
         parameters = [
             Parameter(name=k, lb=v[0], ub=v[1])
             for k, v in parameter_bounds.items()
+            if k in params_to_synth
         ]
         scenario = ParameterSynthesisScenario(
             parameters=parameters, model=model, query=query
@@ -491,7 +494,7 @@ class TestUseCases(unittest.TestCase):
         params[f"rec_m_m"] = [gamma, gamma]
 
         params = {
-            k: [v[0] + (1.0 - noise), v[1] + (1.0 + noise)]
+            k: [v[0] * (1.0 - noise), v[1] * (1.0 + noise)]
             for k, v in params.items()
         }
 
@@ -508,6 +511,22 @@ class TestUseCases(unittest.TestCase):
 
     def sir_identical(self):
         return []
+
+    def sir_strat_identical(self):
+        return [
+            ["rec_o_o", "rec_y_y", "rec_m_m"],
+            [
+                "inf_o_o",
+                "inf_o_y",
+                "inf_o_m",
+                "inf_y_o",
+                "inf_y_y",
+                "inf_y_m",
+                "inf_m_o",
+                "inf_m_y",
+                "inf_m_m",
+            ],
+        ]
 
     def test_scenario_1_a(self):
 
@@ -527,7 +546,7 @@ class TestUseCases(unittest.TestCase):
             "initial": self.initial_state_sir_strat,
             "bounds": self.bounds_sir_strat,
             "identical": self.sir_identical,
-            "steps": 1,
+            "steps": 3,
             "query": self.sir_strat_query,
             "report": self.report,
         }
@@ -536,10 +555,12 @@ class TestUseCases(unittest.TestCase):
             "model_fn": self.sir_strata_bilayer,
             "initial": self.initial_state_sir_strat,
             "bounds": self.bounds_sir_strat,
-            "identical": self.sir_identical,
+            "identical": self.sir_strat_identical,
             "steps": 2,
             "query": self.sir_strat_query,
             "report": self.report,
+            "noise": 0.12,
+            "params_to_synth": ["inf_o_o", "rec_o_o"],
         }
 
         case = case_sir_stratified
@@ -547,24 +568,25 @@ class TestUseCases(unittest.TestCase):
         scenario = self.make_scenario(
             BilayerDynamics(json_graph=case["model_fn"]()),
             case["initial"](),
-            case["bounds"](),
+            case["bounds"](noise=0.0),
             case["identical"](),
             case["steps"],
             case["query"](case["steps"], case["initial"]()),
         )
         config = FUNMANConfig(max_steps=case["steps"], solver="dreal")
-        # result_sat = Funman().solve(scenario, config=config)
-        # case["report"](result_sat)
+        result_sat = Funman().solve(scenario, config=config)
+        case["report"](result_sat)
 
         # Do parameter synth
         case = case_sir_stratified_ps
         scenario = self.make_ps_scenario(
             BilayerDynamics(json_graph=case["model_fn"]()),
             case["initial"](),
-            case["bounds"](noise=0.1),
+            case["bounds"](noise=case["noise"]),
             case["identical"](),
             case["steps"],
             case["query"](case["steps"], case["initial"]()),
+            case["params_to_synth"],
         )
         config.tolerance = 1e-3
         config.number_of_processes = 1
