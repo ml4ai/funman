@@ -330,8 +330,16 @@ class TestUseCases(unittest.TestCase):
             identical_parameters=identical_parameters,
         )
         parameters = [
-            Parameter(name="beta_1", lb=1e-7, ub=1e-1),
-            Parameter(name="mu_s", lb=0.00008, ub=0.191),
+            Parameter(
+                name="beta_1",
+                lb=parameter_bounds["beta_1"][0],
+                ub=parameter_bounds["beta_1"][1],
+            ),
+            Parameter(
+                name="mu_s",
+                lb=parameter_bounds["mu_s"][0],
+                ub=parameter_bounds["mu_s"][1],
+            ),
         ]
         scenario = ParameterSynthesisScenario(
             parameters=parameters, model=model, query=query
@@ -473,7 +481,7 @@ class TestUseCases(unittest.TestCase):
         return query
 
     def test_scenario_1_1_a_unit_test_1(self):
-        steps = 2
+        steps = 3
         self.iteration = 0
         mu = [0.00008, 0.078, 0.19]
         config = FUNMANConfig(max_steps=steps, solver="dreal")
@@ -617,22 +625,22 @@ class TestUseCases(unittest.TestCase):
         result_sat = Funman().solve(scenario, config=config)
         self.report(result_sat)
 
-        ###########################################################
-        # The basic constraints are satisfied, but output diverges,
-        # need to check that population is consistent (doesn't exceed N)
-        # Generate results using any parameters
-        ###########################################################
-        print(f"Bounds: {bounds}")
-        scenario = self.make_scenario(
-            bilayer,
-            self.initial_state(),
-            self.unit_test_1_bounds(mu=mu[testcase]),
-            self.identical_parameters(),
-            steps,
-            self.unit_test_1_well_behaved_query(steps, self.initial_state()),
-        )
-        result_sat = Funman().solve(scenario, config=config)
-        self.report(result_sat)
+        # ###########################################################
+        # # The basic constraints are satisfied, but output diverges,
+        # # need to check that population is consistent (doesn't exceed N)
+        # # Generate results using any parameters
+        # ###########################################################
+        # print(f"Bounds: {bounds}")
+        # scenario = self.make_scenario(
+        #     bilayer,
+        #     self.initial_state(),
+        #     self.unit_test_1_bounds(mu=mu[testcase]),
+        #     self.identical_parameters(),
+        #     steps,
+        #     self.unit_test_1_well_behaved_query(steps, self.initial_state()),
+        # )
+        # result_sat = Funman().solve(scenario, config=config)
+        # self.report(result_sat)
 
         ###########################################################
         # Basic constraints are not satisfied, so relax them
@@ -668,7 +676,7 @@ class TestUseCases(unittest.TestCase):
         # Synthesize beta_1
         ###########################################################
         bounds = self.unit_test_1_bounds()
-        bounds["beta_1"] = [1e-7, 5e-2]
+        bounds["beta_1"] = [1e-8, 3e-3]
         bounds["mu_s"] = [0.00008, 0.19]
         bounds["mu_i"] = [0.00008, 0.19]
         bounds["mu_e"] = [0.00008, 0.19]
@@ -681,7 +689,7 @@ class TestUseCases(unittest.TestCase):
             steps,
             self.unit_test_1_well_behaved_query(steps, self.initial_state()),
         )
-        config.tolerance = 1e-2
+        config.tolerance = 1e-3
         config.number_of_processes = 1
         config._handler = ResultCombinedHandler(
             [
@@ -691,11 +699,12 @@ class TestUseCases(unittest.TestCase):
                     plot_points=True,
                     title=f"Feasible Regions (beta)",
                     realtime_save_path=f"box_search.png",
+                    dpi=600,
                 ),
             ]
         )
         result_sat = Funman().solve(scenario, config=config)
-        self.report(result_sat)
+        # self.report(result_sat)
 
 
 if __name__ == "__main__":

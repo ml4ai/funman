@@ -14,6 +14,7 @@ from queue import PriorityQueue as PriorityQueueSP
 from queue import Queue as QueueSP
 from typing import List, Optional, Set, Union
 
+from pysmt.formula import FNode
 from pysmt.logics import QF_NRA
 from pysmt.shortcuts import And, Not, Solver, get_model
 
@@ -53,6 +54,7 @@ class BoxSearchEpisode(SearchEpisode):
     _false_points: Set[Point] = set({})
     _unknown_boxes: PriorityQueueSP
     _iteration: int = 0
+    _formula_stack: List[FNode] = []
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -293,12 +295,18 @@ class BoxSearch(Search):
             data for the current search
         """
         solver.push(1)
-        solver.add_assertion(episode.problem._model_encoding.formula)
-        solver.add_assertion(episode.problem._query_encoding.formula)
+        formula = And(
+            episode.problem._model_encoding.formula,
+            episode.problem._query_encoding.formula,
+        )
+        episode._formula_stack.append(formula)
+        solver.add_assertion(formula)
 
     def _initialize_box(self, solver, box, episode):
         solver.push(1)
-        solver.add_assertion(episode.problem._smt_encoder.box_to_smt(box))
+        formula = episode.problem._smt_encoder.box_to_smt(box)
+        episode._formula_stack.append(formula)
+        solver.add_assertion(formula)
 
     def _setup_false_query(self, solver, episode):
         """
@@ -312,30 +320,29 @@ class BoxSearch(Search):
             data for the current search
         """
         solver.push(1)
-        solver.add_assertion(
-            Not(
-                And(
-                    episode.problem._assume_model,
-                    episode.problem._assume_query,
-                )
-            )
+        formula = And(
+            episode.problem._assume_model,
+            Not(episode.problem._assume_query),
         )
-        self.store_smtlib(episode)
+        episode._formula_stack.append(formula)
+        solver.add_assertion(formula)
 
-    def store_smtlib(self, episode):
+    def store_smtlib(self, episode, box):
         with open("dbg.smt2", "w") as f:
             smtlibscript_from_formula_list(
                 [
+                    episode.problem._model_encoding.formula,
+                    episode.problem._query_encoding.formula,
+                    episode.problem._smt_encoder.box_to_smt(box),
                     Not(
                         And(
                             episode.problem._assume_model,
                             episode.problem._assume_query,
                         )
                     ),
-                    episode.problem._model_encoding.formula,
-                    episode.problem._query_encoding.formula,
-                ]
-            ).serialize(f)
+                ],
+                logic=QF_NRA,
+            ).serialize(f, daggify=False)
 
     def _setup_true_query(self, solver, episode):
         """
@@ -349,10 +356,11 @@ class BoxSearch(Search):
             data for the current search
         """
         solver.push(1)
-        solver.add_assertion(
-            And(episode.problem._assume_model, episode.problem._assume_query)
+        formula = And(
+            episode.problem._assume_model, episode.problem._assume_query
         )
-        self.store_smtlib(episode)
+        episode._formula_stack.append(formula)
+        solver.add_assertion(formula)
 
     def _get_false_points(self, solver, episode, box, rval):
         false_points = [
@@ -362,6 +370,7 @@ class BoxSearch(Search):
             # If no cached point, then attempt to generate one
             # print("Checking false query")
             self._setup_false_query(solver, episode)
+            # self.store_smtlib(episode, box)
             if solver.solve():
                 # Record the false point
                 res = solver.get_model()
@@ -370,6 +379,8 @@ class BoxSearch(Search):
                     episode._add_false_point(point)
                     rval.put(Point.encode_false_point(point))
             solver.pop(1)  # Remove false query
+            episode._formula_stack.pop()
+
         return false_points
 
     def _get_true_points(self, solver, episode, box, rval):
@@ -380,6 +391,7 @@ class BoxSearch(Search):
             # If no cached point, then attempt to generate one
             # print("Checking true query")
             self._setup_true_query(solver, episode)
+            # self.store_smtlib(episode, box)
             if solver.solve():
                 # Record the true point
                 res1 = solver.get_model()
@@ -388,6 +400,7 @@ class BoxSearch(Search):
                     episode._add_true_point(point)
                     rval.put(Point.encode_true_point(point))
             solver.pop(1)  # Remove true query
+            episode._formula_stack.pop()
 
         return true_points
 
@@ -501,6 +514,7 @@ class BoxSearch(Search):
                             rval.put(Box._encode_false_box(box))
                             print(f"--- False({box})")
                         solver.pop(1)  # Remove box from solver
+                        episode._formula_stack.pop()
                         episode._on_iteration()
                         if handler:
                             all_results = handler(
@@ -508,6 +522,7 @@ class BoxSearch(Search):
                             )
                         l.info(f"{process_name} finished work")
                 solver.pop(1)  # Remove the dynamics from the solver
+                episode._formula_stack.pop()
         except KeyboardInterrupt:
             l.info(f"{process_name} Keyboard Interrupt")
         except Exception:
