@@ -222,7 +222,8 @@ class BoxSearch(Search):
     """
 
     def _split(self, box: Box, episode: BoxSearchEpisode, points=None):
-        b1, b2 = box.split(points=points)
+        normalize = episode.problem._original_parameter_widths
+        b1, b2 = box.split(points=points, normalize=normalize)
         episode.statistics._iteration_operation.put("s")
         return episode._add_unknown([b1, b2])
 

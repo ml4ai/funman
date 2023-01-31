@@ -226,6 +226,7 @@ run-docker:
 		-d \
 		-it \
 		--cpus=5 \
+		--cap-add=SYS_PTRACE \
 		--name ${DEV_CONTAINER} \
     -p 127.0.0.1:8888:8888 \
     -p 127.0.0.1:8191:8190 \

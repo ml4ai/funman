@@ -33,6 +33,8 @@ class Parameter(BaseModel):
 
     class Config:
         underscore_attrs_are_private = True
+        smart_union = True
+        extra = "forbid"
         # arbitrary_types_allowed = True
 
     name: str
@@ -111,7 +113,7 @@ class Interval(BaseModel):
             self.lb, other.ub
         )
 
-    def width(self):
+    def width(self, normalize=1.0):
         """
         The width of an interval is ub - lb.
 
@@ -124,7 +126,7 @@ class Interval(BaseModel):
             if self.lb == NEG_INFINITY or self.ub == POS_INFINITY:
                 self.cached_width = BIG_NUMBER
             else:
-                self.cached_width = self.ub - self.lb
+                self.cached_width = (self.ub - self.lb) / normalize
         return self.cached_width
 
     def __lt__(self, other):
@@ -751,13 +753,20 @@ class Box(BaseModel):
         )
         return max_width_parameter
 
-    def _get_max_width_Parameter(self):
-        widths = [bounds.width() for _, bounds in self.bounds.items()]
+    def _get_max_width_Parameter(self, normalize={}):
+        widths = [
+            (
+                bounds.width(normalize=normalize[p])
+                if p in normalize
+                else bounds.width()
+            )
+            for p, bounds in self.bounds.items()
+        ]
         max_width = max(widths)
         param = list(self.bounds.keys())[widths.index(max_width)]
         return param, max_width
 
-    def width(self) -> float:
+    def width(self, normalize={}, overwrite_cache=False) -> float:
         """
         The width of a box is the maximum width of a parameter interval.
 
@@ -766,13 +775,17 @@ class Box(BaseModel):
         float
             Max{p: parameter}(p.ub-p.lb)
         """
-        if self.cached_width is None:
-            _, width = self._get_max_width_Parameter()
+        if self.cached_width is None or overwrite_cache:
+            _, width = self._get_max_width_Parameter(normalize=normalize)
             self.cached_width = width
 
         return self.cached_width
 
-    def split(self, points: List[List[Point]] = None):
+    def split(
+        self,
+        points: List[List[Point]] = None,
+        normalize: Dict[str, float] = {},
+    ):
         """
         Split box along max width dimension. If points are provided, then pick the axis where the points are maximally distant.
 
@@ -797,7 +810,8 @@ class Box(BaseModel):
                 p, _ = self._get_max_width_Parameter()
                 mid = self.bounds[p].midpoint()
         else:
-            p, _ = self._get_max_width_Parameter()
+
+            p, _ = self._get_max_width_Parameter(normalize=normalize)
             mid = self.bounds[p].midpoint()
 
         b1 = self._copy()

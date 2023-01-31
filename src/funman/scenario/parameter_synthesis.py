@@ -20,6 +20,7 @@ from funman.scenario import (
     ConsistencyScenario,
 )
 from funman.translate.translate import Encoder, Encoding
+from funman.utils.math_utils import minus
 
 
 class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
@@ -45,6 +46,7 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
     _query_encoding: Encoding = None
     _assume_model: FNode = None
     _assume_query: FNode = None
+    _original_parameter_widths: Dict[str, float] = {}
 
     def solve(
         self, config: "FUNMANConfig"
@@ -73,6 +75,10 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
             search = config._search()
 
         self._encode(config)
+
+        self._original_parameter_widths = {
+            p: minus(p.ub, p.lb) for p in self.parameters
+        }
 
         result: ParameterSpace = search.search(self, config)
         return ParameterSynthesisScenarioResult(
