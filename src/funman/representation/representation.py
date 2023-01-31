@@ -7,7 +7,7 @@ import json
 import logging
 from functools import total_ordering
 from statistics import mean as average
-from typing import Dict, List, Union
+from typing import Dict, List, Literal, Optional, Union
 
 from pydantic import BaseModel
 from pysmt.fnode import FNode
@@ -17,6 +17,12 @@ import funman.utils.math_utils as math_utils
 from funman.constants import BIG_NUMBER, NEG_INFINITY, POS_INFINITY
 
 l = logging.getLogger(__name__)
+
+
+LABEL_TRUE: Literal["true"] = "true"
+LABEL_FALSE: Literal["false"] = "false"
+LABEL_UNKNOWN: Literal["unknown"] = "unknown"
+Label = Literal["true", "false", "unknown"]
 
 
 class Parameter(BaseModel):
@@ -90,7 +96,10 @@ class Interval(BaseModel):
 
     lb: Union[float, str]
     ub: Union[float, str]
-    cached_width: float = None
+    cached_width: Optional[float] = None
+
+    class Config:
+        fields = {"cached_width": {"exclude": True}}
 
     def __hash__(self):
         return int(math_utils.plus(self.lb, self.ub))
@@ -372,25 +381,25 @@ class Interval(BaseModel):
         return {
             "lb": self.lb,
             "ub": self.ub,
-            # "cached_width": self.cached_width
         }
 
     @staticmethod
     def from_dict(data):
         res = Interval(lb=data["lb"], ub=data["ub"])
-        # res.cached_width = data["cached_width"]
         return res
 
 
 class Point(BaseModel):
+    type: Literal["point"] = "point"
     values: Dict[str, float]
+    label: Label = LABEL_UNKNOWN
 
     # def __init__(self, **kw) -> None:
     #     super().__init__(**kw)
     #     self.values = kw['values']
 
     def __str__(self):
-        return f"Point({self.values})"
+        return f"Point({self.dict()})"
 
     def to_dict(self):
         return {"values": {k: v for k, v in self.values.items()}}
@@ -414,28 +423,6 @@ class Point(BaseModel):
         else:
             return False
 
-    @staticmethod
-    def _encode_labeled_point(point: "Point", label: str):
-        return {"label": label, "type": "point", "value": point.to_dict()}
-
-    @staticmethod
-    def encode_true_point(point: "Point"):
-        return Point._encode_labeled_point(point, "true")
-
-    @staticmethod
-    def encode_false_point(point: "Point"):
-        return Point._encode_labeled_point(point, "false")
-
-    @staticmethod
-    def encode_unknown_point(point: "Point"):
-        return Point._encode_labeled_point(point, "unkown")
-
-    @staticmethod
-    def decode_labeled_point(point: dict):
-        if point["type"] != "point":
-            return None
-        return (Point.from_dict(point["value"]), point["label"])
-
 
 @total_ordering
 class Box(BaseModel):
@@ -443,8 +430,13 @@ class Box(BaseModel):
     A Box maps n parameters to intervals, representing an n-dimensional connected open subset of R^n.
     """
 
+    type: Literal["box"] = "box"
     bounds: Dict[str, Interval] = {}
-    cached_width: float = None
+    label: Label = LABEL_UNKNOWN
+    cached_width: Optional[float] = None
+
+    class Config:
+        fields = {"cached_width": {"exclude": True}}
 
     def __hash__(self):
         return int(sum([i.__hash__() for _, i in self.bounds.items()]))
@@ -552,7 +544,6 @@ class Box(BaseModel):
         """
         return {
             "bounds": {k: v.to_dict() for k, v in self.bounds.items()},
-            # "cached_width": self.cached_width
         }
 
     @staticmethod
@@ -575,7 +566,6 @@ class Box(BaseModel):
                 k: Interval.from_dict(v) for k, v in data["bounds"].items()
             }
         )
-        # res.cached_width = data["cached_width"]
         return res
 
     def _copy(self):
@@ -830,28 +820,6 @@ class Box(BaseModel):
         b2.bounds[p] = Interval(lb=mid, ub=b2.bounds[p].ub)
 
         return [b2, b1]
-
-    @staticmethod
-    def _encode_labeled_box(box: "Box", label: str):
-        return {"label": label, "type": "box", "value": box.to_dict()}
-
-    @staticmethod
-    def _encode_true_box(box: "Box"):
-        return Box._encode_labeled_box(box, "true")
-
-    @staticmethod
-    def _encode_false_box(box: "Box"):
-        return Box._encode_labeled_box(box, "false")
-
-    @staticmethod
-    def _encode_unknown_box(box: "Box"):
-        return Box._encode_labeled_box(box, "unknown")
-
-    @staticmethod
-    def _decode_labeled_box(box: dict):
-        if box["type"] != "box":
-            return None
-        return (Box.from_dict(box["value"]), box["label"])
 
     def intersect(
         self, b2: "Box", param_list: List[str] = None
@@ -1123,12 +1091,17 @@ class ParameterSpace(BaseModel):
     def decode_labeled_object(obj: dict):
         if not isinstance(obj, dict):
             raise Exception("obj is not a dict")
-        if "type" not in obj:
-            raise Exception("obj does not specify a 'type' field")
-        if obj["type"] == "point":
-            return (Point.decode_labeled_point(obj), Point)
-        if obj["type"] == "box":
-            return (Box._decode_labeled_box(obj), Box)
+
+        try:
+            return Point.parse_obj(obj)
+        except:
+            pass
+
+        try:
+            return Box.parse_obj(obj)
+        except:
+            pass
+
         raise Exception(f"obj of type {obj['type']}")
 
     def __repr__(self) -> str:
@@ -1221,17 +1194,16 @@ class ParameterSpace(BaseModel):
                 if len(line) == 0:
                     continue
                 data = json.loads(line)
-                ((inst, label), typ) = ParameterSpace.decode_labeled_object(
-                    data
-                )
-                if typ is Box:
+                inst = ParameterSpace.decode_labeled_object(data)
+                label = inst.label
+                if isinstance(inst, Box):
                     if label == "true":
                         ps.true_boxes.append(inst)
                     elif label == "false":
                         ps.false_boxes.append(inst)
                     else:
                         l.warning(f"Skipping Box with label: {label}")
-                elif typ is Point:
+                elif isinstance(inst, Point):
                     if label == "true":
                         ps.true_points.append(inst)
                     elif label == "false":
@@ -1239,5 +1211,5 @@ class ParameterSpace(BaseModel):
                     else:
                         l.warning(f"Skipping Point with label: {label}")
                 else:
-                    l.error(f"Skipping invalid object type: {typ}")
+                    l.error(f"Skipping invalid object type: {type(inst)}")
         return ps

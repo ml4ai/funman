@@ -18,7 +18,12 @@ from pysmt.formula import FNode
 from pysmt.logics import QF_NRA
 from pysmt.shortcuts import And, Not, Solver, get_model
 
-from funman.representation.representation import Interval
+from funman.representation.representation import (
+    LABEL_FALSE,
+    LABEL_TRUE,
+    LABEL_UNKNOWN,
+    Interval,
+)
 from funman.search import Box, ParameterSpace, Point, Search, SearchEpisode
 from funman.search.search import SearchStaticsMP, SearchStatistics
 from funman.utils.smtlib_utils import smtlibscript_from_formula_list
@@ -127,6 +132,7 @@ class BoxSearchEpisode(SearchEpisode):
 
     def _add_unknown_box(self, box: Box) -> bool:
         if box.width() > self.config.tolerance:
+            box.label = LABEL_UNKNOWN
             self._unknown_boxes.put(box)
             if self.config.number_of_processes > 1:
                 self.statistics._num_unknown.value += 1
@@ -145,6 +151,7 @@ class BoxSearchEpisode(SearchEpisode):
         return did_add
 
     def _add_false(self, box: Box):
+        box.label = LABEL_FALSE
         self._false_boxes.append(box)
         # with self.statistics.num_false.get_lock():
         #     self.statistics.num_false.value += 1
@@ -155,9 +162,11 @@ class BoxSearchEpisode(SearchEpisode):
             l.error(
                 f"Point: {point} is marked false, but already marked true."
             )
+        point.label = LABEL_FALSE
         self._false_points.add(point)
 
     def _add_true(self, box: Box):
+        box.label = LABEL_TRUE
         self._true_boxes.append(box)
         # with self.statistics.num_true.get_lock():
         #     self.statistics.num_true.value += 1
@@ -168,6 +177,7 @@ class BoxSearchEpisode(SearchEpisode):
             l.error(
                 f"Point: {point} is marked true, but already marked false."
             )
+        point.label = LABEL_TRUE
         self._true_points.add(point)
 
     def _get_unknown(self):
@@ -372,7 +382,7 @@ class BoxSearch(Search):
                 false_points = [episode._extract_point(res)]
                 for point in false_points:
                     episode._add_false_point(point)
-                    rval.put(Point.encode_false_point(point))
+                    rval.put(point.dict())
             solver.pop(1)  # Remove false query
             episode._formula_stack.pop()
 
@@ -396,7 +406,7 @@ class BoxSearch(Search):
                 true_points = [episode._extract_point(res1)]
                 for point in true_points:
                     episode._add_true_point(point)
-                    rval.put(Point.encode_true_point(point))
+                    rval.put(point.dict())
             solver.pop(1)  # Remove true query
             episode._formula_stack.pop()
 
@@ -448,7 +458,7 @@ class BoxSearch(Search):
                 while True:
                     try:
                         box: Box = episode._get_unknown()
-                        rval.put(Box._encode_unknown_box(box))
+                        rval.put(box.dict())
                         l.info(f"{process_name} claimed work")
                     except Empty:
                         exit = self._handle_empty_queue(
@@ -502,14 +512,14 @@ class BoxSearch(Search):
                             else:
                                 # box does not intersect f, so it is in t (true region)
                                 episode._add_true(box)
-                                rval.put(Box._encode_true_box(box))
+                                rval.put(box.dict())
                                 print(f"+++ True({box})")
                         else:
                             # box is a subset of f (intersects f but not t)
                             episode._add_false(
                                 box
                             )  # TODO consider merging lists of boxes
-                            rval.put(Box._encode_false_box(box))
+                            rval.put(box.dict())
                             print(f"--- False({box})")
                         solver.pop(1)  # Remove box from solver
                         episode._formula_stack.pop()
@@ -554,18 +564,16 @@ class BoxSearch(Search):
                         break
 
                     # TODO this is a bit of a mess and can likely be cleaned up
-                    (
-                        (inst, label),
-                        typ,
-                    ) = ParameterSpace.decode_labeled_object(result)
-                    if typ is Box:
+                    inst = ParameterSpace.decode_labeled_object(result)
+                    label = inst.label
+                    if isinstance(inst, Box):
                         if label == "true":
                             true_boxes.append(inst)
                         elif label == "false":
                             false_boxes.append(inst)
                         else:
                             l.warning(f"Skipping Box with label: {label}")
-                    elif typ is Point:
+                    elif isinstance(inst, Point):
                         if label == "true":
                             true_points.append(inst)
                         elif label == "false":
@@ -620,15 +628,13 @@ class BoxSearch(Search):
 
                     # TODO this is a bit of a mess and can likely be cleaned up
                     try:
-                        (
-                            (inst, label),
-                            typ,
-                        ) = ParameterSpace.decode_labeled_object(result)
+                        inst = ParameterSpace.decode_labeled_object(result)
                     except:
                         l.error(f"Skipping invalid object")
                         continue
 
-                    if typ is Box:
+                    label = inst.label
+                    if isinstance(inst, Box):
                         if label == "true":
                             all_results["true_boxes"].append(inst)
                         elif label == "false":
@@ -637,7 +643,7 @@ class BoxSearch(Search):
                             pass  # Allow unknown boxes for plotting
                         else:
                             l.warning(f"Skipping Box with label: {label}")
-                    elif typ is Point:
+                    elif isinstance(inst, Point):
                         if label == "true":
                             all_results["true_points"].append(inst)
                         elif label == "false":
@@ -645,7 +651,7 @@ class BoxSearch(Search):
                         else:
                             l.warning(f"Skipping Point with label: {label}")
                     else:
-                        l.error(f"Skipping invalid object type: {typ}")
+                        l.error(f"Skipping invalid object type: {type(inst)}")
                         continue
 
                     try:

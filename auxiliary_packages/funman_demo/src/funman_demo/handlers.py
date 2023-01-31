@@ -82,8 +82,9 @@ class RealtimeResultPlotter(ResultHandler):
         self.plotter.initialize_figure()
 
     def process(self, result: dict) -> None:
-        ((inst, label), typ) = ParameterSpace.decode_labeled_object(result)
-        if typ is Box and isinstance(inst, Box):
+        inst = ParameterSpace.decode_labeled_object(result)
+        label = inst.label
+        if isinstance(inst, Box):
             if label == "unknown":
                 self.plotter.plot_add_patch(
                     inst, color=self.plotter.color_map[label]
@@ -92,7 +93,7 @@ class RealtimeResultPlotter(ResultHandler):
                 self.plotter.plot_add_box(
                     inst, color=self.plotter.color_map[label]
                 )
-        elif typ is Point and isinstance(inst, Point):
+        elif isinstance(inst, Point):
             if self.plot_points:
                 self.plotter.plot_add_point(
                     inst,
@@ -100,7 +101,7 @@ class RealtimeResultPlotter(ResultHandler):
                     shape=self.plotter.shape_map[label],
                 )
         else:
-            print(f"Skipping invalid object type: {typ}")
+            print(f"Skipping invalid object type: {type(inst)}")
 
         if self.realtime_save_path is not None:
             plt.savefig(self.realtime_save_path, dpi=self.dpi)
