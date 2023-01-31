@@ -1,0 +1,117 @@
+
+{
+  "Qin": [
+    {
+      "variable": "S"
+    },
+    {
+      "variable": "I"
+    },
+    {
+      "variable": "R"
+    },
+    {
+      "variable": "H"
+    },
+    {
+      "variable": "D"
+    }
+  ],
+  "Qout": [
+    {
+      "tanvar": "S"
+    },
+    {
+      "tanvar": "I"
+    },
+    {
+      "tanvar": "R"
+    },
+    {
+      "tanvar": "H"
+    },
+    {
+      "tanvar": "D"
+    }
+  ],
+  "Win": [
+    {
+      "arg": 1,
+      "call": 1
+    },
+    {
+      "arg": 2,
+      "call": 1
+    },
+    {
+      "arg": 2,
+      "call": 2
+    },
+    {
+      "arg": 2,
+      "call": 3
+    },
+    {
+      "arg": 4,
+      "call": 4
+    }
+  ],
+  "Wn": [
+    {
+      "efflux": 1,
+      "effusion": 1
+    },
+    {
+      "efflux": 1,
+      "effusion": 2
+    },
+    {
+      "efflux": 2,
+      "effusion": 2
+    },
+    {
+      "efflux": 3,
+      "effusion": 2
+    },
+    {
+      "efflux": 4,
+      "effusion": 4
+    }
+  ],
+  "Wa": [
+    {
+      "influx": 1,
+      "infusion": 2
+    },
+    {
+      "influx": 1,
+      "infusion": 2
+    },
+    {
+      "influx": 2,
+      "infusion": 3
+    },
+    {
+      "influx": 3,
+      "infusion": 4
+    },
+    {
+      "influx": 4,
+      "infusion": 5
+    }
+  ],
+  "Box": [
+    {
+      "parameter": "beta"
+    },
+    {
+      "parameter": "gamma"
+    },
+    {
+      "parameter": "hosp"
+    },
+    {
+      "parameter": "death"
+    }
+  ]
+}
