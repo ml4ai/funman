@@ -87,8 +87,12 @@ class TestUseCases(unittest.TestCase):
         )
 
     def test_use_case_simple_parameter_synthesis(self):
-        x = Symbol("x", REAL)
-        y = Symbol("y", REAL)
+        parameters = [
+            Parameter(name="x"),
+            Parameter(name="y"),
+        ]
+        x = parameters[0].symbol()
+        y = parameters[1].symbol()
 
         formula = And(
             LE(x, Real(5.0)),
@@ -100,10 +104,7 @@ class TestUseCases(unittest.TestCase):
         funman = Funman()
         result: ParameterSynthesisScenarioResult = funman.solve(
             ParameterSynthesisScenario(
-                parameters=[
-                    Parameter(name="x", _symbol=x),
-                    Parameter(name="y", _symbol=y),
-                ],
+                parameters=parameters,
                 model=EncodedModel(_formula=formula),
                 query=QueryTrue(),
             )

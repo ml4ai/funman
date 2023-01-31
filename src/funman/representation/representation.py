@@ -3,7 +3,6 @@ This submodule contains definitions for the classes used
 during the configuration and execution of a search.
 """
 import copy
-import json
 import logging
 from functools import total_ordering
 from statistics import mean as average
@@ -157,7 +156,7 @@ class Interval(BaseModel):
             return False
 
     def __repr__(self):
-        return str(self.to_dict())
+        return str(self.dict())
 
     def __str__(self):
         return f"Interval([{self.lb}, {self.ub}))"
@@ -377,22 +376,11 @@ class Interval(BaseModel):
         """
         return math_utils.gte(value, self.lb) and math_utils.lt(value, self.ub)
 
-    def to_dict(self):
-        return {
-            "lb": self.lb,
-            "ub": self.ub,
-        }
-
-    @staticmethod
-    def from_dict(data):
-        res = Interval(lb=data["lb"], ub=data["ub"])
-        return res
-
 
 class Point(BaseModel):
     type: Literal["point"] = "point"
-    values: Dict[str, float]
     label: Label = LABEL_UNKNOWN
+    values: Dict[str, float]
 
     # def __init__(self, **kw) -> None:
     #     super().__init__(**kw)
@@ -401,11 +389,8 @@ class Point(BaseModel):
     def __str__(self):
         return f"Point({self.dict()})"
 
-    def to_dict(self):
-        return {"values": {k: v for k, v in self.values.items()}}
-
     def __repr__(self) -> str:
-        return str(self.to_dict())
+        return str(self.dict())
 
     @staticmethod
     def from_dict(data):
@@ -431,8 +416,8 @@ class Box(BaseModel):
     """
 
     type: Literal["box"] = "box"
-    bounds: Dict[str, Interval] = {}
     label: Label = LABEL_UNKNOWN
+    bounds: Dict[str, Interval] = {}
     cached_width: Optional[float] = None
 
     class Config:
@@ -533,41 +518,6 @@ class Box(BaseModel):
             candidates = meets_set.intersection(equals_set)
         return candidates
 
-    def to_dict(self) -> Dict[str, Dict[str, Dict[str, float]]]:
-        """
-        Covert Box to a dict.
-
-        Returns
-        -------
-        dict
-            dictionary representing the box
-        """
-        return {
-            "bounds": {k: v.to_dict() for k, v in self.bounds.items()},
-        }
-
-    @staticmethod
-    def from_dict(data: Dict[str, Dict[str, Dict[str, float]]]) -> "Box":
-        """
-        Create a box from a dict
-
-        Parameters
-        ----------
-        data : dict
-            box represented as dict
-
-        Returns
-        -------
-        Box
-            Box object for dict
-        """
-        res = Box(
-            bounds={
-                k: Interval.from_dict(v) for k, v in data["bounds"].items()
-            }
-        )
-        return res
-
     def _copy(self):
         c = Box(
             bounds={
@@ -591,7 +541,7 @@ class Box(BaseModel):
             return False
 
     def __repr__(self):
-        return str(self.to_dict())
+        return str(self.dict())
 
     def __str__(self):
         return f"Box({self.bounds}), width = {self.width()}"
@@ -1105,13 +1055,27 @@ class ParameterSpace(BaseModel):
         raise Exception(f"obj of type {obj['type']}")
 
     def __repr__(self) -> str:
-        return str(self.to_dict())
+        return str(self.dict())
 
-    def to_dict(self) -> Dict[str, List[Dict]]:
-        return {
-            "true_boxes": list(map(lambda x: x.to_dict(), self.true_boxes)),
-            "false_boxes": list(map(lambda x: x.to_dict(), self.false_boxes)),
-        }
+    def append_result(self, result: dict):
+        inst = ParameterSpace.decode_labeled_object(result)
+        label = inst.label
+        if isinstance(inst, Box):
+            if label == "true":
+                self.true_boxes.append(inst)
+            elif label == "false":
+                self.false_boxes.append(inst)
+            else:
+                l.info(f"Skipping Box with label: {label}")
+        elif isinstance(inst, Point):
+            if label == "true":
+                self.true_points.append(inst)
+            elif label == "false":
+                self.false_points.append(inst)
+            else:
+                l.info(f"Skipping Point with label: {label}")
+        else:
+            l.error(f"Skipping invalid object type: {type(inst)}")
 
     def consistent(self) -> bool:
         """
@@ -1185,31 +1149,3 @@ class ParameterSpace(BaseModel):
                         break
 
             return sorted_dimensions[dim]
-
-    @staticmethod
-    def from_file(filename: str) -> "ParameterSpace":
-        ps = ParameterSpace()
-        with open(filename) as f:
-            for line in f.readlines():
-                if len(line) == 0:
-                    continue
-                data = json.loads(line)
-                inst = ParameterSpace.decode_labeled_object(data)
-                label = inst.label
-                if isinstance(inst, Box):
-                    if label == "true":
-                        ps.true_boxes.append(inst)
-                    elif label == "false":
-                        ps.false_boxes.append(inst)
-                    else:
-                        l.warning(f"Skipping Box with label: {label}")
-                elif isinstance(inst, Point):
-                    if label == "true":
-                        ps.true_points.append(inst)
-                    elif label == "false":
-                        ps.false_points.append(inst)
-                    else:
-                        l.warning(f"Skipping Point with label: {label}")
-                else:
-                    l.error(f"Skipping invalid object type: {type(inst)}")
-        return ps

@@ -35,15 +35,16 @@ class NotebookImageRefresher(WaitAction):
 class ResultCacheWriter(ResultHandler):
     def __init__(self, write_path) -> None:
         self.write_path = write_path
+        self.parameter_space = ParameterSpace()
         self.f = None
 
     def open(self) -> None:
         self.f = open(self.write_path, "w")
 
     def process(self, result: dict) -> None:
-        data = json.dumps(result)
-        self.f.write(data)
-        self.f.write("\n")
+        self.parameter_space.append_result(result)
+        self.f.seek(0)
+        json.dump(self.parameter_space.dict(), self.f, indent=2)
         self.f.flush()
 
     def close(self) -> None:
