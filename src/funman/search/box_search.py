@@ -329,20 +329,10 @@ class BoxSearch(Search):
         episode._formula_stack.append(formula)
         solver.add_assertion(formula)
 
-    def store_smtlib(self, episode, box):
-        with open("dbg.smt2", "w") as f:
+    def store_smtlib(self, episode, box, filename="dbg.smt2"):
+        with open(filename, "w") as f:
             smtlibscript_from_formula_list(
-                [
-                    episode.problem._model_encoding.formula,
-                    episode.problem._query_encoding.formula,
-                    episode.problem._smt_encoder.box_to_smt(box),
-                    Not(
-                        And(
-                            episode.problem._assume_model,
-                            episode.problem._assume_query,
-                        )
-                    ),
-                ],
+                episode._formula_stack,
                 logic=QF_NRA,
             ).serialize(f, daggify=False)
 
@@ -372,8 +362,11 @@ class BoxSearch(Search):
             # If no cached point, then attempt to generate one
             # print("Checking false query")
             self._setup_false_query(solver, episode)
-            # self.store_smtlib(episode, box)
+
             if solver.solve():
+                # self.store_smtlib(
+                #     episode, box, filename=f"fp_{episode._iteration}.smt2"
+                # )
                 # Record the false point
                 res = solver.get_model()
                 false_points = [episode._extract_point(res)]
@@ -395,6 +388,9 @@ class BoxSearch(Search):
             self._setup_true_query(solver, episode)
             # self.store_smtlib(episode, box)
             if solver.solve():
+                # self.store_smtlib(
+                #     episode, box, filename=f"tp_{episode._iteration}.smt2"
+                # )
                 # Record the true point
                 res1 = solver.get_model()
                 true_points = [episode._extract_point(res1)]

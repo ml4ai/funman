@@ -113,7 +113,7 @@ class Interval(BaseModel):
             self.lb, other.ub
         )
 
-    def width(self, normalize=1.0):
+    def width(self, normalize=None):
         """
         The width of an interval is ub - lb.
 
@@ -126,8 +126,12 @@ class Interval(BaseModel):
             if self.lb == NEG_INFINITY or self.ub == POS_INFINITY:
                 self.cached_width = BIG_NUMBER
             else:
-                self.cached_width = (self.ub - self.lb) / normalize
-        return self.cached_width
+                self.cached_width = self.ub - self.lb
+
+        if normalize is not None:
+            return self.cached_width / normalize
+        else:
+            return self.cached_width
 
     def __lt__(self, other):
         if isinstance(other, Interval):
@@ -754,17 +758,17 @@ class Box(BaseModel):
         return max_width_parameter
 
     def _get_max_width_Parameter(self, normalize={}):
-        widths = [
-            (
+        widths = {
+            p: (
                 bounds.width(normalize=normalize[p])
                 if p in normalize
                 else bounds.width()
             )
             for p, bounds in self.bounds.items()
-        ]
-        max_width = max(widths)
-        param = list(self.bounds.keys())[widths.index(max_width)]
-        return param, max_width
+        }
+        max_width = max(widths, key=widths.get)
+
+        return max_width, widths[max_width]
 
     def width(self, normalize={}, overwrite_cache=False) -> float:
         """

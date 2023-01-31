@@ -133,9 +133,9 @@ class TestUseCases(TestUseCases):
         return params
 
     def bounds_sir_strat_fixed(self, noise=0.0):
-        if_lb = 1e-8
+        if_lb = 1e-6
         if_ub = 1e-3  # 1e-1
-        rec_lb = 1.0 / 60.0
+        rec_lb = 1.0 / 30.0
         rec_ub = 1.0 / 7.0  # 4e0
         params = {
             "inf_y_y": [if_lb, if_ub],
@@ -161,24 +161,24 @@ class TestUseCases(TestUseCases):
         query._formula = And(
             [
                 self.make_global_bounds(steps, init_values),
-                # GE(Symbol(f"Ro_{steps}", REAL), Symbol(f"Ro_0", REAL)),
-                # GE(Symbol(f"Ry_{steps}", REAL), Symbol(f"Ry_0", REAL)),
-                # GE(Symbol(f"Rm_{steps}", REAL), Symbol(f"Rm_0", REAL)),
-                # LE(Symbol(f"Ro_{steps}", REAL), Real(0.1)),
-                # LE(Symbol(f"Ry_{steps}", REAL), Real(0.1)),
-                # LE(Symbol(f"Rm_{steps}", REAL), Real(0.1)),
-                # GE(Symbol(f"Io_{steps}", REAL), Symbol(f"Io_0", REAL)),
-                # GE(Symbol(f"Iy_{steps}", REAL), Symbol(f"Iy_0", REAL)),
-                # GE(Symbol(f"Im_{steps}", REAL), Symbol(f"Im_0", REAL)),
-                # LE(Symbol(f"Io_{steps}", REAL), Real(2.0)),
-                # LE(Symbol(f"Iy_{steps}", REAL), Real(2.0)),
-                # LE(Symbol(f"Im_{steps}", REAL), Real(2.0)),
-                # LE(Symbol(f"So_{steps}", REAL), Symbol(f"So_0", REAL)),
-                # LE(Symbol(f"Sy_{steps}", REAL), Symbol(f"Sy_0", REAL)),
-                # LE(Symbol(f"Sm_{steps}", REAL), Symbol(f"Sm_0", REAL)),
-                # GE(Symbol(f"So_{steps}", REAL), Real(1997.0)),
-                # GE(Symbol(f"Sy_{steps}", REAL), Real(1997.0)),
-                # GE(Symbol(f"Sm_{steps}", REAL), Real(1997.0)),
+                GE(Symbol(f"Ro_{steps}", REAL), Symbol(f"Ro_0", REAL)),
+                GE(Symbol(f"Ry_{steps}", REAL), Symbol(f"Ry_0", REAL)),
+                GE(Symbol(f"Rm_{steps}", REAL), Symbol(f"Rm_0", REAL)),
+                LE(Symbol(f"Ro_{steps}", REAL), Real(0.1)),
+                LE(Symbol(f"Ry_{steps}", REAL), Real(0.1)),
+                LE(Symbol(f"Rm_{steps}", REAL), Real(0.1)),
+                GE(Symbol(f"Io_{steps}", REAL), Symbol(f"Io_0", REAL)),
+                GE(Symbol(f"Iy_{steps}", REAL), Symbol(f"Iy_0", REAL)),
+                GE(Symbol(f"Im_{steps}", REAL), Symbol(f"Im_0", REAL)),
+                LE(Symbol(f"Io_{steps}", REAL), Real(2.0)),
+                LE(Symbol(f"Iy_{steps}", REAL), Real(2.0)),
+                LE(Symbol(f"Im_{steps}", REAL), Real(2.0)),
+                LE(Symbol(f"So_{steps}", REAL), Symbol(f"So_0", REAL)),
+                LE(Symbol(f"Sy_{steps}", REAL), Symbol(f"Sy_0", REAL)),
+                LE(Symbol(f"Sm_{steps}", REAL), Symbol(f"Sm_0", REAL)),
+                GE(Symbol(f"So_{steps}", REAL), Real(1997.0)),
+                GE(Symbol(f"Sy_{steps}", REAL), Real(1997.0)),
+                GE(Symbol(f"Sm_{steps}", REAL), Real(1997.0)),
                 # self.make_max_difference_constraint(
                 #     steps, init_values, diff=100.0
                 # ),
@@ -235,7 +235,7 @@ class TestUseCases(TestUseCases):
             "initial": self.initial_state_sir_strat,
             "bounds": self.bounds_sir_strat_fixed,
             "identical": self.sir_strat_identical,
-            "steps": 60,
+            "steps": 1,
             "query": self.sir_strat_query,
             "report": self.report,
             "noise": 10.0,
@@ -254,8 +254,8 @@ class TestUseCases(TestUseCases):
             case["query"](case["steps"], case["initial"]()),
         )
         config = FUNMANConfig(max_steps=case["steps"], solver="dreal")
-        result_sat = Funman().solve(scenario, config=config)
-        case["report"](result_sat)
+        # result_sat = Funman().solve(scenario, config=config)
+        # case["report"](result_sat)
 
         # Do parameter synth
         case = case_sir_stratified_ps
@@ -269,9 +269,10 @@ class TestUseCases(TestUseCases):
             case["query"](case["steps"], case["initial"]()),
             case["params_to_synth"],
         )
-        config.tolerance = 1e-3
+        config.tolerance = 1e-4
         config.number_of_processes = 1
         config.num_initial_boxes = 1
+        config.max_steps = case["steps"]
         config._handler = ResultCombinedHandler(
             [
                 ResultCacheWriter(f"box_search.json"),
