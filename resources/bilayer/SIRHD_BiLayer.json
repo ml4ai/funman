@@ -19,19 +19,19 @@
   ],
   "Qout": [
     {
-      "tanvar": "S"
+      "tanvar": "S'"
     },
     {
-      "tanvar": "I"
+      "tanvar": "I'"
     },
     {
-      "tanvar": "R"
+      "tanvar": "R'"
     },
     {
-      "tanvar": "H"
+      "tanvar": "H'"
     },
     {
-      "tanvar": "D"
+      "tanvar": "D'"
     }
   ],
   "Win": [
