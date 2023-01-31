@@ -105,9 +105,10 @@ class TestUseCases(TestUseCases):
             "initial": self.initial_state_sidarthe,
             "bounds": self.bounds_sidarthe,
             "identical": self.sidarthe_identical,
-            "steps": 1,
+            "steps": 20,
             "query": self.sidarthe_query,
             "report": self.report,
+            "initial_state_tolerance": 1e-6,
         }
         scenario = self.make_scenario(
             BilayerDynamics(json_graph=case["model_fn"]()),
@@ -117,7 +118,11 @@ class TestUseCases(TestUseCases):
             case["steps"],
             case["query"](case["steps"], case["initial"]()),
         )
-        config = FUNMANConfig(max_steps=case["steps"], solver="dreal")
+        config = FUNMANConfig(
+            max_steps=case["steps"],
+            solver="dreal",
+            initial_state_tolerance=case["initial_state_tolerance"],
+        )
         result_sat = Funman().solve(scenario, config=config)
         case["report"](result_sat)
 

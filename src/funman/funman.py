@@ -37,6 +37,7 @@ class FUNMANConfig(BaseModel):
     max_steps: int = 2
     step_size: int = 1
     num_initial_boxes: int = 1
+    initial_state_tolerance = 0.0
 
     @validator("solver")
     def import_dreal(cls, v):

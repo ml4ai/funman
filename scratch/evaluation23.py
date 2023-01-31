@@ -144,20 +144,21 @@ class TestUseCases(unittest.TestCase):
             for i in range(steps):
                 vi = Symbol(f"{v}_{i}", REAL)
                 vj = Symbol(f"{v}_{i+1}", REAL)
-                # b = Times(Real(diff), vi)
-                # bm = Times(Real(-diff), vi)
-                b = Real(diff)
-                bm = Real(-diff)
+                b = Times(Real(diff), vi)
+                bm = Times(Real(-diff), vi)
+                # b = Real(diff)
+                # bm = Real(-diff)
                 constraint = And(LE(Minus(vi, vj), b), LE(bm, Minus(vi, vj)))
 
                 constraints.append(constraint)
 
         return And(constraints)
 
-    def make_monotone_constraints(self, steps, init_values):
+    @staticmethod
+    def make_monotone_constraints(steps, init_values, var_directions):
         # | v_i - v_{i+1} | < diff * v_i, for all v
         constraints = []
-        for (v, dir) in {("S", "decrease"), ("R", "increase")}:
+        for (v, dir) in var_directions:
             for i in range(steps):
                 vi = Symbol(f"{v}_{i}", REAL)
                 vj = Symbol(f"{v}_{i+1}", REAL)
@@ -383,7 +384,6 @@ class TestUseCases(unittest.TestCase):
                 # ),  # S is less than 0.5 on day 80
                 self.make_global_bounds(steps, init_values),
                 # self.make_max_difference_constraint(steps, init_values),
-                # self.make_monotone_constraints(steps, init_values),
                 # self.make_peak_constraints(steps, init_values),
             ]
         )

@@ -7,9 +7,11 @@ from typing import Dict, List, Set, Union
 
 import pysmt
 from pysmt.shortcuts import (
+    LE,
     TRUE,
     And,
     Equals,
+    Minus,
     Plus,
     Real,
     Symbol,
@@ -110,9 +112,25 @@ class BilayerEncoder(Encoder):
 
             init = And(
                 [
-                    Equals(
-                        self._encode_bilayer_state_node(node, timepoint=0),
-                        Real(model.init_values[node.parameter]),
+                    And(
+                        LE(
+                            Real(-1.0 * self.config.initial_state_tolerance),
+                            Minus(
+                                self._encode_bilayer_state_node(
+                                    node, timepoint=0
+                                ),
+                                Real(model.init_values[node.parameter]),
+                            ),
+                        ),
+                        LE(
+                            Minus(
+                                self._encode_bilayer_state_node(
+                                    node, timepoint=0
+                                ),
+                                Real(model.init_values[node.parameter]),
+                            ),
+                            Real(self.config.initial_state_tolerance),
+                        ),
                     )
                     for idx, node in model.bilayer._state.items()
                 ]

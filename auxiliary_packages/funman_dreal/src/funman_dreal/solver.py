@@ -425,9 +425,9 @@ class DRealNative(Solver, SmtLibBasicSolver, SmtLibIgnoreMixin):
         # dreal specific attributes
         self.context = dreal.Context()
         self.context.SetLogic(dreal.Logic.QF_NRA)
-        # self.context.config.precision = 0.0000001
+        self.context.config.precision = 1
         # self.context.config.use_polytope = True
-        # self.context.config.use_worklist_fixpoint = True
+        self.context.config.use_worklist_fixpoint = True
         self.model = None
         # dreal.set_log_level(dreal.LogLevel.DEBUG)
 
