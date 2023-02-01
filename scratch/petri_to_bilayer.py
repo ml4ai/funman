@@ -1,10 +1,13 @@
 import json
 
+
 def petri_to_bilayer(petri_net_path):
     """Takes in a LabelledPetriNet JSON object and outputs a BiLayer JSON object"""
     ### Initialize lists to build outputs
     Wa_list = []
     Wn_list = []
+    Wa_index_list = []
+    Wn_index_list = []
     Win_list = []
     Box_list = []
     Qin_list = []
@@ -37,7 +40,8 @@ def petri_to_bilayer(petri_net_path):
         i += 1
         ot = outtransition["ot"]
         os = outtransition["os"]
-        Wa_list.append({"influx": ot, "infusion": os})
+        Wa_index_list.append((ot, os))
+    #        Wa_list.append({"influx": ot, "infusion": os})
     #    print(Wa_list)
     ### Get Wn
     i = 1
@@ -46,7 +50,8 @@ def petri_to_bilayer(petri_net_path):
         i += 1
         it = intransition["it"]
         iss = intransition["is"]
-        Wn_list.append({"efflux": it, "effusion": iss})
+        Wn_index_list.append((it, iss))
+    #        Wn_list.append({"efflux": it, "effusion": iss})
     #    print(Wn_list)
     ### Get Win
     for state_var in petri_net_src["S"]:
@@ -66,9 +71,9 @@ def petri_to_bilayer(petri_net_path):
                                 == transition["index"]
                             ):
                                 ### Look up state variable with index "is"
-                                state_variable_src_index = (
-                                    into_transition_edge["is"]
-                                )
+                                state_variable_src_index = into_transition_edge[
+                                    "is"
+                                ]
                                 for state_var in petri_net_src["S"]:
                                     if (
                                         state_var["index"]
@@ -94,9 +99,9 @@ def petri_to_bilayer(petri_net_path):
                                 == transition["index"]
                             ):
                                 ### Look up state variable with index "is"
-                                state_variable_src_index = (
-                                    into_transition_edge["is"]
-                                )
+                                state_variable_src_index = into_transition_edge[
+                                    "is"
+                                ]
                                 for state_var in petri_net_src["S"]:
                                     if (
                                         state_var["index"]
@@ -109,6 +114,17 @@ def petri_to_bilayer(petri_net_path):
                                         if Win_list_input not in Win_list:
                                             Win_list.append(Win_list_input)
     #    print(Win_list) ### actually want to take the set of this
+    ########## Optional: getting rid of redundant edges
+    for elt in Wa_index_list:
+        if elt in Wn_index_list:
+            Wa_index_list.remove(elt)
+            Wn_index_list.remove(elt)
+    for elt in Wa_index_list:
+        Wa_list.append({"influx": elt[0], "infusion": elt[1]})
+    for elt in Wn_index_list:
+        Wn_list.append({"efflux": elt[0], "effusion": elt[1]})
+
+    ###################################################
     output = {
         "Qin": Qin_list,
         "Qout": Qout_list,
@@ -117,11 +133,12 @@ def petri_to_bilayer(petri_net_path):
         "Wn": Wn_list,
         "Win": Win_list,
     }
-    json_output = json.dumps(output, indent = 4)
+    json_output = json.dumps(output, indent=4)
     return json_output
 
 
 ################ Example use case
+
 print(
     petri_to_bilayer("../resources/petrinet/CHIME_SIR_dynamics_PetriNet.json")
 )
