@@ -321,7 +321,7 @@ class BilayerEncoder(Encoder):
         ## joined by an "And" command and returned
 
         for t in bilayer._tangent:  ## Loop over _tangents (derivatives)
-            derivative_expr = 0
+            derivative_expr = Real(0.0)
             ## Get _tangent variable and translate it to SMT form tanvar_smt
             tanvar = bilayer._tangent[t].parameter
             tanvar_smt = self._encode_bilayer_state_node(
@@ -364,12 +364,12 @@ class BilayerEncoder(Encoder):
                     self._encode_bilayer_edge(flux_sign_index[0], timepoint)
                     == "positive"
                 ):
-                    derivative_expr += expr
+                    Equals(derivative_expr, Plus(derivative_expr, expr))
                 elif (
                     self._encode_bilayer_edge(flux_sign_index[0], timepoint)
                     == "negative"
                 ):
-                    derivative_expr -= expr
+                    Equals(derivative_expr, Minus(derivative_expr, expr))
             # Assemble into equation of the form f(t + delta t) approximately =
             # f(t) + (delta t) f'(t)
             eqn = simplify(
