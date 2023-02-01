@@ -39,12 +39,14 @@ class FUNMANSmtPrinter(SmtPrinter):
         )
         if formula.constant_value() < 0:
             if d != 1:
-                res = f"(- {(n / d):20f})"
+                # res = f"(- {(n / d):20f})"
+                res = f"(- {(n / d)})"
             else:
                 res = f"(- {n})"
         else:
             if d != 1:
-                res = f"{(n / d):20f}"
+                # res = f"{(n / d):20f}"
+                res = f"{(n / d)}"
             else:
                 res = f"{n}"
 

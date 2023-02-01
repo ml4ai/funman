@@ -110,31 +110,7 @@ class BilayerEncoder(Encoder):
             for _, node in model.bilayer._flux.items():
                 self._untimed_symbols.add(node.parameter)
 
-            init = And(
-                [
-                    And(
-                        LE(
-                            Real(-1.0 * self.config.initial_state_tolerance),
-                            Minus(
-                                self._encode_bilayer_state_node(
-                                    node, timepoint=0
-                                ),
-                                Real(model.init_values[node.parameter]),
-                            ),
-                        ),
-                        LE(
-                            Minus(
-                                self._encode_bilayer_state_node(
-                                    node, timepoint=0
-                                ),
-                                Real(model.init_values[node.parameter]),
-                            ),
-                            Real(self.config.initial_state_tolerance),
-                        ),
-                    )
-                    for idx, node in model.bilayer._state.items()
-                ]
-            )
+            init = self._define_init(model)
 
             encoding = self._encode_bilayer(
                 model.bilayer,
@@ -236,12 +212,55 @@ class BilayerEncoder(Encoder):
                 encoding,
                 measurements,
                 identical_parameters,
+                (
+                    model._extra_constraints
+                    if model._extra_constraints
+                    else TRUE()
+                ),
             )
             symbols = self._symbols(formula)
             return Encoding(formula=formula, symbols=symbols)
         else:
             raise Exception(
                 f"BilayerEncoder cannot encode model of type: {type(model)}"
+            )
+
+    def _define_init(self, model):
+        if self.config.initial_state_tolerance == 0.0:
+            return And(
+                [
+                    Equals(
+                        self._encode_bilayer_state_node(node, timepoint=0),
+                        Real(model.init_values[node.parameter]),
+                    )
+                    for idx, node in model.bilayer._state.items()
+                ]
+            )
+        else:
+            return And(
+                [
+                    And(
+                        LE(
+                            Real(-1.0 * self.config.initial_state_tolerance),
+                            Minus(
+                                self._encode_bilayer_state_node(
+                                    node, timepoint=0
+                                ),
+                                Real(model.init_values[node.parameter]),
+                            ),
+                        ),
+                        LE(
+                            Minus(
+                                self._encode_bilayer_state_node(
+                                    node, timepoint=0
+                                ),
+                                Real(model.init_values[node.parameter]),
+                            ),
+                            Real(self.config.initial_state_tolerance),
+                        ),
+                    )
+                    for idx, node in model.bilayer._state.items()
+                ]
             )
 
     def _encode_measurements(

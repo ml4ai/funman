@@ -38,6 +38,7 @@ class FUNMANConfig(BaseModel):
     step_size: int = 1
     num_initial_boxes: int = 1
     initial_state_tolerance = 0.0
+    save_smtlib: bool = False
 
     @validator("solver")
     def import_dreal(cls, v):

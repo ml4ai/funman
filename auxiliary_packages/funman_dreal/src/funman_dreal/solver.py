@@ -427,11 +427,10 @@ class DRealNative(Solver, SmtLibBasicSolver, SmtLibIgnoreMixin):
         self.context.SetLogic(dreal.Logic.QF_NRA)
         self.context.config.precision = 1
         # self.context.config.use_polytope = True
-        self.context.config.use_worklist_fixpoint = True
+        # self.context.config.use_worklist_fixpoint = True
         self.model = None
         # dreal.set_log_level(dreal.LogLevel.DEBUG)
-
-        # self.config.number_of_jobs = 4
+        dreal.set_log_level(dreal.LogLevel.INFO)
 
         # self.to = self.environment.typeso
         self.LOGICS = DReal.LOGICS

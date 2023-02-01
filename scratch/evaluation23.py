@@ -234,6 +234,7 @@ class TestUseCases(unittest.TestCase):
         steps,
         query,
         params_to_synth=["inf_o_o", "rec_o_o"],
+        extra_constraints=None,
     ):
         model = BilayerModel(
             bilayer=bilayer,
@@ -241,7 +242,7 @@ class TestUseCases(unittest.TestCase):
             parameter_bounds=parameter_bounds,
             identical_parameters=identical_parameters,
         )
-
+        model._extra_constraints = extra_constraints
         parameters = [
             Parameter(name=k, lb=v[0], ub=v[1])
             for k, v in parameter_bounds.items()
@@ -405,6 +406,7 @@ class TestUseCases(unittest.TestCase):
         identical_parameters,
         steps,
         query,
+        extra_constraints=None,
     ):
         model = BilayerModel(
             bilayer=bilayer,
@@ -412,6 +414,7 @@ class TestUseCases(unittest.TestCase):
             parameter_bounds=parameter_bounds,
             identical_parameters=identical_parameters,
         )
+        model._extra_constraints = extra_constraints
 
         scenario = ConsistencyScenario(model=model, query=query)
         return scenario

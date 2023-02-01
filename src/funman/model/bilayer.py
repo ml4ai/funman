@@ -3,6 +3,7 @@ from typing import Dict, List, Literal, Optional, Union
 
 import graphviz
 from pydantic import BaseModel, validator
+from pysmt.formula import FNode
 from pysmt.shortcuts import (
     FALSE,
     GE,
@@ -463,9 +464,13 @@ class BilayerModel(Model):
 
     """
 
+    class Config:
+        underscore_attrs_are_private = True
+
     bilayer: BilayerDynamics
     measurements: BilayerMeasurement = None
     identical_parameters: List[List[str]] = []
+    _extra_constraints: FNode = None
 
     def default_encoder(self, config: "FUNMANConfig") -> "Encoder":
         """

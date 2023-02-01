@@ -50,7 +50,8 @@ RESOURCES = os.path.join(
 class TestUseCases(TestUseCases):
     def sidarthe_bilayer(self):
         with open(
-            os.path.join(RESOURCES, "bilayer", "SIDARTHEV_BiLayer.json"), "r",
+            os.path.join(RESOURCES, "bilayer", "SIDARTHEV_BiLayer.json"),
+            "r",
         ) as f:
             bilayer = json.load(f)
         return bilayer

@@ -362,11 +362,12 @@ class BoxSearch(Search):
             # If no cached point, then attempt to generate one
             # print("Checking false query")
             self._setup_false_query(solver, episode)
-
+            if episode.config.save_smtlib:
+                self.store_smtlib(
+                    episode, box, filename=f"fp_{episode._iteration}.smt2"
+                )
             if solver.solve():
-                # self.store_smtlib(
-                #     episode, box, filename=f"fp_{episode._iteration}.smt2"
-                # )
+
                 # Record the false point
                 res = solver.get_model()
                 false_points = [episode._extract_point(res)]
@@ -386,6 +387,10 @@ class BoxSearch(Search):
             # If no cached point, then attempt to generate one
             # print("Checking true query")
             self._setup_true_query(solver, episode)
+            if episode.config.save_smtlib:
+                self.store_smtlib(
+                    episode, box, filename=f"tp_{episode._iteration}.smt2"
+                )
             # self.store_smtlib(episode, box)
             if solver.solve():
                 # self.store_smtlib(
