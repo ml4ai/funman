@@ -3,6 +3,7 @@ This module encodes bilayer models into a SMTLib formula.
 
 """
 import logging
+from functools import reduce
 from typing import Dict, List, Set, Union
 
 import pysmt
@@ -321,7 +322,8 @@ class BilayerEncoder(Encoder):
         ## joined by an "And" command and returned
 
         for t in bilayer._tangent:  ## Loop over _tangents (derivatives)
-            derivative_expr = Real(0.0)
+            pos_derivative_expr_terms = []
+            neg_derivative_expr_terms = []
             ## Get _tangent variable and translate it to SMT form tanvar_smt
             tanvar = bilayer._tangent[t].parameter
             tanvar_smt = self._encode_bilayer_state_node(
@@ -364,18 +366,34 @@ class BilayerEncoder(Encoder):
                     self._encode_bilayer_edge(flux_sign_index[0], timepoint)
                     == "positive"
                 ):
-                    Equals(derivative_expr, Plus(derivative_expr, expr))
+                    pos_derivative_expr_terms.append(expr)
                 elif (
                     self._encode_bilayer_edge(flux_sign_index[0], timepoint)
                     == "negative"
                 ):
-                    Equals(derivative_expr, Minus(derivative_expr, expr))
+                    neg_derivative_expr_terms.append(expr)
             # Assemble into equation of the form f(t + delta t) approximately =
             # f(t) + (delta t) f'(t)
+            pos_terms = (
+                reduce(lambda a, b: Plus(a, b), pos_derivative_expr_terms)
+                if len(pos_derivative_expr_terms) > 0
+                else Real(0.0)
+            )
+            neg_terms = (
+                reduce(lambda a, b: Plus(a, b), neg_derivative_expr_terms)
+                if len(neg_derivative_expr_terms) > 0
+                else Real(0.0)
+            )
             eqn = simplify(
                 Equals(
                     state_var_next_step_smt,
-                    Plus(state_var_smt, time_step_size * derivative_expr),
+                    Plus(
+                        state_var_smt,
+                        Times(
+                            Real(time_step_size),
+                            Minus(pos_terms, neg_terms),
+                        ),
+                    ),
                 )
             )
             # print(eqn)

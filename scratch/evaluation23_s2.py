@@ -300,6 +300,7 @@ class TestUseCases(TestUseCases):
         result_sat = Funman().solve(scenario, config=config)
         # case["report"](result_sat)
 
+    @unittest.skip(reason="tmp")
     def test_scenario_2_1_b_i(self):
         self.iteration = 0
         case = {
@@ -370,7 +371,7 @@ class TestUseCases(TestUseCases):
 
         pass
 
-    @unittest.skip("tmp")
+    # @unittest.skip("tmp")
     def test_scenario_2_1_d_2d(self):
         self.iteration = 0
         case = {
@@ -378,11 +379,11 @@ class TestUseCases(TestUseCases):
             "initial": self.initial_state_sidarthe,
             "bounds": self.bounds_sidarthe,
             "identical": self.sidarthe_identical,
-            "steps": 2,
+            "steps": 100,
             "query": self.sidarthe_query_1_1_d_1d,
             "report": self.report,
             "initial_state_tolerance": 0,
-            "step_size": 2,
+            "step_size": 4,
             "extra_constraints": self.sidarthe_extra_1_1_d_2d,
         }
         bounds = case["bounds"]()
@@ -403,9 +404,10 @@ class TestUseCases(TestUseCases):
             bounds,
             case["identical"](),
             case["steps"],
-            case["query"](case["steps"], case["initial"](), bound=0.33),
+            # case["query"](),
+            case["query"](case["steps"], case["initial"](), bound=1),
             extra_constraints=case["extra_constraints"](
-                case["steps"], case["initial"]()
+                case["steps"], case["initial"](), step_size=case["step_size"]
             ),
         )
         config = FUNMANConfig(
@@ -422,11 +424,12 @@ class TestUseCases(TestUseCases):
             "initial": self.initial_state_sidarthe,
             "bounds": self.bounds_sidarthe,
             "identical": self.sidarthe_identical,
-            "steps": 60,
+            "steps": 100,
             "query": self.sidarthe_query_1_1_d_1d,
             "report": self.report,
             "initial_state_tolerance": 0,
             "extra_constraints": self.sidarthe_extra_1_1_d_2d,
+            "step_size": 10,
         }
         bounds = case["bounds"]()
         epsilon_tolerance = 1e-9
@@ -458,7 +461,8 @@ class TestUseCases(TestUseCases):
             num_initial_boxes=1,
             initial_state_tolerance=case["initial_state_tolerance"],
             tolerance=1e-11,
-            save_smtlib=True,
+            save_smtlib=False,
+            step_size=case["step_size"],
         )
         config._handler = ResultCombinedHandler(
             [

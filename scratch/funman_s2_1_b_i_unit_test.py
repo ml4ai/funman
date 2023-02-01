@@ -65,7 +65,7 @@ class TestUseCases(TestUseCases):
         ) as f:
             bilayer = json.load(f)
         return bilayer
-    
+
     def sidarthe_bilayer_CM(self):
         with open(
             os.path.join(
@@ -309,7 +309,10 @@ class TestUseCases(TestUseCases):
         }
         bounds = case["bounds"]()
         factor = 1.0
-        bounds = {k: [v[0]*(1.0-factor), v[1]*(1.0+factor)] for k, v in bounds.items()}
+        bounds = {
+            k: [v[0] * (1.0 - factor), v[1] * (1.0 + factor)]
+            for k, v in bounds.items()
+        }
 
         scenario = self.make_scenario(
             BilayerDynamics(json_graph=case["model_fn"]()),
@@ -362,7 +365,6 @@ class TestUseCases(TestUseCases):
         )
 
         pass
-
 
     def test_scenario_2_1_b_i_CMM(self):
         # Manually encoded Bilayer by CM and DM
@@ -433,6 +435,7 @@ class TestUseCases(TestUseCases):
         )
 
         pass
+
 
 if __name__ == "__main__":
     unittest.main()
