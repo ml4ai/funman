@@ -79,6 +79,18 @@ class TestUseCases(TestUseCases):
             bilayer = json.load(f)
         return bilayer
 
+    def sidarthe_bilayer_extract(self):
+        with open(
+            os.path.join(
+                RESOURCES,
+                "bilayer",
+                "SKEMA_SIDARTHE_PN_BL_renamed_transitions.json",
+            ),
+            "r",
+        ) as f:
+            bilayer = json.load(f)
+        return bilayer
+
     def initial_state_sidarthe(self):
         with open(
             os.path.join(
@@ -140,7 +152,7 @@ class TestUseCases(TestUseCases):
     def sidarthe_identical(self):
         return []
 
-    # @unittest.skip("tmp")
+    @unittest.skip("tmp")
     def test_scenario_2_1_b_i(self):
         self.iteration = 0
         case = {
@@ -195,6 +207,76 @@ class TestUseCases(TestUseCases):
         ax.set_ylabel("I+D+A+R+T")
         try:
             plt.savefig(f"funman_s2_1_b_i_infected.png")
+        except Exception as e:
+            pass
+        plt.clf()
+
+        assert (
+            abs(max_infected - case["expected_max_infected"])
+            < case["test_threshold"]
+        )
+        assert (
+            abs(max_day - case["expected_max_day"])
+            < case["test_max_day_threshold"]
+        )
+
+        pass
+
+    def test_scenario_2_1_b_i_extract(self):
+        self.iteration = 0
+        case = {
+            "name": "funman_s2_1_b_i_SKEMA_extract",
+            "model_fn": self.sidarthe_bilayer_extract,
+            "initial": self.initial_state_sidarthe,
+            "bounds": self.bounds_sidarthe,
+            "identical": self.sidarthe_identical,
+            "steps": 100,
+            "query": QueryTrue,
+            "report": self.report,
+            "initial_state_tolerance": 0,
+            "step_size": 2,
+            "extra_constraints": self.sidarthe_extra_1_1_d_2d,
+            "test_threshold": 0.1,
+            "expected_max_infected": 0.6,
+            "test_max_day_threshold": 25,
+            "expected_max_day": 47,
+        }
+        bounds = case["bounds"]()
+
+        scenario = self.make_scenario(
+            BilayerDynamics(json_graph=case["model_fn"]()),
+            case["initial"](),
+            bounds,
+            case["identical"](),
+            case["steps"],
+            case["query"](),
+            extra_constraints=case["extra_constraints"](
+                case["steps"], case["initial"](), step_size=case["step_size"]
+            ),
+        )
+        config = FUNMANConfig(
+            max_steps=case["steps"],
+            step_size=case["step_size"],
+            solver="dreal",
+            initial_state_tolerance=case["initial_state_tolerance"],
+        )
+        result_sat = Funman().solve(scenario, config=config)
+        case["report"](result_sat, name=case["name"])
+
+        df = result_sat.dataframe()
+
+        df["infected_states"] = df.apply(
+            lambda x: sum([x["I"], x["D"], x["A"], x["R"], x["T"]]), axis=1
+        )
+        max_infected = df["infected_states"].max()
+        max_day = df["infected_states"].idxmax()
+        ax = df["infected_states"].plot(
+            title=f"I+D+A+R+T by day (max: {max_infected}, day: {max_day})",
+        )
+        ax.set_xlabel("Day")
+        ax.set_ylabel("I+D+A+R+T")
+        try:
+            plt.savefig(f"{case['name']}_infected.png")
         except Exception as e:
             pass
         plt.clf()
@@ -369,11 +451,12 @@ class TestUseCases(TestUseCases):
 
         pass
 
-    @unittest.skip("tmp")
+    # @unittest.skip("tmp")
     def test_scenario_2_1_b_i_CMM(self):
         # Manually encoded Bilayer by CM and DM
         self.iteration = 3
         case = {
+            "name": "funman_s2_1_b_i_CMM_hand",
             "model_fn": self.sidarthe_bilayer_CM,
             "initial": self.initial_state_sidarthe,
             "bounds": self.bounds_sidarthe,
@@ -409,7 +492,7 @@ class TestUseCases(TestUseCases):
             initial_state_tolerance=case["initial_state_tolerance"],
         )
         result_sat = Funman().solve(scenario, config=config)
-        case["report"](result_sat)
+        case["report"](result_sat, name=case["name"])
 
         df = result_sat.dataframe()
 
@@ -424,7 +507,7 @@ class TestUseCases(TestUseCases):
         ax.set_xlabel("Day")
         ax.set_ylabel("I+D+A+R+T")
         try:
-            plt.savefig(f"funman_s2_1_b_i_infected.png")
+            plt.savefig(f"{case['name']}_infected.png")
         except Exception as e:
             pass
         plt.clf()

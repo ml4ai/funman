@@ -253,7 +253,7 @@ class TestUseCases(unittest.TestCase):
         )
         return scenario
 
-    def report(self, result: AnalysisScenario):
+    def report(self, result: AnalysisScenario, name="bilayer"):
         if result.consistent:
             parameters = result._parameters()
             print(f"Iteration {self.iteration}: {parameters}")
@@ -262,7 +262,7 @@ class TestUseCases(unittest.TestCase):
             self.results_df = pd.concat([self.results_df, res])
             result.scenario.model.bilayer.to_dot(
                 values=result.scenario.model.variables()
-            ).render(f"bilayer_{self.iteration}")
+            ).render(f"{name}_bilayer")
             print(result.dataframe())
             ax = result.plot(
                 variables=list(result.scenario.model.init_values.keys()),
@@ -271,7 +271,7 @@ class TestUseCases(unittest.TestCase):
             ax.set_xlabel("Day")
             ax.set_ylabel("Proportion Population")
             try:
-                plt.savefig(f"bilayer_{self.iteration}.png")
+                plt.savefig(f"{name}_test_case.png")
             except Exception as e:
                 print(
                     f"Iteration {self.iteration}: Exception while plotting: {e}"
