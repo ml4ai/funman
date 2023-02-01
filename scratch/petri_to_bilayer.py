@@ -1,6 +1,5 @@
 import json
 
-
 def petri_to_bilayer(petri_net_path):
     """Takes in a LabelledPetriNet JSON object and outputs a BiLayer JSON object"""
     ### Initialize lists to build outputs
@@ -118,7 +117,8 @@ def petri_to_bilayer(petri_net_path):
         "Wn": Wn_list,
         "Win": Win_list,
     }
-    return output
+    json_output = json.dumps(output, indent = 4)
+    return json_output
 
 
 ################ Example use case
