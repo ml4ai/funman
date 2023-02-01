@@ -51,69 +51,9 @@ def petri_to_bilayer(petri_net_path):
         it = intransition["it"]
         iss = intransition["is"]
         Wn_index_list.append((it, iss))
+        Win_list.append({"arg": iss, "call": it})
     #        Wn_list.append({"efflux": it, "effusion": iss})
     #    print(Wn_list)
-    ### Get Win
-    for state_var in petri_net_src["S"]:
-        for out_of_transition_edge in petri_net_src[
-            "O"
-        ]:  ## Loop over edges that will be added
-            if out_of_transition_edge["os"] == state_var["index"]:
-                summand = out_of_transition_edge[
-                    "ot"
-                ]  ## Finding relevant transition
-                for transition in petri_net_src["T"]:
-                    if transition["index"] == summand:
-                        ### Find state vars that point into transition
-                        for into_transition_edge in petri_net_src["I"]:
-                            if (
-                                into_transition_edge["it"]
-                                == transition["index"]
-                            ):
-                                ### Look up state variable with index "is"
-                                state_variable_src_index = into_transition_edge[
-                                    "is"
-                                ]
-                                for state_var in petri_net_src["S"]:
-                                    if (
-                                        state_var["index"]
-                                        == state_variable_src_index
-                                    ):
-                                        Win_list_input = {
-                                            "arg": state_var["index"],
-                                            "call": transition["index"],
-                                        }
-                                        if Win_list_input not in Win_list:
-                                            Win_list.append(Win_list_input)
-        for into_transition_edge in petri_net_src["I"]:
-            if into_transition_edge["is"] == state_var["index"]:
-                summand = into_transition_edge[
-                    "it"
-                ]  ## Finding relevant transition
-                for transition in petri_net_src["T"]:
-                    if transition["index"] == summand:
-                        ### Find state vars that point into transition
-                        for into_transition_edge in petri_net_src["I"]:
-                            if (
-                                into_transition_edge["it"]
-                                == transition["index"]
-                            ):
-                                ### Look up state variable with index "is"
-                                state_variable_src_index = into_transition_edge[
-                                    "is"
-                                ]
-                                for state_var in petri_net_src["S"]:
-                                    if (
-                                        state_var["index"]
-                                        == state_variable_src_index
-                                    ):
-                                        Win_list_input = {
-                                            "arg": state_var["index"],
-                                            "call": transition["index"],
-                                        }
-                                        if Win_list_input not in Win_list:
-                                            Win_list.append(Win_list_input)
-    #    print(Win_list) ### actually want to take the set of this
     ########## Optional: getting rid of redundant edges
     for elt in Wa_index_list:
         if elt in Wn_index_list:
@@ -123,7 +63,6 @@ def petri_to_bilayer(petri_net_path):
         Wa_list.append({"influx": elt[0], "infusion": elt[1]})
     for elt in Wn_index_list:
         Wn_list.append({"efflux": elt[0], "effusion": elt[1]})
-
     ###################################################
     output = {
         "Qin": Qin_list,
@@ -140,5 +79,5 @@ def petri_to_bilayer(petri_net_path):
 ################ Example use case
 
 print(
-    petri_to_bilayer("../resources/petrinet/CHIME_SIR_dynamics_PetriNet.json")
+    petri_to_bilayer("../resources/petrinet/SIDARTHE_petri_DMI.json")
 )
