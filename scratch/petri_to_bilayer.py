@@ -67,9 +67,9 @@ def petri_to_bilayer(petri_net_path):
                                 == transition["index"]
                             ):
                                 ### Look up state variable with index "is"
-                                state_variable_src_index = into_transition_edge[
-                                    "is"
-                                ]
+                                state_variable_src_index = (
+                                    into_transition_edge["is"]
+                                )
                                 for state_var in petri_net_src["S"]:
                                     if (
                                         state_var["index"]
@@ -95,9 +95,9 @@ def petri_to_bilayer(petri_net_path):
                                 == transition["index"]
                             ):
                                 ### Look up state variable with index "is"
-                                state_variable_src_index = into_transition_edge[
-                                    "is"
-                                ]
+                                state_variable_src_index = (
+                                    into_transition_edge["is"]
+                                )
                                 for state_var in petri_net_src["S"]:
                                     if (
                                         state_var["index"]

@@ -430,7 +430,7 @@ class DRealNative(Solver, SmtLibBasicSolver, SmtLibIgnoreMixin):
         # self.context.config.use_worklist_fixpoint = True
         self.model = None
         # dreal.set_log_level(dreal.LogLevel.DEBUG)
-        dreal.set_log_level(dreal.LogLevel.INFO)
+        # dreal.set_log_level(dreal.LogLevel.INFO)
 
         # self.to = self.environment.typeso
         self.LOGICS = DReal.LOGICS

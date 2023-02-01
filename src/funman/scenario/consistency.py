@@ -156,14 +156,15 @@ class ConsistencyScenarioResult(AnalysisScenarioResult, BaseModel):
         """
         if self.consistent:
             if variables is not None:
-                self.dataframe()[variables].plot(marker="o", **kwargs)
+                ax = self.dataframe()[variables].plot(marker="o", **kwargs)
             else:
-                self.dataframe().plot(marker="o", **kwargs)
+                ax = self.dataframe().plot(marker="o", **kwargs)
             plt.show(block=False)
         else:
             raise Exception(
                 f"Cannot plot result for an inconsistent scenario."
             )
+        return ax
 
     def __repr__(self) -> str:
         return str(self.consistent)

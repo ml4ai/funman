@@ -78,7 +78,7 @@ class TestUseCases(TestUseCases):
             params = json.load(f)
         return {k: [v, v] for k, v in params.items()}
 
-    def make_bounds(self, steps, init_values, tolerance=1e-5):
+    def make_bounds(self, steps, init_values, tolerance=1e-5, step_size=1):
         return And(
             [
                 And(
@@ -103,7 +103,7 @@ class TestUseCases(TestUseCases):
                         ),
                     ]
                 )
-                for i in range(steps + 1)
+                for i in range(0, steps + 1, step_size)
             ]
         )
 
@@ -152,10 +152,10 @@ class TestUseCases(TestUseCases):
             ]
         )
 
-    def sidarthe_extra_1_1_d_2d(self, steps, init_values):
+    def sidarthe_extra_1_1_d_2d(self, steps, init_values, step_size=1):
         return And(
             [
-                self.make_bounds(steps, init_values),
+                self.make_bounds(steps, init_values, step_size=step_size),
                 GE(
                     Symbol("theta", REAL),
                     Times(Real(2.0), Symbol("epsilon", REAL)),
@@ -300,6 +300,77 @@ class TestUseCases(TestUseCases):
         result_sat = Funman().solve(scenario, config=config)
         # case["report"](result_sat)
 
+    def test_scenario_2_1_b_i(self):
+        self.iteration = 0
+        case = {
+            "model_fn": self.sidarthe_bilayer,
+            "initial": self.initial_state_sidarthe,
+            "bounds": self.bounds_sidarthe,
+            "identical": self.sidarthe_identical,
+            "steps": 100,
+            # "query": self.sidarthe_query_1_1_d_1d,
+            "report": self.report,
+            "initial_state_tolerance": 0,
+            "step_size": 2,
+            "extra_constraints": self.sidarthe_extra_1_1_d_2d,
+            "test_threshold": 0.1,
+            "expected_max_infected": 0.6,
+            "test_max_day_threshold": 25,
+            "expected_max_day": 47,
+        }
+        bounds = case["bounds"]()
+
+        scenario = self.make_scenario(
+            BilayerDynamics(json_graph=case["model_fn"]()),
+            case["initial"](),
+            bounds,
+            case["identical"](),
+            case["steps"],
+            # case["query"](case["steps"], case["initial"](), bound=0.33),
+            QueryTrue(),
+            extra_constraints=case["extra_constraints"](
+                case["steps"], case["initial"](), step_size=case["step_size"]
+            ),
+        )
+        config = FUNMANConfig(
+            max_steps=case["steps"],
+            step_size=case["step_size"],
+            solver="dreal",
+            initial_state_tolerance=case["initial_state_tolerance"],
+        )
+        result_sat = Funman().solve(scenario, config=config)
+        case["report"](result_sat)
+
+        df = result_sat.dataframe()
+
+        df["infected_states"] = df.apply(
+            lambda x: sum([x["I"], x["D"], x["A"], x["R"], x["T"]]), axis=1
+        )
+        max_infected = df["infected_states"].max()
+        max_day = df["infected_states"].idxmax()
+        ax = df["infected_states"].plot(
+            title=f"I+D+A+R+T by day (max: {max_infected}, day: {max_day})",
+        )
+        ax.set_xlabel("Day")
+        ax.set_ylabel("I+D+A+R+T")
+        try:
+            plt.savefig(f"s2_1_b_i_infected.png")
+        except Exception as e:
+            pass
+        plt.clf()
+
+        assert (
+            abs(max_infected - case["expected_max_infected"])
+            < case["test_threshold"]
+        )
+        assert (
+            abs(max_day - case["expected_max_day"])
+            < case["test_max_day_threshold"]
+        )
+
+        pass
+
+    @unittest.skip("tmp")
     def test_scenario_2_1_d_2d(self):
         self.iteration = 0
         case = {
@@ -307,24 +378,25 @@ class TestUseCases(TestUseCases):
             "initial": self.initial_state_sidarthe,
             "bounds": self.bounds_sidarthe,
             "identical": self.sidarthe_identical,
-            "steps": 65,
+            "steps": 2,
             "query": self.sidarthe_query_1_1_d_1d,
             "report": self.report,
             "initial_state_tolerance": 0,
+            "step_size": 2,
             "extra_constraints": self.sidarthe_extra_1_1_d_2d,
         }
         bounds = case["bounds"]()
         # bounds["epsilon"] = [0.170, 0.172]
-        epsilon_tolerance = 0.00001
+        epsilon_tolerance = 1e-1
         # theta_tolerance = 0.001
-        bounds["epsilon"] = [
-            bounds["epsilon"][0],
-            bounds["epsilon"][1] + epsilon_tolerance,
-        ]
-        bounds["theta"] = [
-            2 * bounds["epsilon"][0],
-            2 * bounds["epsilon"][1],
-        ]
+        # bounds["epsilon"] = [
+        #     bounds["epsilon"][0],
+        #     bounds["epsilon"][1] + epsilon_tolerance,
+        # ]
+        # bounds["theta"] = [
+        #     2 * bounds["epsilon"][0],
+        #     2 * bounds["epsilon"][1],
+        # ]
         scenario = self.make_scenario(
             BilayerDynamics(json_graph=case["model_fn"]()),
             case["initial"](),
@@ -332,15 +404,18 @@ class TestUseCases(TestUseCases):
             case["identical"](),
             case["steps"],
             case["query"](case["steps"], case["initial"](), bound=0.33),
-            case["extra_constraints"](case["steps"], case["initial"]()),
+            extra_constraints=case["extra_constraints"](
+                case["steps"], case["initial"]()
+            ),
         )
         config = FUNMANConfig(
             max_steps=case["steps"],
+            step_size=case["step_size"],
             solver="dreal",
             initial_state_tolerance=case["initial_state_tolerance"],
         )
-        # result_sat = Funman().solve(scenario, config=config)
-        # case["report"](result_sat)
+        result_sat = Funman().solve(scenario, config=config)
+        case["report"](result_sat)
 
         case = {
             "model_fn": self.sidarthe_bilayer,

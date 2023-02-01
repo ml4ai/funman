@@ -264,10 +264,12 @@ class TestUseCases(unittest.TestCase):
                 values=result.scenario.model.variables()
             ).render(f"bilayer_{self.iteration}")
             print(result.dataframe())
-            result.plot(
+            ax = result.plot(
                 variables=list(result.scenario.model.init_values.keys()),
                 title="\n".join(textwrap.wrap(str(parameters), width=75)),
             )
+            ax.set_xlabel("Day")
+            ax.set_ylabel("Proportion Population")
             try:
                 plt.savefig(f"bilayer_{self.iteration}.png")
             except Exception as e:
