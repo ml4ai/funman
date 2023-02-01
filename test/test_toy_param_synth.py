@@ -14,8 +14,8 @@ from funman.translate import EncodedEncoder
 class TestCompilation(unittest.TestCase):
     def test_toy(self):
 
-        x = Symbol("x", REAL)
-        parameters = [Parameter(name="x", _symbol=x)]
+        parameters = [Parameter(name="x")]
+        x = parameters[0].symbol()
 
         # 0.0 <= x <= 5
         model = EncodedModel(_formula=And(LE(x, Real(5.0)), GE(x, Real(0.0))))
@@ -31,12 +31,12 @@ class TestCompilation(unittest.TestCase):
 
     def test_toy_2d(self):
 
-        x = Symbol("x", REAL)
-        y = Symbol("y", REAL)
         parameters = [
-            Parameter(name="x", _symbol=x),
-            Parameter(name="y", _symbol=y),
+            Parameter(name="x"),
+            Parameter(name="y"),
         ]
+        x = parameters[0].symbol()
+        y = parameters[1].symbol()
 
         # 0.0 < x < 5.0, 10.0 < y < 12.0
         model = EncodedModel(

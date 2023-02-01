@@ -1,7 +1,7 @@
 """
 This module defines the Parameter Synthesis scenario.
 """
-from typing import Any, Dict, List, Union
+from typing import Dict, List, Union
 
 from pandas import DataFrame
 from pydantic import BaseModel
@@ -137,7 +137,7 @@ class ParameterSynthesisScenarioResult(AnalysisScenarioResult, BaseModel):
             "ParameterSynthesisScenario.plot() is not implemented"
         )
 
-    # points are of the form (see Point.to_dict())
+    # points are of the form (see Point)
     # [
     #     {"values": {"beta": 0.1}}
     # ]
@@ -168,7 +168,7 @@ class ParameterSynthesisScenarioResult(AnalysisScenarioResult, BaseModel):
         dfs = []
         for point in points:
             if isinstance(point, dict):
-                point = Point.from_dict(point)
+                point = Point.parse_obj(point)
             if not isinstance(point, Point):
                 raise Exception("Provided point is not of type Point")
             # update the model with the
@@ -193,9 +193,4 @@ class ParameterSynthesisScenarioResult(AnalysisScenarioResult, BaseModel):
         return dfs
 
     def __repr__(self) -> str:
-        return str(self.to_dict())
-
-    def to_dict(self) -> Dict[str, Any]:
-        return {
-            "parameter_space": self.parameter_space,
-        }
+        return str(self.dict())

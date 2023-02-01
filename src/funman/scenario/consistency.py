@@ -67,6 +67,7 @@ class ConsistencyScenario(AnalysisScenario, BaseModel):
 
         result = search.search(self, config=config)
 
+        # FIXME this to_dict call assumes result is an unusual type
         consistent = result.to_dict() if result else None
 
         scenario_result = ConsistencyScenarioResult(
