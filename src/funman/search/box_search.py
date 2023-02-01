@@ -10,7 +10,6 @@ from datetime import datetime
 from multiprocessing import Queue, Value
 from multiprocessing.synchronize import Condition, Event, Lock
 from queue import Empty
-from queue import PriorityQueue as PriorityQueueSP
 from queue import Queue as QueueSP
 from typing import List, Optional, Set, Union
 
@@ -57,13 +56,13 @@ class BoxSearchEpisode(SearchEpisode):
     _false_boxes: List[Box] = []
     _true_points: Set[Point] = set({})
     _false_points: Set[Point] = set({})
-    _unknown_boxes: PriorityQueueSP
+    _unknown_boxes: QueueSP
     _iteration: int = 0
     _formula_stack: List[FNode] = []
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self._unknown_boxes = PriorityQueueSP()
+        self._unknown_boxes = QueueSP()
         self.statistics = SearchStatistics()
 
     # def __init__(
@@ -139,6 +138,8 @@ class BoxSearchEpisode(SearchEpisode):
             else:
                 self.statistics._num_unknown += 1
             return True
+        else:
+            box.label = LABEL_DROPPED
         return False
 
     def _add_unknown(self, box: Union[Box, List[Box]]):
@@ -506,6 +507,8 @@ class BoxSearch(Search):
                                     points=[true_points, false_points],
                                 ):
                                     l.info(f"{process_name} produced work")
+                                else:
+                                    rval.put(box.dict())
                                 if episode.config.number_of_processes > 1:
                                     # FIXME This would only be none when
                                     # the number of processes is 1. This
@@ -550,6 +553,7 @@ class BoxSearch(Search):
         handler: ResultHandler = config._handler
         true_boxes = []
         false_boxes = []
+        dropped_boxes = []
         true_points = []
         false_points = []
         break_on_interrupt = False
@@ -576,6 +580,8 @@ class BoxSearch(Search):
                             true_boxes.append(inst)
                         elif label == "false":
                             false_boxes.append(inst)
+                        elif label == "dropped":
+                            dropped_boxes.append(inst)
                         else:
                             l.warning(f"Skipping Box with label: {label}")
                     elif isinstance(inst, Point):
@@ -600,6 +606,7 @@ class BoxSearch(Search):
         return {
             "true_boxes": true_boxes,
             "false_boxes": false_boxes,
+            "dropped_boxes": dropped_boxes,
             "true_points": true_points,
             "false_points": false_points,
         }
@@ -644,6 +651,8 @@ class BoxSearch(Search):
                             all_results["true_boxes"].append(inst)
                         elif label == "false":
                             all_results["false_boxes"].append(inst)
+                        elif label == "dropped":
+                            all_results["dropped_boxes"].append(inst)
                         elif label == "unknown":
                             pass  # Allow unknown boxes for plotting
                         else:

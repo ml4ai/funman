@@ -50,7 +50,10 @@ RESOURCES = os.path.join(
 class TestUseCases(TestUseCases):
     def sidarthe_bilayer(self):
         with open(
-            os.path.join(RESOURCES, "bilayer", "SIDARTHE_BiLayer.json"),
+            # os.path.join(RESOURCES, "bilayer", "SIDARTHE_BiLayer.json"),
+            os.path.join(
+                RESOURCES, "bilayer", "SIDARTHE_BiLayer_corrected.json"
+            ),
             "r",
         ) as f:
             bilayer = json.load(f)
@@ -137,7 +140,7 @@ class TestUseCases(TestUseCases):
     def sidarthe_identical(self):
         return []
 
-    @unittest.skip("tmp")
+    # @unittest.skip("tmp")
     def test_scenario_2_1_b_i(self):
         self.iteration = 0
         case = {
@@ -366,6 +369,7 @@ class TestUseCases(TestUseCases):
 
         pass
 
+    @unittest.skip("tmp")
     def test_scenario_2_1_b_i_CMM(self):
         # Manually encoded Bilayer by CM and DM
         self.iteration = 3

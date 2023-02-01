@@ -21,7 +21,8 @@ l = logging.getLogger(__name__)
 LABEL_TRUE: Literal["true"] = "true"
 LABEL_FALSE: Literal["false"] = "false"
 LABEL_UNKNOWN: Literal["unknown"] = "unknown"
-Label = Literal["true", "false", "unknown"]
+LABEL_DROPPED: Literal["dropped"] = "dropped"
+Label = Literal["true", "false", "unknown", "dropped"]
 
 
 class Parameter(BaseModel):

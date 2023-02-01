@@ -61,6 +61,7 @@ class RealtimeResultPlotter(ResultHandler):
         color_map: Dict[str, str] = {
             "true": "g",
             "false": "r",
+            "dropped": "p",
             "unknown": "b",
         },
         shape_map: Dict[str, str] = {"true": "x", "false": "o"},

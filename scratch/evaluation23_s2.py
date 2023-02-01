@@ -50,7 +50,9 @@ RESOURCES = os.path.join(
 class TestUseCases(TestUseCases):
     def sidarthe_bilayer(self):
         with open(
-            os.path.join(RESOURCES, "bilayer", "SIDARTHE_BiLayer.json"),
+            os.path.join(
+                RESOURCES, "bilayer", "SIDARTHE_BiLayer_corrected.json"
+            ),
             "r",
         ) as f:
             bilayer = json.load(f)
@@ -113,7 +115,9 @@ class TestUseCases(TestUseCases):
         print(query._formula)
         return query
 
-    def sidarthe_query_1_1_d_1d(self, steps, init_values, bound=(1.0 / 3.0)):
+    def sidarthe_query_1_1_d_1d(
+        self, steps, init_values, bound=(1.0 / 3.0), step_size=1
+    ):
         query = QueryEncoded()
         query._formula = And(
             [
@@ -132,7 +136,7 @@ class TestUseCases(TestUseCases):
                             ),
                             Real(bound),
                         )
-                        for step in range(steps + 1)
+                        for step in range(0, steps + 1, step_size)
                     ]
                 )
             ]
@@ -383,21 +387,21 @@ class TestUseCases(TestUseCases):
             "query": self.sidarthe_query_1_1_d_1d,
             "report": self.report,
             "initial_state_tolerance": 0,
-            "step_size": 4,
+            "step_size": 10,
             "extra_constraints": self.sidarthe_extra_1_1_d_2d,
         }
         bounds = case["bounds"]()
-        # bounds["epsilon"] = [0.170, 0.172]
-        epsilon_tolerance = 1e-1
+        bounds["epsilon"] = [0.167, 0.173]
+        # epsilon_tolerance = 1e-1
         # theta_tolerance = 0.001
         # bounds["epsilon"] = [
         #     bounds["epsilon"][0],
         #     bounds["epsilon"][1] + epsilon_tolerance,
         # ]
-        # bounds["theta"] = [
-        #     2 * bounds["epsilon"][0],
-        #     2 * bounds["epsilon"][1],
-        # ]
+        bounds["theta"] = [
+            2 * bounds["epsilon"][0],
+            2 * bounds["epsilon"][1],
+        ]
         scenario = self.make_scenario(
             BilayerDynamics(json_graph=case["model_fn"]()),
             case["initial"](),
@@ -405,7 +409,12 @@ class TestUseCases(TestUseCases):
             case["identical"](),
             case["steps"],
             # case["query"](),
-            case["query"](case["steps"], case["initial"](), bound=1),
+            case["query"](
+                case["steps"],
+                case["initial"](),
+                bound=0.33,
+                step_size=case["step_size"],
+            ),
             extra_constraints=case["extra_constraints"](
                 case["steps"], case["initial"](), step_size=case["step_size"]
             ),
@@ -429,38 +438,44 @@ class TestUseCases(TestUseCases):
             "report": self.report,
             "initial_state_tolerance": 0,
             "extra_constraints": self.sidarthe_extra_1_1_d_2d,
-            "step_size": 4,
+            "step_size": 10,
         }
-        bounds = case["bounds"]()
-        epsilon_tolerance = 1e-9
+        # bounds = case["bounds"]()
+        # epsilon_tolerance = 1e-2
         # theta_tolerance = 0.0005
-        bounds["epsilon"] = [
-            bounds["epsilon"][0],
-            bounds["epsilon"][1] + epsilon_tolerance,
-        ]
-        bounds["theta"] = [
-            2 * bounds["epsilon"][0],
-            2 * bounds["epsilon"][1],
-        ]
+        # bounds["epsilon"] = [
+        #     bounds["epsilon"][0],
+        #     bounds["epsilon"][1] + epsilon_tolerance,
+        # ]
+        # bounds["epsilon"] = [0.16, 0.19]
+        # bounds["theta"] = [
+        #     2 * bounds["epsilon"][0],
+        #     2 * bounds["epsilon"][1],
+        # ]
         scenario = self.make_ps_scenario(
             BilayerDynamics(json_graph=case["model_fn"]()),
             case["initial"](),
             bounds,
             case["identical"](),
             case["steps"],
-            case["query"](case["steps"], case["initial"](), bound=0.33),
+            case["query"](
+                case["steps"],
+                case["initial"](),
+                bound=0.33,
+                step_size=case["step_size"],
+            ),
             params_to_synth=["epsilon", "theta"],
             extra_constraints=case["extra_constraints"](
-                case["steps"], case["initial"]()
+                case["steps"], case["initial"](), step_size=case["step_size"]
             ),
         )
         config = FUNMANConfig(
             max_steps=case["steps"],
             solver="dreal",
             number_of_processes=1,
-            num_initial_boxes=1,
+            num_initial_boxes=16,
             initial_state_tolerance=case["initial_state_tolerance"],
-            tolerance=1e-11,
+            tolerance=1e-4,
             save_smtlib=False,
             step_size=case["step_size"],
         )
