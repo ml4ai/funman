@@ -429,7 +429,7 @@ class TestUseCases(TestUseCases):
             "report": self.report,
             "initial_state_tolerance": 0,
             "extra_constraints": self.sidarthe_extra_1_1_d_2d,
-            "step_size": 10,
+            "step_size": 4,
         }
         bounds = case["bounds"]()
         epsilon_tolerance = 1e-9
