@@ -4,25 +4,25 @@
             "variable": "S"
         },
         {
-            "variable": " I"
+            "variable": "I"
         },
         {
-            "variable": " D"
+            "variable": "D"
         },
         {
-            "variable": " A"
+            "variable": "A"
         },
         {
-            "variable": " R"
+            "variable": "R"
         },
         {
-            "variable": " T"
+            "variable": "T"
         },
         {
-            "variable": " H"
+            "variable": "H"
         },
         {
-            "variable": " E"
+            "variable": "E"
         }
     ],
     "Qout": [
@@ -30,25 +30,25 @@
             "tanvar": "S'"
         },
         {
-            "tanvar": " I'"
+            "tanvar": "I'"
         },
         {
-            "tanvar": " D'"
+            "tanvar": "D'"
         },
         {
-            "tanvar": " A'"
+            "tanvar": "A'"
         },
         {
-            "tanvar": " R'"
+            "tanvar": "R'"
         },
         {
-            "tanvar": " T'"
+            "tanvar": "T'"
         },
         {
-            "tanvar": " H'"
+            "tanvar": "H'"
         },
         {
-            "tanvar": " E'"
+            "tanvar": "E'"
         }
     ],
     "Box": [
@@ -56,49 +56,49 @@
             "parameter": "alpha"
         },
         {
-            "parameter": " beta"
+            "parameter": "beta"
         },
         {
-            "parameter": " gamma"
+            "parameter": "gamma"
         },
         {
-            "parameter": " delta"
+            "parameter": "delta"
         },
         {
-            "parameter": " epsilon"
+            "parameter": "epsilon"
         },
         {
-            "parameter": " mu"
+            "parameter": "mu"
         },
         {
-            "parameter": " zeta"
+            "parameter": "zeta"
         },
         {
-            "parameter": " lamb"
+            "parameter": "lambda"
         },
         {
-            "parameter": " eta"
+            "parameter": "eta"
         },
         {
-            "parameter": " rho"
+            "parameter": "rho"
         },
         {
-            "parameter": " theta"
+            "parameter": "theta"
         },
         {
-            "parameter": " kappa"
+            "parameter": "kappa"
         },
         {
-            "parameter": " nu"
+            "parameter": "nu"
         },
         {
-            "parameter": " xi"
+            "parameter": "xi"
         },
         {
-            "parameter": " sigma"
+            "parameter": "sigma"
         },
         {
-            "parameter": " tau"
+            "parameter": "tau"
         }
     ],
     "Wa": [],
