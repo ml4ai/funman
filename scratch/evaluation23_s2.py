@@ -383,15 +383,15 @@ class TestUseCases(TestUseCases):
             "initial": self.initial_state_sidarthe,
             "bounds": self.bounds_sidarthe,
             "identical": self.sidarthe_identical,
-            "steps": 100,
+            "steps": 96,
             "query": self.sidarthe_query_1_1_d_1d,
             "report": self.report,
             "initial_state_tolerance": 0,
-            "step_size": 10,
+            "step_size": 12,
             "extra_constraints": self.sidarthe_extra_1_1_d_2d,
         }
         bounds = case["bounds"]()
-        bounds["epsilon"] = [0.167, 0.173]
+        bounds["epsilon"] = [0.09, 0.175]
         # epsilon_tolerance = 1e-1
         # theta_tolerance = 0.001
         # bounds["epsilon"] = [
@@ -399,8 +399,8 @@ class TestUseCases(TestUseCases):
         #     bounds["epsilon"][1] + epsilon_tolerance,
         # ]
         bounds["theta"] = [
-            2 * bounds["epsilon"][0],
-            2 * bounds["epsilon"][1],
+            0.2, 0.3
+            # max(2 * bounds["epsilon"][1], bounds["theta"][1]),
         ]
         scenario = self.make_scenario(
             BilayerDynamics(json_graph=case["model_fn"]()),
@@ -428,18 +428,18 @@ class TestUseCases(TestUseCases):
         result_sat = Funman().solve(scenario, config=config)
         case["report"](result_sat)
 
-        case = {
-            "model_fn": self.sidarthe_bilayer,
-            "initial": self.initial_state_sidarthe,
-            "bounds": self.bounds_sidarthe,
-            "identical": self.sidarthe_identical,
-            "steps": 100,
-            "query": self.sidarthe_query_1_1_d_1d,
-            "report": self.report,
-            "initial_state_tolerance": 0,
-            "extra_constraints": self.sidarthe_extra_1_1_d_2d,
-            "step_size": 10,
-        }
+        # case = {
+        #     "model_fn": self.sidarthe_bilayer,
+        #     "initial": self.initial_state_sidarthe,
+        #     "bounds": self.bounds_sidarthe,
+        #     "identical": self.sidarthe_identical,
+        #     "steps": 100,
+        #     "query": self.sidarthe_query_1_1_d_1d,
+        #     "report": self.report,
+        #     "initial_state_tolerance": 0,
+        #     "extra_constraints": self.sidarthe_extra_1_1_d_2d,
+        #     "step_size": 10,
+        # }
         # bounds = case["bounds"]()
         # epsilon_tolerance = 1e-2
         # theta_tolerance = 0.0005
@@ -473,7 +473,7 @@ class TestUseCases(TestUseCases):
             max_steps=case["steps"],
             solver="dreal",
             number_of_processes=1,
-            num_initial_boxes=16,
+            num_initial_boxes=128,
             initial_state_tolerance=case["initial_state_tolerance"],
             tolerance=1e-4,
             save_smtlib=False,
@@ -492,6 +492,8 @@ class TestUseCases(TestUseCases):
             ]
         )
         result_sat = Funman().solve(scenario, config=config)
+        with open("funman_s2_1_d_parameter_space_.json", "w") as f:
+            f.write(result_sat.parameter_space.json())
         # case["report"](result_sat)
 
 
