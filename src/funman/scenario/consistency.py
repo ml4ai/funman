@@ -21,13 +21,13 @@ class ConsistencyScenario(AnalysisScenario, BaseModel):
     The ConsistencyScenario class is an Analysis Scenario that analyzes a Model to find assignments to all variables, if consistent.
 
     Parameters
-        ----------
-        model : Model
-            model to check
-        query : Query
-            model query
-        smt_encoder : Encoder, optional
-            method to encode the scenario, by default None
+    ----------
+    model : Model
+        model to check
+    query : Query
+        model query
+    smt_encoder : Encoder, optional
+        method to encode the scenario, by default None
     """
 
     class Config:
