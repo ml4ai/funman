@@ -269,9 +269,7 @@ class BilayerEncoder(Encoder):
     ):
         ans = And(
             [
-                self._encode_measurements_timepoint(
-                    measurements, timepoints[i]
-                )
+                self._encode_measurements_timepoint(measurements, timepoints[i])
                 for i in range(len(timepoints))
             ]
         )
@@ -316,9 +314,7 @@ class BilayerEncoder(Encoder):
     ):
         ## Calculate time step size
         time_step_size = next_timepoint - timepoint
-        eqns = (
-            []
-        )  ## List of SMT equations for a given timepoint. These will be
+        eqns = []  ## List of SMT equations for a given timepoint. These will be
         ## joined by an "And" command and returned
 
         for t in bilayer._tangent:  ## Loop over _tangents (derivatives)
@@ -423,7 +419,7 @@ class BilayerEncoder(Encoder):
     def _encode_bilayer_edge(self, edge, timepoint=None):
         if not isinstance(edge, BilayerEdge):
             raise Exception("Edge is not a BilayerEdge")
-        return edge.get_label()
+        return edge._get_label()
 
     def _observable_defn(self, measurements, obs, t):
         # flux * incoming1 * incoming2 ...

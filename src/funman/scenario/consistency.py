@@ -1,6 +1,7 @@
 """
 This submodule defines a consistency scenario.  Consistency scenarios specify an existentially quantified model.  If consistent, the solution assigns any unassigned variable, subject to their bounds and other constraints.  
 """
+
 from typing import Dict, Union
 
 import matplotlib.pyplot as plt
@@ -161,9 +162,7 @@ class ConsistencyScenarioResult(AnalysisScenarioResult, BaseModel):
                 ax = self.dataframe().plot(marker="o", **kwargs)
             plt.show(block=False)
         else:
-            raise Exception(
-                f"Cannot plot result for an inconsistent scenario."
-            )
+            raise Exception(f"Cannot plot result for an inconsistent scenario.")
         return ax
 
     def __repr__(self) -> str:

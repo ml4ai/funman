@@ -49,6 +49,14 @@ class Parameter(BaseModel):
     _symbol: FNode = None
 
     def symbol(self):
+        """
+        Get a pysmt Symbol for the parameter
+
+        Returns
+        -------
+        pysmt.fnode.FNode
+            _description_
+        """        
         if not self._symbol:
             self._symbol = Symbol(self.name, REAL)
         return self._symbol

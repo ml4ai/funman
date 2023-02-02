@@ -22,7 +22,11 @@ extensions = [
     "sphinx.ext.graphviz",
     "sphinx.ext.inheritance_diagram",
     "sphinx.ext.napoleon",
+    "sphinxcontrib.autodoc_pydantic",
 ]
+
+autodoc_pydantic_model_show_json = True
+autodoc_pydantic_settings_show_json = False
 
 templates_path = ["_templates"]
 exclude_patterns = []
