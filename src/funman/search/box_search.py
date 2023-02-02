@@ -18,10 +18,10 @@ from pysmt.logics import QF_NRA
 from pysmt.shortcuts import And, Not, Solver, get_model
 
 from funman.representation.representation import (
+    LABEL_DROPPED,
     LABEL_FALSE,
     LABEL_TRUE,
     LABEL_UNKNOWN,
-    LABEL_DROPPED,
     Interval,
 )
 from funman.search import Box, ParameterSpace, Point, Search, SearchEpisode
@@ -161,7 +161,9 @@ class BoxSearchEpisode(SearchEpisode):
 
     def _add_false_point(self, point: Point):
         if point in self._true_points:
-            l.error(f"Point: {point} is marked false, but already marked true.")
+            l.error(
+                f"Point: {point} is marked false, but already marked true."
+            )
         point.label = LABEL_FALSE
         self._false_points.add(point)
 
@@ -174,7 +176,9 @@ class BoxSearchEpisode(SearchEpisode):
 
     def _add_true_point(self, point: Point):
         if point in self._false_points:
-            l.error(f"Point: {point} is marked true, but already marked false.")
+            l.error(
+                f"Point: {point} is marked true, but already marked false."
+            )
         point.label = LABEL_TRUE
         self._true_points.add(point)
 

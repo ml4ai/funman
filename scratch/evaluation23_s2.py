@@ -399,7 +399,8 @@ class TestUseCases(TestUseCases):
         #     bounds["epsilon"][1] + epsilon_tolerance,
         # ]
         bounds["theta"] = [
-            0.2, 0.3
+            0.2,
+            0.3
             # max(2 * bounds["epsilon"][1], bounds["theta"][1]),
         ]
         scenario = self.make_scenario(
