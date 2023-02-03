@@ -1,3 +1,11 @@
+"""
+Definitions for the REST API endpoints.  Running this file will start a uvicorn server that serves the API.
+
+Raises
+------
+HTTPException
+    HTTPException description
+"""
 import os
 from typing import Optional, Union
 
@@ -61,7 +69,15 @@ app.add_middleware(
 
 @app.get("/", dependencies=[Depends(_api_key_auth)])
 def read_root():
-    return {"Hello": "World"}
+    """
+    Root endpoint
+
+    Returns
+    -------
+    Dict
+        emtpy result
+    """
+    return {}
 
 
 @app.put(
@@ -75,6 +91,21 @@ async def solve_consistency(
     scenario: ConsistencyScenario,
     config: Optional[FUNMANConfig] = FUNMANConfig(),
 ):
+    """
+    Solve a consisistency scenario.
+
+    Parameters
+    ----------
+    scenario : ConsistencyScenario
+        the scenario to solve
+    config : Optional[FUNMANConfig], optional
+        solver configuration, by default FUNMANConfig()
+
+    Returns
+    -------
+    ConsistencyScenarioResult
+        the scenario result
+    """
     try:
         f = Funman()
         result = f.solve(scenario, config=config)
@@ -98,6 +129,20 @@ async def solve_parameter_synthesis(
     scenario: ParameterSynthesisScenario,
     config: Optional[FUNMANConfig] = FUNMANConfig(),
 ):
+    """
+    Solve a Parameter Synthesis Scenario
+
+    Parameters
+    ----------
+    scenario : ParameterSynthesisScenario
+        the scenario to solve
+    config : Optional[FUNMANConfig], optional
+        solver configuration, by default FUNMANConfig()
+
+    Returns
+    -------
+        ParameterSynthesisScenarioResult
+    """
     try:
         f = Funman()
         result = f.solve(scenario, config=config)
@@ -121,6 +166,20 @@ async def solve_simulation(
     scenario: SimulationScenario,
     config: Optional[FUNMANConfig] = FUNMANConfig(),
 ):
+    """
+    Solve a simulation scenario
+
+    Parameters
+    ----------
+    scenario : SimulationScenario
+        the scenario to solve
+    config : Optional[FUNMANConfig], optional
+        solver configuration, by default FUNMANConfig()
+
+    Returns
+    -------
+    SimulationScenarioResult
+    """
     try:
         f = Funman()
         result = f.solve(scenario, config=config)

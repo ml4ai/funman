@@ -1,0 +1,87 @@
+digraph bilayer {
+	graph [shape=box]
+	"A'" [label="A': "]
+	"S'" [label="S': "]
+	"R'" [label="R': "]
+	"H'" [label="H': "]
+	"I'" [label="I': "]
+	"E'" [label="E': "]
+	"T'" [label="T': "]
+	"D'" [label="D': "]
+	alpha [label="alpha: [0.57, 0.57]"]
+	beta [label="beta: [0.011, 0.011]"]
+	gamma [label="gamma: [0.456, 0.456]"]
+	delta [label="delta: [0.011, 0.011]"]
+	epsilon [label="epsilon: [0.171, 0.171]"]
+	zeta [label="zeta: [0.125, 0.125]"]
+	lambda [label="lambda: [0.034, 0.034]"]
+	eta [label="eta: [0.125, 0.125]"]
+	rho [label="rho: [0.034, 0.034]"]
+	theta [label="theta: [0.371, 0.371]"]
+	mu [label="mu: [0.017, 0.017]"]
+	kappa [label="kappa: [0.017, 0.017]"]
+	nu [label="nu: [0.027, 0.027]"]
+	xi [label="xi: [0.017, 0.017]"]
+	sigma [label="sigma: [0.017, 0.017]"]
+	tau [label="tau: [0.01, 0.01]"]
+	A [label="A: 1.67e-09"]
+	S [label="S: 0.99999628333"]
+	R [label="R: 3.33e-09"]
+	H [label="H: 0.0"]
+	I [label="I: 3.3333e-07"]
+	E [label="E: 0.0"]
+	T [label="T: 0.0"]
+	D [label="D: 3.333e-08"]
+	S -> alpha
+	I -> alpha
+	S -> beta
+	D -> beta
+	S -> gamma
+	A -> gamma
+	S -> delta
+	R -> delta
+	I -> epsilon
+	I -> zeta
+	I -> lambda
+	D -> eta
+	D -> rho
+	A -> theta
+	A -> mu
+	A -> kappa
+	R -> nu
+	R -> xi
+	T -> sigma
+	T -> tau
+	alpha -> "I'"
+	beta -> "I'"
+	gamma -> "I'"
+	delta -> "I'"
+	epsilon -> "D'"
+	zeta -> "A'"
+	lambda -> "H'"
+	eta -> "R'"
+	rho -> "H'"
+	theta -> "R'"
+	mu -> "T'"
+	kappa -> "H'"
+	nu -> "T'"
+	xi -> "H'"
+	sigma -> "H'"
+	tau -> "E'"
+	alpha -> "S'" [style=dashed]
+	beta -> "S'" [style=dashed]
+	gamma -> "S'" [style=dashed]
+	delta -> "S'" [style=dashed]
+	epsilon -> "I'" [style=dashed]
+	zeta -> "I'" [style=dashed]
+	lambda -> "I'" [style=dashed]
+	eta -> "D'" [style=dashed]
+	rho -> "D'" [style=dashed]
+	theta -> "A'" [style=dashed]
+	mu -> "A'" [style=dashed]
+	kappa -> "A'" [style=dashed]
+	nu -> "R'" [style=dashed]
+	xi -> "R'" [style=dashed]
+	sigma -> "T'" [style=dashed]
+	tau -> "T'" [style=dashed]
+}

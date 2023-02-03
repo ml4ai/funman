@@ -3,6 +3,7 @@ from typing import Dict, List, Literal, Optional, Union
 
 import graphviz
 from pydantic import BaseModel, validator
+from pysmt.formula import FNode
 from pysmt.shortcuts import (
     FALSE,
     GE,
@@ -81,7 +82,7 @@ class BilayerEdge(BaseModel):
     src: BilayerNode
     tgt: BilayerNode
 
-    def get_label(self):
+    def _get_label(self):
         return ""
 
     def to_dot(self, dot):
@@ -102,7 +103,7 @@ class BilayerPositiveEdge(BilayerEdge):
     Class representing a positive influence between a FluxNode and a StateNode.
     """
 
-    def get_label(self):
+    def _get_label(self):
         """
         Edge label
 
@@ -119,7 +120,7 @@ class BilayerNegativeEdge(BilayerEdge):
     Class representing a positive influence between a FluxNode and a StateNode.
     """
 
-    def get_label(self):
+    def _get_label(self):
         """
         Edge label
 
@@ -151,20 +152,16 @@ class BilayerGraph(ABC, BaseModel):
         underscore_attrs_are_private = True
 
     json_graph: Dict
-    _node_incoming_edges: Dict[
-        BilayerNode, Dict[BilayerNode, BilayerEdge]
-    ] = {}
-    _node_outgoing_edges: Dict[
-        BilayerNode, Dict[BilayerNode, BilayerEdge]
-    ] = {}
+    _node_incoming_edges: Dict[BilayerNode, Dict[BilayerNode, BilayerEdge]] = {}
+    _node_outgoing_edges: Dict[BilayerNode, Dict[BilayerNode, BilayerEdge]] = {}
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.json_graph = kwargs["json_graph"]
-        self.initialize_from_json()
+        self._initialize_from_json()
 
     @abstractmethod
-    def initialize_from_json(self):
+    def _initialize_from_json(self):
         pass
 
     def _get_json_node(self, node_dict, node_type, node_list, node_name):
@@ -238,7 +235,7 @@ class BilayerDynamics(BilayerGraph):
     #     bilayer.initialize_from_json()
     #     return bilayer
 
-    def initialize_from_json(self):
+    def _initialize_from_json(self):
 
         """
         Create a BilayerDynamics object from a JSON formatted bilayer graph.
@@ -359,7 +356,7 @@ class BilayerMeasurement(BilayerGraph, BaseModel):
     input_edges: BilayerEdge = []  # Input to observable, defined in Win
     output_edges: BilayerEdge = []  # Flux to Output, defined in Wa,Wn
 
-    def initialize_from_json(self):
+    def _initialize_from_json(self):
         """
         Create a BilayerMeasurement object from a JSON formatted bilayer graph.
 
@@ -463,9 +460,13 @@ class BilayerModel(Model):
 
     """
 
+    class Config:
+        underscore_attrs_are_private = True
+
     bilayer: BilayerDynamics
     measurements: BilayerMeasurement = None
     identical_parameters: List[List[str]] = []
+    _extra_constraints: FNode = None
 
     def default_encoder(self, config: "FUNMANConfig") -> "Encoder":
         """

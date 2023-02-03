@@ -1,6 +1,7 @@
 """
 This submodule defines a consistency scenario.  Consistency scenarios specify an existentially quantified model.  If consistent, the solution assigns any unassigned variable, subject to their bounds and other constraints.  
 """
+
 from typing import Dict, Union
 
 import matplotlib.pyplot as plt
@@ -21,13 +22,13 @@ class ConsistencyScenario(AnalysisScenario, BaseModel):
     The ConsistencyScenario class is an Analysis Scenario that analyzes a Model to find assignments to all variables, if consistent.
 
     Parameters
-        ----------
-        model : Model
-            model to check
-        query : Query
-            model query
-        smt_encoder : Encoder, optional
-            method to encode the scenario, by default None
+    ----------
+    model : Model
+        model to check
+    query : Query
+        model query
+    smt_encoder : Encoder, optional
+        method to encode the scenario, by default None
     """
 
     class Config:
@@ -67,6 +68,7 @@ class ConsistencyScenario(AnalysisScenario, BaseModel):
 
         result = search.search(self, config=config)
 
+        # FIXME this to_dict call assumes result is an unusual type
         consistent = result.to_dict() if result else None
 
         scenario_result = ConsistencyScenarioResult(
@@ -155,14 +157,13 @@ class ConsistencyScenarioResult(AnalysisScenarioResult, BaseModel):
         """
         if self.consistent:
             if variables is not None:
-                self.dataframe()[variables].plot(marker="o", **kwargs)
+                ax = self.dataframe()[variables].plot(marker="o", **kwargs)
             else:
-                self.dataframe().plot(marker="o", **kwargs)
+                ax = self.dataframe().plot(marker="o", **kwargs)
             plt.show(block=False)
         else:
-            raise Exception(
-                f"Cannot plot result for an inconsistent scenario."
-            )
+            raise Exception(f"Cannot plot result for an inconsistent scenario.")
+        return ax
 
     def __repr__(self) -> str:
         return str(self.consistent)

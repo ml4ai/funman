@@ -1,0 +1,95 @@
+{
+  "Qin": [
+    {
+      "variable": "S"
+    },
+    {
+      "variable": "I"
+    },
+    {
+      "variable": "R"
+    },
+    {
+      "variable": "H"
+    }
+  ],
+  "Qout": [
+    {
+      "tanvar": "S'"
+    },
+    {
+      "tanvar": "I'"
+    },
+    {
+      "tanvar": "R'"
+    },
+    {
+      "tanvar": "H'"
+    }
+  ],
+  "Win": [
+    {
+      "arg": 1,
+      "call": 1
+    },
+    {
+      "arg": 2,
+      "call": 1
+    },
+    {
+      "arg": 2,
+      "call": 2
+    },
+    {
+      "arg": 2,
+      "call": 3
+    }
+  ],
+  "Wn": [
+    {
+      "efflux": 1,
+      "effusion": 1
+    },
+    {
+      "efflux": 1,
+      "effusion": 2
+    },
+    {
+      "efflux": 2,
+      "effusion": 2
+    },
+    {
+      "efflux": 3,
+      "effusion": 2
+    }
+  ],
+  "Wa": [
+    {
+      "influx": 1,
+      "infusion": 2
+    },
+    {
+      "influx": 1,
+      "infusion": 2
+    },
+    {
+      "influx": 2,
+      "infusion": 3
+    },
+    {
+      "influx": 3,
+      "infusion": 4
+    }
+  ],
+  "Box": [
+    {
+      "parameter": "inf"
+    },
+    {
+      "parameter": "rec"
+    },
+    {
+      "parameter": "hosp"
+    }
+  ]
+}

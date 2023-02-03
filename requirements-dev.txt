@@ -5,4 +5,4 @@ pre-commit
 pycln
 pytest-cov
 twine
-
+autodoc_pydantic

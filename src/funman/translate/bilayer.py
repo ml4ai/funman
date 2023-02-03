@@ -3,13 +3,16 @@ This module encodes bilayer models into a SMTLib formula.
 
 """
 import logging
+from functools import reduce
 from typing import Dict, List, Set, Union
 
 import pysmt
 from pysmt.shortcuts import (
+    LE,
     TRUE,
     And,
     Equals,
+    Minus,
     Plus,
     Real,
     Symbol,
@@ -108,15 +111,7 @@ class BilayerEncoder(Encoder):
             for _, node in model.bilayer._flux.items():
                 self._untimed_symbols.add(node.parameter)
 
-            init = And(
-                [
-                    Equals(
-                        self._encode_bilayer_state_node(node, timepoint=0),
-                        Real(model.init_values[node.parameter]),
-                    )
-                    for idx, node in model.bilayer._state.items()
-                ]
-            )
+            init = self._define_init(model)
 
             encoding = self._encode_bilayer(
                 model.bilayer,
@@ -218,6 +213,11 @@ class BilayerEncoder(Encoder):
                 encoding,
                 measurements,
                 identical_parameters,
+                (
+                    model._extra_constraints
+                    if model._extra_constraints
+                    else TRUE()
+                ),
             )
             symbols = self._symbols(formula)
             return Encoding(formula=formula, symbols=symbols)
@@ -226,14 +226,50 @@ class BilayerEncoder(Encoder):
                 f"BilayerEncoder cannot encode model of type: {type(model)}"
             )
 
+    def _define_init(self, model):
+        if self.config.initial_state_tolerance == 0.0:
+            return And(
+                [
+                    Equals(
+                        self._encode_bilayer_state_node(node, timepoint=0),
+                        Real(model.init_values[node.parameter]),
+                    )
+                    for idx, node in model.bilayer._state.items()
+                ]
+            )
+        else:
+            return And(
+                [
+                    And(
+                        LE(
+                            Real(-1.0 * self.config.initial_state_tolerance),
+                            Minus(
+                                self._encode_bilayer_state_node(
+                                    node, timepoint=0
+                                ),
+                                Real(model.init_values[node.parameter]),
+                            ),
+                        ),
+                        LE(
+                            Minus(
+                                self._encode_bilayer_state_node(
+                                    node, timepoint=0
+                                ),
+                                Real(model.init_values[node.parameter]),
+                            ),
+                            Real(self.config.initial_state_tolerance),
+                        ),
+                    )
+                    for idx, node in model.bilayer._state.items()
+                ]
+            )
+
     def _encode_measurements(
         self, measurements: BilayerMeasurement, timepoints
     ):
         ans = And(
             [
-                self._encode_measurements_timepoint(
-                    measurements, timepoints[i]
-                )
+                self._encode_measurements_timepoint(measurements, timepoints[i])
                 for i in range(len(timepoints))
             ]
         )
@@ -278,13 +314,12 @@ class BilayerEncoder(Encoder):
     ):
         ## Calculate time step size
         time_step_size = next_timepoint - timepoint
-        eqns = (
-            []
-        )  ## List of SMT equations for a given timepoint. These will be
+        eqns = []  ## List of SMT equations for a given timepoint. These will be
         ## joined by an "And" command and returned
 
         for t in bilayer._tangent:  ## Loop over _tangents (derivatives)
-            derivative_expr = 0
+            pos_derivative_expr_terms = []
+            neg_derivative_expr_terms = []
             ## Get _tangent variable and translate it to SMT form tanvar_smt
             tanvar = bilayer._tangent[t].parameter
             tanvar_smt = self._encode_bilayer_state_node(
@@ -327,18 +362,34 @@ class BilayerEncoder(Encoder):
                     self._encode_bilayer_edge(flux_sign_index[0], timepoint)
                     == "positive"
                 ):
-                    derivative_expr += expr
+                    pos_derivative_expr_terms.append(expr)
                 elif (
                     self._encode_bilayer_edge(flux_sign_index[0], timepoint)
                     == "negative"
                 ):
-                    derivative_expr -= expr
+                    neg_derivative_expr_terms.append(expr)
             # Assemble into equation of the form f(t + delta t) approximately =
             # f(t) + (delta t) f'(t)
+            pos_terms = (
+                reduce(lambda a, b: Plus(a, b), pos_derivative_expr_terms)
+                if len(pos_derivative_expr_terms) > 0
+                else Real(0.0)
+            )
+            neg_terms = (
+                reduce(lambda a, b: Plus(a, b), neg_derivative_expr_terms)
+                if len(neg_derivative_expr_terms) > 0
+                else Real(0.0)
+            )
             eqn = simplify(
                 Equals(
                     state_var_next_step_smt,
-                    Plus(state_var_smt, time_step_size * derivative_expr),
+                    Plus(
+                        state_var_smt,
+                        Times(
+                            Real(time_step_size),
+                            Minus(pos_terms, neg_terms),
+                        ),
+                    ),
                 )
             )
             # print(eqn)
@@ -368,7 +419,7 @@ class BilayerEncoder(Encoder):
     def _encode_bilayer_edge(self, edge, timepoint=None):
         if not isinstance(edge, BilayerEdge):
             raise Exception("Edge is not a BilayerEdge")
-        return edge.get_label()
+        return edge._get_label()
 
     def _observable_defn(self, measurements, obs, t):
         # flux * incoming1 * incoming2 ...

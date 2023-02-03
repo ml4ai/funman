@@ -10,7 +10,6 @@ from datetime import datetime
 from multiprocessing import Queue, Value
 from multiprocessing.synchronize import Condition, Event, Lock
 from queue import Empty
-from queue import PriorityQueue as PriorityQueueSP
 from queue import Queue as QueueSP
 from typing import List, Optional, Set, Union
 
@@ -18,7 +17,13 @@ from pysmt.formula import FNode
 from pysmt.logics import QF_NRA
 from pysmt.shortcuts import And, Not, Solver, get_model
 
-from funman.representation.representation import Interval
+from funman.representation.representation import (
+    LABEL_DROPPED,
+    LABEL_FALSE,
+    LABEL_TRUE,
+    LABEL_UNKNOWN,
+    Interval,
+)
 from funman.search import Box, ParameterSpace, Point, Search, SearchEpisode
 from funman.search.search import SearchStaticsMP, SearchStatistics
 from funman.utils.smtlib_utils import smtlibscript_from_formula_list
@@ -52,13 +57,13 @@ class BoxSearchEpisode(SearchEpisode):
     _false_boxes: List[Box] = []
     _true_points: Set[Point] = set({})
     _false_points: Set[Point] = set({})
-    _unknown_boxes: PriorityQueueSP
+    _unknown_boxes: QueueSP
     _iteration: int = 0
     _formula_stack: List[FNode] = []
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self._unknown_boxes = PriorityQueueSP()
+        self._unknown_boxes = QueueSP()
         self.statistics = SearchStatistics()
 
     # def __init__(
@@ -127,12 +132,15 @@ class BoxSearchEpisode(SearchEpisode):
 
     def _add_unknown_box(self, box: Box) -> bool:
         if box.width() > self.config.tolerance:
+            box.label = LABEL_UNKNOWN
             self._unknown_boxes.put(box)
             if self.config.number_of_processes > 1:
                 self.statistics._num_unknown.value += 1
             else:
                 self.statistics._num_unknown += 1
             return True
+        else:
+            box.label = LABEL_DROPPED
         return False
 
     def _add_unknown(self, box: Union[Box, List[Box]]):
@@ -145,6 +153,7 @@ class BoxSearchEpisode(SearchEpisode):
         return did_add
 
     def _add_false(self, box: Box):
+        box.label = LABEL_FALSE
         self._false_boxes.append(box)
         # with self.statistics.num_false.get_lock():
         #     self.statistics.num_false.value += 1
@@ -155,9 +164,11 @@ class BoxSearchEpisode(SearchEpisode):
             l.error(
                 f"Point: {point} is marked false, but already marked true."
             )
+        point.label = LABEL_FALSE
         self._false_points.add(point)
 
     def _add_true(self, box: Box):
+        box.label = LABEL_TRUE
         self._true_boxes.append(box)
         # with self.statistics.num_true.get_lock():
         #     self.statistics.num_true.value += 1
@@ -168,6 +179,7 @@ class BoxSearchEpisode(SearchEpisode):
             l.error(
                 f"Point: {point} is marked true, but already marked false."
             )
+        point.label = LABEL_TRUE
         self._true_points.add(point)
 
     def _get_unknown(self):
@@ -222,7 +234,8 @@ class BoxSearch(Search):
     """
 
     def _split(self, box: Box, episode: BoxSearchEpisode, points=None):
-        b1, b2 = box.split(points=points)
+        normalize = episode.problem._original_parameter_widths
+        b1, b2 = box.split(points=points, normalize=normalize)
         episode.statistics._iteration_operation.put("s")
         return episode._add_unknown([b1, b2])
 
@@ -328,20 +341,10 @@ class BoxSearch(Search):
         episode._formula_stack.append(formula)
         solver.add_assertion(formula)
 
-    def store_smtlib(self, episode, box):
-        with open("dbg.smt2", "w") as f:
+    def store_smtlib(self, episode, box, filename="dbg.smt2"):
+        with open(filename, "w") as f:
             smtlibscript_from_formula_list(
-                [
-                    episode.problem._model_encoding.formula,
-                    episode.problem._query_encoding.formula,
-                    episode.problem._smt_encoder.box_to_smt(box),
-                    Not(
-                        And(
-                            episode.problem._assume_model,
-                            episode.problem._assume_query,
-                        )
-                    ),
-                ],
+                episode._formula_stack,
                 logic=QF_NRA,
             ).serialize(f, daggify=False)
 
@@ -371,14 +374,18 @@ class BoxSearch(Search):
             # If no cached point, then attempt to generate one
             # print("Checking false query")
             self._setup_false_query(solver, episode)
-            # self.store_smtlib(episode, box)
+            if episode.config.save_smtlib:
+                self.store_smtlib(
+                    episode, box, filename=f"fp_{episode._iteration}.smt2"
+                )
             if solver.solve():
+
                 # Record the false point
                 res = solver.get_model()
                 false_points = [episode._extract_point(res)]
                 for point in false_points:
                     episode._add_false_point(point)
-                    rval.put(Point.encode_false_point(point))
+                    rval.put(point.dict())
             solver.pop(1)  # Remove false query
             episode._formula_stack.pop()
 
@@ -392,14 +399,21 @@ class BoxSearch(Search):
             # If no cached point, then attempt to generate one
             # print("Checking true query")
             self._setup_true_query(solver, episode)
+            if episode.config.save_smtlib:
+                self.store_smtlib(
+                    episode, box, filename=f"tp_{episode._iteration}.smt2"
+                )
             # self.store_smtlib(episode, box)
             if solver.solve():
+                # self.store_smtlib(
+                #     episode, box, filename=f"tp_{episode._iteration}.smt2"
+                # )
                 # Record the true point
                 res1 = solver.get_model()
                 true_points = [episode._extract_point(res1)]
                 for point in true_points:
                     episode._add_true_point(point)
-                    rval.put(Point.encode_true_point(point))
+                    rval.put(point.dict())
             solver.pop(1)  # Remove true query
             episode._formula_stack.pop()
 
@@ -451,7 +465,7 @@ class BoxSearch(Search):
                 while True:
                     try:
                         box: Box = episode._get_unknown()
-                        rval.put(Box._encode_unknown_box(box))
+                        rval.put(box.dict())
                         l.info(f"{process_name} claimed work")
                     except Empty:
                         exit = self._handle_empty_queue(
@@ -494,6 +508,8 @@ class BoxSearch(Search):
                                     points=[true_points, false_points],
                                 ):
                                     l.info(f"{process_name} produced work")
+                                else:
+                                    rval.put(box.dict())
                                 if episode.config.number_of_processes > 1:
                                     # FIXME This would only be none when
                                     # the number of processes is 1. This
@@ -505,14 +521,14 @@ class BoxSearch(Search):
                             else:
                                 # box does not intersect f, so it is in t (true region)
                                 episode._add_true(box)
-                                rval.put(Box._encode_true_box(box))
+                                rval.put(box.dict())
                                 print(f"+++ True({box})")
                         else:
                             # box is a subset of f (intersects f but not t)
                             episode._add_false(
                                 box
                             )  # TODO consider merging lists of boxes
-                            rval.put(Box._encode_false_box(box))
+                            rval.put(box.dict())
                             print(f"--- False({box})")
                         solver.pop(1)  # Remove box from solver
                         episode._formula_stack.pop()
@@ -538,6 +554,7 @@ class BoxSearch(Search):
         handler: ResultHandler = config._handler
         true_boxes = []
         false_boxes = []
+        dropped_boxes = []
         true_points = []
         false_points = []
         break_on_interrupt = False
@@ -557,18 +574,18 @@ class BoxSearch(Search):
                         break
 
                     # TODO this is a bit of a mess and can likely be cleaned up
-                    (
-                        (inst, label),
-                        typ,
-                    ) = ParameterSpace.decode_labeled_object(result)
-                    if typ is Box:
+                    inst = ParameterSpace.decode_labeled_object(result)
+                    label = inst.label
+                    if isinstance(inst, Box):
                         if label == "true":
                             true_boxes.append(inst)
                         elif label == "false":
                             false_boxes.append(inst)
+                        elif label == "dropped":
+                            dropped_boxes.append(inst)
                         else:
                             l.warning(f"Skipping Box with label: {label}")
-                    elif typ is Point:
+                    elif isinstance(inst, Point):
                         if label == "true":
                             true_points.append(inst)
                         elif label == "false":
@@ -590,6 +607,7 @@ class BoxSearch(Search):
         return {
             "true_boxes": true_boxes,
             "false_boxes": false_boxes,
+            "dropped_boxes": dropped_boxes,
             "true_points": true_points,
             "false_points": false_points,
         }
@@ -623,24 +641,24 @@ class BoxSearch(Search):
 
                     # TODO this is a bit of a mess and can likely be cleaned up
                     try:
-                        (
-                            (inst, label),
-                            typ,
-                        ) = ParameterSpace.decode_labeled_object(result)
+                        inst = ParameterSpace.decode_labeled_object(result)
                     except:
                         l.error(f"Skipping invalid object")
                         continue
 
-                    if typ is Box:
+                    label = inst.label
+                    if isinstance(inst, Box):
                         if label == "true":
                             all_results["true_boxes"].append(inst)
                         elif label == "false":
                             all_results["false_boxes"].append(inst)
+                        elif label == "dropped":
+                            all_results["dropped_boxes"].append(inst)
                         elif label == "unknown":
                             pass  # Allow unknown boxes for plotting
                         else:
                             l.warning(f"Skipping Box with label: {label}")
-                    elif typ is Point:
+                    elif isinstance(inst, Point):
                         if label == "true":
                             all_results["true_points"].append(inst)
                         elif label == "false":
@@ -648,7 +666,7 @@ class BoxSearch(Search):
                         else:
                             l.warning(f"Skipping Point with label: {label}")
                     else:
-                        l.error(f"Skipping invalid object type: {typ}")
+                        l.error(f"Skipping invalid object type: {type(inst)}")
                         continue
 
                     try:
@@ -697,7 +715,7 @@ class BoxSearch(Search):
 
     def _search_sp(self, problem, config: "FUNMANConfig") -> ParameterSpace:
         episode = BoxSearchEpisode(config=config, problem=problem)
-        episode._initialize_boxes(1)
+        episode._initialize_boxes(config.num_initial_boxes)
         rval = QueueSP()
         all_results = {
             "true_boxes": [],

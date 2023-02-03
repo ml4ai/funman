@@ -45,15 +45,16 @@ def plot_cached_search(search_path, alpha: float = 0.2):
             if len(line) == 0:
                 continue
             data = json.loads(line)
-            ((inst, label), typ) = ParameterSpace.decode_labeled_object(data)
-            if typ is Box:
+            inst = ParameterSpace.decode_labeled_object(data)
+            label = inst.label
+            if isinstance(inst, Box):
                 if label == "true":
                     true_boxes.append(inst)
                 elif label == "false":
                     false_boxes.append(inst)
                 else:
                     l.info(f"Skipping Box with label: {label}")
-            elif typ is Point:
+            elif isinstance(inst, Point):
                 if label == "true":
                     true_points.append(inst)
                 elif label == "false":
@@ -61,7 +62,7 @@ def plot_cached_search(search_path, alpha: float = 0.2):
                 else:
                     l.info(f"Skipping Point with label: {label}")
             else:
-                l.error(f"Skipping invalid object type: {typ}")
+                l.error(f"Skipping invalid object type: {type(inst)}")
     plot_parameter_space(
         ParameterSpace(true_boxes, false_boxes, true_points, false_points),
         alpha=alpha,

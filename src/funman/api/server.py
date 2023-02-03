@@ -9,6 +9,10 @@ import uvicorn
 
 
 class ServerConfig(uvicorn.Config):
+    """
+    Server configuration
+    """
+
     def __init__(
         self,
         app,
@@ -20,11 +24,15 @@ class ServerConfig(uvicorn.Config):
 
 
 class Server(uvicorn.Server):
-    def install_signal_handlers(self):
-        pass
+    """
+    Uvicorn server object
+    """
 
     @contextlib.contextmanager
     def run_in_thread(self):
+        """
+        Override the uvicorn method to allow running server in a thread, for example in a notebook.
+        """
         thread = threading.Thread(target=self.run)
         thread.start()
         try:

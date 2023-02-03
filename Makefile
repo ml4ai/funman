@@ -17,6 +17,7 @@ CMD_UPDATE_VERSION = sed -i -E 's/^__version__ = \"[0-9]+\.[0-9]+\.[0-9]+((a|b|r
 SHELL_GET_TARGET_ARCH := $(shell test ! -z $(TARGET_ARCH) && echo $(TARGET_ARCH) || \
 	arch \
 	| sed s/x86_64/amd64/g \
+	| sed s/i386/amd64/g \
 	| sed s/aarch64/arm64/g \
 )
 TARGET_OS=linux
@@ -226,6 +227,7 @@ run-docker:
 		-d \
 		-it \
 		--cpus=5 \
+		--cap-add=SYS_PTRACE \
 		--name ${DEV_CONTAINER} \
     -p 127.0.0.1:8888:8888 \
     -p 127.0.0.1:8191:8190 \

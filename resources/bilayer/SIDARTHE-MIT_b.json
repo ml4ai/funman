@@ -1,0 +1,107 @@
+{
+    "Qin": [
+        {
+            "variable": "S"
+        },
+        {
+            "variable": " I"
+        },
+        {
+            "variable": " D"
+        },
+        {
+            "variable": " A"
+        },
+        {
+            "variable": " R"
+        },
+        {
+            "variable": " T"
+        },
+        {
+            "variable": " H"
+        },
+        {
+            "variable": " E"
+        }
+    ],
+    "Qout": [
+        {
+            "tanvar": "S'"
+        },
+        {
+            "tanvar": " I'"
+        },
+        {
+            "tanvar": " D'"
+        },
+        {
+            "tanvar": " A'"
+        },
+        {
+            "tanvar": " R'"
+        },
+        {
+            "tanvar": " T'"
+        },
+        {
+            "tanvar": " H'"
+        },
+        {
+            "tanvar": " E'"
+        }
+    ],
+    "Box": [
+        {
+            "parameter": "alpha"
+        },
+        {
+            "parameter": " beta"
+        },
+        {
+            "parameter": " gamma"
+        },
+        {
+            "parameter": " delta"
+        },
+        {
+            "parameter": " epsilon"
+        },
+        {
+            "parameter": " mu"
+        },
+        {
+            "parameter": " zeta"
+        },
+        {
+            "parameter": " lamb"
+        },
+        {
+            "parameter": " eta"
+        },
+        {
+            "parameter": " rho"
+        },
+        {
+            "parameter": " theta"
+        },
+        {
+            "parameter": " kappa"
+        },
+        {
+            "parameter": " nu"
+        },
+        {
+            "parameter": " xi"
+        },
+        {
+            "parameter": " sigma"
+        },
+        {
+            "parameter": " tau"
+        }
+    ],
+    "Wa": [],
+    "Wn": [],
+    "Win": []
+}

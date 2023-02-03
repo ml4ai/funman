@@ -5,7 +5,7 @@ analysis.
 import logging
 
 import multiprocess as mp
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, Field, validator
 
 from funman.utils.handlers import NoopResultHandler, ResultHandler, WaitAction
 
@@ -23,19 +23,34 @@ class FUNMANConfig(BaseModel):
         arbitrary_types_allowed = True
 
     tolerance: float = 0.1
+    """Algorithm-specific tolerance for approximation, used by BoxSearch"""
 
     queue_timeout: int = 1
+    """Multiprocessing queue timeout, used by BoxSearch"""    
     number_of_processes: int = mp.cpu_count()
+    """Number of BoxSearch processes"""
     _handler: ResultHandler = NoopResultHandler()
     wait_timeout: int = None
+    """Timeout for BoxSearch procesess to wait for boxes to evaluate"""
     _wait_action: WaitAction = None
     wait_action_timeout: float = 0.05
+    """Time to sleep proceses waiting for work"""
     _read_cache: ResultHandler = None
     # episode_type: =None,
     _search: str = None
+    """Name of search algorithm to use"""
     solver: str = "z3"
+    """Name of pysmt solver to use"""
     max_steps: int = 2
+    """Number of timesteps to encode"""
     step_size: int = 1
+    """Step size for encoding"""
+    num_initial_boxes: int = 1
+    """Number of initial boxes for BoxSearch"""
+    initial_state_tolerance = 0.0
+    """Factor used to relax initial state values bounds"""
+    save_smtlib: bool = False
+    """Whether to save each smt invocation as an SMTLib file"""
 
     @validator("solver")
     def import_dreal(cls, v):
