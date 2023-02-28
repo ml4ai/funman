@@ -152,8 +152,12 @@ class BilayerGraph(ABC, BaseModel):
         underscore_attrs_are_private = True
 
     json_graph: Dict
-    _node_incoming_edges: Dict[BilayerNode, Dict[BilayerNode, BilayerEdge]] = {}
-    _node_outgoing_edges: Dict[BilayerNode, Dict[BilayerNode, BilayerEdge]] = {}
+    _node_incoming_edges: Dict[
+        BilayerNode, Dict[BilayerNode, BilayerEdge]
+    ] = {}
+    _node_outgoing_edges: Dict[
+        BilayerNode, Dict[BilayerNode, BilayerEdge]
+    ] = {}
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

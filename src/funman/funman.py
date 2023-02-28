@@ -26,7 +26,7 @@ class FUNMANConfig(BaseModel):
     """Algorithm-specific tolerance for approximation, used by BoxSearch"""
 
     queue_timeout: int = 1
-    """Multiprocessing queue timeout, used by BoxSearch"""    
+    """Multiprocessing queue timeout, used by BoxSearch"""
     number_of_processes: int = mp.cpu_count()
     """Number of BoxSearch processes"""
     _handler: ResultHandler = NoopResultHandler()

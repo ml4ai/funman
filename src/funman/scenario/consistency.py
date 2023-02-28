@@ -162,7 +162,9 @@ class ConsistencyScenarioResult(AnalysisScenarioResult, BaseModel):
                 ax = self.dataframe().plot(marker="o", **kwargs)
             plt.show(block=False)
         else:
-            raise Exception(f"Cannot plot result for an inconsistent scenario.")
+            raise Exception(
+                f"Cannot plot result for an inconsistent scenario."
+            )
         return ax
 
     def __repr__(self) -> str:

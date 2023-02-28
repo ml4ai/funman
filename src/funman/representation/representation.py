@@ -56,7 +56,7 @@ class Parameter(BaseModel):
         -------
         pysmt.fnode.FNode
             _description_
-        """        
+        """
         if not self._symbol:
             self._symbol = Symbol(self.name, REAL)
         return self._symbol
