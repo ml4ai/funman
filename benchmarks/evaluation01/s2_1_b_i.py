@@ -26,7 +26,8 @@ from funman.model.query import QueryTrue
 
 class TestS21BUnitTest(TestUnitTests):
     steps = 100
-    step_size = 2
+    step_size = 1
+    dreal_precision = 1e-3
     expected_max_infected = 0.6
     test_threshold = 0.1
     expected_max_day = 47
@@ -66,6 +67,8 @@ class TestS21BUnitTest(TestUnitTests):
             step_size=self.step_size,
             solver="dreal",
             initial_state_tolerance=0.0,
+            save_smtlib=True,
+            dreal_precision=self.dreal_precision,
         )
         result_sat = Funman().solve(scenario, config=config)
         self.report(result_sat, name=model_name)

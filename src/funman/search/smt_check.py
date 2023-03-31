@@ -19,7 +19,14 @@ class SMTCheck(Search):
         return result
 
     def expand(self, problem, episode):
-        with Solver(name=episode.config.solver, logic=QF_NRA) as s:
+        with Solver(
+            name=episode.config.solver,
+            logic=QF_NRA,
+            solver_options={
+                "dreal_precision": episode.config.dreal_precision,
+                "dreal_log_level": episode.config.dreal_log_level,
+            },
+        ) as s:
             formula = And(
                 problem._model_encoding.formula,
                 problem._query_encoding.formula,
