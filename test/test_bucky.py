@@ -1,21 +1,13 @@
 import json
+import logging
 import os
 import unittest
 
 from funman_demo.handlers import RealtimeResultPlotter, ResultCacheWriter
-from funman_demo.sim.CHIME.CHIME_SIR import main as run_CHIME_SIR
-from pysmt.shortcuts import GE, LE, And, Real, Symbol
-from pysmt.typing import REAL
 
 from funman import Funman
 from funman.funman import FUNMANConfig
-from funman.model import (
-    EncodedModel,
-    QueryFunction,
-    QueryLE,
-    QueryTrue,
-    SimulatorModel,
-)
+from funman.model import QueryLE
 from funman.model.bilayer import BilayerDynamics, BilayerModel
 from funman.representation.representation import Parameter
 from funman.scenario import (
@@ -53,25 +45,37 @@ class TestBucky(unittest.TestCase):
 
         identical_parameters = [
             ["beta_1", "beta_2"],
-            ["gamma_1", "gamma_2", "gamma_h"],
+            ["gamma_1", "gamma_2"],
         ]
+
+        lb = 0.0
+        ub = 1.0
+
+        gamma = 0.456
+        gamma_h = 0.3648
+        delta_1 = 0.25
+        delta_2 = 0.00969
+        delta_3 = 0.00121125
+        delta_4 = 0.0912
+        sigma = 0.017
+        theta = 0.1012
 
         model = BilayerModel(
             bilayer=BilayerDynamics(json_graph=bilayer_src),
             init_values=init_values,
-            # identical_parameters=identical_parameters,
+            identical_parameters=identical_parameters,
             parameter_bounds={
-                "beta_1": [0.0, 1.0],
-                "beta_2": [0.0, 1.0],
-                "gamma_1": [0.0, 1.0],
-                "gamma_2": [0.0, 1.0],
-                "gamma_h": [0.0, 1.0],
-                "delta_1": [0.0, 1.0],
-                "delta_2": [0.0, 1.0],
-                "delta_3": [0.0, 1.0],
-                "delta_4": [0.0, 1.0],
-                "sigma": [0.0, 1.0],
-                "theta": [0.0, 1.0],
+                "beta_1": [lb, ub],
+                "beta_2": [lb, ub],
+                "gamma_1": [gamma, gamma],
+                "gamma_2": [gamma, gamma],
+                "gamma_h": [gamma_h, gamma_h],
+                "delta_1": [delta_1, delta_1],
+                "delta_2": [delta_2, delta_2],
+                "delta_3": [delta_3, delta_3],
+                "delta_4": [delta_4, delta_4],
+                "sigma": [sigma, sigma],
+                "theta": [theta, theta],
             },
         )
 
@@ -103,28 +107,29 @@ class TestBucky(unittest.TestCase):
 
         return scenario
 
-    unittest.skip(reason="placeholder")
-
     def test_use_case_bilayer_parameter_synthesis(self):
         scenario = self.setup_use_case_bilayer_parameter_synthesis()
         funman = Funman()
-        result: ParameterSynthesisScenarioResult = funman.solve(
-            scenario,
-            config=FUNMANConfig(
-                tolerance=1e-8,
-                number_of_processes=1,
-                _handler=ResultCombinedHandler(
-                    [
-                        ResultCacheWriter(f"bucky_box_search.json"),
-                        RealtimeResultPlotter(
-                            scenario.parameters,
-                            plot_points=True,
-                            title=f"Feasible Regions (beta)",
-                            realtime_save_path=f"bucky_box_search.png",
-                        ),
-                    ]
+        config = FUNMANConfig(
+            tolerance=1e-8,
+            number_of_processes=1,
+            log_level=logging.INFO,
+        )
+        # FIXME arguments with form _* do not get assigned when using pydantic
+        config._handler = ResultCombinedHandler(
+            [
+                ResultCacheWriter(f"bucky_box_search.json"),
+                RealtimeResultPlotter(
+                    scenario.parameters,
+                    plot_points=True,
+                    title=f"Feasible Regions (beta)",
+                    realtime_save_path=f"bucky_box_search.png",
                 ),
-            ),
+            ]
+        )
+
+        result: ParameterSynthesisScenarioResult = funman.solve(
+            scenario, config=config
         )
         assert len(result.parameter_space.true_boxes) > 0
         assert len(result.parameter_space.false_boxes) > 0
@@ -133,13 +138,20 @@ class TestBucky(unittest.TestCase):
         scenario = self.setup_use_case_bilayer_consistency()
 
         funman = Funman()
-        config = FUNMANConfig(max_steps=2, step_size=1, solver="dreal")
+        config = FUNMANConfig(
+            max_steps=5,
+            step_size=1,
+            solver="dreal",
+            log_level=logging.INFO,
+        )
 
         # Show that region in parameter space is sat (i.e., there exists a true point)
         result_sat: ConsistencyScenarioResult = funman.solve(
             scenario, config=config
         )
         df = result_sat.dataframe()
+
+        parameters = result_sat._parameters()
 
         # assert abs(df["I"][2] - 2.24) < 0.01
         # beta = result_sat._parameters()["beta"]
