@@ -70,6 +70,11 @@ class SearchEpisode(BaseModel):
     statistics: SearchStatistics = None
     _model: pysmt.solvers.solver.Model = None
 
+    def __init__(self, **kw):
+        super().__init__(**kw)
+        self.config = kw["config"]
+        self.problem = kw["problem"]
+
     def num_parameters(self):
         return len(self.problem.parameters)
 

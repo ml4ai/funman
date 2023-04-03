@@ -66,22 +66,6 @@ class BoxSearchEpisode(SearchEpisode):
         self._unknown_boxes = QueueSP()
         self.statistics = SearchStatistics()
 
-    # def __init__(
-    #     self,
-    #     config: SearchConfig,
-    #     problem: "ParameterSynthesisScenario",
-    #     manager: Optional[SyncManager] = None,
-    # ) -> None:
-    #     super(BoxSearchEpisode, self).__init__(config, problem)
-    #     self.statistics = SearchStatistics.from_manager(manager)
-    #     self._unknown_boxes = manager.Queue() if manager else SQueue()
-    #     self._true_boxes: List[Box] = []
-    #     self.false_boxes: List[Box] = []
-    #     self._true_points: Set[Point] = set({})
-    #     self._false_points: Set[Point] = set({})
-
-    #     self.iteration = manager.Value("i", 0) if manager else 0
-
     def _initialize_boxes(self, expander_count):
         initial_box = self._initial_box()
         # if not self.add_unknown(initial_box):
@@ -239,57 +223,43 @@ class BoxSearch(Search):
         episode.statistics._iteration_operation.put("s")
         return episode._add_unknown([b1, b2])
 
-    def _logger(self, config, process_name=None):
-        if config.number_of_processes > 1:
-            l = mp.log_to_stderr()
-            if process_name:
-                l.name = process_name
-            l.setLevel(LOG_LEVEL)
-        else:
-            if not process_name:
-                process_name = "BoxSearch"
-            l = logging.Logger(process_name)
-        return l
-
     def _handle_empty_queue(
-        self, process_name, episode, more_work, idle_mutex, idle_flags
+        self, process_name, episode, idx, more_work, idle_mutex, idle_flags
     ):
-        if episode.config.number_of_processes > 1:
-            # set this processes idle flag and check all the other process idle flags
-            # doing so under the idle_mutex to ensure the flags are not under active change
-            with idle_mutex:
-                idle_flags[id].set()
-                should_exit = all(f.is_set() for f in idle_flags)
-
-            # all worker processes appear to be idle
-            if should_exit:
-                # one last check to see if there is work to be done
-                # which would be an error at this point in the code
-                if episode._unknown_boxes.qsize() != 0:
-                    l.error(
-                        f"{process_name} found more work while preparing to exit"
-                    )
-                    return False
-                l.info(f"{process_name} is exiting")
-                # tell other worker processing to check again with the expectation
-                # that they will also resolve to exit
-                with more_work:
-                    more_work.notify()
-                # break of the while True and allow the process to exit
-                return True
-
-            # wait for notification of more work
-            l.info(f"{process_name} is awaiting work")
-            with more_work:
-                more_work.wait()
-
-            # clear the current processes idle flag under the idle_mutex
-            with idle_mutex:
-                idle_flags[id].clear()
-
-            return False
-        else:
+        if episode.config.number_of_processes <= 1:
             return True
+
+        # set this processes idle flag and check all the other process idle flags
+        # doing so under the idle_mutex to ensure the flags are not under active change
+        with idle_mutex:
+            idle_flags[idx].set()
+            should_exit = all(f.is_set() for f in idle_flags)
+
+        # all worker processes appear to be idle
+        if should_exit:
+            # one last check to see if there is work to be done
+            # which would be an error at this point in the code
+            if episode._unknown_boxes.qsize() != 0:
+                l.error(
+                    f"{process_name} found more work while preparing to exit"
+                )
+                return False
+            l.info(f"{process_name} is exiting")
+            # tell other worker processing to check again with the expectation
+            # that they will also resolve to exit
+            with more_work:
+                more_work.notify()
+            # break of the while True and allow the process to exit
+            return True
+
+        # wait for notification of more work
+        l.info(f"{process_name} is awaiting work")
+        with more_work:
+            more_work.wait()
+
+        # clear the current processes idle flag under the idle_mutex
+        with idle_mutex:
+            idle_flags[idx].clear()
 
     def _initialize_encoding(self, solver: Solver, episode: BoxSearchEpisode):
         """
@@ -454,7 +424,7 @@ class BoxSearch(Search):
             Shared search data and statistics.
         """
         process_name = f"Expander_{idx}_p{os.getpid()}"
-        l = self._logger(episode.config, process_name=process_name)
+        l = episode.config.get_logger()
 
         try:
             if episode.config.solver == "dreal":
@@ -471,9 +441,9 @@ class BoxSearch(Search):
                 solver_options=opts,
             ) as solver:
                 l.info(f"{process_name} entering process loop")
-                print("Starting initializing dynamics of model")
+                l.info("Starting initializing dynamics of model")
                 self._initialize_encoding(solver, episode)
-                print("Initialized dynamics of model")
+                l.info("Initialized dynamics of model")
                 while True:
                     try:
                         box: Box = episode._get_unknown()
@@ -483,6 +453,7 @@ class BoxSearch(Search):
                         exit = self._handle_empty_queue(
                             process_name,
                             episode,
+                            idx,
                             more_work,
                             idle_mutex,
                             idle_flags,
@@ -529,19 +500,19 @@ class BoxSearch(Search):
                                     if more_work:
                                         with more_work:
                                             more_work.notify_all()
-                                print(f"Split({box})")
+                                l.debug(f"Split({box})")
                             else:
                                 # box does not intersect f, so it is in t (true region)
                                 episode._add_true(box)
                                 rval.put(box.dict())
-                                print(f"+++ True({box})")
+                                l.debug(f"+++ True({box})")
                         else:
                             # box is a subset of f (intersects f but not t)
                             episode._add_false(
                                 box
                             )  # TODO consider merging lists of boxes
                             rval.put(box.dict())
-                            print(f"--- False({box})")
+                            l.debug(f"--- False({box})")
                         solver.pop(1)  # Remove box from solver
                         episode._formula_stack.pop()
                         episode._on_iteration()
@@ -561,7 +532,7 @@ class BoxSearch(Search):
         """
         Execute the process that does final processing of the results of expand()
         """
-        l = self._logger(config, process_name=f"search_process_result_handler")
+        l = config.get_logger()
 
         handler: ResultHandler = config._handler
         true_boxes = []
@@ -571,6 +542,7 @@ class BoxSearch(Search):
         false_points = []
         break_on_interrupt = False
         try:
+            l.info("Opening result handler")
             handler.open()
             while True:
                 try:
@@ -605,9 +577,10 @@ class BoxSearch(Search):
                         else:
                             l.warning(f"Skipping Point with label: {label}")
                     else:
-                        l.error(f"Skipping invalid object type: {typ}")
+                        l.error(f"Skipping invalid object type: {type(inst)}")
 
                     try:
+                        l.info(f"Processing: {result}")
                         handler.process(result)
                     except Exception:
                         l.error(traceback.format_exc())
@@ -615,6 +588,7 @@ class BoxSearch(Search):
         except Exception as error:
             l.error(error)
         finally:
+            l.info("Closing result handler")
             handler.close()
         return {
             "true_boxes": true_boxes,
@@ -628,7 +602,7 @@ class BoxSearch(Search):
         """
         Execute one step of processing the results of expand()
         """
-        l = self._logger(config, process_name=f"search_process_result_handler")
+        l = config.get_logger()
 
         handler: ResultHandler = config._handler
         # true_boxes = []
@@ -717,7 +691,6 @@ class BoxSearch(Search):
         BoxSearchEpisode
             Final search results (parameter space) and statistics.
         """
-
         # problem.encode()
 
         if config.number_of_processes > 1:
@@ -726,6 +699,8 @@ class BoxSearch(Search):
             return self._search_sp(problem, config)
 
     def _search_sp(self, problem, config: "FUNMANConfig") -> ParameterSpace:
+        log = config.get_logger()
+        log.info("Running as single process")
         episode = BoxSearchEpisode(config=config, problem=problem)
         episode._initialize_boxes(config.num_initial_boxes)
         rval = QueueSP()
@@ -759,8 +734,7 @@ class BoxSearch(Search):
         return parameter_space
 
     def _search_mp(self, problem, config: "FUNMANConfig") -> ParameterSpace:
-        l = mp.get_logger()
-        l.setLevel(LOG_LEVEL)
+        log = config.get_logger()
         processes = config.number_of_processes
         with mp.Manager() as manager:
             rval = manager.Queue()
@@ -777,12 +751,12 @@ class BoxSearch(Search):
                 more_work_condition = manager.Condition()
 
                 # start the result handler process
-                l.info("Starting result handler process")
+                log.info("Starting result handler process")
                 rval_handler_process = pool.apply_async(
                     self._run_handler, args=(rval, config)
                 )
                 # blocking exec of the expansion processes
-                l.info(f"Starting {expand_count} expand processes")
+                log.info(f"Starting {expand_count} expand processes")
 
                 starmap_result = pool.starmap_async(
                     self._expand,
@@ -790,12 +764,12 @@ class BoxSearch(Search):
                         (
                             rval,
                             episode,
-                            {
-                                "idx": idx,
-                                "more_work": more_work_condition,
-                                "idle_mutex": idle_mutex,
-                                "idle_flags": idle_flags,
-                            },
+                            idx,
+                            more_work_condition,
+                            idle_mutex,
+                            idle_flags,
+                            None,
+                            None,
                         )
                         for idx in range(expand_count)
                     ],
@@ -808,15 +782,15 @@ class BoxSearch(Search):
                             config._wait_action.run()
                     starmap_result.wait()
                 except KeyboardInterrupt:
-                    l.warninging("--- Received Keyboard Interrupt ---")
+                    log.warning("--- Received Keyboard Interrupt ---")
 
                 rval.put(None)
-                l.info("Waiting for result handler process")
+                log.info("Waiting for result handler process")
                 # wait for the result handler to finish
                 rval_handler_process.wait(timeout=config.wait_timeout)
 
                 if not rval_handler_process.successful():
-                    l.error("Result handler failed to exit")
+                    log.error("Result handler failed to exit")
                 all_results = rval_handler_process.get()
 
                 # episode._true_boxes = all_results.get("true_boxes")

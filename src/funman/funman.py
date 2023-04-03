@@ -3,8 +3,9 @@ This module defines the Funman class, the primary entry point for FUNMAN
 analysis.
 """
 import logging
+import multiprocessing as mp
+import sys
 
-import multiprocess as mp
 from pydantic import BaseModel, Field, validator
 
 from funman.utils.handlers import NoopResultHandler, ResultHandler, WaitAction
@@ -58,6 +59,28 @@ class FUNMANConfig(BaseModel):
     constraint_noise: float = 0.0
     """Use MCTS in dreal"""
     dreal_mcts = False
+
+    log_level: int = logging.WARNING
+    """Log level to use during execution"""
+
+    _logger = None
+
+    def get_logger(self):
+        if self._logger is None:
+            if self.number_of_processes > 1:
+                l = mp.log_to_stderr()
+            else:
+                l = logging.getLogger()
+                log_format = logging.Formatter(
+                    "[%(levelname)s] %(asctime)s - %(message)s"
+                )
+                stream_handler = logging.StreamHandler(sys.stderr)
+                stream_handler.setFormatter(log_format)
+                stream_handler.setLevel(self.log_level)
+                l.addHandler(stream_handler)
+            l.setLevel(self.log_level)
+            self._logger = l
+        return self._logger
 
     @validator("solver")
     def import_dreal(cls, v):
