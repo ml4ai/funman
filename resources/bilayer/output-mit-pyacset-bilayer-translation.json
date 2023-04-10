@@ -1,0 +1,269 @@
+{
+    "Qin": [
+        {
+            "variable": "S"
+        },
+        {
+            "variable": "E"
+        },
+        {
+            "variable": "I"
+        },
+        {
+            "variable": "Ia"
+        },
+        {
+            "variable": "Ic"
+        },
+        {
+            "variable": "Rh"
+        },
+        {
+            "variable": "R"
+        },
+        {
+            "variable": "D"
+        },
+        {
+            "variable": "incH"
+        },
+        {
+            "variable": "incC"
+        }
+    ],
+    "Qout": [
+        {
+            "tanvar": "S'"
+        },
+        {
+            "tanvar": "E'"
+        },
+        {
+            "tanvar": "I'"
+        },
+        {
+            "tanvar": "Ia'"
+        },
+        {
+            "tanvar": "Ic'"
+        },
+        {
+            "tanvar": "Rh'"
+        },
+        {
+            "tanvar": "R'"
+        },
+        {
+            "tanvar": "D'"
+        },
+        {
+            "tanvar": "incH'"
+        },
+        {
+            "tanvar": "incC'"
+        }
+    ],
+    "Box": [
+        {
+            "parameter": "BETA"
+        },
+        {
+            "parameter": "F_eff"
+        },
+        {
+            "parameter": "HOSP"
+        },
+        {
+            "parameter": "THETA"
+        },
+        {
+            "parameter": "GAMMA"
+        },
+        {
+            "parameter": "GAMMA_H"
+        },
+        {
+            "parameter": "SIGMA"
+        },
+        {
+            "parameter": "SYM_FRAC"
+        },
+        {
+            "parameter": "CASE_REPORT"
+        }
+    ],
+    "Wa": [
+        {
+            "influx": 1,
+            "infusion": 2
+        },
+        {
+            "influx": 2,
+            "infusion": 4
+        },
+        {
+            "influx": 3,
+            "infusion": 3
+        },
+        {
+            "influx": 4,
+            "infusion": 3
+        },
+        {
+            "influx": 5,
+            "infusion": 5
+        },
+        {
+            "influx": 6,
+            "infusion": 6
+        },
+        {
+            "influx": 7,
+            "infusion": 7
+        },
+        {
+            "influx": 8,
+            "infusion": 8
+        },
+        {
+            "influx": 9,
+            "infusion": 6
+        },
+        {
+            "influx": 10,
+            "infusion": 7
+        },
+        {
+            "influx": 11,
+            "infusion": 8
+        },
+        {
+            "influx": 12,
+            "infusion": 8
+        },
+        {
+            "influx": 13,
+            "infusion": 8
+        },
+        {
+            "influx": 14,
+            "infusion": 8
+        }
+    ],
+    "Wn": [
+        {
+            "efflux": 1,
+            "effusion": 1
+        },
+        {
+            "efflux": 2,
+            "effusion": 2
+        },
+        {
+            "efflux": 3,
+            "effusion": 2
+        },
+        {
+            "efflux": 4,
+            "effusion": 4
+        },
+        {
+            "efflux": 5,
+            "effusion": 3
+        },
+        {
+            "efflux": 6,
+            "effusion": 5
+        },
+        {
+            "efflux": 7,
+            "effusion": 6
+        },
+        {
+            "efflux": 8,
+            "effusion": 7
+        },
+        {
+            "efflux": 9,
+            "effusion": 2
+        },
+        {
+            "efflux": 10,
+            "effusion": 2
+        },
+        {
+            "efflux": 11,
+            "effusion": 2
+        },
+        {
+            "efflux": 12,
+            "effusion": 4
+        },
+        {
+            "efflux": 13,
+            "effusion": 3
+        },
+        {
+            "efflux": 14,
+            "effusion": 5
+        }
+    ],
+    "Win": [
+        {
+            "arg": 1,
+            "call": 1
+        },
+        {
+            "arg": 2,
+            "call": 2
+        },
+        {
+            "arg": 2,
+            "call": 3
+        },
+        {
+            "arg": 4,
+            "call": 4
+        },
+        {
+            "arg": 3,
+            "call": 5
+        },
+        {
+            "arg": 5,
+            "call": 6
+        },
+        {
+            "arg": 6,
+            "call": 7
+        },
+        {
+            "arg": 7,
+            "call": 8
+        },
+        {
+            "arg": 2,
+            "call": 9
+        },
+        {
+            "arg": 2,
+            "call": 10
+        },
+        {
+            "arg": 2,
+            "call": 11
+        },
+        {
+            "arg": 4,
+            "call": 12
+        },
+        {
+            "arg": 3,
+            "call": 13
+        },
+        {
+            "arg": 5,
+            "call": 14
+        }
+    ]
+}
