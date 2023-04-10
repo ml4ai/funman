@@ -104,7 +104,10 @@ class TestUnitTests(unittest.TestCase):
                         ),
                         And(
                             [
-                                GE(Symbol(f"{v}_{i}", REAL), Real(0.0))
+                                GE(
+                                    Symbol(f"{v}_{i}", REAL),
+                                    Real(0.0 - tolerance),
+                                )
                                 for v in init_values
                             ]
                         ),

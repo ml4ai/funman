@@ -54,6 +54,8 @@ class FUNMANConfig(BaseModel):
     dreal_precision: float = 0.001
     """Precision delta for dreal solver"""
     dreal_log_level: str = "info"
+    """Constraint noise term to relax constraints"""
+    constraint_noise: float = 0.0
 
     @validator("solver")
     def import_dreal(cls, v):

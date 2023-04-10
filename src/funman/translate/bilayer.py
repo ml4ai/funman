@@ -8,7 +8,10 @@ from typing import Dict, List, Set, Union
 
 import pysmt
 from pysmt.shortcuts import (
+    GE,
+    GT,
     LE,
+    LT,
     TRUE,
     And,
     Equals,
@@ -384,14 +387,30 @@ class BilayerEncoder(Encoder):
                 if len(neg_derivative_expr_terms) > 0
                 else Real(0.0)
             )
+            # noise = Symbol(f"noise_{state_var_next_step_smt}", REAL)
+            # self._timed_symbols.add(f"{noise}".rsplit("_", 1)[0])
             eqn = simplify(
-                Equals(
-                    state_var_next_step_smt,
-                    Plus(
-                        state_var_smt,
-                        Times(
-                            Real(time_step_size),
-                            Minus(pos_terms, neg_terms),
+                And(
+                    LE(
+                        state_var_next_step_smt,
+                        Plus(
+                            state_var_smt,
+                            Times(
+                                Real(time_step_size),
+                                Minus(pos_terms, neg_terms),
+                            ),
+                            Real(self.config.constraint_noise),
+                        ),
+                    ),
+                    GE(
+                        state_var_next_step_smt,
+                        Plus(
+                            state_var_smt,
+                            Times(
+                                Real(time_step_size),
+                                Minus(pos_terms, neg_terms),
+                            ),
+                            Real(-self.config.constraint_noise),
                         ),
                     ),
                 )
