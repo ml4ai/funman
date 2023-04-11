@@ -26,12 +26,15 @@ RESOURCES = os.path.join(
 class TestBucky(unittest.TestCase):
     def setup_use_case_bilayer_common(self):
         bilayer_path = os.path.join(
-            RESOURCES, "bilayer", "Bucky_SEIIIRRD_BiLayer_v3.json"
+            RESOURCES,
+            "bilayer",
+            "Bucky_SEIIIRRD_BiLayer_v3.json"
+            # RESOURCES, "bilayer", "output-mit-pyacset-bilayer-translation.json"
         )
         with open(bilayer_path, "r") as f:
             bilayer_src = json.load(f)
 
-        infected_threshold = 50
+        infected_threshold = 0.055
         init_values = {
             "S": 99.43,
             "E": 0.4,
@@ -48,38 +51,36 @@ class TestBucky(unittest.TestCase):
             ["gamma_1", "gamma_2"],
         ]
 
-        lb = 0.0
-        ub = 1.0
-
-        gamma = 0.456
-        gamma_h = 0.3648
-        delta_1 = 0.25
-        delta_2 = 0.00969
-        delta_3 = 0.00121125
-        delta_4 = 0.0912
-        sigma = 0.017
-        theta = 0.1012
+        beta = [0.249, 0.251]
+        gamma = [0.469, 0.471]
+        gamma_h = [0.3648, 0.3648]
+        delta_1 = [0.25, 0.25]
+        delta_2 = [0.00969, 0.00969]
+        delta_3 = [0.00121125, 0.00121125]
+        delta_4 = [0.0912, 0.0912]
+        sigma = [0.016, 0.018]
+        theta = [0.1012, 0.1012]
 
         model = BilayerModel(
             bilayer=BilayerDynamics(json_graph=bilayer_src),
             init_values=init_values,
             identical_parameters=identical_parameters,
             parameter_bounds={
-                "beta_1": [lb, ub],
-                "beta_2": [lb, ub],
-                "gamma_1": [gamma, gamma],
-                "gamma_2": [gamma, gamma],
-                "gamma_h": [gamma_h, gamma_h],
-                "delta_1": [delta_1, delta_1],
-                "delta_2": [delta_2, delta_2],
-                "delta_3": [delta_3, delta_3],
-                "delta_4": [delta_4, delta_4],
-                "sigma": [sigma, sigma],
-                "theta": [theta, theta],
+                "beta_1": beta,
+                "beta_2": beta,
+                "gamma_1": gamma,
+                "gamma_2": gamma,
+                "gamma_h": gamma_h,
+                "delta_1": delta_1,
+                "delta_2": delta_2,
+                "delta_3": delta_3,
+                "delta_4": delta_4,
+                "sigma": sigma,
+                "theta": theta,
             },
         )
 
-        query = QueryLE(variable="I_crit", ub=infected_threshold)
+        query = QueryLE(variable="I_mild", ub=infected_threshold)
 
         return model, query
 
@@ -98,8 +99,10 @@ class TestBucky(unittest.TestCase):
 
         scenario = ParameterSynthesisScenario(
             parameters=[
+                make_parameter("gamma_1"),
                 make_parameter("beta_1"),
-                make_parameter("beta_2"),
+                # make_parameter("gamma_2"),
+                # make_parameter("beta_2"),
             ],
             model=model,
             query=query,
@@ -139,7 +142,7 @@ class TestBucky(unittest.TestCase):
 
         funman = Funman()
         config = FUNMANConfig(
-            max_steps=5,
+            max_steps=2,
             step_size=1,
             solver="dreal",
             log_level=logging.INFO,

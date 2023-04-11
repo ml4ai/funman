@@ -159,25 +159,25 @@ class TestUseCases(unittest.TestCase):
     def test_use_case_bilayer_parameter_synthesis(self):
         scenario = self.setup_use_case_bilayer_parameter_synthesis()
         funman = Funman()
-        result: ParameterSynthesisScenarioResult = funman.solve(
-            scenario,
-            config=FUNMANConfig(
-                solver="dreal",
-                dreal_mcts=True,
-                tolerance=1e-8,
-                number_of_processes=1,
-                _handler=ResultCombinedHandler(
-                    [
-                        ResultCacheWriter(f"box_search.json"),
-                        RealtimeResultPlotter(
-                            scenario.parameters,
-                            plot_points=True,
-                            title=f"Feasible Regions (beta)",
-                            realtime_save_path=f"box_search.png",
-                        ),
-                    ]
+        config = FUNMANConfig(
+            solver = "dreal",
+            dreal_mcts=True
+            tolerance=1e-8,
+            number_of_processes=1,
+        )
+        config._handler = ResultCombinedHandler(
+            [
+                ResultCacheWriter(f"box_search.json"),
+                RealtimeResultPlotter(
+                    scenario.parameters,
+                    plot_points=True,
+                    title=f"Feasible Regions (beta)",
+                    realtime_save_path=f"box_search.png",
                 ),
-            ),
+            ]
+        )
+        result: ParameterSynthesisScenarioResult = funman.solve(
+            scenario, config=config
         )
         assert len(result.parameter_space.true_boxes) > 0
         assert len(result.parameter_space.false_boxes) > 0
