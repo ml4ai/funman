@@ -56,6 +56,8 @@ class FUNMANConfig(BaseModel):
     dreal_log_level: str = "info"
     """Constraint noise term to relax constraints"""
     constraint_noise: float = 0.0
+    """Use MCTS in dreal"""
+    dreal_mcts = False
 
     @validator("solver")
     def import_dreal(cls, v):

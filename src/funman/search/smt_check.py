@@ -25,6 +25,7 @@ class SMTCheck(Search):
             solver_options={
                 "dreal_precision": episode.config.dreal_precision,
                 "dreal_log_level": episode.config.dreal_log_level,
+                "dreal_mcts": episode.config.dreal_mcts,
             },
         ) as s:
             formula = And(
