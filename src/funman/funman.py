@@ -41,7 +41,7 @@ class FUNMANConfig(BaseModel):
     """Name of search algorithm to use"""
     solver: str = "z3"
     """Name of pysmt solver to use"""
-    max_steps: int = 2
+    num_steps: int = 2
     """Number of timesteps to encode"""
     step_size: int = 1
     """Step size for encoding"""
@@ -53,7 +53,7 @@ class FUNMANConfig(BaseModel):
     """Whether to save each smt invocation as an SMTLib file"""
     dreal_precision: float = 0.001
     """Precision delta for dreal solver"""
-    dreal_log_level: str = "info"
+    dreal_log_level: str = "off"
     """Constraint noise term to relax constraints"""
     constraint_noise: float = 0.0
     """Use MCTS in dreal"""

@@ -484,7 +484,7 @@ class TestUseCases(unittest.TestCase):
         steps = 3
         self.iteration = 0
         mu = [0.00008, 0.078, 0.19]
-        config = FUNMANConfig(max_steps=steps, solver="dreal")
+        config = FUNMANConfig(num_steps=steps, solver="dreal")
 
         bilayer = BilayerDynamics(json_graph=self.initial_bilayer())
         bounds = self.unit_test_1_bounds()

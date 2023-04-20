@@ -343,6 +343,7 @@ class BoxSearch(Search):
 
     def store_smtlib(self, episode, box, filename="dbg.smt2"):
         with open(filename, "w") as f:
+            print(f"Saving smtlib file: {filename}")
             smtlibscript_from_formula_list(
                 episode._formula_stack,
                 logic=QF_NRA,

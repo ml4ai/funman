@@ -451,6 +451,9 @@ class DRealNative(Solver, SmtLibBasicSolver, SmtLibIgnoreMixin):
         self.LOGICS = DReal.LOGICS
         self.symbols = {}
 
+    def __del__(self):
+        self.context.Exit()
+
     @clear_pending_pop
     def add_assertion(self, formula, named=None):
         # print(f"Assert({formula})")
@@ -530,12 +533,16 @@ class DRealNative(Solver, SmtLibBasicSolver, SmtLibIgnoreMixin):
         return EagerModel(assignment=assignment, environment=self.environment)
 
     def get_value(self, item):
+        # print(f"get_value() {item}: {self.model[item]}")
         return Real(self.model[item].lb())
 
     @clear_pending_pop
     def solve(self, assumptions=None):
         assert assumptions is None
-        ans = self.check_sat()
+        try:
+            ans = self.check_sat()
+        except Exception as e:
+            raise e
         return ans is not None
 
     def _exit(self):
