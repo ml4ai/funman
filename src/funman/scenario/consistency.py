@@ -65,7 +65,6 @@ class ConsistencyScenario(AnalysisScenario, BaseModel):
             search = config._search()
 
         if self.model.structural_parameter_bounds:
-
             if self._smt_encoder is None:
                 self._smt_encoder = self.model.default_encoder(config)
                 self._smt_encoder._encode_timed_model_elements(self.model)
@@ -165,7 +164,6 @@ class ConsistencyScenario(AnalysisScenario, BaseModel):
         return self._model_encoding, self._query_encoding
 
     def _encode_timed(self, num_steps, step_size, config: "FUNMANConfig"):
-
         # This will overwrite the _model_encoding for each configuration, but the encoder will retain components of the configurations.
         self._model_encoding = self._smt_encoder.encode_model_timed(
             self.model, num_steps, step_size

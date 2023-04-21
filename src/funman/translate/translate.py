@@ -143,7 +143,6 @@ class Encoder(ABC, BaseModel):
         )
         a_series["index"] = list(range(0, max_t + 1))
         for var, tps in series.items():
-
             vals = [None] * (int(max_t) + 1)
             for t, v in tps.items():
                 if t.isdigit():

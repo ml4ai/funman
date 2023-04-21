@@ -13,6 +13,9 @@ class Model(ABC, BaseModel):
     The abstract base class for Models.
     """
 
+    class Config:
+        allow_inf_nan = True
+
     init_values: Dict[str, float] = {}
     parameter_bounds: Dict[str, List[float]] = {}
     structural_parameter_bounds: Dict[str, List[int]] = {}

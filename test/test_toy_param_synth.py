@@ -13,7 +13,6 @@ from funman.translate import EncodedEncoder
 
 class TestCompilation(unittest.TestCase):
     def test_toy(self):
-
         parameters = [Parameter(name="x")]
         x = parameters[0].symbol()
 
@@ -30,7 +29,6 @@ class TestCompilation(unittest.TestCase):
         result = funman.solve(scenario, config)
 
     def test_toy_2d(self):
-
         parameters = [
             Parameter(name="x"),
             Parameter(name="y"),

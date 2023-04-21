@@ -102,12 +102,19 @@ class TestUseCases(unittest.TestCase):
         )
 
         funman = Funman()
+
         result: ParameterSynthesisScenarioResult = funman.solve(
             ParameterSynthesisScenario(
                 parameters=parameters,
                 model=EncodedModel(_formula=formula),
                 query=QueryTrue(),
-            )
+            ),
+            config=FUNMANConfig(
+                solver="dreal",
+                dreal_mcts=True,
+                tolerance=1e-8,
+                number_of_processes=1,
+            ),
         )
         assert result
 

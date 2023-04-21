@@ -763,7 +763,6 @@ class Box(BaseModel):
                 p, _ = self._get_max_width_Parameter()
                 mid = self.bounds[p].midpoint()
         else:
-
             p, _ = self._get_max_width_Parameter(normalize=normalize)
             mid = self.bounds[p].midpoint()
 

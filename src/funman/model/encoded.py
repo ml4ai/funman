@@ -1,3 +1,4 @@
+from pydantic import Extra
 from pysmt.formula import FNode
 from pysmt.shortcuts import TRUE
 
@@ -11,7 +12,7 @@ class EncodedModel(Model):
 
     class Config:
         arbitrary_types_allowed = True
-        underscore_attrs_are_private = True
+        extra = Extra.allow
 
     _formula: FNode = TRUE()
 

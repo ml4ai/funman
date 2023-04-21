@@ -241,7 +241,6 @@ class BilayerDynamics(BilayerGraph):
     #     return bilayer
 
     def _initialize_from_json(self):
-
         """
         Create a BilayerDynamics object from a JSON formatted bilayer graph.
 
