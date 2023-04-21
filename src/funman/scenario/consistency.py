@@ -10,6 +10,7 @@ from pydantic import BaseModel
 from pysmt.solvers.solver import Model as pysmt_Model
 
 from funman.model.bilayer import BilayerModel, validator
+from funman.model.decapode import DecapodeModel
 from funman.model.encoded import EncodedModel
 from funman.model.query import QueryEncoded, QueryFunction, QueryLE, QueryTrue
 from funman.scenario import AnalysisScenario, AnalysisScenarioResult
@@ -36,7 +37,7 @@ class ConsistencyScenario(AnalysisScenario, BaseModel):
         smart_union = True
         extra = "forbid"
 
-    model: Union[BilayerModel, EncodedModel]
+    model: Union[DecapodeModel, BilayerModel, EncodedModel]
     query: Union[QueryLE, QueryEncoded, QueryFunction, QueryTrue]
     _smt_encoder: Encoder = None
     _model_encoding: Encoding = None

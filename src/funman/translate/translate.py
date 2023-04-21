@@ -114,6 +114,10 @@ class Encoder(ABC, BaseModel):
         return Encoding(formula=query._formula)
 
     def _encode_query_le(self, model_encoding, query):
+        if query.variable not in model_encoding.symbols:
+            raise Exception(
+                f"Could not encode QueryLE because {query.variable} does not appear in the model_encoding symbols."
+            )
         timepoints = model_encoding.symbols[query.variable]
         return Encoding(
             formula=And([LE(s, Real(query.ub)) for s in timepoints.values()])
