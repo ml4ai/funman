@@ -27,7 +27,7 @@ from funman.model.query import QueryTrue
 
 
 class TestS21BUnitTest(TestUnitTests):
-    steps = 100
+    steps = 50
     step_size = 2
     dreal_precision = 1e-3
     expected_max_infected = 0.6
@@ -35,14 +35,14 @@ class TestS21BUnitTest(TestUnitTests):
     expected_max_day = 47
     test_max_day_threshold = 25
 
-    speedups = {}
-
     s2_models = [
         "Mosaphir_petri_to_bilayer",
         "UF_petri_to_bilayer",
         "Morrison_bilayer",
         "Skema_bilayer",
     ]
+
+    speedups = {m: [] for m in s2_models}
 
     @contextmanager
     def elapsed_timer(self):
@@ -69,10 +69,10 @@ class TestS21BUnitTest(TestUnitTests):
             initial,
             self.bounds_sidarthe(),
             [],
-            self.steps,
+            self.steps * self.step_size,
             QueryTrue(),
             extra_constraints=self.sidarthe_extra_1_1_d_2d(
-                self.steps, initial, self.step_size
+                self.steps * self.step_size, initial, self.step_size
             ),
         )
         config = FUNMANConfig(
@@ -127,20 +127,18 @@ class TestS21BUnitTest(TestUnitTests):
 
     def compute_speedup(self, elapsed_base_dreal, elapsed_mcts_dreal, model):
         mcts_speedup = elapsed_base_dreal / elapsed_mcts_dreal
-        self.speedups[model] = mcts_speedup
-        # print(f"Model {model} mcts speedup:", mcts_speedup)
+        self.speedups[model].append(mcts_speedup)
+        print(f"Speedups: {self.speedups}")
 
     def compare_mcts_speedup(self, model):
         with self.elapsed_timer() as t:
             self.common_test_model(model)
-        elapsed_base_dreal = t()
-        mcts_times = []
-        for i in range(10):
+            elapsed_base_dreal = t()
+        for i in range(5):
             with self.elapsed_timer() as t:
                 self.common_test_model(model, dreal_mcts=True)
-            mcts_times.append(t())
-        elapsed_mcts_dreal = sum(mcts_times) / len(mcts_times)
-        self.compute_speedup(elapsed_base_dreal, elapsed_mcts_dreal, model)
+                elapsed_mcts_dreal = t()
+            self.compute_speedup(elapsed_base_dreal, elapsed_mcts_dreal, model)
 
     def test_model_0(self):
         self.compare_mcts_speedup(self.s2_models[0])

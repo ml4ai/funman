@@ -303,17 +303,19 @@ class BilayerEncoder(Encoder):
         if isinstance(model, BilayerModel):
             state_timepoints = range(
                 0,
-                self.config.num_steps + 1,
+                (self.config.num_steps * self.config.step_size) + 1,
                 self.config.step_size,
             )
 
             if len(list(state_timepoints)) == 0:
                 raise Exception(
-                    f"Could not identify timepoints from step_size = {self.config.step_size} and max_steps = {self.config.num_steps}"
+                    f"Could not identify timepoints from step_size = {self.config.step_size} and num_steps = {self.config.num_steps}"
                 )
 
             transition_timepoints = range(
-                0, self.config.num_steps, self.config.step_size
+                0,
+                self.config.num_steps * self.config.step_size,
+                self.config.step_size,
             )
 
             # All state nodes correspond to timed symbols
