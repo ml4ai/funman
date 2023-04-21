@@ -29,6 +29,7 @@ from pysmt.shortcuts import (
 from pysmt.typing import BOOL, INT, REAL
 
 from funman.model import Model
+from funman.representation.representation import Parameter
 
 
 class BilayerMetadata(BaseModel):
@@ -484,3 +485,28 @@ class BilayerModel(Model):
         from funman.translate import BilayerEncoder
 
         return BilayerEncoder(config=config)
+
+    def _parameters(self) -> List[Parameter]:
+        params = [
+            Parameter(
+                name=node.parameter,
+                lb=self.parameter_bounds[node.parameter][0],
+                ub=self.parameter_bounds[node.parameter][1],
+            )
+            for _, node in self.bilayer._flux.items()
+            if self.parameter_bounds
+            and node.parameter in self.parameter_bounds
+            and self.parameter_bounds[node.parameter]
+        ]
+        if self.measurements:
+            params += [
+                Parameter(
+                    name=node.parameter,
+                    lb=self.parameter_bounds[node.parameter][0],
+                    ub=self.parameter_bounds[node.parameter][1],
+                )
+                for _, node in self.measurements._flux.items()
+                if node.parameter in self.parameter_bounds
+                and self.parameter_bounds[node.parameter]
+            ]
+        return params

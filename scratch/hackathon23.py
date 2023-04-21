@@ -334,7 +334,7 @@ class TestUseCases(unittest.TestCase):
     def test_use_case_bilayer_consistency(self):
         steps = 8
         self.iteration = 0
-        config = FUNMANConfig(max_steps=steps, solver="dreal")
+        config = FUNMANConfig(num_steps=steps, solver="dreal")
 
         bilayer = BilayerDynamics(json_graph=self.initial_bilayer())
         bounds = self.parameter_bounds()

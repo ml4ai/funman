@@ -8,7 +8,7 @@ from typing import Dict, List, Union
 import pysmt
 from pydantic import BaseModel
 from pysmt.formula import FNode
-from pysmt.shortcuts import GE, LE, LT, REAL, TRUE, And, Real, Symbol
+from pysmt.shortcuts import GE, LE, LT, REAL, TRUE, And, Equals, Real, Symbol
 
 from funman.constants import NEG_INFINITY, POS_INFINITY
 from funman.funman import FUNMANConfig
@@ -169,19 +169,24 @@ class Encoder(ABC, BaseModel):
         FNode
             formula constraining p to the interval
         """
-        lower = (
-            GE(Symbol(p, REAL), Real(i.lb)) if i.lb != NEG_INFINITY else TRUE()
-        )
-        upper_ineq = LE if closed_upper_bound else LT
-        upper = (
-            upper_ineq(Symbol(p, REAL), Real(i.ub))
-            if i.ub != POS_INFINITY
-            else TRUE()
-        )
-        return And(
-            lower,
-            upper,
-        ).simplify()
+        if i.lb == i.ub and i.lb != NEG_INFINITY and i.lb != POS_INFINITY:
+            return Equals(Symbol(p, REAL), Real(i.lb))
+        else:
+            lower = (
+                GE(Symbol(p, REAL), Real(i.lb))
+                if i.lb != NEG_INFINITY
+                else TRUE()
+            )
+            upper_ineq = LE if closed_upper_bound else LT
+            upper = (
+                upper_ineq(Symbol(p, REAL), Real(i.ub))
+                if i.ub != POS_INFINITY
+                else TRUE()
+            )
+            return And(
+                lower,
+                upper,
+            ).simplify()
 
     def point_to_smt(self, pt: Point):
         return And(

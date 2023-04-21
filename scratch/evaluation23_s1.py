@@ -263,7 +263,7 @@ class TestUseCases(TestUseCases):
             case["steps"],
             case["query"](case["steps"], case["initial"]()),
         )
-        config = FUNMANConfig(max_steps=case["steps"], solver="dreal")
+        config = FUNMANConfig(num_steps=case["steps"], solver="dreal")
         # result_sat = Funman().solve(scenario, config=config)
         # case["report"](result_sat)
 
@@ -282,7 +282,7 @@ class TestUseCases(TestUseCases):
         config.tolerance = 1e-4
         config.number_of_processes = 1
         config.num_initial_boxes = 1
-        config.max_steps = case["steps"]
+        config.num_steps = case["steps"]
         config._handler = ResultCombinedHandler(
             [
                 ResultCacheWriter(f"box_search.json"),

@@ -41,7 +41,7 @@ class FUNMANConfig(BaseModel):
     """Name of search algorithm to use"""
     solver: str = "z3"
     """Name of pysmt solver to use"""
-    max_steps: int = 2
+    num_steps: int = 2
     """Number of timesteps to encode"""
     step_size: int = 1
     """Step size for encoding"""
@@ -51,6 +51,13 @@ class FUNMANConfig(BaseModel):
     """Factor used to relax initial state values bounds"""
     save_smtlib: bool = False
     """Whether to save each smt invocation as an SMTLib file"""
+    dreal_precision: float = 0.001
+    """Precision delta for dreal solver"""
+    dreal_log_level: str = "off"
+    """Constraint noise term to relax constraints"""
+    constraint_noise: float = 0.0
+    """Use MCTS in dreal"""
+    dreal_mcts = False
 
     @validator("solver")
     def import_dreal(cls, v):

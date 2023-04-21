@@ -423,18 +423,36 @@ class DRealNative(Solver, SmtLibBasicSolver, SmtLibIgnoreMixin):
         self.model = None
 
         # dreal specific attributes
-        self.context = dreal.Context()
-        self.context.SetLogic(dreal.Logic.QF_NRA)
-        self.context.config.precision = 0.05
+        self.config = dreal.Config()
+
+        if "dreal_precision" in options:
+            self.config.precision = options["solver_options"][
+                "dreal_precision"
+            ]
         # self.context.config.use_polytope = True
         # self.context.config.use_worklist_fixpoint = True
         self.model = None
-        # dreal.set_log_level(dreal.LogLevel.DEBUG)
-        # dreal.set_log_level(dreal.LogLevel.INFO)
+        if "dreal_log_level" in options["solver_options"]:
+            if options["solver_options"]["dreal_log_level"] == "debug":
+                dreal.set_log_level(dreal.LogLevel.DEBUG)
+            elif options["solver_options"]["dreal_log_level"] == "info":
+                dreal.set_log_level(dreal.LogLevel.INFO)
+
+        if (
+            "dreal_mcts" in options["solver_options"]
+            and options["solver_options"]["dreal_mcts"]
+        ):
+            self.config.mcts = True
+
+        self.context = dreal.Context(self.config)
+        self.context.SetLogic(dreal.Logic.QF_NRA)
 
         # self.to = self.environment.typeso
         self.LOGICS = DReal.LOGICS
         self.symbols = {}
+
+    def __del__(self):
+        self.context.Exit()
 
     @clear_pending_pop
     def add_assertion(self, formula, named=None):
@@ -515,12 +533,16 @@ class DRealNative(Solver, SmtLibBasicSolver, SmtLibIgnoreMixin):
         return EagerModel(assignment=assignment, environment=self.environment)
 
     def get_value(self, item):
+        # print(f"get_value() {item}: {self.model[item]}")
         return Real(self.model[item].lb())
 
     @clear_pending_pop
     def solve(self, assumptions=None):
         assert assumptions is None
-        ans = self.check_sat()
+        try:
+            ans = self.check_sat()
+        except Exception as e:
+            raise e
         return ans is not None
 
     def _exit(self):

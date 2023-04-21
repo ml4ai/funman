@@ -7,8 +7,12 @@ from functools import reduce
 from typing import Dict, List, Set, Union
 
 import pysmt
+from pysmt.formula import FNode
 from pysmt.shortcuts import (
+    GE,
+    GT,
     LE,
+    LT,
     TRUE,
     And,
     Equals,
@@ -65,6 +69,215 @@ class BilayerEncoder(Encoder):
 
     _timed_symbols: Set[str] = set([])
     _untimed_symbols: Set[str] = set([])
+    _timed_model_elements: Dict = None
+    _untimed_constraints: FNode
+    _min_time_point: int
+    _min_step_size: int
+
+    def get_structural_configurations(self, model: Model):
+        configurations: List[Dict[str, int]] = []
+        if len(model.structural_parameter_bounds) == 0:
+            self._min_time_point = 0
+            self._min_step_size = 1
+            num_steps = [1, self.config.num_steps]
+            step_size = [1, self.config.step_size]
+            max_step_size = self.config.step_size
+            max_step_index = self.config.num_steps * max_step_size
+            configurations.append(
+                {
+                    "num_steps": self.config.num_steps,
+                    "step_size": self.config.step_size,
+                }
+            )
+        else:
+            num_steps = model.structural_parameter_bounds["num_steps"]
+            step_size = model.structural_parameter_bounds["step_size"]
+            self._min_time_point = num_steps[0]
+            self._min_step_size = step_size[0]
+            max_step_size = step_size[1]
+            max_step_index = num_steps[1] * max_step_size
+            configurations += [
+                {"num_steps": ns, "step_size": ss}
+                for ns in range(num_steps[0], num_steps[1] + 1)
+                for ss in range(step_size[0], step_size[1] + 1)
+            ]
+        return configurations, max_step_index, max_step_size
+
+    def get_timepoints(self, num_steps, step_size):
+        state_timepoints = range(
+            0,
+            (step_size * num_steps) + 1,
+            step_size,
+        )
+
+        if len(list(state_timepoints)) == 0:
+            raise Exception(
+                f"Could not identify timepoints from step_size = {step_size} and num_steps = {num_steps}"
+            )
+
+        transition_timepoints = range(0, step_size * num_steps, step_size)
+        return list(state_timepoints), list(transition_timepoints)
+
+    def _encode_next_step(
+        self,
+        model: Model,
+        step: int,
+        next_step: int,
+        time_dependent_parameters=None,
+    ):
+        transition = self._encode_bilayer(
+            model.bilayer,
+            [step, next_step],
+            time_dependent_parameters=time_dependent_parameters,
+        )
+        if model.measurements:
+            measurements = self._encode_measurements(
+                model.measurements, [step + next_step]
+            )
+        else:
+            measurements = TRUE()
+
+        return And(transition, measurements).simplify()
+
+    def _encode_untimed_constraints(
+        self, model: Model, time_dependent_parameters=False
+    ):
+        untimed_constraints = []
+        parameters = model._parameters()
+        if not time_dependent_parameters:
+            untimed_constraints.append(
+                self.box_to_smt(
+                    Box(
+                        bounds={
+                            p.name: Interval(lb=p.lb, ub=p.ub)
+                            for p in parameters
+                        },
+                        closed_upper_bound=True,
+                    )
+                )
+            )
+            # Encode that all of the identical parameters are equal
+            untimed_constraints.append(
+                And(
+                    [
+                        Equals(Symbol(var1, REAL), Symbol(var2, REAL))
+                        for group in model.identical_parameters
+                        for var1 in group
+                        for var2 in group
+                        if var1 != var2
+                    ]
+                ).simplify()
+            )
+        return And(untimed_constraints).simplify()
+
+    def _encode_timed_model_elements(
+        self, model: Model, time_dependent_parameters=False
+    ):
+        # All state nodes correspond to timed symbols
+        for idx, node in model.bilayer._state.items():
+            self._timed_symbols.add(node.parameter)
+
+        # All flux nodes correspond to untimed symbols
+        for _, node in model.bilayer._flux.items():
+            self._untimed_symbols.add(node.parameter)
+
+        (
+            configurations,
+            max_step_index,
+            max_step_size,
+        ) = self.get_structural_configurations(model)
+        self._timed_model_elements = {
+            "init": self._define_init(model),
+            "time_step_constraints": [
+                [None for i in range(max_step_size)]
+                for j in range(max_step_index)
+            ],
+            "configurations": configurations,
+            "untimed_constraints": self._encode_untimed_constraints(model),
+            "timed_parameters": [
+                [None for i in range(max_step_size)]
+                for j in range(max_step_index)
+            ],
+        }
+
+    def encode_model_timed(
+        self,
+        model: Model,
+        num_steps: int,
+        step_size: int,
+        time_dependent_parameters: bool = False,
+    ):
+        if self._timed_model_elements is None:
+            self._timed_model_elements = self._encode_timed_model_elements(
+                model, time_dependent_parameters=time_dependent_parameters
+            )
+
+        state_timepoints, transition_timepoints = self.get_timepoints(
+            num_steps, step_size
+        )
+        parameters = model._parameters()
+
+        constraints = []
+
+        for i, timepoint in enumerate(transition_timepoints):
+            c = self._timed_model_elements["time_step_constraints"][timepoint][
+                step_size - self._min_step_size
+            ]
+            if c is None:
+                c = self._encode_next_step(
+                    model,
+                    state_timepoints[i],
+                    state_timepoints[i + 1],
+                    time_dependent_parameters=None,
+                )
+                self._timed_model_elements["time_step_constraints"][timepoint][
+                    step_size - self._min_step_size
+                ] = c
+            constraints.append(c)
+
+            if time_dependent_parameters:
+                params = self._timed_model_elements["timed_parameters"][
+                    timepoint
+                ][step_size - self._min_step_size]
+                if params == []:
+                    params = [p.timed_copy(timepoint) for p in parameters]
+                    self._timed_model_elements["timed_parameters"][timepoint][
+                        step_size - self._min_step_size
+                    ] = params
+                constraints.append(
+                    self.box_to_smt(
+                        Box(
+                            bounds={
+                                p.name: Interval(lb=p.lb, ub=p.ub)
+                                for p in timed_parameters
+                            }
+                        ),
+                        closed_upper_bound=True,
+                    )
+                )
+
+        if time_dependent_parameters:
+            # FIXME cache this computation
+            ## Assume that all parameters are constant
+            constraints.append(
+                self._set_parameters_constant(
+                    parameters,
+                    constraints,
+                ),
+            )
+
+        formula = And(
+            And(
+                [
+                    self._timed_model_elements["init"],
+                    self._timed_model_elements["untimed_constraints"],
+                ]
+                + constraints
+            ).simplify(),
+            (model._extra_constraints if model._extra_constraints else TRUE()),
+        ).simplify()
+        symbols = self._symbols(formula)
+        return Encoding(formula=formula, symbols=symbols)
 
     def encode_model(self, model: Model, time_dependent_parameters=False):
         """
@@ -90,17 +303,19 @@ class BilayerEncoder(Encoder):
         if isinstance(model, BilayerModel):
             state_timepoints = range(
                 0,
-                self.config.max_steps + 1,
+                (self.config.num_steps * self.config.step_size) + 1,
                 self.config.step_size,
             )
 
             if len(list(state_timepoints)) == 0:
                 raise Exception(
-                    f"Could not identify timepoints from step_size = {self.config.step_size} and max_steps = {self.config.max_steps}"
+                    f"Could not identify timepoints from step_size = {self.config.step_size} and num_steps = {self.config.num_steps}"
                 )
 
             transition_timepoints = range(
-                0, self.config.max_steps, self.config.step_size
+                0,
+                self.config.num_steps * self.config.step_size,
+                self.config.step_size,
             )
 
             # All state nodes correspond to timed symbols
@@ -384,14 +599,30 @@ class BilayerEncoder(Encoder):
                 if len(neg_derivative_expr_terms) > 0
                 else Real(0.0)
             )
+            # noise = Symbol(f"noise_{state_var_next_step_smt}", REAL)
+            # self._timed_symbols.add(f"{noise}".rsplit("_", 1)[0])
             eqn = simplify(
-                Equals(
-                    state_var_next_step_smt,
-                    Plus(
-                        state_var_smt,
-                        Times(
-                            Real(time_step_size),
-                            Minus(pos_terms, neg_terms),
+                And(
+                    LE(
+                        state_var_next_step_smt,
+                        Plus(
+                            state_var_smt,
+                            Times(
+                                Real(time_step_size),
+                                Minus(pos_terms, neg_terms),
+                            ),
+                            Real(self.config.constraint_noise),
+                        ),
+                    ),
+                    GE(
+                        state_var_next_step_smt,
+                        Plus(
+                            state_var_smt,
+                            Times(
+                                Real(time_step_size),
+                                Minus(pos_terms, neg_terms),
+                            ),
+                            Real(-self.config.constraint_noise),
                         ),
                     ),
                 )
