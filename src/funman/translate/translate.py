@@ -6,7 +6,7 @@ from abc import ABC, abstractmethod
 from typing import Dict, List, Union
 
 import pysmt
-from pydantic import BaseModel
+from pydantic import BaseModel, Extra
 from pysmt.formula import FNode
 from pysmt.shortcuts import GE, LE, LT, REAL, TRUE, And, Equals, Real, Symbol
 
@@ -25,9 +25,10 @@ class Encoding(BaseModel):
 
     class Config:
         arbitrary_types_allowed = True
+        extra = Extra.allow
 
-    formula: FNode = None
-    symbols: Union[List[FNode], Dict[str, Dict[str, FNode]]] = None
+    _formula: FNode = None
+    _symbols: Union[List[FNode], Dict[str, Dict[str, FNode]]] = None
 
     # @validator("formula")
     # def set_symbols(cls, v: FNode):
@@ -111,16 +112,16 @@ class Encoder(ABC, BaseModel):
             )
 
     def _return_encoded_query(self, model_encoding, query):
-        return Encoding(formula=query._formula)
+        return Encoding(_formula=query._formula)
 
     def _encode_query_le(self, model_encoding, query):
-        timepoints = model_encoding.symbols[query.variable]
+        timepoints = model_encoding._symbols[query.variable]
         return Encoding(
-            formula=And([LE(s, Real(query.ub)) for s in timepoints.values()])
+            _formula=And([LE(s, Real(query.ub)) for s in timepoints.values()])
         )
 
     def _encode_query_true(self, model_encoding, query):
-        return Encoding(formula=TRUE())
+        return Encoding(_formula=TRUE())
 
     def symbol_timeseries(
         self, model_encoding, pysmtModel: pysmt.solvers.solver.Model
