@@ -217,7 +217,6 @@ class TestUseCases(TestUseCases):
         ]
 
     def test_scenario_1_a(self):
-
         self.iteration = 0
 
         case_sir = {

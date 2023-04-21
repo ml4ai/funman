@@ -75,7 +75,6 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
             search = config._search()
 
         if self.model.structural_parameter_bounds:
-
             if self._smt_encoder is None:
                 self._smt_encoder = self.model.default_encoder(config)
                 self._smt_encoder._encode_timed_model_elements(self.model)
@@ -95,7 +94,6 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
             for configuration in self._smt_encoder._timed_model_elements[
                 "configurations"
             ]:
-
                 num_steps = configuration["num_steps"]
                 step_size = configuration["step_size"]
                 self._encode_timed(num_steps, step_size, config)

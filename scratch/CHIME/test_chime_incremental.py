@@ -241,7 +241,6 @@ class TestHandcoded(unittest.TestCase):
 
     @unittest.skip("Time consuming ...")
     def test_simple_chime_propositional(self):
-
         min_num_timepoints = 30
         max_num_timepoints = 30
 
@@ -278,7 +277,6 @@ class TestHandcoded(unittest.TestCase):
         for num_timepoints in range(
             min_num_timepoints, max_num_timepoints + 1
         ):
-
             reset_env()
             phi = chime.encode_time_horizon(
                 parameters, init, dynamics, query, num_timepoints

@@ -380,7 +380,6 @@ class BoxSearch(Search):
                     episode, box, filename=f"fp_{episode._iteration}.smt2"
                 )
             if solver.solve():
-
                 # Record the false point
                 res = solver.get_model()
                 false_points = [episode._extract_point(res)]

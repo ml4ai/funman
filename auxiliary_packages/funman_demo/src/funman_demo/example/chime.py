@@ -78,7 +78,6 @@ class CHIME(object):
         )
 
     def make_dynamics_s1(self, *vars):
-
         (
             susceptible,
             infected,
@@ -267,7 +266,6 @@ class CHIME(object):
         return parameters, init, dynamics
 
     def make_chime_query(self, infected, n, num_timepoints, threshold):
-
         # I_t <= n * threshold, threshold is proportion (0, 1]
         query = [
             LT(infected[t], Times(n, Real(threshold)))

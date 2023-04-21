@@ -799,7 +799,6 @@ class Scenario2(object):
             )
 
     def to_md(self, model):
-
         model.measurements.to_dot().render(
             filename="measurement", format="png"
         )
@@ -864,7 +863,6 @@ SIR Bilayer (left), Infected Measurement (right)
         for model_name, model in self.models[
             "intervention_vaccination"
         ].items():
-
             lb = model.parameter_bounds["v_r"][0] * (
                 1.0 + vaccination_increase[0]
             )

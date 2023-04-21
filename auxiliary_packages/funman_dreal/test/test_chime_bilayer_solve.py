@@ -132,7 +132,6 @@ class TestChimeBilayerSolve(unittest.TestCase):
 
     # @unittest.skip("temporarily remove")
     def test_chime_bilayer_synthesize(self):
-
         model, query, encoder = self.setup(
             duration=10, transmission_reduction=[-0.05, 0.1]
         )

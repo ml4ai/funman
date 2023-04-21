@@ -12,6 +12,7 @@ class Model(ABC, BaseModel):
     """
     The abstract base class for Models.
     """
+
     class Config:
         allow_inf_nan = True
 
