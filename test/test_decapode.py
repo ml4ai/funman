@@ -8,13 +8,7 @@ from pysmt.typing import REAL
 
 from funman import Funman
 from funman.funman import FUNMANConfig
-from funman.model import (
-    EncodedModel,
-    QueryFunction,
-    QueryLE,
-    QueryTrue,
-    SimulatorModel,
-)
+from funman.model import QueryLE
 from funman.model.decapode import DecapodeDynamics, DecapodeModel
 from funman.representation.representation import Parameter
 from funman.scenario import (
@@ -22,10 +16,6 @@ from funman.scenario import (
     ConsistencyScenarioResult,
     ParameterSynthesisScenario,
     ParameterSynthesisScenarioResult,
-)
-from funman.scenario.simulation import (
-    SimulationScenario,
-    SimulationScenarioResult,
 )
 from funman.utils.handlers import ResultCombinedHandler
 
@@ -36,6 +26,21 @@ RESOURCES = os.path.join(
 
 class TestUseCases(unittest.TestCase):
     def setup_use_case_decapode_common(self):
+        """
+        Setup a Decapode model that has parameters:
+        R^Mo(Other("*")):
+        m_Mo(Other("‾")): mean molecular mass
+        T_n:
+
+        The query states that the geopotential does not exceed a threshold over the entire range of altitude z.
+
+        Returns
+        -------
+        DecapodeModel
+            Model of H(z), where H(0) = 1
+        Query
+            for all z. H(z) <= geopotential_threshold (5000)
+        """
         decapode_path = os.path.join(
             RESOURCES, "decapode", "hydrostatic_3_6.json"
         )
@@ -65,6 +70,14 @@ class TestUseCases(unittest.TestCase):
         return model, query
 
     def setup_use_case_decapode_parameter_synthesis(self):
+        """
+        Create a ParameterSynthesisScenario to compute values of m_bar that satisfy the query.
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         model, query = self.setup_use_case_decapode_common()
         [lb, ub] = model.parameter_bounds['m_Mo(Other("‾"))']
         scenario = ParameterSynthesisScenario(
@@ -76,6 +89,14 @@ class TestUseCases(unittest.TestCase):
         return scenario
 
     def test_use_case_decapode_parameter_synthesis(self):
+        """
+        Use case for Parameter Synthesis.
+        Case 2:  Regression: find m-bar values that set H(z=1000) = 500mb
+                    Test: m0 is in ps(m-bar).true
+
+        Case 4:  Sensitivity: Variance in H(z)=500mb due to m-bar
+                    Test: | Var(H(z)|z=500mb) - V0 | <= epsilon
+        """
         scenario = self.setup_use_case_decapode_parameter_synthesis()
         funman = Funman()
         result: ParameterSynthesisScenarioResult = funman.solve(
@@ -99,6 +120,9 @@ class TestUseCases(unittest.TestCase):
         assert len(result.parameter_space.true_boxes) > 0
         assert len(result.parameter_space.false_boxes) > 0
 
+        # Analysis of Parameter Synthesis:
+        # Grid sampling over m-bar and calculate the altitude (z) at which geopotential is 500mb.  Report the variance over Var(H(z| z=500mb, m-bar)).  How sensitive is the altitude of a reference geopotential to the choice of m-bar?
+
     def setup_use_case_decapode_consistency(self):
         model, query = self.setup_use_case_decapode_common()
 
@@ -106,6 +130,17 @@ class TestUseCases(unittest.TestCase):
         return scenario
 
     def test_use_case_decapode_consistency(self):
+        """
+        Check that for a given m-bar, that the geopotential at z= 500mb is a given constant H500.
+        Case 1: Consistency: assert |H(z=1000) - H0| <= epsilon in formulation and test whether its consistent.
+                Test: is satisfiable
+        Case 3:  Projection: for m-bar = m0, calculate H(z=1000)
+            Test: |H(z=1000) - H0| <= epsilon
+
+
+        query = QueryAnd(queries=[QueryLE(variable="H", ub=H0+epsilon, at_end=True), QueryGE(variable="H", lb=H0-epsilon, at_end=True)]), requires that last value of z is 1000.
+
+        """
         scenario = self.setup_use_case_decapode_consistency()
 
         funman = Funman()
