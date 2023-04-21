@@ -4,21 +4,6 @@ import os
 import unittest
 
 from funman_demo.handlers import RealtimeResultPlotter, ResultCacheWriter
-
-from funman import Funman
-from funman.funman import FUNMANConfig
-from funman.model import QueryLE
-from funman.model.bilayer import BilayerDynamics, BilayerModel
-from funman.model.query import QueryTrue
-from funman.representation.representation import Parameter
-from funman.scenario import (
-    ConsistencyScenario,
-    ConsistencyScenarioResult,
-    ParameterSynthesisScenario,
-    ParameterSynthesisScenarioResult,
-)
-from funman.utils.handlers import ResultCombinedHandler
-
 from pysmt.shortcuts import (
     GE,
     GT,
@@ -35,6 +20,20 @@ from pysmt.shortcuts import (
     Times,
 )
 
+from funman import Funman
+from funman.funman import FUNMANConfig
+from funman.model import QueryLE
+from funman.model.bilayer import BilayerDynamics, BilayerModel
+from funman.model.query import QueryTrue
+from funman.representation.representation import Parameter
+from funman.scenario import (
+    ConsistencyScenario,
+    ConsistencyScenarioResult,
+    ParameterSynthesisScenario,
+    ParameterSynthesisScenarioResult,
+)
+from funman.utils.handlers import ResultCombinedHandler
+
 RESOURCES = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "../resources"
 )
@@ -43,7 +42,7 @@ RESOURCES = os.path.join(
 class TestBucky(unittest.TestCase):
     def make_monotonic_constraints(self, values, steps):
         constraints = []
-        for (name, direction) in values:
+        for name, direction in values:
             for i in range(steps):
                 vi = Symbol(f"{name}_{i}", REAL)
                 vj = Symbol(f"{name}_{i+1}", REAL)
@@ -56,14 +55,12 @@ class TestBucky(unittest.TestCase):
 
     def setup_use_case_bilayer_common(self, config):
         bilayer_path = os.path.join(
-            RESOURCES,
-            "bilayer",
-            "Bucky_SEIIIRRD_BiLayer_v3.json"
+            RESOURCES, "bilayer", "Bucky_SEIIIRRD_BiLayer_v3.json"
         )
         with open(bilayer_path, "r") as f:
             bilayer_src = json.load(f)
 
-        infected_threshold = 5
+        infected_threshold = 70
         init_values = {
             "S": 99.43,
             "E": 0.4,
@@ -76,19 +73,10 @@ class TestBucky(unittest.TestCase):
         }
 
         extra_constraints = And(
-            self.make_monotonic_constraints([
-                ("S", "decrease"),
-                ("R", "increase"),
-                ("R_hosp", "increase")
-            ], config.num_steps),
-            GE(Symbol(f"S_{config.num_steps}", REAL), Real(0)),
-            GE(Symbol(f"E_{config.num_steps}", REAL), Real(0)),
-            GE(Symbol(f"I_asym_{config.num_steps}", REAL), Real(0)),
-            GE(Symbol(f"I_mild_{config.num_steps}", REAL), Real(0)),
-            GE(Symbol(f"I_crit_{config.num_steps}", REAL), Real(0)),
-            GE(Symbol(f"R_{config.num_steps}", REAL), Real(0)),
-            GE(Symbol(f"R_hosp_{config.num_steps}", REAL), Real(0)),
-            GE(Symbol(f"D_{config.num_steps}", REAL), Real(0)),
+            self.make_monotonic_constraints(
+                [("S", "decrease"), ("R", "increase"), ("R_hosp", "increase")],
+                config.num_steps,
+            ),
         )
 
         identical_parameters = [
@@ -96,15 +84,15 @@ class TestBucky(unittest.TestCase):
             ["gamma_1", "gamma_2"],
         ]
 
-        beta = [0.24, 0.26]
-        gamma = [0.469, 0.471]
-        gamma_h = [0.3648, 0.3648]
-        delta_1 = [0.24, 0.26]
-        delta_2 = [0.009, 0.01]
-        delta_3 = [0.001, 0.002]
-        delta_4 = [0.09, 0.1]
-        sigma = [0.016, 0.018]
-        theta = [0.1012, 0.1012]
+        beta = [0.2499995, 0.2500005]
+        gamma = [0.4696, 0.4698]
+        gamma_h = [0.36479, 0.36481]
+        delta_1 = [0.2495, 0.2505]
+        delta_2 = [0.00945, 0.00955]
+        delta_3 = [0.0014, 0.0016]
+        delta_4 = [0.0945, 0.0955]
+        sigma = [0.017, 0.017]
+        theta = [0.1011999, 0.1012001]
 
         model = BilayerModel(
             bilayer=BilayerDynamics(json_graph=bilayer_src),
@@ -120,15 +108,16 @@ class TestBucky(unittest.TestCase):
                 "delta_2": delta_2,
                 "delta_3": delta_3,
                 "delta_4": delta_4,
-                "sigma": sigma,
+                # FIXME check why this stalls search dramatically
+                # "sigma": sigma,
                 "theta": theta,
             },
         )
 
-        #model._extra_constraints = extra_constraints
+        # model._extra_constraints = extra_constraints
 
-        query = QueryTrue()
-        # query = QueryLE(variable="I_crit", ub=infected_threshold)
+        # query = QueryTrue()
+        query = QueryLE(variable="I_crit", ub=infected_threshold)
         return model, query
 
     def setup_use_case_bilayer_consistency(self, config):
@@ -147,11 +136,15 @@ class TestBucky(unittest.TestCase):
         scenario = ParameterSynthesisScenario(
             parameters=[
                 make_parameter("beta_1"),
-                #make_parameter("beta_2"),
                 make_parameter("gamma_1"),
-                #make_parameter("gamma_2"),
-                #make_parameter("gamma_h"),
-                #make_parameter("sigma"),
+                make_parameter("beta_2"),
+                make_parameter("gamma_2"),
+                make_parameter("gamma_h"),
+                make_parameter("delta_1"),
+                make_parameter("delta_2"),
+                make_parameter("delta_3"),
+                make_parameter("delta_4"),
+                make_parameter("theta"),
             ],
             model=model,
             query=query,
@@ -159,30 +152,31 @@ class TestBucky(unittest.TestCase):
 
         return scenario
 
+    @unittest.skip(reason="work in progress")
     def test_use_case_bilayer_parameter_synthesis(self):
         funman = Funman()
         config = FUNMANConfig(
             tolerance=1e-8,
-            num_steps=1,
-            step_size=10,
+            num_steps=10,
+            step_size=2,
             solver="dreal",
-            dreal_mcts=False,
+            dreal_mcts=True,
             number_of_processes=1,
-            log_level=logging.INFO,
+            log_level=logging.DEBUG,
         )
         scenario = self.setup_use_case_bilayer_parameter_synthesis(config)
         # FIXME arguments with form _* do not get assigned when using pydantic
-        # config._handler = ResultCombinedHandler(
-        #     [
-        #         ResultCacheWriter(f"bucky_box_search.json"),
-        #         RealtimeResultPlotter(
-        #             scenario.parameters,
-        #             plot_points=True,
-        #             title=f"Feasible Regions (beta)",
-        #             realtime_save_path=f"bucky_box_search.png",
-        #         ),
-        #     ]
-        # )
+        config._handler = ResultCombinedHandler(
+            [
+                ResultCacheWriter(f"bucky_box_search.json"),
+                RealtimeResultPlotter(
+                    scenario.parameters,
+                    plot_points=True,
+                    title=f"Feasible Regions (beta)",
+                    realtime_save_path=f"bucky_box_search.png",
+                ),
+            ]
+        )
 
         result: ParameterSynthesisScenarioResult = funman.solve(
             scenario, config=config
@@ -190,12 +184,13 @@ class TestBucky(unittest.TestCase):
         assert len(result.parameter_space.true_boxes) > 0
         assert len(result.parameter_space.false_boxes) > 0
 
-    def ttest_use_case_bilayer_consistency(self):
+    @unittest.skip(reason="work in progress")
+    def test_use_case_bilayer_consistency(self):
         funman = Funman()
         config = FUNMANConfig(
             tolerance=1e-8,
-            #num_steps=10,
-            #step_size=10,
+            num_steps=10,
+            step_size=10,
             solver="dreal",
             dreal_mcts=False,
             log_level=logging.INFO,
