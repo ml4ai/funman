@@ -123,11 +123,16 @@ class TestUseCases(unittest.TestCase):
                     ),
                 ),
             )
+            # Finding true and false boxes for Regression use case
             assert len(result.parameter_space.true_boxes) > 0
             assert len(result.parameter_space.false_boxes) > 0
 
-            # Analysis of Parameter Synthesis:
+            # Analysis of Parameter Synthesis: Sensitivity Analysis Use Case
             # Grid sampling over m-bar and calculate the altitude (z) at which geopotential is 500mb.  Report the variance over Var(H(z| z=500mb, m-bar)).  How sensitive is the altitude of a reference geopotential to the choice of m-bar?
+            # Find variance of true boxes
+            sensitivity_analysis_result = variance(
+                result.parameter_space.true_boxes
+            )
         except Exception as e:
             print(f"Could not solve scenario because: {e}")
             assert False
