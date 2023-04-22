@@ -1,18 +1,17 @@
 """
-The tests in this module represent use cases for space weather model analysis with FUNMAN.  The test class includes common configuration functions and four test cases, as described in: https://ml4ai.github.io/funman/sw_use_cases.html
+The tests in this module represent use cases for space weather model analysis
+with FUNMAN.  The test class includes common configuration functions and four
+test cases, as described in: https://ml4ai.github.io/funman/sw_use_cases.html
 """
 
 import json
 import os
 import unittest
 
-from funman_demo.handlers import RealtimeResultPlotter, ResultCacheWriter
-
 from funman import Funman
 from funman.funman import FUNMANConfig
-from funman.model import QueryLE
 from funman.model.decapode import DecapodeDynamics, DecapodeModel
-from funman.model.query import Query, QueryAnd, QueryGE, QueryTrue
+from funman.model.query import Query, QueryAnd, QueryTrue
 from funman.representation.representation import Parameter
 from funman.scenario import (
     ConsistencyScenario,
@@ -20,19 +19,23 @@ from funman.scenario import (
     ParameterSynthesisScenario,
     ParameterSynthesisScenarioResult,
 )
-from funman.utils.handlers import ResultCombinedHandler
 
 RESOURCES = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "../resources"
 )
 
 GEOPOTENTIAL_THRESHOLD = 500
+M_BAR_CONSISTENCY_VALUE = 1e-10
 
 
 class TestUseCases(unittest.TestCase):
     def setup_use_case_decapode_common(self):
         """
-        Setup a Decapode model that has treats the constant m_Mo(Other("‾")) (i.e., the mean molecular mass) as a parameter.  The model uses the structural_parameter_bounds to define a number of steps and step size so that the extreme value of the z variable is 1000, where queries will evaluate H(z).
+        Setup a Decapode model that has treats the constant m_Mo(Other("‾"))
+        (i.e., the mean molecular mass) as a parameter.  The model uses the
+        structural_parameter_bounds to define a number of steps and step size so
+        that the extreme value of the z variable is 1000, where queries will
+        evaluate H(z).
 
         Returns
         -------
@@ -71,7 +74,8 @@ class TestUseCases(unittest.TestCase):
 
     def setup_use_case_decapode_parameter_synthesis(self, query: Query):
         """
-        Create a ParameterSynthesisScenario to compute values of m_Mo(Other("‾")) that satisfy the query.
+        Create a ParameterSynthesisScenario to compute values of
+        m_Mo(Other("‾")) that satisfy the query.
 
         Returns
         -------
@@ -91,7 +95,9 @@ class TestUseCases(unittest.TestCase):
     @unittest.expectedFailure
     def test_use_case_decapode_sensitivity_analysis(self):
         """
-        Use case for Regression with Parameter Synthesis. Find the values for mean molecular mass where the geopotential is 500mb at an altitude of 100 (i.e.  H(z=1000) = 500mb)
+        Use case for Regression with Parameter Synthesis. Find the values for
+        mean molecular mass where the geopotential is 500mb at an altitude of
+        100 (i.e.  H(z=1000) = 500mb)
         """
         try:
             query = QueryAnd(
@@ -115,7 +121,9 @@ class TestUseCases(unittest.TestCase):
     @unittest.expectedFailure
     def test_use_case_decapode_sensitivity_analysis(self):
         """
-        Use case for Sensitivity Analysis with Parameter Synthesis. Find the variance in geopotential over feasible values for the mean molecular mass.
+        Use case for Sensitivity Analysis with Parameter Synthesis. Find the
+        variance in geopotential over feasible values for the mean molecular
+        mass.
         """
         try:
             scenario = self.setup_use_case_decapode_parameter_synthesis(
@@ -127,10 +135,12 @@ class TestUseCases(unittest.TestCase):
 
             assert len(result.parameter_space.true_boxes) > 0
 
-            # Extract several point values for the mean molecular mass that are feasible
+            # Extract several point values for the mean molecular mass that are
+            # feasible
             points = result.parameter_space.sample_true_boxes()
 
-            # Calculate the distribution of geopotential H over altitude z for each point
+            # Calculate the distribution of geopotential H over altitude z for
+            # each point
             dataframe = result.true_point_timeseries(points)
 
             # Calculate the variance at an altitude of 1000m
@@ -143,8 +153,8 @@ class TestUseCases(unittest.TestCase):
             print(f"Could not solve scenario because: {e}")
             assert False
 
-    def setup_use_case_decapode_consistency(self):
-        model, query = self.setup_use_case_decapode_common()
+    def setup_use_case_decapode_consistency(self, query: Query):
+        model = self.setup_use_case_decapode_common()
 
         scenario = ConsistencyScenario(model=model, query=query)
         return scenario
@@ -152,35 +162,53 @@ class TestUseCases(unittest.TestCase):
     @unittest.expectedFailure
     def test_use_case_decapode_consistency(self):
         """
-        Check that for a given m_bar, that the geopotential at z= 500mb is a given constant H500.
-        Case 1: Consistency: assert |H(z=1000) - H0| <= epsilon in formulation and test whether its consistent.
-                Test: is satisfiable
-        Case 3:  Projection: for m-bar = m0, calculate H(z=1000)
-            Test: |H(z=1000) - H0| <= epsilon
+        Use case for consistency. Check that for a given mean molecular mass
+        (1e-10), that the geopotential at 1000m alitude is 500mb.
+        """
+        try:
+            query = QueryEquals("H", GEOPOTENTIAL_THRESHOLD, at_end=True)
+            scenario = self.setup_use_case_decapode_consistency(query)
+            scenario.model.parameter_bounds['m_Mo(Other("‾"))'] = [
+                M_BAR_CONSISTENCY_VALUE,
+                M_BAR_CONSISTENCY_VALUE,
+            ]
+            result_sat: ConsistencyScenarioResult = Funman().solve(scenario)
+            assert abs(result_sat.consistent)
 
+            print(
+                "Success: the mean molecular mass 1e-10 is consistent with a geopotential of 500mb at an altitude of 1000m."
+            )
+        except Exception as e:
+            print(f"Could not solve scenario because: {e}")
+            assert False
 
-        query = QueryAnd(queries=[QueryLE(variable="H", ub=H0+epsilon, at_end=True), QueryGE(variable="H", lb=H0-epsilon, at_end=True)]), requires that last value of z is 1000.
-
+    @unittest.expectedFailure
+    def test_use_case_decapode_projection(self):
+        """
+        Use case for projection. Calculate the geopotential at 1000m alitude
+        given a mean molecular mass (1e-10).
         """
         scenario = self.setup_use_case_decapode_consistency()
 
         funman = Funman()
 
-        # Show that region in parameter space is sat (i.e., there exists a true point)
+        # Show that region in parameter space is sat (i.e., there exists a true
+        # point)
         try:
-            result_sat: ConsistencyScenarioResult = funman.solve(scenario)
+            scenario = self.setup_use_case_decapode_consistency(QueryTrue())
+            scenario.model.parameter_bounds['m_Mo(Other("‾"))'] = [
+                M_BAR_CONSISTENCY_VALUE,
+                M_BAR_CONSISTENCY_VALUE,
+            ]
+            result_sat: ConsistencyScenarioResult = Funman().solve(scenario)
+            assert abs(result_sat.consistent)
 
             df = result_sat.dataframe()
+            H_at_1000m = df.loc[df.z == 1000].H
 
-            assert abs(df["H"][-1] - 500) < epsilon
-
-            # Show that region in parameter space is unsat/false
-            scenario.model.parameter_bounds['m_Mo(Other("‾"))'] = [
-                1.67e-27 * 1.5,
-                1.67e-27 * 1.75,
-            ]
-            result_unsat: ConsistencyScenarioResult = funman.solve(scenario)
-            assert not result_unsat.consistent
+            print(
+                f"Success: the mean molecular mass 1e-10 results in a geopotential of {H_at_1000m}mb at an altitude of 1000m."
+            )
         except Exception as e:
             print(f"Could not solve scenario because: {e}")
             assert False
