@@ -126,7 +126,7 @@ class TestUseCases(TestUnitTests):
             extra_constraints=extra_constraints,
         )
         config = FUNMANConfig(
-            max_steps=self.steps,
+            num_steps=self.steps,
             step_size=self.step_size,
             solver="dreal",
             initial_state_tolerance=0.0,
@@ -145,7 +145,7 @@ class TestUseCases(TestUnitTests):
             params_to_synth=["epsilon", "theta"],
         )
         config = FUNMANConfig(
-            max_steps=self.steps,
+            num_steps=self.steps,
             solver="dreal",
             number_of_processes=1,
             num_initial_boxes=128,

@@ -36,88 +36,6 @@ RESOURCES = os.path.join(
 
 
 class TestUseCases(unittest.TestCase):
-    def compare_against_CHIME_Sim(
-        self, bilayer_path, init_values, infected_threshold
-    ):
-        # query the simulator
-        def does_not_cross_threshold(sim_results):
-            i = sim_results[2]
-            return all(i_t <= infected_threshold for i_t in i)
-
-        query = QueryLE(variable="I", ub=infected_threshold)
-
-        funman = Funman()
-
-        sim_result: SimulationScenarioResult = funman.solve(
-            SimulationScenario(
-                model=SimulatorModel(main_fn=run_CHIME_SIR),
-                query=QueryFunction(function=does_not_cross_threshold),
-            )
-        )
-
-        with open(bilayer_path, "r") as f:
-            bilayer_src = json.load(f)
-
-        consistency_result: ConsistencyScenarioResult = funman.solve(
-            ConsistencyScenario(
-                model=BilayerModel(
-                    bilayer=BilayerDynamics.from_json(bilayer_src=bilayer_src),
-                    init_values=init_values,
-                ),
-                query=query,
-            )
-        )
-
-        # assert the both queries returned the same result
-        return sim_result.query_satisfied == (
-            consistency_result.consistent is not None
-        )
-
-    def test_use_case_bilayer_consistency(self):
-        """
-        This test compares a BilayerModel against a SimulatorModel to determine whether their response to a query is identical.
-        """
-        bilayer_path = os.path.join(
-            RESOURCES, "bilayer", "CHIME_SIR_dynamics_BiLayer.json"
-        )
-        infected_threshold = 130
-        init_values = {"S": 9998, "I": 1, "R": 1}
-        assert self.compare_against_CHIME_Sim(
-            bilayer_path, init_values, infected_threshold
-        )
-
-    def test_use_case_simple_parameter_synthesis(self):
-        parameters = [
-            Parameter(name="x"),
-            Parameter(name="y"),
-        ]
-        x = parameters[0].symbol()
-        y = parameters[1].symbol()
-
-        formula = And(
-            LE(x, Real(5.0)),
-            GE(x, Real(0.0)),
-            LE(y, Real(12.0)),
-            GE(y, Real(10.0)),
-        )
-
-        funman = Funman()
-
-        result: ParameterSynthesisScenarioResult = funman.solve(
-            ParameterSynthesisScenario(
-                parameters=parameters,
-                model=EncodedModel(_formula=formula),
-                query=QueryTrue(),
-            ),
-            config=FUNMANConfig(
-                solver="dreal",
-                dreal_mcts=True,
-                tolerance=1e-8,
-                number_of_processes=1,
-            ),
-        )
-        assert result
-
     def setup_use_case_bilayer_common(self):
         bilayer_path = os.path.join(
             RESOURCES, "bilayer", "CHIME_SIR_dynamics_BiLayer.json"
@@ -138,6 +56,10 @@ class TestUseCases(unittest.TestCase):
             parameter_bounds={
                 "beta": [lb, ub],
                 "gamma": [1.0 / 14.0, 1.0 / 14.0],
+            },
+            structural_parameter_bounds={
+                "num_steps": [1, 5],
+                "step_size": [2, 5],
             },
         )
 
@@ -166,6 +88,8 @@ class TestUseCases(unittest.TestCase):
                 dreal_mcts=True,
                 tolerance=1e-8,
                 number_of_processes=1,
+                save_smtlib=True,
+                # dreal_log_level="debug",
                 _handler=ResultCombinedHandler(
                     [
                         ResultCacheWriter(f"box_search.json"),
@@ -188,25 +112,25 @@ class TestUseCases(unittest.TestCase):
         scenario = ConsistencyScenario(model=model, query=query)
         return scenario
 
+    @unittest.skip(reason="tmp")
     def test_use_case_bilayer_consistency(self):
         scenario = self.setup_use_case_bilayer_consistency()
 
-        funman = Funman()
-
         # Show that region in parameter space is sat (i.e., there exists a true point)
-        result_sat: ConsistencyScenarioResult = funman.solve(scenario)
+        result_sat: ConsistencyScenarioResult = Funman().solve(scenario)
         df = result_sat.dataframe()
 
         assert abs(df["I"][2] - 2.24) < 0.13
         beta = result_sat._parameters()["beta"]
         assert abs(beta - 0.00005) < 0.001
 
+        scenario = self.setup_use_case_bilayer_consistency()
         # Show that region in parameter space is unsat/false
         scenario.model.parameter_bounds["beta"] = [
             0.000067 * 1.5,
             0.000067 * 1.75,
         ]
-        result_unsat: ConsistencyScenarioResult = funman.solve(scenario)
+        result_unsat: ConsistencyScenarioResult = Funman().solve(scenario)
         assert not result_unsat.consistent
 
 

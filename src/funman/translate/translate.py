@@ -6,9 +6,9 @@ from abc import ABC, abstractmethod
 from typing import Dict, List, Union
 
 import pysmt
-from pydantic import BaseModel
+from pydantic import BaseModel, Extra
 from pysmt.formula import FNode
-from pysmt.shortcuts import GE, LE, LT, REAL, TRUE, And, Real, Symbol
+from pysmt.shortcuts import GE, LE, LT, REAL, TRUE, And, Equals, Real, Symbol
 
 from funman.constants import NEG_INFINITY, POS_INFINITY
 from funman.funman import FUNMANConfig
@@ -25,9 +25,10 @@ class Encoding(BaseModel):
 
     class Config:
         arbitrary_types_allowed = True
+        extra = Extra.allow
 
-    formula: FNode = None
-    symbols: Union[List[FNode], Dict[str, Dict[str, FNode]]] = None
+    _formula: FNode = None
+    _symbols: Union[List[FNode], Dict[str, Dict[str, FNode]]] = None
 
     # @validator("formula")
     # def set_symbols(cls, v: FNode):
@@ -111,20 +112,20 @@ class Encoder(ABC, BaseModel):
             )
 
     def _return_encoded_query(self, model_encoding, query):
-        return Encoding(formula=query._formula)
+        return Encoding(_formula=query._formula)
 
     def _encode_query_le(self, model_encoding, query):
-        if query.variable not in model_encoding.symbols:
+        if query.variable not in model_encoding._symbols:
             raise Exception(
                 f"Could not encode QueryLE because {query.variable} does not appear in the model_encoding symbols."
             )
-        timepoints = model_encoding.symbols[query.variable]
+        timepoints = model_encoding._symbols[query.variable]
         return Encoding(
-            formula=And([LE(s, Real(query.ub)) for s in timepoints.values()])
+            _formula=And([LE(s, Real(query.ub)) for s in timepoints.values()])
         )
 
     def _encode_query_true(self, model_encoding, query):
-        return Encoding(formula=TRUE())
+        return Encoding(_formula=TRUE())
 
     def symbol_timeseries(
         self, model_encoding, pysmtModel: pysmt.solvers.solver.Model
@@ -147,7 +148,6 @@ class Encoder(ABC, BaseModel):
         )
         a_series["index"] = list(range(0, max_t + 1))
         for var, tps in series.items():
-
             vals = [None] * (int(max_t) + 1)
             for t, v in tps.items():
                 if t.isdigit():
@@ -173,19 +173,24 @@ class Encoder(ABC, BaseModel):
         FNode
             formula constraining p to the interval
         """
-        lower = (
-            GE(Symbol(p, REAL), Real(i.lb)) if i.lb != NEG_INFINITY else TRUE()
-        )
-        upper_ineq = LE if closed_upper_bound else LT
-        upper = (
-            upper_ineq(Symbol(p, REAL), Real(i.ub))
-            if i.ub != POS_INFINITY
-            else TRUE()
-        )
-        return And(
-            lower,
-            upper,
-        ).simplify()
+        if i.lb == i.ub and i.lb != NEG_INFINITY and i.lb != POS_INFINITY:
+            return Equals(Symbol(p, REAL), Real(i.lb))
+        else:
+            lower = (
+                GE(Symbol(p, REAL), Real(i.lb))
+                if i.lb != NEG_INFINITY
+                else TRUE()
+            )
+            upper_ineq = LE if closed_upper_bound else LT
+            upper = (
+                upper_ineq(Symbol(p, REAL), Real(i.ub))
+                if i.ub != POS_INFINITY
+                else TRUE()
+            )
+            return And(
+                lower,
+                upper,
+            ).simplify()
 
     def point_to_smt(self, pt: Point):
         return And(

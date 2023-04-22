@@ -35,7 +35,6 @@ class SearchStatistics(BaseModel):
 
 
 class SearchStaticsMP(SearchStatistics):
-
     _multiprocessing: bool = True
     _num_true: Value = 0
     _num_false: Value = 0

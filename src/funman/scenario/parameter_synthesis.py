@@ -75,15 +75,60 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
         else:
             search = config._search()
 
-        self._encode(config)
+        if self.model.structural_parameter_bounds:
+            if self._smt_encoder is None:
+                self._smt_encoder = self.model.default_encoder(config)
+                self._smt_encoder._encode_timed_model_elements(self.model)
 
-        self._original_parameter_widths = {
-            p: minus(p.ub, p.lb) for p in self.parameters
-        }
+            # FIXME these ranges are also computed in the encoder
+            num_steps_range = range(
+                self.model.structural_parameter_bounds["num_steps"][0],
+                self.model.structural_parameter_bounds["num_steps"][1] + 1,
+            )
+            step_size_range = range(
+                self.model.structural_parameter_bounds["step_size"][0],
+                self.model.structural_parameter_bounds["step_size"][1] + 1,
+            )
+            result = []
 
-        result: ParameterSpace = search.search(self, config)
+            consistent = None
+            for configuration in self._smt_encoder._timed_model_elements[
+                "configurations"
+            ]:
+                num_steps = configuration["num_steps"]
+                step_size = configuration["step_size"]
+                self._encode_timed(num_steps, step_size, config)
+                r = search.search(self, config=config)
+                result.append(
+                    {
+                        "num_steps": num_steps,
+                        "step_size": step_size,
+                        "parameter_space": r,
+                    }
+                )
+                print(self._results_str(result))
+                print("-" * 80)
+
+            parameter_space = ParameterSpace._from_configurations(result)
+        else:
+            self._encode(config)
+
+            self._original_parameter_widths = {
+                p: minus(p.ub, p.lb) for p in self.parameters
+            }
+            parameter_space: ParameterSpace = search.search(self, config)
+
         return ParameterSynthesisScenarioResult(
-            parameter_space=result, scenario=self
+            parameter_space=parameter_space, scenario=self
+        )
+
+    def _results_str(self, result: List[Dict]):
+        return "\n".join(
+            ["num_steps\tstep_size\t|true|\t|false|"]
+            + [
+                f"{r['num_steps']}\t\t{r['step_size']}\t\t{len(r['parameter_space'].true_boxes)}\t{len(r['parameter_space'].false_boxes)}"
+                for r in result
+            ]
         )
 
     def _encode(self, config: "FUNMANConfig"):
@@ -100,14 +145,34 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
         self._assume_model = Symbol("assume_model")
         self._assume_query = Symbol("assume_query")
         self._model_encoding = self._smt_encoder.encode_model(self.model)
-        self._model_encoding.formula = Iff(
-            self._assume_model, self._model_encoding.formula
+        self._model_encoding._formula = Iff(
+            self._assume_model, self._model_encoding._formula
         )
         self._query_encoding = self._smt_encoder.encode_query(
             self._model_encoding, self.query
         )
-        self._query_encoding.formula = Iff(
-            self._assume_query, self._query_encoding.formula
+        self._query_encoding._formula = Iff(
+            self._assume_query, self._query_encoding._formula
+        )
+        return self._model_encoding, self._query_encoding
+
+    def _encode_timed(self, num_steps, step_size, config: "FUNMANConfig"):
+        self._assume_model = Symbol("assume_model")
+        self._assume_query = Symbol("assume_query")
+        # This will overwrite the _model_encoding for each configuration, but the encoder will retain components of the configurations.
+        self._model_encoding = self._smt_encoder.encode_model_timed(
+            self.model, num_steps, step_size
+        )
+        self._model_encoding._formula = Iff(
+            self._assume_model, self._model_encoding._formula
+        )
+
+        # This will create a new formula for each query without caching them (its typically inexpensive)
+        self._query_encoding = self._smt_encoder.encode_query(
+            self._model_encoding, self.query
+        )
+        self._query_encoding._formula = Iff(
+            self._assume_query, self._query_encoding._formula
         )
         return self._model_encoding, self._query_encoding
 

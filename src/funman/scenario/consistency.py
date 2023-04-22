@@ -65,25 +65,112 @@ class ConsistencyScenario(AnalysisScenario, BaseModel):
         else:
             search = config._search()
 
-        self._encode(config)
+        if self.model.structural_parameter_bounds:
+            if self._smt_encoder is None:
+                self._smt_encoder = self.model.default_encoder(config)
+                self._smt_encoder._encode_timed_model_elements(self.model)
 
-        result = search.search(self, config=config)
+            # FIXME these ranges are also computed in the encoder
+            num_steps_range = range(
+                self.model.structural_parameter_bounds["num_steps"][0],
+                self.model.structural_parameter_bounds["num_steps"][1] + 1,
+            )
+            step_size_range = range(
+                self.model.structural_parameter_bounds["step_size"][0],
+                self.model.structural_parameter_bounds["step_size"][1] + 1,
+            )
+            result = [
+                [None for i in range(len(step_size_range))]
+                for j in range(len(num_steps_range))
+            ]
 
-        # FIXME this to_dict call assumes result is an unusual type
-        consistent = result.to_dict() if result else None
+            consistent = None
+            for configuration in self._smt_encoder._timed_model_elements[
+                "configurations"
+            ]:
+                num_steps = configuration["num_steps"]
+                step_size = configuration["step_size"]
+                self._encode_timed(num_steps, step_size, config)
+                result[num_steps - num_steps_range.start][
+                    step_size - step_size_range.start
+                ] = search.search(self, config=config)
+                print(self._results_str(result))
+                print("-" * 80)
+                if result[num_steps - num_steps_range.start][
+                    step_size - step_size_range.start
+                ]:
+                    consistent = result[num_steps - num_steps_range.start][
+                        step_size - step_size_range.start
+                    ].to_dict()
+                    break
+            # consistent = [
+            #     [result[j][i].to_dict() for i in range(len(step_size_range))]
+            #     for j in range(len(num_steps_range))
+            # ]
+            scenario_result = ConsistencyScenarioResult(
+                scenario=self, consistent=consistent
+            )
+            scenario_result._model = result[num_steps - num_steps_range.start][
+                step_size - step_size_range.start
+            ]
+        else:
+            self._encode(config)
+            result = search.search(self, config=config)
+            # FIXME this to_dict call assumes result is an unusual type
+            consistent = result.to_dict() if result else None
 
-        scenario_result = ConsistencyScenarioResult(
-            scenario=self, consistent=consistent
-        )
-        scenario_result._model = (
-            result  # Constructor won't assign this private attr :(
-        )
+            scenario_result = ConsistencyScenarioResult(
+                scenario=self, consistent=consistent
+            )
+            scenario_result._model = (
+                result  # Constructor won't assign this private attr :(
+            )
         return scenario_result
+
+    def _results_str(self, result):
+        return "\n".join(
+            [
+                x
+                for x in [
+                    (
+                        str(i)
+                        + ": ["
+                        + "".join(
+                            [
+                                (
+                                    "F"
+                                    if s == False
+                                    else ("T" if s == True else " ")
+                                )
+                                for s in t
+                            ]
+                        )
+                        + "]"
+                        if any([True for r in t if r is not None])
+                        else ""
+                    )
+                    for i, t in enumerate(result)
+                ]
+                if x != ""
+            ]
+        )
 
     def _encode(self, config: "FUNMANConfig"):
         if self._smt_encoder is None:
             self._smt_encoder = self.model.default_encoder(config)
         self._model_encoding = self._smt_encoder.encode_model(self.model)
+        self._query_encoding = self._smt_encoder.encode_query(
+            self._model_encoding, self.query
+        )
+        return self._model_encoding, self._query_encoding
+
+    def _encode_timed(self, num_steps, step_size, config: "FUNMANConfig"):
+        # This will overwrite the _model_encoding for each configuration, but the encoder will retain components of the configurations.
+        self._model_encoding = self._smt_encoder.encode_model_timed(
+            self.model, num_steps, step_size
+        )
+
+        # This will create a new formula for each query without caching them (its typically inexpensive)
         self._query_encoding = self._smt_encoder.encode_query(
             self._model_encoding, self.query
         )

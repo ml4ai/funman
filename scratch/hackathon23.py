@@ -148,7 +148,6 @@ class TestUseCases(unittest.TestCase):
             # "epsilon",
         ],
     ):
-
         bounds = {
             "mu_s": [0.01, 0.01],
             "mu_e": [0.01, 0.01],
@@ -196,7 +195,6 @@ class TestUseCases(unittest.TestCase):
         return global_bounds
 
     def make_basic_query(self, steps, init_values):
-
         # Query for test case 1
         query = QueryEncoded()
         query._formula = self.make_global_bounds(steps, init_values)
@@ -223,7 +221,7 @@ class TestUseCases(unittest.TestCase):
     def make_monotone_constraints(self, steps, init_values):
         # | v_i - v_{i+1} | < diff * v_i, for all v
         constraints = []
-        for (v, dir) in {("S", "decrease"), ("R", "increase")}:
+        for v, dir in {("S", "decrease"), ("R", "increase")}:
             for i in range(steps):
                 vi = Symbol(f"{v}_{i}", REAL)
                 vj = Symbol(f"{v}_{i+1}", REAL)
@@ -262,7 +260,6 @@ class TestUseCases(unittest.TestCase):
         return And(constraints)
 
     def make_well_formed_query(self, steps, init_values):
-
         # Query for test case 1
         query = QueryEncoded()
         query._formula = And(
@@ -334,7 +331,7 @@ class TestUseCases(unittest.TestCase):
     def test_use_case_bilayer_consistency(self):
         steps = 8
         self.iteration = 0
-        config = FUNMANConfig(max_steps=steps, solver="dreal")
+        config = FUNMANConfig(num_steps=steps, solver="dreal")
 
         bilayer = BilayerDynamics(json_graph=self.initial_bilayer())
         bounds = self.parameter_bounds()

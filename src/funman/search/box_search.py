@@ -310,8 +310,8 @@ class BoxSearch(Search):
         """
         solver.push(1)
         formula = And(
-            episode.problem._model_encoding.formula,
-            episode.problem._query_encoding.formula,
+            episode.problem._model_encoding._formula,
+            episode.problem._query_encoding._formula,
         )
         episode._formula_stack.append(formula)
         solver.add_assertion(formula)
@@ -343,6 +343,7 @@ class BoxSearch(Search):
 
     def store_smtlib(self, episode, box, filename="dbg.smt2"):
         with open(filename, "w") as f:
+            print(f"Saving smtlib file: {filename}")
             smtlibscript_from_formula_list(
                 episode._formula_stack,
                 logic=QF_NRA,
@@ -379,7 +380,6 @@ class BoxSearch(Search):
                     episode, box, filename=f"fp_{episode._iteration}.smt2"
                 )
             if solver.solve():
-
                 # Record the false point
                 res = solver.get_model()
                 false_points = [episode._extract_point(res)]
@@ -457,7 +457,19 @@ class BoxSearch(Search):
         l = self._logger(episode.config, process_name=process_name)
 
         try:
-            with Solver(name=episode.config.solver, logic=QF_NRA) as solver:
+            if episode.config.solver == "dreal":
+                opts = {
+                    "dreal_precision": episode.config.dreal_precision,
+                    "dreal_log_level": episode.config.dreal_log_level,
+                    "dreal_mcts": episode.config.dreal_mcts,
+                }
+            else:
+                opts = {}
+            with Solver(
+                name=episode.config.solver,
+                logic=QF_NRA,
+                solver_options=opts,
+            ) as solver:
                 l.info(f"{process_name} entering process loop")
                 print("Starting initializing dynamics of model")
                 self._initialize_encoding(solver, episode)

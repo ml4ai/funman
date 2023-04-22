@@ -775,7 +775,6 @@ class Box(BaseModel):
                 p, _ = self._get_max_width_Parameter()
                 mid = self.bounds[p].midpoint()
         else:
-
             p, _ = self._get_max_width_Parameter(normalize=normalize)
             mid = self.bounds[p].midpoint()
 
@@ -964,6 +963,41 @@ class ParameterSpace(BaseModel):
     false_boxes: List[Box] = []
     true_points: List[Point] = []
     false_points: List[Point] = []
+
+    @staticmethod
+    def _from_configurations(
+        configurations: List[Dict[str, Union[int, "ParameterSpace"]]]
+    ) -> "ParameterSpace":
+        all_ps = ParameterSpace()
+        for result in configurations:
+            ps = result["parameter_space"]
+            num_steps = result["num_steps"]
+            step_size = result["step_size"]
+            for box in ps.true_boxes:
+                box.bounds["num_steps"] = Interval(
+                    lb=num_steps, ub=num_steps + 1
+                )
+                box.bounds["step_size"] = Interval(
+                    lb=step_size, ub=step_size + 1
+                )
+                all_ps.true_boxes.append(box)
+            for box in ps.false_boxes:
+                box.bounds["num_steps"] = Interval(
+                    lb=num_steps, ub=num_steps + 1
+                )
+                box.bounds["step_size"] = Interval(
+                    lb=step_size, ub=step_size + 1
+                )
+                all_ps.false_boxes.append(box)
+            for point in ps.true_points:
+                point.values["num_steps"] = num_steps
+                point.values["step_size"] = step_size
+                all_ps.true_points.append(point)
+            for point in ps.false_points:
+                point.values["num_steps"] = num_steps
+                point.values["step_size"] = step_size
+                all_ps.false_points.append(point)
+        return all_ps
 
     # STUB project parameter space onto a parameter
     @staticmethod

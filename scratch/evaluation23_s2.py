@@ -197,7 +197,7 @@ class TestUseCases(TestUseCases):
             case["query"](case["steps"], case["initial"]()),
         )
         config = FUNMANConfig(
-            max_steps=case["steps"],
+            num_steps=case["steps"],
             solver="dreal",
             initial_state_tolerance=case["initial_state_tolerance"],
         )
@@ -241,7 +241,7 @@ class TestUseCases(TestUseCases):
             ),
         )
         config = FUNMANConfig(
-            max_steps=case["steps"],
+            num_steps=case["steps"],
             solver="dreal",
             initial_state_tolerance=case["initial_state_tolerance"],
         )
@@ -282,7 +282,7 @@ class TestUseCases(TestUseCases):
             ),
         )
         config = FUNMANConfig(
-            max_steps=case["steps"],
+            num_steps=case["steps"],
             solver="dreal",
             number_of_processes=1,
             num_initial_boxes=40,
@@ -338,7 +338,7 @@ class TestUseCases(TestUseCases):
             ),
         )
         config = FUNMANConfig(
-            max_steps=case["steps"],
+            num_steps=case["steps"],
             step_size=case["step_size"],
             solver="dreal",
             initial_state_tolerance=case["initial_state_tolerance"],
@@ -421,7 +421,7 @@ class TestUseCases(TestUseCases):
             ),
         )
         config = FUNMANConfig(
-            max_steps=case["steps"],
+            num_steps=case["steps"],
             step_size=case["step_size"],
             solver="dreal",
             initial_state_tolerance=case["initial_state_tolerance"],
@@ -471,7 +471,7 @@ class TestUseCases(TestUseCases):
             ),
         )
         config = FUNMANConfig(
-            max_steps=case["steps"],
+            num_steps=case["steps"],
             solver="dreal",
             number_of_processes=1,
             num_initial_boxes=128,

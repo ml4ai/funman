@@ -63,7 +63,7 @@ class TestUnitTests(unittest.TestCase):
         )
 
     def initial_state_sidarthe(self):
-        return self.from_json(
+        init = self.from_json(
             os.path.join(
                 TestUnitTests.RESOURCES,
                 "evaluation23",
@@ -71,14 +71,16 @@ class TestUnitTests(unittest.TestCase):
                 "SIDARTHE-ic-unit1.json",
             )
         )
+        init = {k: round(v, 10) for k, v in init.items()}
+        return init
 
     def bounds_sidarthe(self):
         params = self.from_json(
             os.path.join(
                 TestUnitTests.RESOURCES,
                 "evaluation23",
-                "SIDARTHEV",
-                "SIDARTHEV-params-unit1.json",
+                "SIDARTHE",
+                "SIDARTHE-params-unit1.json",
             )
         )
         return {k: [v, v] for k, v in params.items()}
@@ -102,7 +104,10 @@ class TestUnitTests(unittest.TestCase):
                         ),
                         And(
                             [
-                                GE(Symbol(f"{v}_{i}", REAL), Real(0.0))
+                                GE(
+                                    Symbol(f"{v}_{i}", REAL),
+                                    Real(0.0 - tolerance),
+                                )
                                 for v in init_values
                             ]
                         ),

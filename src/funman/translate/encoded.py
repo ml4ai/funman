@@ -33,8 +33,8 @@ class EncodedEncoder(Encoder):
         """
         if isinstance(model, EncodedModel):
             encoding = Encoding(
-                formula=model._formula,
-                symbols=list(model._formula.get_free_variables()),
+                _formula=model._formula,
+                _symbols=list(model._formula.get_free_variables()),
             )
             return encoding
         else:

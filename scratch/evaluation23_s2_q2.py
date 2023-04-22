@@ -122,7 +122,7 @@ class TestUseCases(TestUseCases):
             case["query"](case["steps"], case["initial"]()),
         )
         config = FUNMANConfig(
-            max_steps=case["steps"],
+            num_steps=case["steps"],
             solver="dreal",
             initial_state_tolerance=case["initial_state_tolerance"],
         )
