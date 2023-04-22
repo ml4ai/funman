@@ -58,47 +58,30 @@ It first constructs an instance of the DecapodeModel class using the provided DE
 Regression (find inputs for given output) of DECAPODE Model:
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-
 This use case involves FUNMAN reasoning about the hydrostatic equation within the TIE-GCM space weather model, represented as a DECAPODE model file.  It checks whether the DECAPODE model is consistent with some expected output behavior (e.g., from a reliable data source or simulation).  If it is, the query will return all parameter values that allow the model to be consistent.
 It first constructs an instance of the DecapodeModel class using the provided DECAPODE file.  This class constructs a model from the DECAPODE file that can be asked to answer a query with that model.  In the example, the provided DECAPODE file corresponds to the hydrostatic equation within the TIE-GCM model.  The query asks to find all values of m_bar, step_size, and num_steps such that the geopotential does not exceed a specified threshold.  The test will return ranges and point values of m_bar, num_steps, and step_size that jointly satisfy the query.
 
 
-.. code-block:: py
-    def test_use_case_decapode_parameter_synthesis(self):
+.. code-block::
+    def test_use_case_decapode_regression(self):
         """
-        Use case for Parameter Synthesis.
-        Regression: find m-bar values that set H(z=1000) = 500mb
-                    Test: m0 is in ps(m-bar).true
-
-        Sensitivity: Variance in H(z)=500mb due to m-bar
-                    Test: | Var(H(z)|z=500mb) - V0 | <= epsilon
+        Use case for Regression with Parameter Synthesis. Find the values for mean molecular mass where the geopotential is 500mb at an altitude of 100 (i.e.  H(z=1000) = 500mb)
         """
         try:
-            scenario = self.setup_use_case_decapode_parameter_synthesis()
-            funman = Funman()
-            result: ParameterSynthesisScenarioResult = funman.solve(
-                scenario,
-                config=FUNMANConfig(
-                    tolerance=1e-8,
-                    number_of_processes=1,
-                    _handler=ResultCombinedHandler(
-                        [
-                            ResultCacheWriter(f"box_search.json"),
-                            RealtimeResultPlotter(
-                                scenario.parameters,
-                                plot_points=True,
-                                title=f"Feasible Regions (beta)",
-                                realtime_save_path=f"box_search.png",
-                            ),
-                        ]
-                    ),
-                ),
+            query = QueryAnd(
+                QueryEquals("H", GEOPOTENTIAL_THRESHOLD, at_end=True)
             )
-            assert len(result.parameter_space.true_boxes) > 0
-            assert len(result.parameter_space.false_boxes) > 0
+            scenario = self.setup_use_case_decapode_parameter_synthesis(query)
+            result: ParameterSynthesisScenarioResult = Funman().solve(
+                scenario, config=FUNMANConfig(number_of_processes=1)
+            )
 
-            # Analysis of Parameter Synthesis:
-            # Grid sampling over m-bar and calculate the altitude (z) at which geopotential is 500mb.  Report the variance over Var(H(z| z=500mb, m-bar)).  How sensitive is the altitude of a reference geopotential to the choice of m-bar?
+            assert len(result.parameter_space.true_boxes) > 0
+
+            print(
+                f"The geopotential will be 500mb at an alitude of 1000m if the mean molecular mass is in the intervals: {result.parameter_space.true_boxes}"
+            )
+
         except Exception as e:
             print(f"Could not solve scenario because: {e}")
             assert False
@@ -111,6 +94,36 @@ This use case involves FUNMAN reasoning about the hydrostatic equation within th
 It first constructs an instance of the DecapodeModel class using the provided DECAPODE file.  This class constructs a model from the DECAPODE file that can be asked to answer a query with that model.  In the example, the provided DECAPODE file corresponds to the hydrostatic equation within the TIE-GCM model.  The query fixes the parameters step_size and num_steps, then gives a range around a specified value of the parameter m_bar.  The test will return the range of the output values for the geopotential.  By comparing the results of this test to those of the projection test above, we can see how perturbations in the parameter values can impact the output.
 This use case follows the same initial setup as the Regression use case above, but is followed by an analysis of how sensitive the geopotential is to the parameter m_bar.
 
+.. code-block::
 
+    def test_use_case_decapode_sensitivity_analysis(self):
+        """
+        Use case for Sensitivity Analysis with Parameter Synthesis. Find the variance in geopotential over feasible values for the mean molecular mass.
+        """
+        try:
+            scenario = self.setup_use_case_decapode_parameter_synthesis(
+                QueryTrue()
+            )
+            result: ParameterSynthesisScenarioResult = Funman().solve(
+                scenario, config=FUNMANConfig(number_of_processes=1)
+            )
+
+            assert len(result.parameter_space.true_boxes) > 0
+
+            # Extract several point values for the mean molecular mass that are feasible
+            points = result.parameter_space.sample_true_boxes()
+
+            # Calculate the distribution of geopotential H over altitude z for each point
+            dataframe = result.true_point_timeseries(points)
+
+            # Calculate the variance at an altitude of 1000m
+            sensitivity = dataframe.loc[dataframe.z == 1000].var()
+
+            print(
+                f"The variance geopotential at an alitude of 1000m due to the mean molecular mass is: {sensitivity.H}"
+            )
+        except Exception as e:
+            print(f"Could not solve scenario because: {e}")
+            assert False
 
 
