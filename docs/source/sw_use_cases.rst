@@ -4,13 +4,13 @@ Space Weather Use Cases
 .. _test decapode: https://github.com/ml4ai/funman/tree/main/test/test_decapode.py
 
 The following use cases reside in `test decapode`_.  
-=========
+
 
 Check Consistency of DECAPODE Model:
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 This use case involves FUNMAN reasoning about the hydrostatic equation within the TIE-GCM space weather model, represented as a DECAPODE model file.  It checks whether the DECAPODE model is consistent with some expected output behavior (e.g., from a reliable data source or simulation).
-It first constructs an instance of the DecapodeModel class using the provided DECAPODE file.  This class constructs a model from the DECAPODE file that can be asked to answer a query with that model.  In the example, the provided DECAPODE file corresponds to the hydrostatic equation within the TIE-GCM model.  The query asks whether there are values of the parameter m_bar (mean molecular mass) such that the geopotential does not exceed a specified threshold.  The test will succeed if the given values satisfy the query.  
+It first constructs an instance of the DecapodeModel class using the provided DECAPODE file.  This class constructs a model from the DECAPODE file that can be asked to answer a query with that model.  The query asks whether there are values of the parameter m_bar (mean molecular mass) such that the geopotential does not exceed a specified threshold.  The test will succeed if the given values satisfy the query.  
 
 
 .. code-block::
@@ -42,7 +42,7 @@ Projection (find outputs for given input) of DECAPODE Model:
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 This use case involves FUNMAN reasoning about the hydrostatic equation within the TIE-GCM space weather model, represented as a DECAPODE model file.  It checks the output of the model given some input parameter values. 
-It first constructs an instance of the DecapodeModel class using the provided DECAPODE file.  This class constructs a model from the DECAPODE file that can be asked to answer a query with that model.  In the example, the provided DECAPODE file corresponds to the hydrostatic equation within the TIE-GCM model.  The query asks to find the expected geopotential value given the fixed parameter value of m_bar.  The test will return the expected simulation value for the geopotential.
+It first constructs an instance of the DecapodeModel class using the provided DECAPODE file.  This class constructs a model from the DECAPODE file that can be asked to answer a query with that model.   The query asks to find the expected geopotential value given the fixed parameter value of m_bar.  The test will return the expected simulation value for the geopotential.  The projection use case is similar to the consistency use case, but differs by relaxing the query constraint on the projected value.
 
 
 .. code-block::
@@ -83,7 +83,7 @@ Regression (find inputs for given output) of DECAPODE Model:
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 This use case involves FUNMAN reasoning about the hydrostatic equation within the TIE-GCM space weather model, represented as a DECAPODE model file.  It checks whether the DECAPODE model is consistent with some expected output behavior (e.g., from a reliable data source or simulation).  If it is, the query will return all parameter values that allow the model to be consistent.
-It first constructs an instance of the DecapodeModel class using the provided DECAPODE file.  This class constructs a model from the DECAPODE file that can be asked to answer a query with that model.  In the example, the provided DECAPODE file corresponds to the hydrostatic equation within the TIE-GCM model.  The query asks to find all values of m_bar such that the geopotential does not exceed a specified threshold.  The test will return ranges of m_bar that satisfy the query.
+It first constructs an instance of the DecapodeModel class using the provided DECAPODE file.  This class constructs a model from the DECAPODE file that can be asked to answer a query with that model.  The query asks to find all values of m_bar such that the geopotential is equal to a specified threshold.  The test will return ranges of m_bar that satisfy the query.
 
 
 .. code-block::
@@ -116,7 +116,7 @@ Sensitivity Analysis (capture the relationship between input and output behavior
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 This use case involves FUNMAN reasoning about the hydrostatic equation within the TIE-GCM space weather model, represented as a DECAPODE model file.  It finds information about the relationship between the inputs and outputs of the model.
-It first constructs an instance of the DecapodeModel class using the provided DECAPODE file.  This class constructs a model from the DECAPODE file that can be asked to answer a query with that model.  In the example, the provided DECAPODE file corresponds to the hydrostatic equation within the TIE-GCM model.  The query fixes the parameters step_size and num_steps, then gives the variance of the geopotential at a fixed altitude of 1000m of the parameter m_bar, the mean molecular mass.   The results of this test give information about how perturbations in the parameter value m_bar can impact the output.
+  The query fixes the parameters step_size and num_steps, but does not constrain the geopotential.  FUNMAN then finds all values for the mean molecular mass and geopotential that will be consistent with the model.  From the possible values for mean molecular mass and geopotential, the test finds the variance of the geopotential at a fixed altitude of 1000m.   The results of this test give information about how perturbations in the parameter value m_bar can impact the output.
 This use case follows the same initial setup as the Regression use case above, but is followed by an analysis of how sensitive the geopotential is to the parameter m_bar.
 
 .. code-block::
