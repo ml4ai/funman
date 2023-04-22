@@ -310,8 +310,8 @@ class BoxSearch(Search):
         """
         solver.push(1)
         formula = And(
-            episode.problem._model_encoding.formula,
-            episode.problem._query_encoding.formula,
+            episode.problem._model_encoding._formula,
+            episode.problem._query_encoding._formula,
         )
         episode._formula_stack.append(formula)
         solver.add_assertion(formula)

@@ -277,7 +277,7 @@ class BilayerEncoder(Encoder):
             (model._extra_constraints if model._extra_constraints else TRUE()),
         ).simplify()
         symbols = self._symbols(formula)
-        return Encoding(formula=formula, symbols=symbols)
+        return Encoding(_formula=formula, _symbols=symbols)
 
     def encode_model(self, model: Model, time_dependent_parameters=False):
         """
@@ -435,7 +435,7 @@ class BilayerEncoder(Encoder):
                 ),
             )
             symbols = self._symbols(formula)
-            return Encoding(formula=formula, symbols=symbols)
+            return Encoding(_formula=formula, _symbols=symbols)
         else:
             raise Exception(
                 f"BilayerEncoder cannot encode model of type: {type(model)}"
@@ -715,7 +715,7 @@ class BilayerEncoder(Encoder):
             mapping from symbol and timepoint to value
         """
 
-        vars = model_encoding.symbols
+        vars = model_encoding._symbols
         vals = {}
         for var in vars:
             vals[var] = {}

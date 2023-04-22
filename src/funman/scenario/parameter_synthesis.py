@@ -144,14 +144,14 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
         self._assume_model = Symbol("assume_model")
         self._assume_query = Symbol("assume_query")
         self._model_encoding = self._smt_encoder.encode_model(self.model)
-        self._model_encoding.formula = Iff(
-            self._assume_model, self._model_encoding.formula
+        self._model_encoding._formula = Iff(
+            self._assume_model, self._model_encoding._formula
         )
         self._query_encoding = self._smt_encoder.encode_query(
             self._model_encoding, self.query
         )
-        self._query_encoding.formula = Iff(
-            self._assume_query, self._query_encoding.formula
+        self._query_encoding._formula = Iff(
+            self._assume_query, self._query_encoding._formula
         )
         return self._model_encoding, self._query_encoding
 
@@ -162,16 +162,16 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
         self._model_encoding = self._smt_encoder.encode_model_timed(
             self.model, num_steps, step_size
         )
-        self._model_encoding.formula = Iff(
-            self._assume_model, self._model_encoding.formula
+        self._model_encoding._formula = Iff(
+            self._assume_model, self._model_encoding._formula
         )
 
         # This will create a new formula for each query without caching them (its typically inexpensive)
         self._query_encoding = self._smt_encoder.encode_query(
             self._model_encoding, self.query
         )
-        self._query_encoding.formula = Iff(
-            self._assume_query, self._query_encoding.formula
+        self._query_encoding._formula = Iff(
+            self._assume_query, self._query_encoding._formula
         )
         return self._model_encoding, self._query_encoding
 
