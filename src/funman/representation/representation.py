@@ -734,6 +734,18 @@ class Box(BaseModel):
 
         return self.cached_width
 
+    def variance(self, overwrite_cache=False) -> float:
+        """
+        The variance of a box is the maximum variance of a parameter interval.
+        STUB for Milestone 8 sensitivity analysis
+
+        Returns
+        -------
+        float
+            Variance{p: parameter}
+        """
+        pass
+
     def split(
         self,
         points: List[List[Point]] = None,

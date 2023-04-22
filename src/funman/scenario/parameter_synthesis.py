@@ -10,6 +10,7 @@ from pysmt.shortcuts import BOOL, Iff, Symbol
 
 from funman.model import QueryTrue
 from funman.model.bilayer import BilayerModel
+from funman.model.decapode import DecapodeModel
 from funman.model.encoded import EncodedModel
 from funman.model.query import QueryEncoded, QueryFunction, QueryLE
 from funman.representation import Parameter
@@ -38,7 +39,7 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
         extra = "forbid"
 
     parameters: List[Parameter]
-    model: Union[BilayerModel, EncodedModel]
+    model: Union[DecapodeModel, BilayerModel, EncodedModel]
     query: Union[QueryLE, QueryEncoded, QueryFunction, QueryTrue] = None
     _search: str = "BoxSearch"
     _smt_encoder: Encoder = None  # TODO set to model.default_encoder()

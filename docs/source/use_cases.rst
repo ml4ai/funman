@@ -1,5 +1,5 @@
-Use Cases
-=========
+Epidemiology Use Cases
+======================
 
 .. _test use cases: https://github.com/ml4ai/funman/tree/main/test/test_use_cases.py
 
