@@ -82,6 +82,25 @@ class QueryGE(Query):
     at_end: bool = False
 
 
+class QueryEquals(Query):
+    """
+    Class to represent a query of the form: var == value, where var is a variable, and value is a constant.
+
+    Parameters
+    ----------
+    variable : str
+        model variable name
+    value : float
+        value
+    at_end : bool, optional
+        apply the constraint to the last timepoint of a scenario only, by default False
+    """
+
+    variable: str
+    value: float
+    at_end: bool = False
+
+
 class QueryAnd(Query):
     """
     Conjunction of queries.

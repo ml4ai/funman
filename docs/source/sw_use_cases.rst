@@ -1,4 +1,5 @@
-Use Cases
+Space Weather Use Cases
+=======================
 
 .. _test decapode: https://github.com/ml4ai/funman/tree/main/test/test_decapode.py
 

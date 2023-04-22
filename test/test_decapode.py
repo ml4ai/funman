@@ -1,15 +1,18 @@
+"""
+The tests in this module represent use cases for space weather model analysis with FUNMAN.  The test class includes common configuration functions and four test cases, as described in: https://ml4ai.github.io/funman/sw_use_cases.html
+"""
+
 import json
 import os
 import unittest
 
 from funman_demo.handlers import RealtimeResultPlotter, ResultCacheWriter
-from pysmt.shortcuts import GE, LE, And, Real, Symbol
-from pysmt.typing import REAL
 
 from funman import Funman
 from funman.funman import FUNMANConfig
 from funman.model import QueryLE
 from funman.model.decapode import DecapodeDynamics, DecapodeModel
+from funman.model.query import Query, QueryAnd, QueryGE, QueryTrue
 from funman.representation.representation import Parameter
 from funman.scenario import (
     ConsistencyScenario,
@@ -23,23 +26,18 @@ RESOURCES = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "../resources"
 )
 
+GEOPOTENTIAL_THRESHOLD = 500
+
 
 class TestUseCases(unittest.TestCase):
     def setup_use_case_decapode_common(self):
         """
-        Setup a Decapode model that has parameters:
-        R^Mo(Other("*")): gas constant
-        m_Mo(Other("‾")): mean molecular mass
-        T_n: global mean reference temperature
-
-        The query states that the geopotential does not exceed a threshold over the entire range of altitude z.
+        Setup a Decapode model that has treats the constant m_Mo(Other("‾")) (i.e., the mean molecular mass) as a parameter.  The model uses the structural_parameter_bounds to define a number of steps and step size so that the extreme value of the z variable is 1000, where queries will evaluate H(z).
 
         Returns
         -------
         DecapodeModel
-            Model of H(z), where H(0) = 1
-        Query
-            for all z. H(z) <= geopotential_threshold (5000)
+            Model of H(z), with boundary H(0) = 1
         """
         # read in the decapode file
         decapode_path = os.path.join(
@@ -47,10 +45,6 @@ class TestUseCases(unittest.TestCase):
         )
         with open(decapode_path, "r") as f:
             decapode_src = json.load(f)
-        # set a threshold geopotential to be used in query
-        geopotential_threshold = 5000
-        # set boundary condition
-        init_values = {"H": 1}
 
         # set range of parameter space to search over
         scale_factor = 0.75
@@ -60,29 +54,31 @@ class TestUseCases(unittest.TestCase):
         # create instance of decapode model that can be queried
         model = DecapodeModel(
             decapode=DecapodeDynamics(json_graph=decapode_src),
-            init_values=init_values,
+            init_values={"H": 1},  # set boundary condition
             parameter_bounds={
                 'R^Mo(Other("*"))': [8.31, 8.31],
                 "T_n": [286, 286],
                 'm_Mo(Other("‾"))': [lb, ub],
                 "g": [9.8, 9.8],
             },
+            structural_parameter_bounds={
+                "num_steps": [100, 100],
+                "step_size": [10, 10],
+            },
         )
-        # set up query that checks whether the geopotential stays under a given threshold
-        query = QueryLE(variable="H", ub=geopotential_threshold)
 
-        return model, query
+        return model
 
-    def setup_use_case_decapode_parameter_synthesis(self):
+    def setup_use_case_decapode_parameter_synthesis(self, query: Query):
         """
-        Create a ParameterSynthesisScenario to compute values of m_bar that satisfy the query.
+        Create a ParameterSynthesisScenario to compute values of m_Mo(Other("‾")) that satisfy the query.
 
         Returns
         -------
-        _type_
-            _description_
+        ParameterSynthesisScenario
+            test case scenario definition
         """
-        model, query = self.setup_use_case_decapode_common()
+        model = self.setup_use_case_decapode_common()
         [lb, ub] = model.parameter_bounds['m_Mo(Other("‾"))']
         scenario = ParameterSynthesisScenario(
             parameters=[Parameter(name='m_Mo(Other("‾"))', lb=lb, ub=ub)],
@@ -93,45 +89,55 @@ class TestUseCases(unittest.TestCase):
         return scenario
 
     @unittest.expectedFailure
-    def test_use_case_decapode_parameter_synthesis(self):
+    def test_use_case_decapode_sensitivity_analysis(self):
         """
-        Use case for Parameter Synthesis.
-        Case 2:  Regression: find m-bar values that set H(z=1000) = 500mb
-                    Test: m0 is in ps(m-bar).true
-
-        Case 4:  Sensitivity: Variance in H(z)=500mb due to m-bar
-                    Test: | Var(H(z)|z=500mb) - V0 | <= epsilon
+        Use case for Regression with Parameter Synthesis. Find the values for mean molecular mass where the geopotential is 500mb at an altitude of 100 (i.e.  H(z=1000) = 500mb)
         """
         try:
-            scenario = self.setup_use_case_decapode_parameter_synthesis()
-            funman = Funman()
-            result: ParameterSynthesisScenarioResult = funman.solve(
-                scenario,
-                config=FUNMANConfig(
-                    tolerance=1e-8,
-                    number_of_processes=1,
-                    _handler=ResultCombinedHandler(
-                        [
-                            ResultCacheWriter(f"box_search.json"),
-                            RealtimeResultPlotter(
-                                scenario.parameters,
-                                plot_points=True,
-                                title=f"Feasible Regions (beta)",
-                                realtime_save_path=f"box_search.png",
-                            ),
-                        ]
-                    ),
-                ),
+            query = QueryAnd(
+                QueryEquals("H", GEOPOTENTIAL_THRESHOLD, at_end=True)
             )
-            # Finding true and false boxes for Regression use case
-            assert len(result.parameter_space.true_boxes) > 0
-            assert len(result.parameter_space.false_boxes) > 0
+            scenario = self.setup_use_case_decapode_parameter_synthesis(query)
+            result: ParameterSynthesisScenarioResult = Funman().solve(
+                scenario, config=FUNMANConfig(number_of_processes=1)
+            )
 
-            # Analysis of Parameter Synthesis: Sensitivity Analysis Use Case
-            # Grid sampling over m-bar and calculate the altitude (z) at which geopotential is 500mb.  Report the variance over Var(H(z| z=500mb, m-bar)).  How sensitive is the altitude of a reference geopotential to the choice of m-bar?
-            # Find variance of true boxes
-            sensitivity_analysis_result = variance(
-                result.parameter_space.true_boxes
+            assert len(result.parameter_space.true_boxes) > 0
+
+            print(
+                f"The geopotential will be 500mb at an alitude of 1000m if the mean molecular mass is in the intervals: {result.parameter_space.true_boxes}"
+            )
+
+        except Exception as e:
+            print(f"Could not solve scenario because: {e}")
+            assert False
+
+    @unittest.expectedFailure
+    def test_use_case_decapode_sensitivity_analysis(self):
+        """
+        Use case for Sensitivity Analysis with Parameter Synthesis. Find the variance in geopotential over feasible values for the mean molecular mass.
+        """
+        try:
+            scenario = self.setup_use_case_decapode_parameter_synthesis(
+                QueryTrue()
+            )
+            result: ParameterSynthesisScenarioResult = Funman().solve(
+                scenario, config=FUNMANConfig(number_of_processes=1)
+            )
+
+            assert len(result.parameter_space.true_boxes) > 0
+
+            # Extract several point values for the mean molecular mass that are feasible
+            points = result.parameter_space.sample_true_boxes()
+
+            # Calculate the distribution of geopotential H over altitude z for each point
+            dataframe = result.true_point_timeseries(points)
+
+            # Calculate the variance at an altitude of 1000m
+            sensitivity = dataframe.loc[dataframe.z == 1000].var()
+
+            print(
+                f"The variance geopotential at an alitude of 1000m due to the mean molecular mass is: {sensitivity.H}"
             )
         except Exception as e:
             print(f"Could not solve scenario because: {e}")
