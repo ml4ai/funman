@@ -1,0 +1,43 @@
+funman.api package
+==================
+
+Submodules
+----------
+
+funman.api.api module
+---------------------
+.. inheritance-diagram:: funman.api.api
+   :parts: 1
+
+.. automodule:: funman.api.api
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+funman.api.client module
+------------------------
+.. inheritance-diagram:: funman.api.client
+   :parts: 1
+
+.. automodule:: funman.api.client
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+funman.api.server module
+------------------------
+.. inheritance-diagram:: funman.api.server
+   :parts: 1
+
+.. automodule:: funman.api.server
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: funman.api
+   :members:
+   :undoc-members:
+   :show-inheritance:

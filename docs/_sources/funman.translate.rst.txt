@@ -1,0 +1,63 @@
+funman.translate package
+========================
+
+Submodules
+----------
+
+funman.translate.bilayer module
+-------------------------------
+.. inheritance-diagram:: funman.translate.bilayer
+   :parts: 1
+
+.. automodule:: funman.translate.bilayer
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+funman.translate.decapode module
+--------------------------------
+.. inheritance-diagram:: funman.translate.decapode
+   :parts: 1
+
+.. automodule:: funman.translate.decapode
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+funman.translate.encoded module
+-------------------------------
+.. inheritance-diagram:: funman.translate.encoded
+   :parts: 1
+
+.. automodule:: funman.translate.encoded
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+funman.translate.gromet module
+------------------------------
+.. inheritance-diagram:: funman.translate.gromet
+   :parts: 1
+
+.. automodule:: funman.translate.gromet
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+funman.translate.translate module
+---------------------------------
+.. inheritance-diagram:: funman.translate.translate
+   :parts: 1
+
+.. automodule:: funman.translate.translate
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: funman.translate
+   :members:
+   :undoc-members:
+   :show-inheritance:

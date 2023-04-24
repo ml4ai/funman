@@ -1,0 +1,43 @@
+funman.search package
+=====================
+
+Submodules
+----------
+
+funman.search.box\_search module
+--------------------------------
+.. inheritance-diagram:: funman.search.box_search
+   :parts: 1
+
+.. automodule:: funman.search.box_search
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+funman.search.search module
+---------------------------
+.. inheritance-diagram:: funman.search.search
+   :parts: 1
+
+.. automodule:: funman.search.search
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+funman.search.smt\_check module
+-------------------------------
+.. inheritance-diagram:: funman.search.smt_check
+   :parts: 1
+
+.. automodule:: funman.search.smt_check
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: funman.search
+   :members:
+   :undoc-members:
+   :show-inheritance:

@@ -1,0 +1,23 @@
+funman.representation package
+=============================
+
+Submodules
+----------
+
+funman.representation.representation module
+-------------------------------------------
+.. inheritance-diagram:: funman.representation.representation
+   :parts: 1
+
+.. automodule:: funman.representation.representation
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: funman.representation
+   :members:
+   :undoc-members:
+   :show-inheritance:

@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Space Weather Use Cases &mdash; funman  documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="_static/graphviz.css" type="text/css" />
+      <link rel="stylesheet" href="_static/autodoc_pydantic.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Class Diagram" href="classes.html" />
+    <link rel="prev" title="Epidemiology Use Cases" href="use_cases.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="index.html" class="icon icon-home"> funman
+          </a>
+              <div class="version">
+                1.5.0
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="use_cases.html">Epidemiology Use Cases</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Space Weather Use Cases</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#check-consistency-of-decapode-model">Check Consistency of DECAPODE Model:</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#projection-find-outputs-for-given-input-of-decapode-model">Projection (find outputs for given input) of DECAPODE Model:</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#regression-find-inputs-for-given-output-of-decapode-model">Regression (find inputs for given output) of DECAPODE Model:</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#sensitivity-analysis-capture-the-relationship-between-input-and-output-behavior-of-decapode-model">Sensitivity Analysis (capture the relationship between input and output behavior) of DECAPODE Model:</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="classes.html">Class Diagram</a></li>
+<li class="toctree-l1"><a class="reference internal" href="packages.html">Package Diagram</a></li>
+<li class="toctree-l1"><a class="reference internal" href="funman.html">funman package</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">funman</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>Space Weather Use Cases</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/sw_use_cases.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="space-weather-use-cases">
+<h1>Space Weather Use Cases<a class="headerlink" href="#space-weather-use-cases" title="Permalink to this heading"></a></h1>
+<p>The following use cases reside in <a class="reference external" href="https://github.com/ml4ai/funman/tree/main/test/test_decapode.py">test decapode</a>.</p>
+<section id="check-consistency-of-decapode-model">
+<h2>Check Consistency of DECAPODE Model:<a class="headerlink" href="#check-consistency-of-decapode-model" title="Permalink to this heading"></a></h2>
+<p>This use case involves FUNMAN reasoning about the hydrostatic equation within the TIE-GCM space weather model, represented as a DECAPODE model file.  It checks whether the DECAPODE model is consistent with some expected output behavior (e.g., from a reliable data source or simulation).
+It first constructs an instance of the DecapodeModel class using the provided DECAPODE file.  This class constructs a model from the DECAPODE file that can be asked to answer a query with that model.  The query asks whether there are values of the parameter m_bar (mean molecular mass) such that the geopotential does not exceed a specified threshold.  The test will succeed if the given values satisfy the query.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">test_use_case_decapode_consistency</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Use case for consistency. Check that for a given mean molecular mass</span>
+<span class="sd">    (1e-10), that the geopotential at 1000m alitude is 500mb.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="n">QueryEquals</span><span class="p">(</span><span class="s2">&quot;H&quot;</span><span class="p">,</span> <span class="n">GEOPOTENTIAL_THRESHOLD</span><span class="p">,</span> <span class="n">at_end</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">scenario</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">setup_use_case_decapode_consistency</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+        <span class="n">scenario</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">parameter_bounds</span><span class="p">[</span><span class="s1">&#39;m_Mo(Other(&quot;‾&quot;))&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">M_BAR_CONSISTENCY_VALUE</span><span class="p">,</span>
+            <span class="n">M_BAR_CONSISTENCY_VALUE</span><span class="p">,</span>
+        <span class="p">]</span>
+        <span class="n">result_sat</span><span class="p">:</span> <span class="n">ConsistencyScenarioResult</span> <span class="o">=</span> <span class="n">Funman</span><span class="p">()</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">scenario</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="nb">abs</span><span class="p">(</span><span class="n">result_sat</span><span class="o">.</span><span class="n">consistent</span><span class="p">)</span>
+
+        <span class="nb">print</span><span class="p">(</span>
+            <span class="s2">&quot;Success: the mean molecular mass 1e-10 is consistent with a geopotential of 500mb at an altitude of 1000m.&quot;</span>
+        <span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Could not solve scenario because: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="kc">False</span>
+</pre></div>
+</div>
+</section>
+<section id="projection-find-outputs-for-given-input-of-decapode-model">
+<h2>Projection (find outputs for given input) of DECAPODE Model:<a class="headerlink" href="#projection-find-outputs-for-given-input-of-decapode-model" title="Permalink to this heading"></a></h2>
+<p>This use case involves FUNMAN reasoning about the hydrostatic equation within the TIE-GCM space weather model, represented as a DECAPODE model file.  It checks the output of the model given some input parameter values.
+It first constructs an instance of the DecapodeModel class using the provided DECAPODE file.  This class constructs a model from the DECAPODE file that can be asked to answer a query with that model.   The query asks to find the expected geopotential value given the fixed parameter value of m_bar.  The test will return the expected simulation value for the geopotential.  The projection use case is similar to the consistency use case, but differs by relaxing the query constraint on the projected value.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">test_use_case_decapode_projection</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Use case for projection. Calculate the geopotential at 1000m alitude</span>
+<span class="sd">    given a mean molecular mass (1e-10).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">scenario</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">setup_use_case_decapode_consistency</span><span class="p">()</span>
+
+    <span class="n">funman</span> <span class="o">=</span> <span class="n">Funman</span><span class="p">()</span>
+
+    <span class="c1"># Show that region in parameter space is sat (i.e., there exists a true</span>
+    <span class="c1"># point)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">scenario</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">setup_use_case_decapode_consistency</span><span class="p">(</span><span class="n">QueryTrue</span><span class="p">())</span>
+        <span class="n">scenario</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">parameter_bounds</span><span class="p">[</span><span class="s1">&#39;m_Mo(Other(&quot;‾&quot;))&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">M_BAR_CONSISTENCY_VALUE</span><span class="p">,</span>
+            <span class="n">M_BAR_CONSISTENCY_VALUE</span><span class="p">,</span>
+        <span class="p">]</span>
+        <span class="n">result_sat</span><span class="p">:</span> <span class="n">ConsistencyScenarioResult</span> <span class="o">=</span> <span class="n">Funman</span><span class="p">()</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">scenario</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="nb">abs</span><span class="p">(</span><span class="n">result_sat</span><span class="o">.</span><span class="n">consistent</span><span class="p">)</span>
+
+        <span class="n">df</span> <span class="o">=</span> <span class="n">result_sat</span><span class="o">.</span><span class="n">dataframe</span><span class="p">()</span>
+        <span class="n">H_at_1000m</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">df</span><span class="o">.</span><span class="n">z</span> <span class="o">==</span> <span class="mi">1000</span><span class="p">]</span><span class="o">.</span><span class="n">H</span>
+
+        <span class="nb">print</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Success: the mean molecular mass 1e-10 results in a geopotential of </span><span class="si">{</span><span class="n">H_at_1000m</span><span class="si">}</span><span class="s2">mb at an altitude of 1000m.&quot;</span>
+        <span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Could not solve scenario because: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="kc">False</span>
+</pre></div>
+</div>
+</section>
+<section id="regression-find-inputs-for-given-output-of-decapode-model">
+<h2>Regression (find inputs for given output) of DECAPODE Model:<a class="headerlink" href="#regression-find-inputs-for-given-output-of-decapode-model" title="Permalink to this heading"></a></h2>
+<p>This use case involves FUNMAN reasoning about the hydrostatic equation within the TIE-GCM space weather model, represented as a DECAPODE model file.  It checks whether the DECAPODE model is consistent with some expected output behavior (e.g., from a reliable data source or simulation).  If it is, the query will return all parameter values that allow the model to be consistent.
+It first constructs an instance of the DecapodeModel class using the provided DECAPODE file.  This class constructs a model from the DECAPODE file that can be asked to answer a query with that model.  The query asks to find all values of m_bar such that the geopotential is equal to a specified threshold.  The test will return ranges of m_bar that satisfy the query.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">test_use_case_decapode_regression</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Use case for Regression with Parameter Synthesis. Find the values for mean molecular mass where the geopotential is 500mb at an altitude of 100 (i.e.  H(z=1000) = 500mb)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="n">QueryAnd</span><span class="p">(</span>
+            <span class="n">QueryEquals</span><span class="p">(</span><span class="s2">&quot;H&quot;</span><span class="p">,</span> <span class="n">GEOPOTENTIAL_THRESHOLD</span><span class="p">,</span> <span class="n">at_end</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">scenario</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">setup_use_case_decapode_parameter_synthesis</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+        <span class="n">result</span><span class="p">:</span> <span class="n">ParameterSynthesisScenarioResult</span> <span class="o">=</span> <span class="n">Funman</span><span class="p">()</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span>
+            <span class="n">scenario</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">FUNMANConfig</span><span class="p">(</span><span class="n">number_of_processes</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">parameter_space</span><span class="o">.</span><span class="n">true_boxes</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span>
+
+        <span class="nb">print</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;The geopotential will be 500mb at an alitude of 1000m if the mean molecular mass is in the intervals: </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">parameter_space</span><span class="o">.</span><span class="n">true_boxes</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Could not solve scenario because: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="kc">False</span>
+</pre></div>
+</div>
+</section>
+<section id="sensitivity-analysis-capture-the-relationship-between-input-and-output-behavior-of-decapode-model">
+<h2>Sensitivity Analysis (capture the relationship between input and output behavior) of DECAPODE Model:<a class="headerlink" href="#sensitivity-analysis-capture-the-relationship-between-input-and-output-behavior-of-decapode-model" title="Permalink to this heading"></a></h2>
+<dl class="simple">
+<dt>This use case involves FUNMAN reasoning about the hydrostatic equation within the TIE-GCM space weather model, represented as a DECAPODE model file.  It finds information about the relationship between the inputs and outputs of the model.</dt><dd><p>The query fixes the parameters step_size and num_steps, but does not constrain the geopotential.  FUNMAN then finds all values for the mean molecular mass and geopotential that will be consistent with the model.  From the possible values for mean molecular mass and geopotential, the test finds the variance of the geopotential at a fixed altitude of 1000m.   The results of this test give information about how perturbations in the parameter value m_bar can impact the output.</p>
+</dd>
+</dl>
+<p>This use case follows the same initial setup as the Regression use case above, but is followed by an analysis of how sensitive the geopotential is to the parameter m_bar.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">test_use_case_decapode_sensitivity_analysis</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Use case for Sensitivity Analysis with Parameter Synthesis. Find the variance in geopotential over feasible values for the mean molecular mass.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">scenario</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">setup_use_case_decapode_parameter_synthesis</span><span class="p">(</span>
+            <span class="n">QueryTrue</span><span class="p">()</span>
+        <span class="p">)</span>
+        <span class="n">result</span><span class="p">:</span> <span class="n">ParameterSynthesisScenarioResult</span> <span class="o">=</span> <span class="n">Funman</span><span class="p">()</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span>
+            <span class="n">scenario</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">FUNMANConfig</span><span class="p">(</span><span class="n">number_of_processes</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">parameter_space</span><span class="o">.</span><span class="n">true_boxes</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span>
+
+        <span class="c1"># Extract several point values for the mean molecular mass that are feasible</span>
+        <span class="n">points</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">parameter_space</span><span class="o">.</span><span class="n">sample_true_boxes</span><span class="p">()</span>
+
+        <span class="c1"># Calculate the distribution of geopotential H over altitude z for each point</span>
+        <span class="n">dataframe</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">true_point_timeseries</span><span class="p">(</span><span class="n">points</span><span class="p">)</span>
+
+        <span class="c1"># Calculate the variance at an altitude of 1000m</span>
+        <span class="n">sensitivity</span> <span class="o">=</span> <span class="n">dataframe</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">dataframe</span><span class="o">.</span><span class="n">z</span> <span class="o">==</span> <span class="mi">1000</span><span class="p">]</span><span class="o">.</span><span class="n">var</span><span class="p">()</span>
+
+        <span class="nb">print</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;The variance geopotential at an altitude of 1000m due to the mean molecular mass is: </span><span class="si">{</span><span class="n">sensitivity</span><span class="o">.</span><span class="n">H</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Could not solve scenario because: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="kc">False</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="use_cases.html" class="btn btn-neutral float-left" title="Epidemiology Use Cases" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="classes.html" class="btn btn-neutral float-right" title="Class Diagram" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, SIFT.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
