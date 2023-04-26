@@ -93,7 +93,7 @@ class TestUseCases(unittest.TestCase):
         return scenario
 
     @unittest.expectedFailure
-    def test_use_case_decapode_sensitivity_analysis(self):
+    def test_use_case_decapode_regression(self):
         """
         Use case for Regression with Parameter Synthesis. Find the values for
         mean molecular mass where the geopotential is 500mb at an altitude of
