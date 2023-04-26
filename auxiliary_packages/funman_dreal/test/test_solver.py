@@ -88,7 +88,11 @@ class TestRunDrealNative(unittest.TestCase):
         # Needed to use dreal with pysmt
         funman_dreal.ensure_dreal_in_pysmt()
 
-        with Solver(name="dreal", logic=QF_NRA) as s:
+        with Solver(
+            name="dreal",
+            logic=QF_NRA,
+            solver_options={"dreal_log_level": "info"},
+        ) as s:
             x = Symbol("x", REAL)
             x_lb = Symbol("x_lb", REAL)
             x_ub = Symbol("x_ub", REAL)
