@@ -791,9 +791,7 @@ class Box(BaseModel):
 
         return [b2, b1]
 
-    def intersect(
-        self, b2: "Box", param_list: List[str] = None
-    ):  ## added 11/21/22 DMM
+    def intersect(self, b2: "Box", param_list: List[str] = None):
         """
         Intersect self with box, optionally over only a subset of the dimensions listed in param_list.
 
@@ -809,7 +807,7 @@ class Box(BaseModel):
         Box
             box representing intersection, optionally defined over parameters in param_list (when specified)
         """
-        result = []
+        params_ans = []
         common_params = (
             param_list if param_list else [k.name for k in self.bounds]
         )
@@ -821,12 +819,62 @@ class Box(BaseModel):
             for b, i in b2.bounds.items():
                 if b == p1:
                     b2_bounds = Interval(lb=i.lb, ub=i.ub)
-            intersection_ans = b1_bounds.intersection(b2_bounds)
-            dict_element = Parameter(
-                name=p1, lb=intersection_ans[0], ub=intersection_ans[1]
+            intersection_ans = b1_bounds.intersection(
+                b2_bounds
+            )  ## will be a list with 2 elements (lower and upper bound) or empty list
+            if (
+                len(intersection_ans) < 1
+            ):  ## empty list: no intersection in 1 variable means no intersection overall.
+                return None
+            else:
+                new_param = Parameter(
+                    name=f"{p1}",
+                    lb=intersection_ans[0],
+                    ub=intersection_ans[1],
+                )
+                params_ans.append(new_param)
+        return Box(
+            bounds={p.name: Interval(lb=p.lb, ub=p.ub) for p in params_ans}
+        )
+
+    def symm_diff(b1: "Box", b2: "Box"):
+        result = []
+        ## First check that the two boxes have the same variables
+        vars_b1 = set([b for b in b1.bounds])
+        vars_b2 = set([b for b in b2.bounds])
+        if vars_b1 == vars_b2:
+            vars_list = list(vars_b1)
+            print("symm diff in progress")
+        else:
+            print(
+                "cannot take the symmetric difference of two boxes that do not have the same variables."
             )
-            result.append(dict_element)
-        return Box(bounds={i.name: Interval(lb=i.lb, ub=i.ub) for i in result})
+            raise Exception(
+                "Cannot take symmetric difference since the two boxes do not have the same variables"
+            )
+        ### Find intersection
+        desired_vars_list = list(vars_b1)
+        intersection = b1.intersect(b2, param_list=desired_vars_list)
+        ### Calculate symmetric difference based on intersection
+        if (
+            intersection == None
+        ):  ## No intersection, so symmetric difference is just the original boxes
+            return [b1, b2]
+        else:  ## Calculate symmetric difference
+            unknown_boxes = [b1, b2]
+            false_boxes = []
+            true_boxes = []
+            while len(unknown_boxes) > 0:
+                b = unknown_boxes.pop()
+                if Box.contains(intersection, b) == True:
+                    false_boxes.append(b)
+                elif Box.contains(b, intersection) == True:
+                    new_boxes = Box.split(b)
+                    for i in range(len(new_boxes)):
+                        unknown_boxes.append(new_boxes[i])
+                else:
+                    true_boxes.append(b)
+            return true_boxes
 
     def __intersect_two_boxes(b1, b2):
         # FIXME subsumed by Box.intersect(), can be removed.
@@ -899,7 +947,7 @@ class Box(BaseModel):
             }
         )
 
-    ### WIP - just for 2 dimensions at this point.
+    ### Can remove and replace this with Box.symm_diff, which works for any number of dimensions.  TODO write a corresponding parameter space symmetric difference and use case.
     def _symmetric_difference_two_boxes(self, b: "Box") -> List["Box"]:
         result: List["Box"] = []
         # if the same box then no symmetric difference
