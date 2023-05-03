@@ -1,5 +1,6 @@
 
 INSTALL_PREFIX?=/usr/local
+ENABLE_DEBUG?=no
 INTERVAL_LIB?=gaol
 LP_LIB?=clp
 
@@ -10,6 +11,16 @@ GAOL_INSTALL_PREFIX?=${INSTALL_PREFIX}
 IBEX_INSTALL_PREFIX?=${INSTALL_PREFIX}
 
 DEPS_WORKSPACE=/tmp/ibex-deps
+
+ifneq ($(ENABLE_DEBUG),no)
+IBEX_DEBUGGING=--with-debug
+MATHLIB_DEBUGGING=--enable-debug
+GAOL_DEBUGGING=
+else
+IBEX_DEBUGGING=
+MATHLIB_DEBUGGING=
+GAOL_DEBUGGING=
+endif
 
 LP_LIB_ARGS=
 ifeq ($(LP_LIB), clp)
@@ -27,6 +38,7 @@ ibex: paths ${INTERVAL_LIB} ${LP_LIB}
 	patch -p1 -i patches/remove_gdtoa.patch
 	./waf configure \
 		--prefix=${IBEX_INSTALL_PREFIX} \
+		${IBEX_DEBUGGING} \
 		--enable-shared \
 		--with-optim \
 		--with-affine-extended \
@@ -53,7 +65,9 @@ mathlib: paths
 	cd ${DEPS_WORKSPACE} \
 		&& tar zxf /ibex-lib/interval_lib_wrapper/gaol/3rd/mathlib-2.1.1.tar.gz
 	cd ${DEPS_WORKSPACE}/mathlib-2.1.1 \
-		&& ./configure  --prefix=${MATHLIB_INSTALL_PREFIX} \
+		&& ./configure \
+		${MATHLIB_DEBUGGING} \
+		--prefix=${MATHLIB_INSTALL_PREFIX} \
 		&& make \
 		&& make check \
 		&& make install
@@ -63,6 +77,7 @@ gaol: paths mathlib
 	git clone https://github.com/jgladwig/GAOL ${DEPS_WORKSPACE}/gaol
 	cd ${DEPS_WORKSPACE}/gaol \
 		&& ./configure \
+		${GAOL_DEBUGGING} \
 		--prefix=${GAOL_INSTALL_PREFIX} \
 		--with-mathlib-include=${MATHLIB_INCDIR} \
 		--with-mathlib-lib=${MATHLIB_LIBDIR} \

@@ -10,6 +10,8 @@ FUNMAN_BRANCH=main
 IBEX_NAME=funman-ibex
 DREAL_NAME=funman-dreal4
 
+DEBUG_IBEX=no
+
 DREAL_LOCAL_REPO?=../dreal4
 
 FUNMAN_VERSION ?= 0.0.0
@@ -105,6 +107,7 @@ use-docker-driver: local-registry
 build-ibex: use-docker-driver
 	DOCKER_BUILDKIT=1 docker buildx build \
 		--output "type=docker" \
+		--build-arg ENABLE_DEBUG=$(DEBUG_IBEX) \
 		--platform $(TARGET_OS)/$(SHELL_GET_TARGET_ARCH) \
 		--tag $(IBEX_TAGGED_NAME) \
 		-f ./ibex/Dockerfile ./ibex
