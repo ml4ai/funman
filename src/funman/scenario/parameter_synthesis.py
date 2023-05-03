@@ -8,10 +8,13 @@ from pydantic import BaseModel
 from pysmt.formula import FNode
 from pysmt.shortcuts import BOOL, Iff, Symbol
 
-from funman.model import QueryTrue
-from funman.model.bilayer import BilayerModel
-from funman.model.decapode import DecapodeModel
-from funman.model.encoded import EncodedModel
+from funman.model import (
+    BilayerModel,
+    DecapodeModel,
+    EncodedModel,
+    PetrinetModel,
+    QueryTrue,
+)
 from funman.model.query import QueryEncoded, QueryFunction, QueryLE
 from funman.representation import Parameter
 from funman.representation.representation import ParameterSpace, Point
@@ -39,7 +42,7 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
         extra = "forbid"
 
     parameters: List[Parameter]
-    model: Union[DecapodeModel, BilayerModel, EncodedModel]
+    model: Union[PetrinetModel, DecapodeModel, BilayerModel, EncodedModel]
     query: Union[QueryLE, QueryEncoded, QueryFunction, QueryTrue] = None
     _search: str = "BoxSearch"
     _smt_encoder: Encoder = None  # TODO set to model.default_encoder()
@@ -78,7 +81,6 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
         if self.model.structural_parameter_bounds:
             if self._smt_encoder is None:
                 self._smt_encoder = self.model.default_encoder(config)
-                self._smt_encoder._encode_timed_model_elements(self.model)
 
             # FIXME these ranges are also computed in the encoder
             num_steps_range = range(

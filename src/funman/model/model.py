@@ -6,6 +6,9 @@ from abc import ABC, abstractmethod
 from typing import Dict, List
 
 from pydantic import BaseModel
+from pysmt.formula import FNode
+
+from funman.representation.representation import Parameter
 
 
 class Model(ABC, BaseModel):
@@ -19,6 +22,7 @@ class Model(ABC, BaseModel):
     init_values: Dict[str, float] = {}
     parameter_bounds: Dict[str, List[float]] = {}
     structural_parameter_bounds: Dict[str, List[int]] = {}
+    _extra_constraints: FNode = None
 
     @abstractmethod
     def default_encoder(self, config: "FUNMANConfig") -> "Encoder":

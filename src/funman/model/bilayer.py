@@ -360,6 +360,9 @@ class BilayerMeasurement(BilayerGraph, BaseModel):
     input_edges: BilayerEdge = []  # Input to observable, defined in Win
     output_edges: BilayerEdge = []  # Flux to Output, defined in Wa,Wn
 
+    def _state_var_names(self) -> List[str]:
+        return [v.parameter for v in model.bilayer._state.values()]
+
     def _initialize_from_json(self):
         """
         Create a BilayerMeasurement object from a JSON formatted bilayer graph.
@@ -470,7 +473,6 @@ class BilayerModel(Model):
     bilayer: BilayerDynamics
     measurements: BilayerMeasurement = None
     identical_parameters: List[List[str]] = []
-    _extra_constraints: FNode = None
 
     def default_encoder(self, config: "FUNMANConfig") -> "Encoder":
         """
@@ -483,7 +485,17 @@ class BilayerModel(Model):
         """
         from funman.translate import BilayerEncoder
 
-        return BilayerEncoder(config=config)
+        return BilayerEncoder(config=config, model=self)
+
+    def _parameter_names(self):
+        param_names = [
+            node.parameter for _, node in self.bilayer._flux.items()
+        ]
+        if self.measurements:
+            param_names += [
+                node.parameter for _, node in self.measurements._flux.items()
+            ]
+        return param_names
 
     def _parameters(self) -> List[Parameter]:
         params = [
