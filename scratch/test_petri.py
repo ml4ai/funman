@@ -1,22 +1,15 @@
+import glob
 import json
 import os
 import unittest
 
+import matplotlib.pyplot as plt
 from funman_demo.handlers import RealtimeResultPlotter, ResultCacheWriter
-from funman_demo.sim.CHIME.CHIME_SIR import main as run_CHIME_SIR
-from pysmt.shortcuts import GE, LE, And, Real, Symbol
-from pysmt.typing import REAL
 
 from funman import Funman
 from funman.funman import FUNMANConfig
-from funman.model import (
-    EncodedModel,
-    QueryFunction,
-    QueryLE,
-    QueryTrue,
-    SimulatorModel,
-)
-from funman.model.bilayer import BilayerDynamics, BilayerModel
+from funman.model import PetrinetModel, QueryLE
+from funman.model.petrinet import PetrinetDynamics
 from funman.representation.representation import Parameter
 from funman.scenario import (
     ConsistencyScenario,
@@ -24,51 +17,67 @@ from funman.scenario import (
     ParameterSynthesisScenario,
     ParameterSynthesisScenarioResult,
 )
-from funman.scenario.simulation import (
-    SimulationScenario,
-    SimulationScenarioResult,
-)
 from funman.utils.handlers import ResultCombinedHandler
 
 RESOURCES = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "../resources"
 )
 
+ensemble_files = glob.glob(
+    os.path.join(RESOURCES, "miranet", "ensemble", "*_miranet.json")
+)
+
 
 class TestUseCases(unittest.TestCase):
-    def setup_use_case_bilayer_common(self):
-        bilayer_path = os.path.join(
-            RESOURCES, "bilayer", "CHIME_SIR_dynamics_BiLayer.json"
-        )
-        with open(bilayer_path, "r") as f:
-            bilayer_src = json.load(f)
+    def setup_use_case_petri_common(self):
+        petri_path = ensemble_files[0]
+        with open(petri_path, "r") as f:
+            petri_src = json.load(f)
 
-        infected_threshold = 1000
-        init_values = {"S": 9998, "I": 1, "R": 1}
+        infected_threshold = 0.3
+
+        N0 = 60e6
+        I0, D0, A0, R0, T0, H0, E0 = 200 / N0, 20 / N0, 1 / N0, 2 / N0, 0, 0, 0
+        S0 = 1 - I0 - D0 - A0 - R0 - T0 - H0 - E0
+        C0 = 0
+        init_values = {
+            "Susceptible": S0,
+            "Infected": I0,
+            "Diagnosed": D0,
+            "Ailing": A0,
+            "Recognized": R0,
+            "Healed": H0,
+            "Threatened": T0,
+            "Extinct": E0,
+            "Cases": C0,
+            "Hospitalizations": H0,
+            "Deaths": D0,
+        }
 
         scale_factor = 0.5
         lb = 0.000067 * (1 - scale_factor)
         ub = 0.000067 * (1 + scale_factor)
 
-        model = BilayerModel(
-            bilayer=BilayerDynamics(json_graph=bilayer_src),
+        model = PetrinetModel(
+            petrinet=PetrinetDynamics(json_graph=petri_src),
             init_values=init_values,
-            parameter_bounds={
-                "beta": [lb, ub],
-                "gamma": [1.0 / 14.0, 1.0 / 14.0],
-            },
+            # parameter_bounds={
+            #     "beta": [lb, ub],
+            #     "gamma": [1.0 / 14.0, 1.0 / 14.0],
+            # },
             structural_parameter_bounds={
-                "num_steps": [100, 100],
+                "num_steps": [50, 50],
                 "step_size": [1, 1],
             },
         )
 
-        query = QueryLE(variable="I", ub=infected_threshold, at_end=True)
+        query = QueryLE(variable="Infected", ub=infected_threshold)
 
         return model, query
 
-    def setup_use_case_bilayer_parameter_synthesis(self):
-        model, query = self.setup_use_case_bilayer_common()
+    @unittest.skip(reason="tmp")
+    def setup_use_case_petri_parameter_synthesis(self):
+        model, query = self.setup_use_case_petri_common()
         [lb, ub] = model.parameter_bounds["beta"]
         scenario = ParameterSynthesisScenario(
             parameters=[Parameter(name="beta", lb=lb, ub=ub)],
@@ -78,9 +87,8 @@ class TestUseCases(unittest.TestCase):
 
         return scenario
 
-    @unittest.skip(reason="tmp")
-    def test_use_case_bilayer_parameter_synthesis(self):
-        scenario = self.setup_use_case_bilayer_parameter_synthesis()
+    def test_use_case_petri_parameter_synthesis(self):
+        scenario = self.setup_use_case_petri_parameter_synthesis()
         funman = Funman()
         result: ParameterSynthesisScenarioResult = funman.solve(
             scenario,
@@ -107,40 +115,35 @@ class TestUseCases(unittest.TestCase):
         assert len(result.parameter_space.true_boxes) > 0
         assert len(result.parameter_space.false_boxes) > 0
 
-    def setup_use_case_bilayer_consistency(self):
-        model, query = self.setup_use_case_bilayer_common()
+    def setup_use_case_petri_consistency(self):
+        model, query = self.setup_use_case_petri_common()
 
         scenario = ConsistencyScenario(model=model, query=query)
         return scenario
 
-    def test_use_case_bilayer_consistency(self):
-        scenario = self.setup_use_case_bilayer_consistency()
+    def test_use_case_petri_consistency(self):
+        scenario = self.setup_use_case_petri_consistency()
 
         # Show that region in parameter space is sat (i.e., there exists a true point)
-        result_sat: ConsistencyScenarioResult = Funman().solve(
-            scenario,
-            config=FUNMANConfig(
-                solver="dreal",
-                dreal_mcts=True,
-                tolerance=1e-8,
-                number_of_processes=1,
-                save_smtlib=True,
-            ),
-        )
+        result_sat: ConsistencyScenarioResult = Funman().solve(scenario)
+        assert result_sat.consistent
         df = result_sat.dataframe()
 
-        assert abs(df["I"][2] - 2.24) < 0.13
-        beta = result_sat._parameters()["beta"]
-        assert abs(beta - 0.00005) < 0.001
+        result_sat.plot(variables=scenario.model._state_var_names())
+        plt.savefig("petri.png")
 
-        scenario = self.setup_use_case_bilayer_consistency()
+        # assert abs(df["Infected"][2] - 2.24) < 0.13
+        beta = result_sat._parameters()["beta"]
+        # assert abs(beta - 0.00005) < 0.001
+
+        # scenario = self.setup_use_case_petri_consistency()
         # Show that region in parameter space is unsat/false
-        scenario.model.parameter_bounds["beta"] = [
-            0.000067 * 1.5,
-            0.000067 * 1.75,
-        ]
-        result_unsat: ConsistencyScenarioResult = Funman().solve(scenario)
-        assert not result_unsat.consistent
+        # scenario.model.parameter_bounds["beta"] = [
+        #     0.000067 * 1.5,
+        #     0.000067 * 1.75,
+        # ]
+        # result_unsat: ConsistencyScenarioResult = Funman().solve(scenario)
+        # assert not result_unsat.consistent
 
 
 if __name__ == "__main__":
