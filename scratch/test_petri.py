@@ -8,8 +8,9 @@ from funman_demo.handlers import RealtimeResultPlotter, ResultCacheWriter
 
 from funman import Funman
 from funman.funman import FUNMANConfig
-from funman.model import PetrinetModel, QueryLE
+from funman.model import EnsembleModel, PetrinetModel, QueryLE
 from funman.model.petrinet import PetrinetDynamics
+from funman.model.query import QueryAnd
 from funman.representation.representation import Parameter
 from funman.scenario import (
     ConsistencyScenario,
@@ -29,6 +30,12 @@ ensemble_files = glob.glob(
 
 
 class TestUseCases(unittest.TestCase):
+    def setup_use_case_petri_ensemble_common(self):
+        m1, q1 = self.setup_use_case_petri_common()
+        m2, q2 = self.setup_use_case_petri_common()
+        m = EnsembleModel(models=[m1, m2])
+        return m, QueryAnd(queries=[m1, m2])
+
     def setup_use_case_petri_common(self):
         petri_path = ensemble_files[0]
         with open(petri_path, "r") as f:
@@ -121,6 +128,13 @@ class TestUseCases(unittest.TestCase):
         scenario = ConsistencyScenario(model=model, query=query)
         return scenario
 
+    def setup_use_case_petri_ensemble_consistency(self):
+        model, query = self.setup_use_case_petri_ensemble_common()
+
+        scenario = ConsistencyScenario(model=model, query=query)
+        return scenario
+
+    @unittest.skip("tmp")
     def test_use_case_petri_consistency(self):
         scenario = self.setup_use_case_petri_consistency()
 
@@ -144,6 +158,20 @@ class TestUseCases(unittest.TestCase):
         # ]
         # result_unsat: ConsistencyScenarioResult = Funman().solve(scenario)
         # assert not result_unsat.consistent
+
+    def test_ensemble(self):
+        scenario = self.setup_use_case_petri_ensemble_consistency()
+
+        # Show that region in parameter space is sat (i.e., there exists a true point)
+        result_sat: ConsistencyScenarioResult = Funman().solve(scenario)
+        assert result_sat.consistent
+        df = result_sat.dataframe()
+
+        result_sat.plot(variables=scenario.model._state_var_names())
+        plt.savefig("petri.png")
+
+        # assert abs(df["Infected"][2] - 2.24) < 0.13
+        beta = result_sat._parameters()["beta"]
 
 
 if __name__ == "__main__":

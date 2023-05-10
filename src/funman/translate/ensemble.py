@@ -18,7 +18,7 @@ from funman.model.model import Model
 from .translate import Encoder, Encoding
 
 
-class PetrinetEncoder(Encoder):
+class EnsembleEncoder(Encoder):
     def encode_model(self, model: "Model") -> Encoding:
         """
         Encode a model into an SMTLib formula.
@@ -127,5 +127,4 @@ class PetrinetEncoder(Encoder):
         List[str]
             state variable names
         """
-        state_vars = model._state_vars()
-        return [s["sname"] for s in state_vars]
+        return model._state_var_names()

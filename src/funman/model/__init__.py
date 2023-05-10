@@ -22,3 +22,4 @@ from .gromet import *
 from .simulator import *
 from .decapode import *
 from .petrinet import *
+from .ensemble import *
