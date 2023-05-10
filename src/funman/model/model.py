@@ -36,6 +36,9 @@ class Model(ABC, BaseModel):
         """
         pass
 
+    def _get_init_value(self, var: str):
+        return self.init_values[var]
+
     def variables(self, include_next_state=False):
         """
         Get all initial values and parameters.

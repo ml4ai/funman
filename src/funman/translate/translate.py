@@ -281,7 +281,7 @@ class Encoder(ABC, BaseModel):
                 [
                     Equals(
                         self._encode_state_var(var, time=init_time),
-                        Real(model.init_values[var]),
+                        Real(model._get_init_value(var)),
                     )
                     for var in state_var_names
                 ]
@@ -294,13 +294,13 @@ class Encoder(ABC, BaseModel):
                             Real(-1.0 * self.config.initial_state_tolerance),
                             Minus(
                                 self._encode_state_var(var, time=init_time),
-                                Real(model.init_values[var]),
+                                Real(model._get_init_value(var)),
                             ),
                         ),
                         LE(
                             Minus(
                                 self._encode_state_var(node, time=init_time),
-                                Real(model.init_values[var]),
+                                Real(model._get_init_value(var)),
                             ),
                             Real(self.config.initial_state_tolerance),
                         ),
