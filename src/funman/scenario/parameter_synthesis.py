@@ -15,7 +15,8 @@ from funman.model import (
     PetrinetModel,
     QueryTrue,
 )
-from funman.model.query import QueryEncoded, QueryFunction, QueryLE
+from funman.model.query import QueryEncoded, QueryFunction, QueryGE, QueryLE
+from funman.model.regnet import RegnetModel
 from funman.representation import Parameter
 from funman.representation.representation import ParameterSpace, Point
 from funman.scenario import (
@@ -42,8 +43,12 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
         extra = "forbid"
 
     parameters: List[Parameter]
-    model: Union[PetrinetModel, DecapodeModel, BilayerModel, EncodedModel]
-    query: Union[QueryLE, QueryEncoded, QueryFunction, QueryTrue] = None
+    model: Union[
+        RegnetModel, PetrinetModel, DecapodeModel, BilayerModel, EncodedModel
+    ]
+    query: Union[
+        QueryGE, QueryLE, QueryEncoded, QueryFunction, QueryTrue
+    ] = None
     _search: str = "BoxSearch"
     _smt_encoder: Encoder = None  # TODO set to model.default_encoder()
     _model_encoding: Encoding = None
@@ -77,6 +82,8 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
             search = BoxSearch()
         else:
             search = config._search()
+
+        self._filter_parameters()
 
         if self.model.structural_parameter_bounds:
             if self._smt_encoder is None:
@@ -113,7 +120,10 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
 
             parameter_space = ParameterSpace._from_configurations(result)
         else:
-            self._encode(config)
+            # self._encode(config)
+            if self._smt_encoder is None:
+                self._smt_encoder = self.model.default_encoder(config)
+            self._encode_timed(config.num_steps, config.step_size, config)
 
             self._original_parameter_widths = {
                 p: minus(p.ub, p.lb) for p in self.parameters
@@ -123,6 +133,14 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
         return ParameterSynthesisScenarioResult(
             parameter_space=parameter_space, scenario=self
         )
+
+    def _filter_parameters(self):
+        # If the scenario has parameters that are not in the model, then remove them from the scenario
+        model_parameters = self.model._parameter_names()
+        if model_parameters is not None:
+            self.parameters = [
+                p for p in self.parameters if p.name in model_parameters
+            ]
 
     def _results_str(self, result: List[Dict]):
         return "\n".join(

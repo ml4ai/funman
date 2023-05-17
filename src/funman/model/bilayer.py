@@ -340,6 +340,9 @@ class BilayerDynamics(BilayerGraph):
             e.to_dot(dot)
         return dot
 
+    def _state_var_names(self) -> List[str]:
+        return [v.parameter for v in self._state.values()]
+
 
 class BilayerMeasurement(BilayerGraph, BaseModel):
     """
@@ -486,6 +489,9 @@ class BilayerModel(Model):
         from funman.translate import BilayerEncoder
 
         return BilayerEncoder(config=config, model=self)
+
+    def _state_var_names(self):
+        return self.bilayer._state_var_names()
 
     def _parameter_names(self):
         param_names = [

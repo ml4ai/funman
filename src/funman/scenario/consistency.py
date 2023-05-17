@@ -15,6 +15,7 @@ from funman.model.encoded import EncodedModel
 from funman.model.ensemble import EnsembleModel
 from funman.model.petrinet import PetrinetModel
 from funman.model.query import QueryEncoded, QueryFunction, QueryLE, QueryTrue
+from funman.model.regnet import RegnetModel
 from funman.scenario import AnalysisScenario, AnalysisScenarioResult
 from funman.translate import Encoder
 from funman.translate.translate import Encoding
@@ -40,7 +41,12 @@ class ConsistencyScenario(AnalysisScenario, BaseModel):
         extra = "forbid"
 
     model: Union[
-        EnsembleModel, PetrinetModel, DecapodeModel, BilayerModel, EncodedModel
+        RegnetModel,
+        EnsembleModel,
+        PetrinetModel,
+        DecapodeModel,
+        BilayerModel,
+        EncodedModel,
     ]
     query: Union[QueryLE, QueryEncoded, QueryFunction, QueryTrue]
     _smt_encoder: Encoder = None
@@ -97,7 +103,7 @@ class ConsistencyScenario(AnalysisScenario, BaseModel):
                 result[num_steps - num_steps_range.start][
                     step_size - step_size_range.start
                 ] = search.search(self, config=config)
-                print(self._results_str(num_steps.start, result))
+                print(self._results_str(num_steps_range.start, result))
                 print("-" * 80)
                 if result[num_steps - num_steps_range.start][
                     step_size - step_size_range.start
@@ -117,7 +123,10 @@ class ConsistencyScenario(AnalysisScenario, BaseModel):
                 step_size - step_size_range.start
             ]
         else:
-            self._encode(config)
+            # self._encode(config)
+            if self._smt_encoder is None:
+                self._smt_encoder = self.model.default_encoder(config)
+            self._encode_timed(config.num_steps, config.step_size, config)
             result = search.search(self, config=config)
             # FIXME this to_dict call assumes result is an unusual type
             consistent = result.to_dict() if result else None
