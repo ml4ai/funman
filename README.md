@@ -206,7 +206,12 @@ directory to the container.
 
 # Build the image:
 ```bash
+# For building with your local arch
 make build
+```
+```bash
+# For building to a target arch
+TARGET_ARCH=arm64 make build
 ```
 
 # Launch the dev container:
