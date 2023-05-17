@@ -17,7 +17,9 @@ FUNMAN_PYTHON=${FUNMAN_ENV_PATH}/bin/python
 FUNMAN_PIP=${FUNMAN_ENV_PATH}/bin/pip
 
 cd "${DREAL_ROOT}"
-bazel build --python_path=${FUNMAN_PYTHON} //:archive
+# OPTIONS=--copt=”-pg” --cxxopt=”-pg” --linkopt=“-pg” --compilation_mode=dbg
+OPTIONS=
+bazel build ${OPTIONS} --python_path=${FUNMAN_PYTHON} //:archive
 sudo /usr/local/bin/update-dreal
 
 ${FUNMAN_PYTHON} setup.py bdist_wheel

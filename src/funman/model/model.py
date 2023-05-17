@@ -37,7 +37,13 @@ class Model(ABC, BaseModel):
         pass
 
     def _get_init_value(self, var: str):
-        return self.init_values[var]
+        if var in self.init_values:
+            return self.init_values[var]
+        elif var in self.parameter_bounds:
+            # get parameter for value
+            return self.parameter_bounds[var]
+        else:
+            return None
 
     def variables(self, include_next_state=False):
         """
@@ -52,3 +58,18 @@ class Model(ABC, BaseModel):
         vars.update(self.parameter_bounds)
 
         return vars
+
+    def _parameter_names(self) -> List[str]:
+        return []
+
+    def _state_var_names(self) -> List[str]:
+        return []
+
+    def _parameter_names(self):
+        return []
+
+    def _parameter_values(self):
+        return {}
+
+    def _parameters(self) -> List[Parameter]:
+        return []

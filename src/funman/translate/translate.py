@@ -6,7 +6,9 @@ from abc import ABC, abstractmethod
 from typing import Dict, List, Set, Tuple, Union
 
 import pysmt
+from numpy import isin
 from pydantic import BaseModel, Extra
+from pysmt.constants import Numeral
 from pysmt.formula import FNode
 from pysmt.shortcuts import GE, LE, LT, REAL, TRUE, And, Equals, Real, Symbol
 from pysmt.solvers.solver import Model as pysmtModel
@@ -14,7 +16,7 @@ from pysmt.solvers.solver import Model as pysmtModel
 from funman.constants import NEG_INFINITY, POS_INFINITY
 from funman.funman import FUNMANConfig
 from funman.model.model import Model
-from funman.model.query import Query, QueryEncoded, QueryLE, QueryTrue
+from funman.model.query import Query, QueryEncoded, QueryGE, QueryLE, QueryTrue
 from funman.representation import Parameter
 from funman.representation.representation import Box, Interval, Point
 
@@ -274,52 +276,69 @@ class Encoder(ABC, BaseModel):
             ]
         return configurations, max_step_index, max_step_size
 
-    def _define_init(self, model: Model, init_time: int = 0) -> FNode:
-        state_var_names = model._state_var_names()
-        if self.config.initial_state_tolerance == 0.0:
+    def _define_init_term(self, model: Model, var: str, init_time: int):
+        value = model._get_init_value(var)
+
+        if (
+            isinstance(value, float)
+            or isinstance(value, int)
+            or isinstance(value, str)
+        ):
+            value_symbol = (
+                Symbol(value, REAL) if isinstance(value, str) else Real(value)
+            )
+            return Equals(
+                self._encode_state_var(var, time=init_time),
+                value_symbol,
+            )
+        elif isinstance(value, list):
             return And(
-                [
-                    Equals(
-                        self._encode_state_var(var, time=init_time),
-                        Real(model._get_init_value(var)),
-                    )
-                    for var in state_var_names
-                ]
+                GE(
+                    self._encode_state_var(var, time=init_time),
+                    Real(value[0]),
+                ),
+                LT(
+                    self._encode_state_var(var, time=init_time),
+                    Real(value[1]),
+                ),
             )
         else:
-            return And(
-                [
-                    And(
-                        LE(
-                            Real(-1.0 * self.config.initial_state_tolerance),
-                            Minus(
-                                self._encode_state_var(var, time=init_time),
-                                Real(model._get_init_value(var)),
-                            ),
-                        ),
-                        LE(
-                            Minus(
-                                self._encode_state_var(node, time=init_time),
-                                Real(model._get_init_value(var)),
-                            ),
-                            Real(self.config.initial_state_tolerance),
-                        ),
-                    )
-                    for var in state_var_names
-                ]
-            )
+            return TRUE()
 
-    def _encode_untimed_constraints(self, model: Model) -> FNode:
-        pass
+    def _define_init(self, model: Model, init_time: int = 0) -> FNode:
+        state_var_names = model._state_var_names()
+        return And(
+            [
+                self._define_init_term(model, var, init_time)
+                for var in state_var_names
+            ]
+        )
 
     def _encode_untimed_constraints(self, model: Model) -> FNode:
         untimed_constraints = []
         parameters = model._parameters()
+
+        # If parameter_bounds exist, then override those encoded in the original model
+        overridden_parameters = [
+            (
+                p
+                if p.name not in model.parameter_bounds
+                else Parameter(
+                    name=p.name,
+                    lb=model.parameter_bounds[p.name][0],
+                    ub=model.parameter_bounds[p.name][1],
+                )
+            )
+            for p in parameters
+        ]
+
+        # Create bounds on parameters, but not necessarily synthesize the parameters
         untimed_constraints.append(
             self.box_to_smt(
                 Box(
                     bounds={
-                        p.name: Interval(lb=p.lb, ub=p.ub) for p in parameters
+                        p.name: Interval(lb=p.lb, ub=p.ub)
+                        for p in overridden_parameters
                     },
                     closed_upper_bound=True,
                 )
@@ -384,6 +403,7 @@ class Encoder(ABC, BaseModel):
         """
         query_handlers = {
             QueryLE: self._encode_query_le,
+            QueryGE: self._encode_query_ge,
             QueryTrue: self._encode_query_true,
             QueryEncoded: self._return_encoded_query,
         }
@@ -406,6 +426,16 @@ class Encoder(ABC, BaseModel):
         timepoints = model_encoding._symbols[query.variable]
         return Encoding(
             _formula=And([LE(s, Real(query.ub)) for s in timepoints.values()])
+        )
+
+    def _encode_query_ge(self, model_encoding, query):
+        if query.variable not in model_encoding._symbols:
+            raise Exception(
+                f"Could not encode QueryGE because {query.variable} does not appear in the model_encoding symbols."
+            )
+        timepoints = model_encoding._symbols[query.variable]
+        return Encoding(
+            _formula=And([GE(s, Real(query.lb)) for s in timepoints.values()])
         )
 
     def _encode_query_true(self, model_encoding, query):
@@ -465,7 +495,10 @@ class Encoder(ABC, BaseModel):
             for t in vars[var]:
                 try:
                     symbol = vars[var][t]
-                    vals[var][t] = float(pysmtModel.get_py_value(symbol))
+                    value = pysmtModel.get_py_value(symbol)
+                    if isinstance(value, Numeral):
+                        value = 0.0
+                    vals[var][t] = float(value)
                 except OverflowError as e:
                     l.warning(e)
         return vals

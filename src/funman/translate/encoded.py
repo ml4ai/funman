@@ -14,9 +14,6 @@ class EncodedEncoder(Encoder):
     encoders.
     """
 
-    def __init__(self, config: "FUNMANConfig") -> None:
-        super().__init__(config=config)
-
     def encode_model(self, model: Model):
         """
         Encode the model by returning the already encoded formula.
@@ -41,3 +38,11 @@ class EncodedEncoder(Encoder):
             raise Exception(
                 f"An EncodedEncoder cannot encode models of type: {type(model)}"
             )
+
+    def _encode_timed_model_elements(self, model: Model):
+        pass
+
+    def encode_model_timed(
+        self, model: "Model", num_steps: int, step_size: int
+    ) -> Encoding:
+        return self.encode_model(model)

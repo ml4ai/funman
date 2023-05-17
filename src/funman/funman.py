@@ -3,11 +3,17 @@ This module defines the Funman class, the primary entry point for FUNMAN
 analysis.
 """
 import logging
+from typing import Union
 
 import multiprocess as mp
 from pydantic import BaseModel, Field, validator
 
-from funman.utils.handlers import NoopResultHandler, ResultHandler, WaitAction
+from funman.utils.handlers import (
+    NoopResultHandler,
+    ResultCombinedHandler,
+    ResultHandler,
+    WaitAction,
+)
 
 l = logging.getLogger(__file__)
 l.setLevel(logging.ERROR)
@@ -29,7 +35,9 @@ class FUNMANConfig(BaseModel):
     """Multiprocessing queue timeout, used by BoxSearch"""
     number_of_processes: int = mp.cpu_count()
     """Number of BoxSearch processes"""
-    _handler: ResultHandler = NoopResultHandler()
+    _handler: Union[
+        ResultCombinedHandler, NoopResultHandler, ResultHandler
+    ] = NoopResultHandler()
     wait_timeout: int = None
     """Timeout for BoxSearch procesess to wait for boxes to evaluate"""
     _wait_action: WaitAction = None

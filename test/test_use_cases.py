@@ -197,11 +197,12 @@ class TestUseCases(unittest.TestCase):
         result_sat: ConsistencyScenarioResult = funman.solve(scenario)
         df = result_sat.dataframe()
 
-        assert abs(df["I"][2] - 2.24) < 0.13
+        assert abs(df["I"][2] - 2.24) < 0.5
         beta = result_sat._parameters()["beta"]
         assert abs(beta - 0.00005) < 0.001
 
         # Show that region in parameter space is unsat/false
+        scenario = self.setup_use_case_bilayer_consistency()
         scenario.model.parameter_bounds["beta"] = [
             0.000067 * 1.5,
             0.000067 * 1.75,

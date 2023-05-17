@@ -279,44 +279,6 @@ class BilayerEncoder(Encoder):
                 f"BilayerEncoder cannot encode model of type: {type(model)}"
             )
 
-    def _define_init(self, model: Model) -> FNode:
-        if self.config.initial_state_tolerance == 0.0:
-            return And(
-                [
-                    Equals(
-                        self._encode_bilayer_state_node(node, timepoint=0),
-                        Real(model.init_values[node.parameter]),
-                    )
-                    for idx, node in model.bilayer._state.items()
-                ]
-            )
-        else:
-            return And(
-                [
-                    And(
-                        LE(
-                            Real(-1.0 * self.config.initial_state_tolerance),
-                            Minus(
-                                self._encode_bilayer_state_node(
-                                    node, timepoint=0
-                                ),
-                                Real(model.init_values[node.parameter]),
-                            ),
-                        ),
-                        LE(
-                            Minus(
-                                self._encode_bilayer_state_node(
-                                    node, timepoint=0
-                                ),
-                                Real(model.init_values[node.parameter]),
-                            ),
-                            Real(self.config.initial_state_tolerance),
-                        ),
-                    )
-                    for idx, node in model.bilayer._state.items()
-                ]
-            )
-
     def _encode_measurements(
         self, measurements: BilayerMeasurement, timepoints
     ):

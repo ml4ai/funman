@@ -1,6 +1,8 @@
+import logging
 import warnings
 
 import pysmt.smtlib.commands as smtcmd
+from pysmt.constants import Numeral
 from pysmt.environment import get_env
 from pysmt.exceptions import NoLogicAvailableError, UndefinedLogicError
 from pysmt.logics import SMTLIB2_LOGICS, Logic, get_closer_smtlib_logic
@@ -13,6 +15,9 @@ from pysmt.smtlib.printers import (
 )
 from pysmt.smtlib.script import SmtLibCommand, SmtLibScript
 from pysmt.solvers.solver import Model
+
+l = logging.Logger(__file__)
+l.setLevel(logging.WARNING)
 
 
 class FUNMANSmtLibScript(SmtLibScript):
@@ -189,7 +194,15 @@ def model_to_dict(self):
     d = {}
     for var in self:
         try:
-            d[var[0].symbol_name()] = float(self.get_py_value(var[0]))
+            value = self.get_py_value(var[0])
+            if isinstance(value, Numeral):
+                l.warning(
+                    f"Setting value of Numeral {var} to 0.0 because cannot convert to float"
+                )
+                value = 0.0
+            else:
+                value = float(value)
+            d[var[0].symbol_name()] = value
         except OverflowError as e:
             raise e
     return d

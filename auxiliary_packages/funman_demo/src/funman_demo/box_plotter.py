@@ -32,12 +32,7 @@ class BoxPlotter(object):
         alpha=0.2,
     ) -> None:
         self.parameters = parameters
-        # assert (
-        #     len(self.parameters) <= 2 and len(self.parameters) > 0,
-        #     f"Plotting {len(self.parameters)} parameteres is not supported, must be 1 or 2",
-        # )
-        self.px = self.parameters[0]
-        self.py = self.parameters[1] if len(self.parameters) > 1 else None
+        self.dim = len(parameters)
         self.plot_bounds = plot_bounds if plot_bounds else self.plotBox()
         self.title = title
         self.color_map = color_map
@@ -50,27 +45,65 @@ class BoxPlotter(object):
         # plt.ion()
 
     def initialize_figure(self):
-        self.fig = plt.figure()
-        self.ax = self.fig.add_subplot(111)
-        (self.data,) = self.ax.plot([], [])
-        plt.title(self.title)
+        fig, axs = plt.subplots(
+            self.dim,
+            self.dim,
+            dpi=600,
+            figsize=(10, 10),
+            # sharex=True,
+            # sharey=True,
+        )
+        self.fig = fig
+        self.axs = axs
+
+        TINY_SIZE = 6
+        SMALL_SIZE = 8
+        MEDIUM_SIZE = 10
+        BIGGER_SIZE = 12
+
+        plt.rc("font", size=SMALL_SIZE)  # controls default text sizes
+        plt.rc("axes", titlesize=SMALL_SIZE)  # fontsize of the axes title
+        plt.rc("axes", labelsize=TINY_SIZE)  # fontsize of the x and y labels
+        plt.rc("xtick", labelsize=TINY_SIZE)  # fontsize of the tick labels
+        plt.rc("ytick", labelsize=TINY_SIZE)  # fontsize of the tick labels
+        plt.rc("legend", fontsize=SMALL_SIZE)  # legend fontsize
+        plt.rc("figure", titlesize=BIGGER_SIZE)  # fontsize of the figure title
+
+        self.fig.tight_layout(pad=3.0)
+        # self.fig = plt.figure()
+        # self.ax = self.fig.add_subplot(111)
+        self.data = [[None] * self.dim] * self.dim
+        for i in range(self.dim):
+            for j in range(self.dim):
+                if j > i:
+                    axs[i, j].axis("off")
+                else:
+                    (self.data[i][j],) = self.axs[i, j].plot([], [])
+                    # axs[i, j].set_title(
+                    #     f"({self.parameters[i].name}, {self.parameters[j].name})"
+                    # )
+                    axs[i, j].set_xlabel(f"{self.parameters[i].name}")
+                    axs[i, j].set_ylabel(f"{self.parameters[j].name}")
+                    # axs[i, j].set_aspect("equal", adjustable="box")
+        # plt.axis("square")
+        self.fig.suptitle(self.title)
         plt.legend(self.custom_lines, ["true", "false"])
 
-        plt.xlabel(self.px.name)
+        # plt.xlabel(self.px.name)
         # plt.xlim(
         #     [
         #         self.plot_bounds.bounds[self.px].lb,
         #         self.plot_bounds.bounds[self.px].ub,
         #     ]
         # )
-        if len(self.parameters) > 1:
-            plt.ylabel(self.py.name)
-            # plt.ylim(
-            #     [
-            #         self.plot_bounds.bounds[self.py].lb,
-            #         self.plot_bounds.bounds[self.py].ub,
-            #     ]
-            # )
+        # if len(self.parameters) > 1:
+        #     plt.ylabel(self.py.name)
+        # plt.ylim(
+        #     [
+        #         self.plot_bounds.bounds[self.py].lb,
+        #         self.plot_bounds.bounds[self.py].ub,
+        #     ]
+        # )
 
         # plt.show(block=False)
         # plt.pause(0.1)
@@ -138,8 +171,8 @@ class BoxPlotter(object):
                     pass
 
     def plot_add_box(self, box: Box, color="r"):
-        if self.py:
-            self.plot2DBox(box, self.px, self.py, color=color)
+        if self.dim > 1:
+            self.plotNDBox(box, color=color)
         else:
             self.plot1DBox(box, self.px, color=color)
         self.fig.canvas.draw()
@@ -147,36 +180,56 @@ class BoxPlotter(object):
         # plt.show(block=False)
 
     def plot_add_patch(self, box: Box, color="r"):
-        lb_y = box.bounds[self.py.name].lb if self.py else -0.05
-        width_y = box.bounds[self.py.name].width() if self.py else 1e-1
-        rect = patches.Rectangle(
-            (box.bounds[self.px.name].lb, lb_y),
-            box.bounds[self.px.name].width(),
-            width_y,
-            linewidth=1,
-            edgecolor=color,
-            facecolor="none",
-        )
+        for i in range(self.dim):
+            for j in range(self.dim):
+                if i < j:
+                    continue
+                lb_y = (
+                    box.bounds[self.parameters[j].name].lb
+                    #  if j != i else -0.05
+                )
+                width_y = (
+                    box.bounds[self.parameters[j].name].width()
+                    # if j != i
+                    # else 1e-1
+                )
+                rect = patches.Rectangle(
+                    (box.bounds[self.parameters[i].name].lb, lb_y),
+                    box.bounds[self.parameters[i].name].width(),
+                    width_y,
+                    linewidth=1,
+                    edgecolor=color,
+                    facecolor="none",
+                )
 
-        # Add the patch to the Axes
-        self.ax.add_patch(rect)
+                # Add the patch to the Axes
+                self.axs[i, j].add_patch(rect)
 
         self.fig.canvas.draw()
         self.fig.canvas.flush_events()
         # plt.show(block=False)
 
     def plot_add_point(self, point: Point, color="r", shape="x", alpha=0.2):
-        yval = point.values[self.py.name] if self.py else 0.0
-        plt.scatter(
-            point.values[self.px.name],
-            yval,
-            color=color,
-            marker=shape,
-            alpha=alpha,
-        )
-        self.fig.canvas.draw()
-        self.fig.canvas.flush_events()
-        # plt.show(block=False)
+        for i in range(self.dim):
+            for j in range(self.dim):
+                if i < j:
+                    continue
+                yval = (
+                    point.values[self.parameters[j].name]
+                    if self.dim > 1
+                    else 0.0
+                )
+                self.axs[i, j].scatter(
+                    point.values[self.parameters[i].name],
+                    yval,
+                    color=color,
+                    marker=shape,
+                    alpha=alpha,
+                    s=3,
+                )
+                self.fig.canvas.draw()
+                self.fig.canvas.flush_events()
+                # plt.show(block=False)
 
     def plotBox(self, interval: Interval = Interval(lb=-2000, ub=2000)):
         box = Box(bounds={p.name: interval for p in self.parameters})
@@ -215,6 +268,42 @@ class BoxPlotter(object):
     def plot1DBox(self, i: Box, p1: Parameter, color="g"):
         x_values = [i.bounds[p1].lb, i.bounds[p1].ub]
         plt.plot(x_values, np.zeros(len(x_values)), color, linestyle="-")
+
+    def plotNDBox(self, box, color="g", alpha=0.2):
+        for i in range(self.dim):
+            for j in range(self.dim):
+                if i < j:
+                    continue
+                x_limits = box.bounds[self.parameters[i].name]
+                y_limits = box.bounds[self.parameters[j].name]
+
+                if i == j:
+                    # Plot a line segment
+                    self.axs[i, j].plot(
+                        [x_limits.lb, x_limits.ub],
+                        [x_limits.lb, x_limits.ub],
+                        color=color,
+                        linewidth=3,
+                        alpha=alpha,
+                    )
+                else:
+                    # Plot a box
+
+                    if (
+                        abs(float(x_limits.lb)) < 100
+                        and abs(float(x_limits.ub)) < 100
+                    ):
+                        x = np.linspace(
+                            float(x_limits.lb), float(x_limits.ub), 1000
+                        )
+                        self.axs[i, j].fill_between(
+                            x,
+                            y_limits.lb,
+                            y_limits.ub,
+                            color=color,
+                            alpha=alpha,
+                        )
+        plt.show(block=False)
 
     def plot2DBox(self, i, p1: Parameter, p2: Parameter, color="g", alpha=0.2):
         x_limits = i.bounds[p1.name]
