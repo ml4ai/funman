@@ -3,14 +3,14 @@
 The funman docker image is built up from several layers of images.
 
 The general order (and purpose) is:
-1. ubuntu:20.04  (use the default dockerhub ubuntu image.)
-2. funman-ibex   (build IBEX from source with minor tweaks.)
-3. funman-dreal  (build a modified version of Dreal from source.)
-4. funman-base   (base image with all funman dependencies.)
-5. Either a or b:
-  a. funman-pypi (image with funman installed via pypi.)
-  b. funman-git  (image with funman installed via a git branch. Defaults to main.)
-6. funman-api    (image to host funman api using uvicorn.)
+- ubuntu:20.04  (use the default dockerhub ubuntu image.)
+- funman-ibex   (build IBEX from source with minor tweaks.)
+- funman-dreal  (build a modified version of Dreal from source.)
+- funman-base   (base image with all funman dependencies.)
+- Either of:
+  - funman-pypi (image with funman installed via pypi.)
+  - funman-git  (image with funman installed via a git branch. Defaults to main.)
+- funman-api    (image to host funman api using uvicorn.)
 
 Each image is briefly described below. General build commands are also listed.
 Note that there are more specific build commands in the Makefile but they use
@@ -25,11 +25,12 @@ images built with docker buildx can easily extend those images.
 
 For example:
 ```
-docker tag funman-ibex:linux-arm64 localhost:5000/sift/funma-ibex:linux-arm64
-docker push localhost:5000/sift/funma-ibex:linux-arm64
+docker tag funman-ibex:linux-arm64 localhost:5000/sift/funman-ibex:linux-arm64
+docker push localhost:5000/sift/funman-ibex:linux-arm64
 ```
 
 Depending on use case and build tools there may be better options described here:
+
 https://docs.docker.com/engine/reference/commandline/buildx_build/
 
 ---
@@ -54,7 +55,7 @@ Dockerfile path: Dockerfile.dreal4
 Install everything needed to build Dreal from source.
 Also build and install from source.
 ### Args
-- IBEX_TAG:
+- IBEX_TAG:\
   Tag to use when extending the funman-ibex image
 ## Build Command
 From the root of the repo:
@@ -73,7 +74,7 @@ Dockerfile path: deploy/base/Dockerfile
 Install the funman dependencies (but not funman) into the image.
 Intended to be the base to allow creation of variant funman images.
 ### Args
-- DREAL_TAG:
+- DREAL_TAG:\
   Tag to use when extending the funman-dreal image
 ## Build Command
 From the root of the repo:
@@ -91,7 +92,7 @@ Dockerfile path: deploy/pypi/Dockerfile
 ### Description
 Install the funman packges into the image using the latest version visible on pypi
 ### Args
-- FROM_TAG:
+- FROM_TAG:\
   Tag to use on when extending the funman-base image
 ## Build Command
 From the root of the repo:
@@ -111,9 +112,9 @@ Shallow clone the repo from https://github.com/ml4ai/funman.git at the
 branch specified by the FUNMAN_BRANCH arg. Then install the funman packages
 into the image environment.
 ### Args
-- FUNMAN_BRANCH:
+- FUNMAN_BRANCH:\
   Branch to use when shallow cloning the funman repo
-- FROM_TAG:
+- FROM_TAG:\
   Tag to use on when extending the funman-base image
 ## Build Command
 From the root of the repo:
@@ -132,9 +133,9 @@ Dockerfile path: deploy/api/Dockerfile
 ### Description 
 Installs unvicorn and updates the CMD to run the api server.
 ### Args
-- FROM_IMAGE:
+- FROM_IMAGE:\
   Image to build the api image on top of.
-- FROM_TAG:
+- FROM_TAG:\
   Tag to use on FROM_IMAGE
 ## Build Command
 From the root of the repo:
