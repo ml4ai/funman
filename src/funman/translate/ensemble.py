@@ -1,4 +1,4 @@
-from typing import List
+from typing import Dict, List
 
 from pysmt.formula import FNode
 from pysmt.shortcuts import (
@@ -11,6 +11,7 @@ from pysmt.shortcuts import (
     Real,
     Symbol,
     Times,
+    substitute,
 )
 
 from funman.model.model import Model
@@ -38,60 +39,42 @@ class EnsembleEncoder(Encoder):
     def _encode_next_step(
         self, model: "Model", step: int, next_step: int
     ) -> FNode:
-        state_vars = model._state_vars()
-        transitions = model._transitions()
-        step_size = next_step - step
-        current_state = [
-            self._encode_state_var(s["sname"], time=step) for s in state_vars
-        ]
-        next_state = [
-            self._encode_state_var(s["sname"], time=next_step)
-            for s in state_vars
-        ]
-
-        # Each transition corresponds to a term that is the product of current state vars and a parameter
-        transition_terms = [
-            self._encode_transition_term(
-                i,
-                t,
-                current_state,
-                next_state,
-                model._input_edges(),
-                model._output_edges(),
+        model_steps = {
+            model.name: substitute(
+                model.default_encoder(self.config)._encode_next_step(
+                    model, step, next_step
+                ),
+                self._submodel_substitution_map(
+                    model, step=step, next_step=next_step
+                ),
             )
-            for i, t in enumerate(transitions)
-        ]
+            for model in model.models
+        }
 
-        # for each var, next state is the net flow for the var: sum(inflow) - sum(outflow)
-        net_flows = []
-        for v_index, var in enumerate(state_vars):
-            state_var_flows = []
-            for t_index, transition in enumerate(transitions):
-                outflow = model._num_flow_from_state_to_transition(
-                    v_index + 1, t_index + 1
-                )
-                inflow = model._flow_into_state_via_transition(
-                    v_index + 1, t_index + 1
-                )
-                net_flow = inflow - outflow
+        return And(list(model_steps.values()))
 
-                if net_flow != 0:
-                    state_var_flows.append(
-                        Times(
-                            Real(net_flow) * transition_terms[t_index]
-                        ).simplify()
-                    )
-            if len(state_var_flows) > 0:
-                flows = Plus(
-                    Times(Real(step_size), Plus(state_var_flows)).simplify(),
-                    current_state[v_index],
-                ).simplify()
-            else:
-                flows = current_state[v_index]
-
-            net_flows.append(Equals(next_state[v_index], flows))
-
-        return And(net_flows)
+    def _submodel_substitution_map(
+        self, model: Model, step=None, next_step=None
+    ) -> Dict[Symbol, Symbol]:
+        curr_var_sub_map: Dict[Symbol, Symbol] = {
+            Symbol(f"{variable}_{step}", REAL): Symbol(
+                f"model_{model.name}_{variable}_{step}", REAL
+            )
+            for variable in model._state_var_names()
+        }
+        next_var_sub_map: Dict[Symbol, Symbol] = {
+            Symbol(f"{variable}_{next_step}", REAL): Symbol(
+                f"model_{model.name}_{variable}_{next_step}", REAL
+            )
+            for variable in model._state_var_names()
+        }
+        parameter_sub_map: Dict[Symbol, Symbol] = {
+            Symbol(f"{variable}", REAL): Symbol(
+                f"model_{model.name}_{variable}", REAL
+            )
+            for variable in model._parameter_names()
+        }
+        return {**curr_var_sub_map, **next_var_sub_map, **parameter_sub_map}
 
     def _encode_transition_term(
         self,

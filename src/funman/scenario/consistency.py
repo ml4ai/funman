@@ -14,7 +14,13 @@ from funman.model.decapode import DecapodeModel
 from funman.model.encoded import EncodedModel
 from funman.model.ensemble import EnsembleModel
 from funman.model.petrinet import PetrinetModel
-from funman.model.query import QueryEncoded, QueryFunction, QueryLE, QueryTrue
+from funman.model.query import (
+    QueryAnd,
+    QueryEncoded,
+    QueryFunction,
+    QueryLE,
+    QueryTrue,
+)
 from funman.model.regnet import RegnetModel
 from funman.scenario import AnalysisScenario, AnalysisScenarioResult
 from funman.translate import Encoder
@@ -48,7 +54,7 @@ class ConsistencyScenario(AnalysisScenario, BaseModel):
         BilayerModel,
         EncodedModel,
     ]
-    query: Union[QueryLE, QueryEncoded, QueryFunction, QueryTrue]
+    query: Union[QueryAnd, QueryLE, QueryEncoded, QueryFunction, QueryTrue]
     _smt_encoder: Encoder = None
     _model_encoding: Encoding = None
     _query_encoding: Encoding = None

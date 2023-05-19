@@ -15,7 +15,13 @@ from funman.model import (
     PetrinetModel,
     QueryTrue,
 )
-from funman.model.query import QueryEncoded, QueryFunction, QueryGE, QueryLE
+from funman.model.query import (
+    QueryAnd,
+    QueryEncoded,
+    QueryFunction,
+    QueryGE,
+    QueryLE,
+)
 from funman.model.regnet import RegnetModel
 from funman.representation import Parameter
 from funman.representation.representation import ParameterSpace, Point
@@ -47,7 +53,7 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
         RegnetModel, PetrinetModel, DecapodeModel, BilayerModel, EncodedModel
     ]
     query: Union[
-        QueryGE, QueryLE, QueryEncoded, QueryFunction, QueryTrue
+        QueryAnd, QueryGE, QueryLE, QueryEncoded, QueryFunction, QueryTrue
     ] = None
     _search: str = "BoxSearch"
     _smt_encoder: Encoder = None  # TODO set to model.default_encoder()

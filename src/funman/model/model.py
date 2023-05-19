@@ -2,6 +2,7 @@
 This module represents the abstract base classes for models.
 """
 import copy
+import uuid
 from abc import ABC, abstractmethod
 from typing import Dict, List
 
@@ -19,6 +20,7 @@ class Model(ABC, BaseModel):
     class Config:
         allow_inf_nan = True
 
+    name: str = f"model_{uuid.uuid4()}"
     init_values: Dict[str, float] = {}
     parameter_bounds: Dict[str, List[float]] = {}
     structural_parameter_bounds: Dict[str, List[int]] = {}

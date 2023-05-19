@@ -2,10 +2,12 @@
 This module defines all Query classes.  Queries are combined with Model objects in Scenarios to determine whether the model satisfies the query.
 """
 from abc import ABC
-from typing import List
+from typing import List, Union
 
 from pydantic import BaseModel
 from pysmt.formula import FNode
+
+from funman.model.model import Model
 
 
 class Query(ABC, BaseModel):
@@ -13,6 +15,7 @@ class Query(ABC, BaseModel):
     Abstract base class for queries.
     """
 
+    model: Model = None
     pass
 
 
@@ -111,4 +114,4 @@ class QueryAnd(Query):
         queries to conjoin.
     """
 
-    queries: List[Query]
+    queries: List[Union[QueryLE, QueryGE, QueryEquals, Query]]

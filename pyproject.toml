@@ -25,7 +25,7 @@ force-exclude = '''
   | _build
   | build
   | dist
-  | .*venv*
+  | .*venv.*
 )/
 '''
 
@@ -37,7 +37,7 @@ exclude = '''
   | _build
   | build
   | dist
-  | .*venv*
+  | *venv*
   | __init__.py
 )/
 '''

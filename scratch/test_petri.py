@@ -31,12 +31,12 @@ ensemble_files = glob.glob(
 
 class TestUseCases(unittest.TestCase):
     def setup_use_case_petri_ensemble_common(self):
-        m1, q1 = self.setup_use_case_petri_common()
-        m2, q2 = self.setup_use_case_petri_common()
+        m1, q1 = self.setup_use_case_petri_common(name="m1")
+        m2, q2 = self.setup_use_case_petri_common(name="m2")
         m = EnsembleModel(models=[m1, m2])
-        return m, QueryAnd(queries=[m1, m2])
+        return m, QueryAnd(queries=[q1, q2])
 
-    def setup_use_case_petri_common(self):
+    def setup_use_case_petri_common(self, name="m"):
         petri_path = ensemble_files[0]
         with open(petri_path, "r") as f:
             petri_src = json.load(f)
@@ -66,19 +66,22 @@ class TestUseCases(unittest.TestCase):
         ub = 0.000067 * (1 + scale_factor)
 
         model = PetrinetModel(
+            name=name,
             petrinet=PetrinetDynamics(json_graph=petri_src),
             init_values=init_values,
-            # parameter_bounds={
-            #     "beta": [lb, ub],
-            #     "gamma": [1.0 / 14.0, 1.0 / 14.0],
-            # },
+            parameter_bounds={
+                "beta": [lb, ub],
+                "gamma": [1.0 / 14.0, 1.0 / 14.0],
+            },
             structural_parameter_bounds={
                 "num_steps": [50, 50],
                 "step_size": [1, 1],
             },
         )
 
-        query = QueryLE(variable="Infected", ub=infected_threshold)
+        query = QueryLE(
+            variable="Infected", ub=infected_threshold, model=model
+        )
 
         return model, query
 
@@ -171,7 +174,7 @@ class TestUseCases(unittest.TestCase):
         plt.savefig("petri.png")
 
         # assert abs(df["Infected"][2] - 2.24) < 0.13
-        beta = result_sat._parameters()["beta"]
+        # beta = result_sat._parameters()["beta"]
 
 
 if __name__ == "__main__":

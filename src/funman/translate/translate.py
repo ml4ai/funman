@@ -16,7 +16,14 @@ from pysmt.solvers.solver import Model as pysmtModel
 from funman.constants import NEG_INFINITY, POS_INFINITY
 from funman.funman import FUNMANConfig
 from funman.model.model import Model
-from funman.model.query import Query, QueryEncoded, QueryGE, QueryLE, QueryTrue
+from funman.model.query import (
+    Query,
+    QueryAnd,
+    QueryEncoded,
+    QueryGE,
+    QueryLE,
+    QueryTrue,
+)
 from funman.representation import Parameter
 from funman.representation.representation import Box, Interval, Point
 
@@ -402,6 +409,7 @@ class Encoder(ABC, BaseModel):
             formula and symbols for the encoding
         """
         query_handlers = {
+            QueryAnd: self._encode_query_and,
             QueryLE: self._encode_query_le,
             QueryGE: self._encode_query_ge,
             QueryTrue: self._encode_query_true,
@@ -418,22 +426,38 @@ class Encoder(ABC, BaseModel):
     def _return_encoded_query(self, model_encoding, query):
         return Encoding(_formula=query._formula)
 
+    def _query_variable_name(self, query):
+        return (
+            query.variable
+            if query.model is None
+            else f"model_{query.model.name}_{query.variable}"
+        )
+
+    def _encode_query_and(self, model_encoding, query):
+        encodings = [
+            self.encode_query(model_encoding, q) for q in query.queries
+        ]
+        return Encoding(_formula=And([e._formula for e in encodings]))
+
     def _encode_query_le(self, model_encoding, query):
-        if query.variable not in model_encoding._symbols:
+        query_variable_name = self._query_variable_name(query)
+        if query_variable_name not in model_encoding._symbols:
             raise Exception(
-                f"Could not encode QueryLE because {query.variable} does not appear in the model_encoding symbols."
+                f"Could not encode QueryLE because {query_variable_name} does not appear in the model_encoding symbols."
             )
-        timepoints = model_encoding._symbols[query.variable]
+        timepoints = model_encoding._symbols[query_variable_name]
         return Encoding(
             _formula=And([LE(s, Real(query.ub)) for s in timepoints.values()])
         )
 
     def _encode_query_ge(self, model_encoding, query):
-        if query.variable not in model_encoding._symbols:
+        query_variable_name = self._query_variable_name(query)
+
+        if query_variable_name not in model_encoding._symbols:
             raise Exception(
-                f"Could not encode QueryGE because {query.variable} does not appear in the model_encoding symbols."
+                f"Could not encode QueryGE because {query_variable_name} does not appear in the model_encoding symbols."
             )
-        timepoints = model_encoding._symbols[query.variable]
+        timepoints = model_encoding._symbols[query_variable_name]
         return Encoding(
             _formula=And([GE(s, Real(query.lb)) for s in timepoints.values()])
         )
