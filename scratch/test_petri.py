@@ -106,6 +106,7 @@ class TestUseCases(unittest.TestCase):
                 solver="dreal",
                 dreal_mcts=True,
                 tolerance=1e-8,
+                search="bubs",
                 number_of_processes=1,
                 save_smtlib=True,
                 # dreal_log_level="debug",

@@ -7,6 +7,7 @@ from typing import List, Optional
 
 import pysmt
 from pydantic import BaseModel
+from pysmt.shortcuts import And, Not, Solver, get_model
 
 from funman.funman import FUNMANConfig
 from funman.scenario.scenario import AnalysisScenario
@@ -60,20 +61,6 @@ class SearchStaticsMP(SearchStatistics):
         self._iteration_operation = manager.Queue()
 
 
-class SearchEpisode(BaseModel):
-    class Config:
-        arbitrary_types_allowed = True
-        underscore_attrs_are_private = True
-
-    problem: AnalysisScenario
-    config: FUNMANConfig
-    statistics: SearchStatistics = None
-    _model: pysmt.solvers.solver.Model = None
-
-    def num_parameters(self):
-        return len(self.problem.parameters)
-
-
 class Search(ABC):
     def __init__(self) -> None:
         self.episodes = []
@@ -85,3 +72,28 @@ class Search(ABC):
         config: Optional["FUNMANConfig"] = None,
     ) -> SearchEpisode:
         pass
+
+    def _initialize_encoding(self, solver: Solver, episode: BoxSearchEpisode):
+        """
+        The formula encoding the model M is of the form:
+
+        AM <=> M
+
+        where AM is a symbol denoting whether we assume M is true.  With this formula we can push/pop AM or Not(AM) to assert M or Not(M) without popping M.  Similarly we also assert the query as:
+
+        AQ <==> Q
+
+        Parameters
+        ----------
+        solver : Solver
+            pysmt solver object
+        episode : episode
+            data for the current search
+        """
+        solver.push(1)
+        formula = And(
+            episode.problem._model_encoding._formula,
+            episode.problem._query_encoding._formula,
+        )
+        episode._formula_stack.append(formula)
+        solver.add_assertion(formula)

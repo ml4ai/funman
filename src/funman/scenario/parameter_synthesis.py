@@ -55,7 +55,6 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
     query: Union[
         QueryAnd, QueryGE, QueryLE, QueryEncoded, QueryFunction, QueryTrue
     ] = None
-    _search: str = "BoxSearch"
     _smt_encoder: Encoder = None  # TODO set to model.default_encoder()
     _model_encoding: Encoding = None
     _query_encoding: Encoding = None
@@ -88,6 +87,12 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
             search = BoxSearch()
         else:
             search = config._search()
+            if search == "bubs":
+                from funman.search.bottom_up_box_search import (
+                    BottomUpBoxSearch,
+                )
+
+                search = BottomUpBoxSearch()
 
         self._filter_parameters()
 
