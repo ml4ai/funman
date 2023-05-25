@@ -1,22 +1,20 @@
 """
 This module defines all Query classes.  Queries are combined with Model objects in Scenarios to determine whether the model satisfies the query.
 """
-from abc import ABC
-from typing import List, Union
+from typing import Generic, List, TypeVar, Union
 
-from pydantic import BaseModel
+from pydantic.generics import GenericModel
 from pysmt.formula import FNode
 
-from funman.model.model import Model
+ModelT = TypeVar("ModelT")
 
 
-class Query(ABC, BaseModel):
+class Query(GenericModel, Generic[ModelT]):
     """
     Abstract base class for queries.
     """
 
-    model: Model = None
-    pass
+    model: ModelT
 
 
 class QueryFunction(Query):
