@@ -5,7 +5,7 @@ LOCAL_REGISTRY_PORT?=5000
 
 LOCAL_REGISTRY=localhost:$(LOCAL_REGISTRY_PORT)
 SIFT_REGISTRY_ROOT=$(LOCAL_REGISTRY)/sift/
-FUNMAN_BRANCH=main
+FUNMAN_BRANCH?=main
 
 IBEX_NAME=funman-ibex
 DREAL_NAME=funman-dreal4
@@ -173,7 +173,7 @@ build-deploy-base: use-docker-driver build-dreal
 	docker push $(SIFT_REGISTRY_ROOT)$(DEPLOY_TAGGED_BASE_NAME)
 
 build-deploy-git: use-docker-driver build-dreal build-deploy-base
-	DOCKER_BUILDKIT=1 docker buildx build \
+	DOCKER_BUILDKIT=1 docker buildx build --no-cache \
 		--output "type=docker" \
 		--platform $(TARGET_OS)/$(SHELL_GET_TARGET_ARCH) \
 		--build-arg SIFT_REGISTRY_ROOT=$(SIFT_REGISTRY_ROOT) \
@@ -183,7 +183,7 @@ build-deploy-git: use-docker-driver build-dreal build-deploy-base
 	docker push $(SIFT_REGISTRY_ROOT)$(DEPLOY_TAGGED_GIT_NAME)
 
 build-deploy-pypi: use-docker-driver build-dreal build-deploy-base
-	DOCKER_BUILDKIT=1 docker buildx build \
+	DOCKER_BUILDKIT=1 docker buildx build --no-cache \
 		--output "type=docker" \
 		--platform $(TARGET_OS)/$(SHELL_GET_TARGET_ARCH) \
 		--build-arg SIFT_REGISTRY_ROOT=$(SIFT_REGISTRY_ROOT) \
@@ -192,7 +192,7 @@ build-deploy-pypi: use-docker-driver build-dreal build-deploy-base
 	docker push $(SIFT_REGISTRY_ROOT)$(DEPLOY_TAGGED_PYPI_NAME)
 
 build-deploy-api-from-git: use-docker-driver build-dreal build-deploy-git
-	DOCKER_BUILDKIT=1 docker buildx build \
+	DOCKER_BUILDKIT=1 docker buildx build --no-cache \
 		--output "type=docker" \
 		--platform $(TARGET_OS)/$(SHELL_GET_TARGET_ARCH) \
 		--build-arg SIFT_REGISTRY_ROOT=$(SIFT_REGISTRY_ROOT) \
@@ -203,7 +203,7 @@ build-deploy-api-from-git: use-docker-driver build-dreal build-deploy-git
 	docker push $(SIFT_REGISTRY_ROOT)$(DEPLOY_TAGGED_API_NAME)
 
 build-deploy-api-from-pypi: use-docker-driver build-dreal build-deploy-pypi
-	DOCKER_BUILDKIT=1 docker buildx build \
+	DOCKER_BUILDKIT=1 docker buildx build --no-cache \
 		--output "type=docker" \
 		--platform $(TARGET_OS)/$(SHELL_GET_TARGET_ARCH) \
 		--build-arg SIFT_REGISTRY_ROOT=$(SIFT_REGISTRY_ROOT) \
