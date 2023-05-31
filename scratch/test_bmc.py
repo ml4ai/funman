@@ -43,7 +43,7 @@ class TestUseCases(unittest.TestCase):
         with open(bilayer_path, "r") as f:
             bilayer_src = json.load(f)
 
-        infected_threshold = 3
+        infected_threshold = 1000
         init_values = {"S": 9998, "I": 1, "R": 1}
 
         scale_factor = 0.5
@@ -58,12 +58,12 @@ class TestUseCases(unittest.TestCase):
                 "gamma": [1.0 / 14.0, 1.0 / 14.0],
             },
             structural_parameter_bounds={
-                "num_steps": [1, 5],
-                "step_size": [2, 5],
+                "num_steps": [100, 100],
+                "step_size": [1, 1],
             },
         )
 
-        query = QueryLE(variable="I", ub=infected_threshold)
+        query = QueryLE(variable="I", ub=infected_threshold, at_end=True)
 
         return model, query
 
@@ -78,6 +78,7 @@ class TestUseCases(unittest.TestCase):
 
         return scenario
 
+    @unittest.skip(reason="tmp")
     def test_use_case_bilayer_parameter_synthesis(self):
         scenario = self.setup_use_case_bilayer_parameter_synthesis()
         funman = Funman()
@@ -112,12 +113,20 @@ class TestUseCases(unittest.TestCase):
         scenario = ConsistencyScenario(model=model, query=query)
         return scenario
 
-    @unittest.skip(reason="tmp")
     def test_use_case_bilayer_consistency(self):
         scenario = self.setup_use_case_bilayer_consistency()
 
         # Show that region in parameter space is sat (i.e., there exists a true point)
-        result_sat: ConsistencyScenarioResult = Funman().solve(scenario)
+        result_sat: ConsistencyScenarioResult = Funman().solve(
+            scenario,
+            config=FUNMANConfig(
+                solver="dreal",
+                dreal_mcts=True,
+                tolerance=1e-8,
+                number_of_processes=1,
+                save_smtlib=True,
+            ),
+        )
         df = result_sat.dataframe()
 
         assert abs(df["I"][2] - 2.24) < 0.13

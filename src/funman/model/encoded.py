@@ -27,4 +27,7 @@ class EncodedModel(Model):
         """
         from funman.translate.encoded import EncodedEncoder
 
-        return EncodedEncoder(config)
+        return EncodedEncoder(config=config, model=self)
+
+    def _parameter_names(self):
+        return None

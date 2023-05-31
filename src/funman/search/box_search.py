@@ -100,7 +100,7 @@ class BoxSearchEpisode(SearchEpisode):
             b = initial_boxes.get()
             if not self._add_unknown(b):
                 l.exception(
-                    f"Did not add an initial box (of width {initial_box.width()}), try reducing config.tolerance, currently {self.config.tolerance}"
+                    f"Did not add an initial box (of width {b.width()}), try reducing config.tolerance, currently {self.config.tolerance}"
                 )
             l.debug(f"Initial box: {b}")
 

@@ -20,3 +20,7 @@ from .bilayer import *
 from .encoded import *
 from .gromet import *
 from .simulator import *
+from .decapode import *
+from .petrinet import *
+from .ensemble import *
+from .regnet import *

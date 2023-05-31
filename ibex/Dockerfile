@@ -1,5 +1,7 @@
 FROM ubuntu:20.04
 
+ARG ENABLE_DEBUG=no
+
 ARG DEBIAN_FRONTEND=noninteractive
 # Install base dependencies
 RUN apt update && apt install -y --no-install-recommends \
@@ -37,6 +39,6 @@ ENV TARGETARCH=$TARGETARCH
 ENV TARGETPLATFORM=$TARGETPLATFORM
 
 WORKDIR /ibex-lib
-RUN make ibex INSTALL_PREFIX=/usr LP_LIB=clp
+RUN make ibex INSTALL_PREFIX=/usr LP_LIB=clp ENABLE_DEBUG=$ENABLE_DEBUG
 
 CMD [ "/bin/bash" ]

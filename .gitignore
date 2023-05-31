@@ -298,3 +298,10 @@ www/_static/js/html5shiv.min.js
 www/_static/js/theme.js
 artifacts/.DS_Store
 scratch/funman.code-workspace
+**/*.gv*
+./box_search.*
+./*.smt2
+gmon.out
+*.png
+*.json
+*.smt2

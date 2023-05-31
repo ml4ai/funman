@@ -12,7 +12,16 @@ from pysmt.solvers.solver import Model as pysmt_Model
 from funman.model.bilayer import BilayerModel, validator
 from funman.model.decapode import DecapodeModel
 from funman.model.encoded import EncodedModel
-from funman.model.query import QueryEncoded, QueryFunction, QueryLE, QueryTrue
+from funman.model.ensemble import EnsembleModel
+from funman.model.petrinet import PetrinetModel
+from funman.model.query import (
+    QueryAnd,
+    QueryEncoded,
+    QueryFunction,
+    QueryLE,
+    QueryTrue,
+)
+from funman.model.regnet import RegnetModel
 from funman.scenario import AnalysisScenario, AnalysisScenarioResult
 from funman.translate import Encoder
 from funman.translate.translate import Encoding
@@ -37,8 +46,15 @@ class ConsistencyScenario(AnalysisScenario, BaseModel):
         smart_union = True
         extra = "forbid"
 
-    model: Union[DecapodeModel, BilayerModel, EncodedModel]
-    query: Union[QueryLE, QueryEncoded, QueryFunction, QueryTrue]
+    model: Union[
+        RegnetModel,
+        EnsembleModel,
+        PetrinetModel,
+        DecapodeModel,
+        BilayerModel,
+        EncodedModel,
+    ]
+    query: Union[QueryAnd, QueryLE, QueryEncoded, QueryFunction, QueryTrue]
     _smt_encoder: Encoder = None
     _model_encoding: Encoding = None
     _query_encoding: Encoding = None
@@ -68,7 +84,6 @@ class ConsistencyScenario(AnalysisScenario, BaseModel):
         if self.model.structural_parameter_bounds:
             if self._smt_encoder is None:
                 self._smt_encoder = self.model.default_encoder(config)
-                self._smt_encoder._encode_timed_model_elements(self.model)
 
             # FIXME these ranges are also computed in the encoder
             num_steps_range = range(
@@ -94,7 +109,7 @@ class ConsistencyScenario(AnalysisScenario, BaseModel):
                 result[num_steps - num_steps_range.start][
                     step_size - step_size_range.start
                 ] = search.search(self, config=config)
-                print(self._results_str(result))
+                print(self._results_str(num_steps_range.start, result))
                 print("-" * 80)
                 if result[num_steps - num_steps_range.start][
                     step_size - step_size_range.start
@@ -114,7 +129,10 @@ class ConsistencyScenario(AnalysisScenario, BaseModel):
                 step_size - step_size_range.start
             ]
         else:
-            self._encode(config)
+            # self._encode(config)
+            if self._smt_encoder is None:
+                self._smt_encoder = self.model.default_encoder(config)
+            self._encode_timed(config.num_steps, config.step_size, config)
             result = search.search(self, config=config)
             # FIXME this to_dict call assumes result is an unusual type
             consistent = result.to_dict() if result else None
@@ -127,20 +145,22 @@ class ConsistencyScenario(AnalysisScenario, BaseModel):
             )
         return scenario_result
 
-    def _results_str(self, result):
+    def _results_str(self, starting_steps, result):
         return "\n".join(
             [
                 x
                 for x in [
                     (
-                        str(i)
+                        str(i + starting_steps)
                         + ": ["
                         + "".join(
                             [
                                 (
                                     "F"
-                                    if s == False
-                                    else ("T" if s == True else " ")
+                                    if s is None
+                                    else (
+                                        "T" if (s is not None and s) else " "
+                                    )
                                 )
                                 for s in t
                             ]
