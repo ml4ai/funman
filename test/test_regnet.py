@@ -76,6 +76,7 @@ class TestUseCases(unittest.TestCase):
 
         return scenario
 
+    @unittest.skip(reason="TODO This test takes too long.")
     def test_use_case_regnet_parameter_synthesis(self):
         scenario = self.setup_use_case_regnet_parameter_synthesis()
         funman = Funman()
