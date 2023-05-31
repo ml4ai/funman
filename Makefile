@@ -21,7 +21,7 @@ endif
 IBEX_NAME=funman-ibex
 DREAL_NAME=funman-dreal4
 
-DEBUG_IBEX=no
+DEBUG_IBEX?=no
 
 DREAL_LOCAL_REPO?=../dreal4
 
@@ -179,6 +179,9 @@ multiplatform: use-docker-driver multiplatform-build-dreal
 		-f ./Dockerfile .
 
 build: build-docker
+
+debug: 
+	DEBUG_IBEX=yes make build-docker
 
 build-deploy-base: use-docker-driver build-dreal
 	DOCKER_BUILDKIT=1 docker buildx build \
