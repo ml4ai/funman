@@ -27,26 +27,45 @@ function "check_suffix" {
 
 # ----------------------------------------------------------------------------------------------------------------------
 
-group "prod" {
-  targets = ["funman"]
-}
-
-group "default" {
-  targets = ["funman-base"]
-}
-
 # ----------------------------------------------------------------------------------------------------------------------
 
 target "_platforms" {
   platforms = ["linux/amd64", "linux/arm64"]
 }
 
-target "funman-base" {
-  context = "."
-  tags = tag("funman", "", "")
+target "funman-ibex" {
+  context = "./ibex"
   dockerfile = "Dockerfile"
+  tags = tag("funman-ibex", "", "")
 }
 
-target "funman" {
-  inherits = ["_platforms", "funman-base"]
+target "funman-dreal4" {
+  context = "."
+  dockerfile = "Dockerfile.dreal4"
+  tags = tag("funman-dreal4", "", "")
+}
+
+target "funman-base" {
+  context = "./deploy/base"
+  dockerfile = "Dockerfile"
+  tags = tag("funman-base", "", "")
+}
+
+target "funman-pypi" {
+  context = "./deploy/pypi"
+  dockerfile = "Dockerfile"
+  tags = tag("funman-pypi", "", "")
+}
+
+target "funman-git" {
+  no-cache = true
+  context = "./deploy/git"
+  dockerfile = "Dockerfile"
+  tags = tag("funman-git", "", "")
+}
+
+target "funman-api" {
+  context = "./deploy/api"
+  dockerfile = "Dockerfile"
+  tags = tag("funman-api", "", "")
 }
