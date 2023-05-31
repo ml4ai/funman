@@ -6,55 +6,69 @@ Raises
 HTTPException
     HTTPException description
 """
-import os
-from typing import Optional, Union
+import uuid
+from contextlib import asynccontextmanager
+from typing import Optional
 
 import uvicorn
-from fastapi import Body, Depends, FastAPI, HTTPException, Security, status
+from fastapi import Depends, FastAPI, HTTPException, Security, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.security import APIKeyQuery
+from fastapi.security import APIKeyHeader
+from typing_extensions import Annotated
 
 from funman import Funman
+from funman.api.settings import Settings
 from funman.funman import FUNMANConfig
-from funman.scenario import AnalysisScenarioResultException
-from funman.scenario.consistency import (
-    ConsistencyScenario,
-    ConsistencyScenarioResult,
-)
-from funman.scenario.parameter_synthesis import (
-    ParameterSynthesisScenario,
-    ParameterSynthesisScenarioResult,
-)
-from funman.scenario.simulation import (
-    SimulationScenario,
-    SimulationScenarioResult,
-)
+from funman.model.ensemble import EnsembleModel
+from funman.scenario.consistency import ConsistencyScenario
+from funman.scenario.parameter_synthesis import ParameterSynthesisScenario
+from funman.server.exception import NotFoundFunmanException
+from funman.server.query import QueryRequest, QueryResponse
+from funman.server.storage import Storage
 
-_FUNMAN_API_TOKEN = os.getenv("FUNMAN_API_TOKEN", None)
-api_key_query = APIKeyQuery(name="token", auto_error=False)
+settings = Settings()
+
+_storage = Storage()
 
 
-def _api_key_auth(api_key: str = Security(api_key_query)):
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    await _storage.start(settings.data_path)
+    yield
+    await _storage.stop()
+
+
+def get_storage():
+    return _storage
+
+
+app = FastAPI(title="funman_api", lifespan=lifespan)
+
+api_key_header = APIKeyHeader(name="token", auto_error=False)
+
+
+def _api_key_auth(api_key: str = Security(api_key_header)):
     # bypass key auth if no token is provided
-    if _FUNMAN_API_TOKEN is None:
+    if settings.funman_api_token is None:
         print("WARNING: Running without API token")
         return
 
     # ensure the token is a non-empty string
-    if not isinstance(_FUNMAN_API_TOKEN, str) or _FUNMAN_API_TOKEN == "":
+    if (
+        not isinstance(settings.funman_api_token, str)
+        or settings.funman_api_token == ""
+    ):
         print("ERROR: API token is either empty or not a string")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal Server Error",
         )
 
-    if api_key != _FUNMAN_API_TOKEN:
+    if api_key != settings.funman_api_token:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Forbidden"
         )
 
-
-app = FastAPI(title="funman_api")
 
 origins = ["*"]
 
@@ -80,116 +94,72 @@ def read_root():
     return {}
 
 
-@app.put(
-    "/solve/consistency",
-    response_model=Union[
-        ConsistencyScenarioResult, AnalysisScenarioResultException
-    ],
+@app.get(
+    "/queries/{query_id}",
+    response_model=QueryResponse,
     dependencies=[Depends(_api_key_auth)],
 )
-async def solve_consistency(
-    scenario: ConsistencyScenario,
-    config: Optional[FUNMANConfig] = FUNMANConfig(),
+async def get_queries(
+    query_id: str,
+    storage: Annotated[Storage, Depends(get_storage)],
 ):
-    """
-    Solve a consisistency scenario.
-
-    Parameters
-    ----------
-    scenario : ConsistencyScenario
-        the scenario to solve
-    config : Optional[FUNMANConfig], optional
-        solver configuration, by default FUNMANConfig()
-
-    Returns
-    -------
-    ConsistencyScenarioResult
-        the scenario result
-    """
+    eid = uuid.uuid4()
     try:
-        f = Funman()
-        result = f.solve(scenario, config=config)
+        response = await storage.get_result(query_id)
+        return response
+    except NotFoundFunmanException:
+        raise HTTPException(404)
     except Exception as e:
-        # print(e)
-        # raise e
-        return AnalysisScenarioResultException(
-            exception=f"Failed to solve scenario due to internal exception: {e}"
+        print(f"Internal Server Error ({eid}): {e}")
+        raise HTTPException(
+            status_code=500, detail=f"Internal Server Error: {eid}"
         )
-    return result
 
 
-@app.put(
-    "/solve/parameter_synthesis",
-    response_model=Union[
-        ParameterSynthesisScenarioResult, AnalysisScenarioResultException
-    ],
+@app.post(
+    "/queries",
+    response_model=QueryResponse,
     dependencies=[Depends(_api_key_auth)],
 )
-async def solve_parameter_synthesis(
-    scenario: ParameterSynthesisScenario,
-    config: Optional[FUNMANConfig] = FUNMANConfig(),
+async def post_queries(
+    request: QueryRequest,
+    storage: Annotated[Storage, Depends(get_storage)],
+    config: Optional[FUNMANConfig] = None,
 ):
-    """
-    Solve a Parameter Synthesis Scenario
-
-    Parameters
-    ----------
-    scenario : ParameterSynthesisScenario
-        the scenario to solve
-    config : Optional[FUNMANConfig], optional
-        solver configuration, by default FUNMANConfig()
-
-    Returns
-    -------
-        ParameterSynthesisScenarioResult
-    """
+    eid = uuid.uuid4()
     try:
+        if config is None:
+            config = FUNMANConfig()
+
+        # convert to scenario
+        if request.parameters is None or all(
+            request.parameters[k] == "one" for k in request.parameters
+        ):
+            kind = "consistency"
+            scenario = ConsistencyScenario(
+                model=request.model, query=request.query
+            )
+        else:
+            kind = "parameter_synthesis"
+            if isinstance(request.model, EnsembleModel):
+                raise Exception(
+                    "TODO handle EnsembleModel for ParameterSynthesisScenario"
+                )
+            scenario = ParameterSynthesisScenario(
+                model=request.model, parameters=[]
+            )
+
         f = Funman()
+        id = await storage.claim_id()
         result = f.solve(scenario, config=config)
+        response = QueryResponse(id=id, scenario=kind, result=result)
+        await storage.add_result(response)
+        return response
     except Exception as e:
-        # print(e)
-        # raise e
-        return AnalysisScenarioResultException(
-            exception=f"Failed to solve scenario due to internal exception: {e}"
+        print(f"Internal Server Error ({eid}): {e}")
+        raise HTTPException(
+            status_code=500, detail=f"Internal Server Error: {eid}"
         )
-    return result
-
-
-@app.put(
-    "/solve/simulation",
-    response_model=Union[
-        SimulationScenarioResult, AnalysisScenarioResultException
-    ],
-    dependencies=[Depends(_api_key_auth)],
-)
-async def solve_simulation(
-    scenario: SimulationScenario,
-    config: Optional[FUNMANConfig] = FUNMANConfig(),
-):
-    """
-    Solve a simulation scenario
-
-    Parameters
-    ----------
-    scenario : SimulationScenario
-        the scenario to solve
-    config : Optional[FUNMANConfig], optional
-        solver configuration, by default FUNMANConfig()
-
-    Returns
-    -------
-    SimulationScenarioResult
-    """
-    try:
-        f = Funman()
-        result = f.solve(scenario, config=config)
-    except Exception as e:
-        # print(e)
-        # raise e
-        return AnalysisScenarioResultException(
-            exception=f"Failed to solve scenario due to internal exception: {e}"
-        )
-    return result
 
 
 if __name__ == "__main__":
