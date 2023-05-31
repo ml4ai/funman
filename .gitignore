@@ -7,6 +7,8 @@ Pipfile.lock
 dist/
 dist.bkp/
 
+.docker-as-root
+
 # locally stored virtual envionment defined by pipenv
 .venv/
 

@@ -1,0 +1,23 @@
+# Assumes running from ASKEM/code
+*
+
+!LICENSE
+!Makefile
+!README.md
+!auxiliary_packages
+!docs
+!notebooks
+!pyproject.toml
+!resources
+!scratch
+!setup.py
+!src
+!test
+!tools
+
+**/.*
+**/build
+**/dist
+
+!**/.git*
+

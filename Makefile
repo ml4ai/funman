@@ -7,6 +7,17 @@ LOCAL_REGISTRY=localhost:$(LOCAL_REGISTRY_PORT)
 SIFT_REGISTRY_ROOT=$(LOCAL_REGISTRY)/sift/
 FUNMAN_BRANCH?=main
 
+FUNMAN_BASE_PORT?=21000
+ifeq (,$(wildcard .docker-as-root))
+FUNMAN_SKIP_USER_ARGS=0
+FUNMAN_USER=$(shell echo $$USER)
+FUNMAN_DEV_DOCKERFILE=Dockerfile
+else
+FUNMAN_SKIP_USER_ARGS=1
+FUNMAN_USER=
+FUNMAN_DEV_DOCKERFILE=Dockerfile.root
+endif
+
 IBEX_NAME=funman-ibex
 DREAL_NAME=funman-dreal4
 
@@ -53,6 +64,9 @@ TERARIUM_ENV_ARGS:= $(if $(TERARIUM_API_KEY),-e FUNMAN_API_TOKEN=$(TERARIUM_API_
 MAKE := make --no-print-directory
 
 .PHONY: docs
+
+docker-as-root:
+	touch .docker-as-root
 
 venv:
 	test -d .venv || python -m venv .venv
@@ -147,10 +161,10 @@ build-docker: use-docker-driver build-dreal
 		--output "type=docker" \
 		--platform $(TARGET_OS)/$(SHELL_GET_TARGET_ARCH) \
 		--build-arg SIFT_REGISTRY_ROOT=$(SIFT_REGISTRY_ROOT) \
-		--build-arg UNAME=$$USER \
-		--build-arg UID=$$(id -u) \
-		--build-arg GID=$$(id -g) \
-		-t ${DEV_TAGGED_NAME} -f ./Dockerfile .
+		$(if $(filter 0,$(FUNMAN_SKIP_USER_ARGS)), --build-arg UNAME=$(FUNMAN_USER)) \
+		$(if $(filter 0,$(FUNMAN_SKIP_USER_ARGS)), --build-arg UID=$$(id -u)) \
+		$(if $(filter 0,$(FUNMAN_SKIP_USER_ARGS)), --build-arg GID=$$(id -g)) \
+		-t ${DEV_TAGGED_NAME} -f ./$(FUNMAN_DEV_DOCKERFILE) .
 	docker tag $(DEV_TAGGED_NAME) $(SIFT_REGISTRY_ROOT)$(DEV_TAGGED_NAME)
 	docker push $(SIFT_REGISTRY_ROOT)$(DEV_TAGGED_NAME)
 
@@ -219,11 +233,13 @@ run-api-server:
 	docker run -it --rm -p 127.0.0.1:8190:8190 $(DEPLOY_TAGGED_API_NAME)
 
 run-docker:
-	@if [ -e "$(DREAL_LOCAL_REPO)" ] ; then \
-		DREAL_LOCAL_VOLUME_ARG=-v ; \
-		DREAL_LOCAL_VOLUME_ARG+=$$(realpath $(DREAL_LOCAL_REPO)):/home/$$USER/dreal4 ; \
+	@FUNMAN_HOME=$(if $(filter 0,$(FUNMAN_SKIP_USER_ARGS)),/home/$$USER,/root) \
+	&& if [ -e "$(DREAL_LOCAL_REPO)" ] ; then \
+		DREAL_LOCAL_VOLUME_CMD=-v ; \
+		DREAL_LOCAL_VOLUME_ARG=$$(realpath $(DREAL_LOCAL_REPO)):$$FUNMAN_HOME/dreal4:rw ; \
 	else \
 		echo "WARNING: Dreal4 repo not found at $(DREAL_LOCAL_REPO)" ; \
+		DREAL_LOCAL_VOLUME_CMD= ; \
 		DREAL_LOCAL_VOLUME_ARG= ; \
 	fi \
 	&& docker run \
@@ -232,9 +248,9 @@ run-docker:
 		--cpus=5 \
 		--cap-add=SYS_PTRACE \
 		--name ${DEV_CONTAINER} \
-    -p 127.0.0.1:8888:8888 \
-    -p 127.0.0.1:8191:8190 \
-		-v $$PWD:/home/$$USER/funman $$DREAL_LOCAL_VOLUME_ARG \
+                -p 127.0.0.1:$(FUNMAN_BASE_PORT):8888 \
+                -p 127.0.0.1:$$(($(FUNMAN_BASE_PORT) + 1)):8190 \
+		-v $$PWD:$$FUNMAN_HOME/funman:rw $$DREAL_LOCAL_VOLUME_CMD $$DREAL_LOCAL_VOLUME_ARG \
 		${DEV_TAGGED_NAME}
 
 
