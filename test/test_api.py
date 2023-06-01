@@ -1,235 +1,175 @@
-import asyncio
 import json
 import unittest
-from os import path
+from pathlib import Path
+from tempfile import TemporaryDirectory
 
-import funman.api.client as client
-from funman.api.api import app
-from funman.api.server import Server, ServerConfig
+from fastapi.testclient import TestClient
 
-API_BASE_PATH = path.join(path.dirname(path.abspath(__file__)), "..")
-RESOURCES = path.join(path.dirname(path.abspath(__file__)), "../resources")
+from funman.api.api import app, settings
+from funman.scenario.consistency import ConsistencyScenario
+from funman.scenario.parameter_synthesis import ParameterSynthesisScenario
+from funman.server.query import QueryResponse
+
+FILE_DIRECTORY = Path(__file__).resolve().parent
+API_BASE_PATH = FILE_DIRECTORY / ".."
+RESOURCES = API_BASE_PATH / "resources"
 API_SERVER_HOST = "0.0.0.0"
 API_SERVER_PORT = 8190
 SERVER_URL = f"http://{API_SERVER_HOST}:{API_SERVER_PORT}"
 OPENAPI_URL = f"{SERVER_URL}/openapi.json"
 CLIENT_NAME = "funman-api-client"
 
+TEST_OUT = FILE_DIRECTORY / "out"
+TEST_OUT.mkdir(parents=True, exist_ok=True)
+
+TEST_API_TOKEN = "funman-test-api-token"
+settings.funman_api_token = TEST_API_TOKEN
+
 
 class TestAPI(unittest.TestCase):
-    def test_api_consistency(self):
-        # Start API Server
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls._tmpdir = TemporaryDirectory(prefix=f"{cls.__name__}_")
 
-        server = Server(
-            config=ServerConfig(
-                app,
-                host=API_SERVER_HOST,
-                port=API_SERVER_PORT,
-                log_level="info",
-            )
+    @classmethod
+    def tearDownClass(cls) -> None:
+        cls._tmpdir.cleanup()
+
+    def setUp(self):
+        self.test_dir = Path(self._tmpdir.name) / self._testMethodName
+        self.test_dir.mkdir()
+        settings.data_path = str(self.test_dir)
+
+    def test_storage(self):
+        bilayer_path = (
+            RESOURCES / "bilayer" / "CHIME_SIR_dynamics_BiLayer.json"
         )
-        with server.run_in_thread():
-            # Server is started.
+        with bilayer_path.open() as bl:
+            bilayer_json = json.load(bl)
+        infected_threshold = 130
+        init_values = {"S": 9998, "I": 1, "R": 1}
 
-            client.make_client(
-                API_BASE_PATH, openapi_url=OPENAPI_URL, client_name=CLIENT_NAME
+        first_id = None
+        with TestClient(app) as client:
+            response = client.post(
+                "/queries",
+                json={
+                    "request": {
+                        "model": {
+                            "init_values": init_values,
+                            "bilayer": {"json_graph": bilayer_json},
+                        },
+                        "query": {
+                            "variable": "I",
+                            "ub": infected_threshold,
+                            "at_end": False,
+                        },
+                    }
+                },
+                headers={"token": f"{TEST_API_TOKEN}"},
             )
-            from funman_api_client import Client
-            from funman_api_client.api.default import (
-                solve_consistency_solve_consistency_put,
-            )
-            from funman_api_client.models import (
-                BodySolveConsistencySolveConsistencyPut,
-                ConsistencyScenario,
-                ConsistencyScenarioResult,
-            )
+            assert response.status_code == 200
+            data = QueryResponse.parse_raw(response.content.decode())
+            assert data.kind == ConsistencyScenario.get_kind()
+            first_id = data.id
 
-            funman_client = Client(SERVER_URL, timeout=None)
+        with TestClient(app) as client:
+            response = client.get(
+                f"/queries/{first_id}", headers={"token": f"{TEST_API_TOKEN}"}
+            )
+            assert response.status_code == 200
+            got_data = QueryResponse.parse_raw(response.content.decode())
+            assert first_id == got_data.id
+            assert got_data.kind == ConsistencyScenario.get_kind()
 
-            bilayer_path = path.join(
-                RESOURCES, "bilayer", "CHIME_SIR_dynamics_BiLayer.json"
-            )
-            with open(bilayer_path, "r") as bl:
-                bilayer_json = json.load(bl)
-            infected_threshold = 130
-            init_values = {"S": 9998, "I": 1, "R": 1}
+    def test_api_bad_token(self):
+        with TestClient(app) as client:
+            response = client.get(f"/queries/bogus")
+            assert response.status_code == 401
 
-            response = asyncio.run(
-                solve_consistency_solve_consistency_put.asyncio_detailed(
-                    client=funman_client,
-                    json_body=BodySolveConsistencySolveConsistencyPut(
-                        ConsistencyScenario.from_dict(
-                            {
-                                "model": {
-                                    "init_values": init_values,
-                                    "bilayer": {"json_graph": bilayer_json},
-                                },
-                                "query": {
-                                    "variable": "I",
-                                    "ub": infected_threshold,
-                                    "at_end": False,
-                                },
-                            }
-                        )
-                    ),
-                )
+    def test_api_bad_id(self):
+        with TestClient(app) as client:
+            response = client.get(
+                f"/queries/bogus", headers={"token": f"{TEST_API_TOKEN}"}
             )
-            result = ConsistencyScenarioResult.from_dict(
-                src_dict=json.loads(response.content.decode())
-            )
-            assert result
+            assert response.status_code == 404
 
-    def test_api_parameter_synthesis(self):
-        # Start API Server
-        server = Server(
-            config=ServerConfig(
-                app,
-                host=API_SERVER_HOST,
-                port=API_SERVER_PORT,
-                log_level="info",
-            )
+    def test_bilayer_consistency(self):
+        bilayer_path = (
+            RESOURCES / "bilayer" / "CHIME_SIR_dynamics_BiLayer.json"
         )
-        with server.run_in_thread():
-            # Server is started.
+        with bilayer_path.open() as bl:
+            bilayer_json = json.load(bl)
+        infected_threshold = 130
+        init_values = {"S": 9998, "I": 1, "R": 1}
 
-            client.make_client(
-                API_BASE_PATH, openapi_url=OPENAPI_URL, client_name=CLIENT_NAME
+        with TestClient(app) as client:
+            response = client.post(
+                "/queries",
+                json={
+                    "request": {
+                        "model": {
+                            "init_values": init_values,
+                            "bilayer": {"json_graph": bilayer_json},
+                        },
+                        "query": {
+                            "variable": "I",
+                            "ub": infected_threshold,
+                            "at_end": False,
+                        },
+                    }
+                },
+                headers={"token": f"{TEST_API_TOKEN}"},
             )
+            assert response.status_code == 200
+            data = QueryResponse.parse_raw(response.content.decode())
+            assert data.kind == ConsistencyScenario.get_kind()
+            assert data.result
 
-            from funman_api_client import Client
-            from funman_api_client.api.default import (
-                solve_parameter_synthesis_solve_parameter_synthesis_put,
-            )
-            from funman_api_client.models import (
-                BodySolveParameterSynthesisSolveParameterSynthesisPut,
-                FUNMANConfig,
-                ParameterSynthesisScenario,
-                ParameterSynthesisScenarioResult,
-            )
-
-            funman_client = Client(SERVER_URL, timeout=None)
-
-            bilayer_path = path.join(
-                RESOURCES, "bilayer", "CHIME_SIR_dynamics_BiLayer.json"
-            )
-            with open(bilayer_path, "r") as bl:
-                bilayer_json = json.load(bl)
-
-            infected_threshold = 3
-            init_values = {"S": 9998, "I": 1, "R": 1}
-
-            lb = 0.000067 * (1 - 0.5)
-            ub = 0.000067 * (1 + 0.5)
-
-            response = asyncio.run(
-                solve_parameter_synthesis_solve_parameter_synthesis_put.asyncio_detailed(
-                    client=funman_client,
-                    json_body=BodySolveParameterSynthesisSolveParameterSynthesisPut(
-                        ParameterSynthesisScenario.from_dict(
-                            {
-                                "parameters": [
-                                    {
-                                        "name": "beta",
-                                        "lb": lb,
-                                        "ub": ub,
-                                    }
-                                ],
-                                "model": {
-                                    "init_values": init_values,
-                                    "bilayer": {"json_graph": bilayer_json},
-                                    "parameter_bounds": {
-                                        "beta": [lb, ub],
-                                        "gamma": [1.0 / 14.0, 1.0 / 14.0],
-                                    },
-                                },
-                                "query": {
-                                    "variable": "I",
-                                    "ub": infected_threshold,
-                                    "at_end": False,
-                                },
-                            }
-                        ),
-                        FUNMANConfig.from_dict(
-                            {"tolerance": 1.0e-8, "number_of_processes": 1}
-                        ),
-                    ),
-                )
-            )
-            result = ParameterSynthesisScenarioResult.from_dict(
-                src_dict=json.loads(response.content.decode())
-            )
-            assert len(result.parameter_space.true_boxes) > 0
-            assert len(result.parameter_space.false_boxes) > 0
-
-    def test_api_simulation(self):
-        # Start API Server
-        server = Server(
-            config=ServerConfig(
-                app,
-                host=API_SERVER_HOST,
-                port=API_SERVER_PORT,
-                log_level="info",
-            )
+    def test_bilayer_parameter_synthesis(self):
+        bilayer_path = (
+            RESOURCES / "bilayer" / "CHIME_SIR_dynamics_BiLayer.json"
         )
-        with server.run_in_thread():
-            # Server is started.
+        with bilayer_path.open() as bl:
+            bilayer_json = json.load(bl)
+        infected_threshold = 130
+        init_values = {"S": 9998, "I": 1, "R": 1}
 
-            client.make_client(
-                API_BASE_PATH, openapi_url=OPENAPI_URL, client_name=CLIENT_NAME
-            )
+        lb = 0.000067 * (1 - 0.5)
+        ub = 0.000067 * (1 + 0.5)
 
-            from funman_api_client import Client
-            from funman_api_client.api.default import (
-                solve_simulation_solve_simulation_put,
-            )
-            from funman_api_client.models import (
-                AnalysisScenarioResultException,
-                BodySolveSimulationSolveSimulationPut,
-                FUNMANConfig,
-                SimulationScenario,
-                SimulationScenarioResult,
-            )
-
-            funman_client = Client(SERVER_URL, timeout=None)
-
-            bilayer_path = path.join(
-                RESOURCES, "bilayer", "CHIME_SIR_dynamics_BiLayer.json"
-            )
-            with open(bilayer_path, "r") as bl:
-                bilayer_json = json.load(bl)
-
-            infected_threshold = 3
-
-            response = asyncio.run(
-                solve_simulation_solve_simulation_put.asyncio_detailed(
-                    client=funman_client,
-                    json_body=BodySolveSimulationSolveSimulationPut(
-                        SimulationScenario.from_dict(
+        with TestClient(app) as client:
+            response = client.post(
+                "/queries",
+                json={
+                    "request": {
+                        "model": {
+                            "init_values": init_values,
+                            "bilayer": {"json_graph": bilayer_json},
+                            "parameter_bounds": {
+                                "beta": [lb, ub],
+                                "gamma": [1.0 / 14.0, 1.0 / 14.0],
+                            },
+                        },
+                        "query": {
+                            "variable": "I",
+                            "ub": infected_threshold,
+                            "at_end": False,
+                        },
+                        "parameters": [
                             {
-                                "model": {
-                                    "main_fn": "funman_demo.sim.CHIME.CHIME_SIR.main"
-                                },
-                                "query": {},
+                                "name": "beta",
+                                "lb": lb,
+                                "ub": ub,
+                                "label": "any",
                             }
-                        )
-                    ),
-                )
+                        ],
+                    },
+                    "config": {"tolerance": 1.0e-8, "number_of_processes": 1},
+                },
+                headers={"token": f"{TEST_API_TOKEN}"},
             )
-            try:
-                result = SimulationScenarioResult.from_dict(
-                    src_dict=json.loads(response.content.decode())
-                )
-                assert result.query_satisfied
-
-            except Exception as e:
-                try:
-                    result = AnalysisScenarioResultException.from_dict(
-                        src_dict=json.loads(response.content.decode())
-                    )
-                    assert False
-                except Exception as e1:
-                    assert False
-
-
-if __name__ == "__main__":
-    unittest.main()
+            assert response.status_code == 200
+            data = QueryResponse.parse_raw(response.content.decode())
+            assert data.kind == ParameterSynthesisScenario.get_kind()
+            assert data.result
