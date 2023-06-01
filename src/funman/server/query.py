@@ -25,9 +25,12 @@ from funman.scenario.parameter_synthesis import (
     ParameterSynthesisScenarioResult,
 )
 
+LABEL_ANY = "any"
+LABEL_ALL = "all"
+
 
 class LabeledParameter(Parameter):
-    label: Literal["one", "any"] = "one"
+    label: Literal["any", "all"] = LABEL_ANY
 
 
 class QueryRequest(BaseModel):
@@ -46,7 +49,7 @@ class QueryRequest(BaseModel):
         self,
     ) -> Union[ConsistencyScenario, ParameterSynthesisScenario]:
         if self.parameters is None or all(
-            p.label == "one" for p in self.parameters
+            p.label == LABEL_ANY for p in self.parameters
         ):
             return ConsistencyScenario(model=self.model, query=self.query)
 
@@ -59,7 +62,7 @@ class QueryRequest(BaseModel):
         parameters = []
         for data in self.parameters:
             # skip any parameters that are not of kind 'any'
-            if data.label != "any":
+            if data.label != LABEL_ALL:
                 continue
             parameters.append(
                 Parameter(name=data.name, ub=data.ub, lb=data.lb)

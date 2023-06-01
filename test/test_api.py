@@ -161,7 +161,7 @@ class TestAPI(unittest.TestCase):
                                 "name": "beta",
                                 "lb": lb,
                                 "ub": ub,
-                                "label": "any",
+                                "label": "all",
                             }
                         ],
                     },
