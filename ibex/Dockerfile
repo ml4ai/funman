@@ -1,4 +1,5 @@
 FROM ubuntu:20.04
+ARG IBEX_BRANCH
 
 ARG DEBIAN_FRONTEND=noninteractive
 # Install base dependencies
@@ -27,7 +28,7 @@ RUN apt update && apt install -y --no-install-recommends \
 # COPY ./ibex-lib /ibex-lib
 RUN git clone \
   --depth 1 \
-  --branch ibex-2.8.5_using_mathlib-2.1.1 \
+  --branch ${IBEX_BRANCH} \
   https://github.com/jgladwig/ibex-lib.git
 
 COPY ./Makefile.ibex /ibex-lib/Makefile
