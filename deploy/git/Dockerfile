@@ -4,7 +4,8 @@ FROM ${SIFT_REGISTRY_ROOT}funman-base:${FROM_TAG}
 
 ARG FUNMAN_BRANCH=main
 
-RUN git clone --depth=1 --branch ${FUNMAN_BRANCH} https://github.com/ml4ai/funman.git /funman
+#RUN git clone --depth=1 --branch ${FUNMAN_BRANCH} https://github.com/ml4ai/funman.git /funman
+COPY . /funman
 
 # Install funman dev packages
 RUN pip install -I \
