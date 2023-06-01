@@ -1,9 +1,6 @@
-from abc import ABC, abstractclassmethod
+from abc import ABC, abstractclassmethod, abstractmethod
 
-import multiprocess as mp
 from pydantic import BaseModel
-
-from funman.utils.handlers import NoopResultHandler, ResultHandler
 
 
 class AnalysisScenario(ABC, BaseModel):
@@ -12,10 +9,14 @@ class AnalysisScenario(ABC, BaseModel):
     """
 
     @abstractclassmethod
+    def get_kind(cls) -> str:
+        pass
+
+    @abstractmethod
     def solve(self, config: "FUNMANConfig"):
         pass
 
-    @abstractclassmethod
+    @abstractmethod
     def _encode(self, config: "FUNMANConfig"):
         pass
 
@@ -25,7 +26,7 @@ class AnalysisScenarioResult(ABC):
     Abstract class for AnalysisScenario result data.
     """
 
-    @abstractclassmethod
+    @abstractmethod
     def plot(self, **kwargs):
         pass
 

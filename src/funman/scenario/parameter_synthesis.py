@@ -1,7 +1,7 @@
 """
 This module defines the Parameter Synthesis scenario.
 """
-from typing import Dict, List, Union
+from typing import Dict, List, Optional, Union
 
 from pandas import DataFrame
 from pydantic import BaseModel
@@ -54,14 +54,20 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
     ]
     query: Union[
         QueryAnd, QueryGE, QueryLE, QueryEncoded, QueryFunction, QueryTrue
-    ] = None
+    ]
     _search: str = "BoxSearch"
-    _smt_encoder: Encoder = None  # TODO set to model.default_encoder()
-    _model_encoding: Encoding = None
-    _query_encoding: Encoding = None
-    _assume_model: FNode = None
-    _assume_query: FNode = None
+    _smt_encoder: Optional[
+        Encoder
+    ] = None  # TODO set to model.default_encoder()
+    _model_encoding: Optional[Encoding] = None
+    _query_encoding: Optional[Encoding] = None
+    _assume_model: Optional[FNode] = None
+    _assume_query: Optional[FNode] = None
     _original_parameter_widths: Dict[str, float] = {}
+
+    @classmethod
+    def get_kind(cls) -> str:
+        return "parameter_synthesis"
 
     def solve(
         self, config: "FUNMANConfig"

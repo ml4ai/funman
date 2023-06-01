@@ -6,6 +6,8 @@ from tempfile import TemporaryDirectory
 from fastapi.testclient import TestClient
 
 from funman.api.api import app, settings
+from funman.scenario.consistency import ConsistencyScenario
+from funman.scenario.parameter_synthesis import ParameterSynthesisScenario
 from funman.server.query import QueryResponse
 
 FILE_DIRECTORY = Path(__file__).resolve().parent
@@ -36,7 +38,7 @@ class TestAPI(unittest.TestCase):
     def setUp(self):
         self.test_dir = Path(self._tmpdir.name) / self._testMethodName
         self.test_dir.mkdir()
-        settings.data_path = self.test_dir
+        settings.data_path = str(self.test_dir)
 
     def test_storage(self):
         bilayer_path = (
@@ -68,6 +70,7 @@ class TestAPI(unittest.TestCase):
             )
             assert response.status_code == 200
             data = QueryResponse.parse_raw(response.content.decode())
+            assert data.kind == ConsistencyScenario.get_kind()
             first_id = data.id
 
         with TestClient(app) as client:
@@ -75,8 +78,9 @@ class TestAPI(unittest.TestCase):
                 f"/queries/{first_id}", headers={"token": f"{TEST_API_TOKEN}"}
             )
             assert response.status_code == 200
-            get_data = QueryResponse.parse_raw(response.content.decode())
-            assert first_id == get_data.id
+            got_data = QueryResponse.parse_raw(response.content.decode())
+            assert first_id == got_data.id
+            assert got_data.kind == ConsistencyScenario.get_kind()
 
     def test_api_bad_token(self):
         with TestClient(app) as client:
@@ -89,3 +93,83 @@ class TestAPI(unittest.TestCase):
                 f"/queries/bogus", headers={"token": f"{TEST_API_TOKEN}"}
             )
             assert response.status_code == 404
+
+    def test_bilayer_consistency(self):
+        bilayer_path = (
+            RESOURCES / "bilayer" / "CHIME_SIR_dynamics_BiLayer.json"
+        )
+        with bilayer_path.open() as bl:
+            bilayer_json = json.load(bl)
+        infected_threshold = 130
+        init_values = {"S": 9998, "I": 1, "R": 1}
+
+        with TestClient(app) as client:
+            response = client.post(
+                "/queries",
+                json={
+                    "request": {
+                        "model": {
+                            "init_values": init_values,
+                            "bilayer": {"json_graph": bilayer_json},
+                        },
+                        "query": {
+                            "variable": "I",
+                            "ub": infected_threshold,
+                            "at_end": False,
+                        },
+                    }
+                },
+                headers={"token": f"{TEST_API_TOKEN}"},
+            )
+            assert response.status_code == 200
+            data = QueryResponse.parse_raw(response.content.decode())
+            assert data.kind == ConsistencyScenario.get_kind()
+            assert data.result
+
+    def test_bilayer_parameter_synthesis(self):
+        bilayer_path = (
+            RESOURCES / "bilayer" / "CHIME_SIR_dynamics_BiLayer.json"
+        )
+        with bilayer_path.open() as bl:
+            bilayer_json = json.load(bl)
+        infected_threshold = 130
+        init_values = {"S": 9998, "I": 1, "R": 1}
+
+        lb = 0.000067 * (1 - 0.5)
+        ub = 0.000067 * (1 + 0.5)
+
+        with TestClient(app) as client:
+            response = client.post(
+                "/queries",
+                json={
+                    "request": {
+                        "model": {
+                            "init_values": init_values,
+                            "bilayer": {"json_graph": bilayer_json},
+                            "parameter_bounds": {
+                                "beta": [lb, ub],
+                                "gamma": [1.0 / 14.0, 1.0 / 14.0],
+                            },
+                        },
+                        "query": {
+                            "variable": "I",
+                            "ub": infected_threshold,
+                            "at_end": False,
+                        },
+                        "parameters": [
+                            {
+                                "name": "beta",
+                                "lb": lb,
+                                "ub": ub,
+                                "label": "any",
+                            }
+                        ],
+                    },
+                    "config": {"tolerance": 1.0e-8, "number_of_processes": 1},
+                },
+                headers={"token": f"{TEST_API_TOKEN}"},
+            )
+            assert response.status_code == 200
+            data = QueryResponse.parse_raw(response.content.decode())
+            assert data.kind == ParameterSynthesisScenario.get_kind()
+            assert data.result

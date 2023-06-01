@@ -16,6 +16,10 @@ class SimulationScenario(AnalysisScenario, BaseModel):
     model: SimulatorModel
     query: Query
 
+    @classmethod
+    def get_kind(cls) -> str:
+        return "simulation"
+
     def solve(self, config: "FUNMANConfig"):
         try:
             p, m = self.model.main_fn.rsplit(".", 1)

@@ -2,7 +2,7 @@
 This submodule defines a consistency scenario.  Consistency scenarios specify an existentially quantified model.  If consistent, the solution assigns any unassigned variable, subject to their bounds and other constraints.  
 """
 
-from typing import Dict, Union
+from typing import Dict, Optional, Union
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -55,9 +55,13 @@ class ConsistencyScenario(AnalysisScenario, BaseModel):
         EncodedModel,
     ]
     query: Union[QueryAnd, QueryLE, QueryEncoded, QueryFunction, QueryTrue]
-    _smt_encoder: Encoder = None
-    _model_encoding: Encoding = None
-    _query_encoding: Encoding = None
+    _smt_encoder: Optional[Encoder] = None
+    _model_encoding: Optional[Encoding] = None
+    _query_encoding: Optional[Encoding] = None
+
+    @classmethod
+    def get_kind(cls) -> str:
+        return "consistency"
 
     def solve(self, config: "FUNMANConfig") -> "AnalysisScenarioResult":
         """

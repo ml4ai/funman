@@ -20,14 +20,11 @@ from funman import Funman
 from funman.api.settings import Settings
 from funman.funman import FUNMANConfig
 from funman.model.ensemble import EnsembleModel
-from funman.scenario.consistency import ConsistencyScenario
-from funman.scenario.parameter_synthesis import ParameterSynthesisScenario
 from funman.server.exception import NotFoundFunmanException
 from funman.server.query import QueryRequest, QueryResponse
 from funman.server.storage import Storage
 
 settings = Settings()
-
 _storage = Storage()
 
 
@@ -43,7 +40,6 @@ def get_storage():
 
 
 app = FastAPI(title="funman_api", lifespan=lifespan)
-
 api_key_header = APIKeyHeader(name="token", auto_error=False)
 
 
@@ -132,27 +128,14 @@ async def post_queries(
             config = FUNMANConfig()
 
         # convert to scenario
-        if request.parameters is None or all(
-            request.parameters[k] == "one" for k in request.parameters
-        ):
-            kind = "consistency"
-            scenario = ConsistencyScenario(
-                model=request.model, query=request.query
-            )
-        else:
-            kind = "parameter_synthesis"
-            if isinstance(request.model, EnsembleModel):
-                raise Exception(
-                    "TODO handle EnsembleModel for ParameterSynthesisScenario"
-                )
-            scenario = ParameterSynthesisScenario(
-                model=request.model, parameters=[]
-            )
+        scenario = request.to_scenario()
 
         f = Funman()
         id = await storage.claim_id()
         result = f.solve(scenario, config=config)
-        response = QueryResponse(id=id, scenario=kind, result=result)
+        response = QueryResponse(
+            id=id, kind=scenario.get_kind(), result=result
+        )
         await storage.add_result(response)
         return response
     except Exception as e:
