@@ -40,6 +40,7 @@ class Encoding(BaseModel):
 
     _formula: FNode = None
     _symbols: Union[List[FNode], Dict[str, Dict[str, FNode]]] = None
+    _substitutions: Dict[FNode, FNode] = {}
 
     # @validator("formula")
     # def set_symbols(cls, v: FNode):
@@ -72,6 +73,7 @@ class Encoder(ABC, BaseModel):
     _untimed_symbols: Set[str] = set([])
     _timed_symbols: Set[str] = set([])
     _untimed_constraints: FNode
+    _assignments: Dict[str, float]
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -196,8 +198,102 @@ class Encoder(ABC, BaseModel):
             ).simplify(),
             (model._extra_constraints if model._extra_constraints else TRUE()),
         ).simplify()
+
         symbols = self._symbols(formula)
-        return Encoding(_formula=formula, _symbols=symbols)
+        if self.config.substitute_subformulas:
+            (
+                substituted_formulas,
+                substitutions,
+                assignments,
+            ) = self._substitute_subformulas(
+                [
+                    self._timed_model_elements["untimed_constraints"],
+                    self._timed_model_elements["init"],
+                ]
+                + constraints,
+                model,
+            )
+            self._assignments = assignments
+            substituted_formula = And(substituted_formulas).simplify()
+            return Encoding(
+                _formula=substituted_formula,
+                _symbols=symbols,
+                _substitutions=substitutions,
+            )
+        else:
+            formula = And(
+                And(
+                    [
+                        self._timed_model_elements["init"],
+                        self._timed_model_elements["untimed_constraints"],
+                    ]
+                    + constraints
+                ).simplify(),
+                (
+                    model._extra_constraints
+                    if model._extra_constraints
+                    else TRUE()
+                ),
+            ).simplify()
+
+            symbols = self._symbols(formula)
+            return Encoding(_formula=formula, _symbols=symbols)
+
+    def _substitute_subformulas(self, formula: List[FNode], model: "Model"):
+        # Add parameter assignments
+        parameters = model._parameters()
+        parameter_assignments = {
+            self._encode_state_var(k.name): (
+                Real(float(k.lb))
+                if k.name not in model.parameter_bounds
+                else Real(model.parameter_bounds[k.name][0])
+            )
+            for k in parameters
+            if k.lb == k.ub
+            and (
+                (not k.name in model.parameter_bounds)
+                or model.parameter_bounds[k.name][0]
+                == model.parameter_bounds[k.name][1]
+            )
+        }
+
+        init_assignments = {
+            self._encode_state_var(k, time=0): Real(model._get_init_value(k))
+            for k in model._state_var_names()
+        }
+
+        substitutions = {**parameter_assignments, **init_assignments}
+
+        processed = []
+        for f in formula:
+            fs = f.substitute(substitutions)
+            fs = fs.simplify()
+            assn = self._get_assignments(fs)
+            substitutions = {**substitutions, **assn}
+            fs = fs.substitute(
+                {k: v for k, v in assn.items() if v.is_constant()}
+            ).simplify()
+            processed.append(fs)
+
+        assignments = {
+            k.symbol_name(): float(v.constant_value())
+            for k, v in substitutions.items()
+            if v.is_constant()
+        }
+
+        return processed, substitutions, assignments
+
+    def _get_assignments(self, formula: FNode):
+        atoms = formula.get_atoms()
+        assignments = {
+            (a.args()[0] if a.args()[0].is_symbol() else a.args()[1]): (
+                a.args()[1] if not a.args()[1].is_symbol() else a.args()[0]
+            )
+            for a in atoms
+            if a.is_equals()
+            and ((a.args()[0].is_symbol()) or (a.args()[1].is_symbol()))
+        }
+        return assignments
 
     def parameter_values(
         self, model: Model, pysmtModel: pysmtModel
@@ -221,7 +317,9 @@ class Encoder(ABC, BaseModel):
             parameters = {
                 parameter.name: pysmtModel[parameter.name]
                 for parameter in model._parameters()
+                if parameter.name in pysmtModel
             }
+
             return parameters
         except OverflowError as e:
             l.warning(e)
@@ -417,7 +515,12 @@ class Encoder(ABC, BaseModel):
         }
 
         if type(query) in query_handlers:
-            return query_handlers[type(query)](model_encoding, query)
+            encoded_query = query_handlers[type(query)](model_encoding, query)
+            simplified_query = encoded_query._formula.substitute(
+                model_encoding._substitutions
+            )
+            encoded_query._formula = simplified_query.simplify()
+            return encoded_query
         else:
             raise NotImplementedError(
                 f"Do not know how to encode query of type {type(query)}"

@@ -31,12 +31,18 @@ ensemble_files = glob.glob(
 
 class TestUseCases(unittest.TestCase):
     def setup_use_case_petri_ensemble_common(self):
-        m1, q1 = self.setup_use_case_petri_common(name="m1")
-        m2, q2 = self.setup_use_case_petri_common(name="m2")
+        m1, q1 = self.setup_use_case_petri_common(
+            name="m1", assign_model_to_query=True
+        )
+        m2, q2 = self.setup_use_case_petri_common(
+            name="m2", assign_model_to_query=True
+        )
         m = EnsembleModel(models=[m1, m2])
         return m, QueryAnd(queries=[q1, q2])
 
-    def setup_use_case_petri_common(self, name="m"):
+    def setup_use_case_petri_common(
+        self, name="m", assign_model_to_query=False
+    ):
         petri_path = ensemble_files[0]
         with open(petri_path, "r") as f:
             petri_src = json.load(f)
@@ -74,18 +80,19 @@ class TestUseCases(unittest.TestCase):
                 "gamma": [1.0 / 14.0, 1.0 / 14.0],
             },
             structural_parameter_bounds={
-                "num_steps": [50, 50],
+                "num_steps": [1, 1],
                 "step_size": [1, 1],
             },
         )
-
-        query = QueryLE(
-            variable="Infected", ub=infected_threshold, model=model
-        )
+        if assign_model_to_query:
+            query = QueryLE(
+                variable="Infected", ub=infected_threshold, model=model
+            )
+        else:
+            query = QueryLE(variable="Infected", ub=infected_threshold)
 
         return model, query
 
-    @unittest.skip(reason="tmp")
     def setup_use_case_petri_parameter_synthesis(self):
         model, query = self.setup_use_case_petri_common()
         [lb, ub] = model.parameter_bounds["beta"]
@@ -162,6 +169,7 @@ class TestUseCases(unittest.TestCase):
         # result_unsat: ConsistencyScenarioResult = Funman().solve(scenario)
         # assert not result_unsat.consistent
 
+    @unittest.skip("tmp")
     def test_ensemble(self):
         scenario = self.setup_use_case_petri_ensemble_consistency()
 
