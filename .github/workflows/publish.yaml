@@ -35,6 +35,7 @@ jobs:
           # echo "DOCKER_REGISTRY=${REG,,}" >> ${GITHUB_ENV}
           # echo "DOCKER_ORG=${ORG,,}" >> ${GITHUB_ENV}
           echo "OUTPUT_TYPE=load" >> ${GITHUB_ENV}
+          echo ls
 
       - name: Run make file
         run: |
