@@ -44,10 +44,6 @@ function "compose_registry" {
 
 # ----------------------------------------------------------------------------------------------------------------------
 
-group "api-git" {
-    targets = ["funman-ibex", "funman-dreal4", "funman-base", "funman-git", "funman-api"]
-}
-
 # ----------------------------------------------------------------------------------------------------------------------
 
 target "_platforms" {
@@ -61,7 +57,6 @@ target "funman-ibex" {
   }
   dockerfile = "Dockerfile"
   tags = tag("funman-ibex", "", "${IBEX_BRANCH}")
-  output = ["type=cacheonly"]
 }
 
 target "funman-dreal4" {
@@ -77,7 +72,6 @@ target "funman-dreal4" {
   }
   dockerfile = "Dockerfile.dreal4"
   tags = tag("funman-dreal4", "", "${DREAL_COMMIT_TAG}")
-  output = ["type=cacheonly"]
 }
 
 target "funman-base" {
@@ -92,7 +86,6 @@ target "funman-base" {
   }
   dockerfile = "Dockerfile"
   tags = tag("funman-base", "", "${AUTOMATES_COMMIT_TAG}")
-  output = ["type=cacheonly"]
 }
 
 target "funman-pypi" {
@@ -119,7 +112,6 @@ target "funman-git" {
   }
   dockerfile = "./deploy/git/Dockerfile"
   tags = tag("funman-git", "", "")
-  output = ["type=cacheonly"]
 }
 
 target "funman-api" {
@@ -134,4 +126,20 @@ target "funman-api" {
   }
   dockerfile = "Dockerfile"
   tags = tag("funman-api", "", "")
+}
+
+target "funman-ibex-multiplatform" {
+  inherits = ["_platforms", "funman-ibex"]
+}
+target "funman-dreal4-multiplatform" {
+  inherits = ["_platforms", "funman-dreal4"]
+}
+target "funman-base-multiplatform" {
+  inherits = ["_platforms", "funman-base"]
+}
+target "funman-git-multiplatform" {
+  inherits = ["_platforms", "funman-git"]
+}
+target "funman-api-multiplatform" {
+  inherits = ["_platforms", "funman-api"]
 }
