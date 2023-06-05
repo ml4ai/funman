@@ -80,7 +80,7 @@ class TestUseCases(unittest.TestCase):
                 "gamma": [1.0 / 14.0, 1.0 / 14.0],
             },
             structural_parameter_bounds={
-                "num_steps": [1, 1],
+                "num_steps": [2, 2],
                 "step_size": [1, 1],
             },
         )

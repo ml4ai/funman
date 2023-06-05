@@ -10,7 +10,18 @@ from numpy import isin
 from pydantic import BaseModel, Extra
 from pysmt.constants import Numeral
 from pysmt.formula import FNode
-from pysmt.shortcuts import GE, LE, LT, REAL, TRUE, And, Equals, Real, Symbol
+from pysmt.shortcuts import (
+    GE,
+    LE,
+    LT,
+    REAL,
+    TRUE,
+    And,
+    Equals,
+    Real,
+    Symbol,
+    get_env,
+)
 from pysmt.solvers.solver import Model as pysmtModel
 
 from funman.constants import NEG_INFINITY, POS_INFINITY
@@ -26,6 +37,7 @@ from funman.model.query import (
 )
 from funman.representation import Parameter
 from funman.representation.representation import Box, Interval, Point
+from funman.translate.simplifier import FUNMANSimplifier
 
 
 class Encoding(BaseModel):
@@ -75,6 +87,9 @@ class Encoder(ABC, BaseModel):
     _untimed_constraints: FNode
     _assignments: Dict[str, float]
 
+    env = get_env()
+    env._simplifier  = FUNMANSimplifier(env)
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         model = kwargs["model"]
@@ -110,7 +125,7 @@ class Encoder(ABC, BaseModel):
         pass
 
     def _encode_next_step(
-        self, model: Model, step: int, next_step: int
+        self, model: Model, step: int, next_step: int, substitutions={}
     ) -> FNode:
         pass
 
@@ -141,16 +156,17 @@ class Encoder(ABC, BaseModel):
         # parameters = model._parameters()
 
         constraints = []
-
+        substitutions = self._initialize_substitutions(model)
         for i, timepoint in enumerate(transition_timepoints):
             c = self._timed_model_elements["time_step_constraints"][timepoint][
                 step_size - self._min_step_size
             ]
             if c is None:
-                c = self._encode_next_step(
+                c, substitutions = self._encode_next_step(
                     model,
                     state_timepoints[i],
                     state_timepoints[i + 1],
+                    substitutions=substitutions,
                 )
                 self._timed_model_elements["time_step_constraints"][timepoint][
                     step_size - self._min_step_size
@@ -201,45 +217,49 @@ class Encoder(ABC, BaseModel):
 
         symbols = self._symbols(formula)
         if self.config.substitute_subformulas:
-            (
-                substituted_formulas,
-                substitutions,
-                assignments,
-            ) = self._substitute_subformulas(
-                [
-                    self._timed_model_elements["untimed_constraints"],
-                    self._timed_model_elements["init"],
-                ]
-                + constraints,
-                model,
-            )
-            self._assignments = assignments
-            substituted_formula = And(substituted_formulas).simplify()
+            # (
+            #     substituted_formulas,
+            #     substitutions,
+            #     assignments,
+            # ) = self._substitute_subformulas(
+            #     [
+            #         self._timed_model_elements["untimed_constraints"],
+            #         self._timed_model_elements["init"],
+            #     ]
+            #     + constraints,
+            #     model,
+            # )
+            self._assignments = {
+                k.symbol_name(): float(v.constant_value())
+                for k, v in substitutions.items()
+                if v.is_constant()
+            }
+            # substituted_formula = And(substituted_formulas).simplify()
             return Encoding(
-                _formula=substituted_formula,
+                _formula=formula,
                 _symbols=symbols,
                 _substitutions=substitutions,
             )
         else:
-            formula = And(
-                And(
-                    [
-                        self._timed_model_elements["init"],
-                        self._timed_model_elements["untimed_constraints"],
-                    ]
-                    + constraints
-                ).simplify(),
-                (
-                    model._extra_constraints
-                    if model._extra_constraints
-                    else TRUE()
-                ),
-            ).simplify()
+            # formula = And(
+            #     And(
+            #         [
+            #             self._timed_model_elements["init"],
+            #             self._timed_model_elements["untimed_constraints"],
+            #         ]
+            #         + constraints
+            #     ).simplify(),
+            #     (
+            #         model._extra_constraints
+            #         if model._extra_constraints
+            #         else TRUE()
+            #     ),
+            # ).simplify()
 
-            symbols = self._symbols(formula)
+            # symbols = self._symbols(formula)
             return Encoding(_formula=formula, _symbols=symbols)
 
-    def _substitute_subformulas(self, formula: List[FNode], model: "Model"):
+    def _initialize_substitutions(self, model: "Model"):
         # Add parameter assignments
         parameters = model._parameters()
         parameter_assignments = {
@@ -264,24 +284,19 @@ class Encoder(ABC, BaseModel):
 
         substitutions = {**parameter_assignments, **init_assignments}
 
-        processed = []
-        for f in formula:
-            fs = f.substitute(substitutions)
-            fs = fs.simplify()
-            assn = self._get_assignments(fs)
-            substitutions = {**substitutions, **assn}
-            fs = fs.substitute(
-                {k: v for k, v in assn.items() if v.is_constant()}
-            ).simplify()
-            processed.append(fs)
+        return substitutions
 
-        assignments = {
-            k.symbol_name(): float(v.constant_value())
-            for k, v in substitutions.items()
-            if v.is_constant()
-        }
+    def _substitute_formula(
+        self, formula: FNode, substitutions: Dict[FNode, FNode], model: "Model"
+    ):
+        fs = formula.substitute(substitutions)
+        fs = fs.simplify()
+        substitutions = {**substitutions, **self._get_assignments(fs)}
+        fs = fs.substitute(
+            {k: v for k, v in assn.items() if v.is_constant()}
+        ).simplify()
 
-        return processed, substitutions, assignments
+        return fs, substitutions
 
     def _get_assignments(self, formula: FNode):
         atoms = formula.get_atoms()

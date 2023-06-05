@@ -36,7 +36,7 @@ class PetrinetEncoder(Encoder):
         return Encoding(formula=TRUE(), symbols={})
 
     def _encode_next_step(
-        self, model: "Model", step: int, next_step: int
+        self, model: "Model", step: int, next_step: int, substitutions={}
     ) -> FNode:
         state_vars = model._state_vars()
         transitions = model._transitions()
@@ -58,6 +58,7 @@ class PetrinetEncoder(Encoder):
                 next_state,
                 model._input_edges(),
                 model._output_edges(),
+                substitutions=substitutions,
             )
             for i, t in enumerate(transitions)
         ]
@@ -76,22 +77,40 @@ class PetrinetEncoder(Encoder):
                 net_flow = inflow - outflow
 
                 if net_flow != 0:
-                    state_var_flows.append(
-                        Times(
-                            Real(net_flow) * transition_terms[t_index]
-                        ).simplify()
-                    )
+                    state_var_flow = Times(
+                        Real(net_flow) * transition_terms[t_index]
+                    ).substitute(substitutions)
+                    state_var_flow = state_var_flow.simplify()
+                    state_var_flows.append(state_var_flow)
             if len(state_var_flows) > 0:
+                combined_flows = Plus(state_var_flows).substitute(substitutions)
+                combined_flows = combined_flows.simplify()
                 flows = Plus(
-                    Times(Real(step_size), Plus(state_var_flows)).simplify(),
-                    current_state[v_index],
+                    Times(Real(step_size), combined_flows).simplify(),
+                    current_state[v_index].substitute(substitutions),
                 ).simplify()
             else:
-                flows = current_state[v_index]
+                flows = (
+                    current_state[v_index].substitute(substitutions).simplify()
+                )
 
+            substitutions[next_state[v_index]] = flows
             net_flows.append(Equals(next_state[v_index], flows))
 
-        return And(net_flows)
+        return And(net_flows), substitutions
+
+    # (= Susceptible_2 (- 
+    #                   (+ c1 (+ 
+    #                          (* (* (+ (* beta c2) c3) c4) (* (- c5 (* beta c6)) c7)) 
+    #                          (* (* beta c8) (* (- c9 (* beta c10)) c11)))) 
+    #                   (+ (* beta c12)  
+    #                    (+ 
+    #                     (* (- c13 (* beta c14)) c15) --> (- (* c15 c13) (* beta c14 c15)) distribute mult. 
+    #                    
+    #                     (* (- c16 (* beta c17)) c18)))))
+    #                    --> (+ (* beta c12) (- (* c15 c13) (* beta c14 c15)) (- (* c16 c18) (* beta c17 c18)))
+    #                    --> (+ (* beta (+ c12 (* -c14 c15) (* -c17 c18))) (* -c15 c13) (* -c16 c18)))
+    #                    --> (+ (* beta d1) d2))
 
     def _encode_transition_term(
         self,
@@ -101,6 +120,7 @@ class PetrinetEncoder(Encoder):
         next_state,
         input_edges,
         output_edges,
+        substitutions={},
     ):
         ins = [
             current_state[edge["is"] - 1]
@@ -111,7 +131,7 @@ class PetrinetEncoder(Encoder):
             transition["tprop"]["parameter_name"]
         )
 
-        return Times([param_symbol] + ins)
+        return Times([param_symbol] + ins).substitute(substitutions).simplify()
 
     def _get_timed_symbols(self, model: Model) -> List[str]:
         """
