@@ -9,23 +9,48 @@ on:
   push:
     branches: ['main']
     tags: ['*']
+  pull_request:
+    branches: ['main']
 
 jobs:
   # Call the Tag Generator to generate an image tag to use
   tag-generator:
     uses: darpa-askem/.github/.github/workflows/tag-generator.yaml@main
 
-  # Build and Publish all targets associated with specified group
-  bake:
+  publish:
+    name: sequence-build-deploy
+    runs-on: ubuntu-22.04
     needs:
       - tag-generator
-    uses: darpa-askem/.github/.github/workflows/bake-publish.yml@main
-    with:
-      file: 'docker-bake.hcl'
-      group: 'prod'
-      registry: 'ghcr.io'
-      organization: ${{ github.repository_owner }}
-      tag: ${{ needs.tag-generator.outputs.tag }}
-    secrets:
-      username: ${{ github.repository_owner }}
-      password: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - name: Set env variables for bakefiles
+        run: |
+          # Lowercase the inputs for Docker image naming conventions
+          TAG=${{ needs.tag-generator.outputs.tag }}
+          # ORG=${{ inputs.organization }}
+          # REG=${{ inputs.registry }}
+
+          echo "VERSION=${TAG,,}" >> ${GITHUB_ENV}
+          # echo "DOCKER_REGISTRY=${REG,,}" >> ${GITHUB_ENV}
+          # echo "DOCKER_ORG=${ORG,,}" >> ${GITHUB_ENV}
+          echo "OUTPUT_TYPE=load" >> ${GITHUB_ENV}
+
+      - name: Run make file
+        run: |
+          make -f Makefile.uncharted multiplatform-build-api
+
+  # # Build and Publish all targets associated with specified group
+  # bake:
+  #   needs:
+  #     - tag-generator
+  #   uses: darpa-askem/.github/.github/workflows/bake-publish.yml@main
+  #   with:
+  #     file: 'docker-bake.hcl'
+  #     group: 'prod'
+  #     registry: 'ghcr.io'
+  #     organization: ${{ github.repository_owner }}
+  #     tag: ${{ needs.tag-generator.outputs.tag }}
+  #   secrets:
+  #     username: ${{ github.repository_owner }}
+  #     password: ${{ secrets.GITHUB_TOKEN }}
