@@ -2,7 +2,7 @@
 This module defines all Query classes.  Queries are combined with Model objects in Scenarios to determine whether the model satisfies the query.
 """
 from abc import ABC
-from typing import List, Union, Optional
+from typing import List, Optional, Union
 
 from pydantic import BaseModel
 from pysmt.formula import FNode

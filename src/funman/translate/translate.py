@@ -88,7 +88,7 @@ class Encoder(ABC, BaseModel):
     _assignments: Dict[str, float]
 
     env = get_env()
-    env._simplifier  = FUNMANSimplifier(env)
+    env._simplifier = FUNMANSimplifier(env)
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

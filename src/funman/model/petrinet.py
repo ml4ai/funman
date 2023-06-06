@@ -4,7 +4,6 @@ import graphviz
 from pydantic import BaseModel
 
 from funman.representation.representation import Parameter
-from funman.translate.petrinet import PetrinetEncoder
 
 from .model import Model
 
@@ -30,6 +29,8 @@ class PetrinetModel(Model):
         Encoder
             SMT encoder for model
         """
+        from funman.translate.petrinet import PetrinetEncoder
+
         return PetrinetEncoder(
             config=config,
             model=self,

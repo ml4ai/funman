@@ -4,7 +4,6 @@ import graphviz
 from pydantic import BaseModel
 
 from funman.representation import Parameter
-from funman.translate import EnsembleEncoder
 
 from .model import Model
 
@@ -33,6 +32,8 @@ class EnsembleModel(Model):
         Encoder
             SMT encoder for model
         """
+        from funman.translate import EnsembleEncoder
+
         return EnsembleEncoder(
             config=config,
             model=self,

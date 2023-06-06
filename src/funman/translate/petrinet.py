@@ -83,7 +83,9 @@ class PetrinetEncoder(Encoder):
                     state_var_flow = state_var_flow.simplify()
                     state_var_flows.append(state_var_flow)
             if len(state_var_flows) > 0:
-                combined_flows = Plus(state_var_flows).substitute(substitutions)
+                combined_flows = Plus(state_var_flows).substitute(
+                    substitutions
+                )
                 combined_flows = combined_flows.simplify()
                 flows = Plus(
                     Times(Real(step_size), combined_flows).simplify(),
@@ -99,15 +101,16 @@ class PetrinetEncoder(Encoder):
 
         return And(net_flows), substitutions
 
-    # (= Susceptible_2 (- 
-    #                   (+ c1 (+ 
-    #                          (* (* (+ (* beta c2) c3) c4) (* (- c5 (* beta c6)) c7)) 
-    #                          (* (* beta c8) (* (- c9 (* beta c10)) c11)))) 
-    #                   (+ (* beta c12)  
-    #                    (+ 
-    #                     (* (- c13 (* beta c14)) c15) --> (- (* c15 c13) (* beta c14 c15)) distribute mult. 
-    #                    
+    # (= Susceptible_2 (-
+    #                   (+ c1 (+
+    #                          (* (* (+ (* beta c2) c3) c4) (* (- c5 (* beta c6)) c7))
+    #                          (* (* beta c8) (* (- c9 (* beta c10)) c11))))
+    #                   (+ (* beta c12)
+    #                    (+
+    #                     (* (- c13 (* beta c14)) c15) --> (- (* c15 c13) (* beta c14 c15)) distribute mult.
+    #
     #                     (* (- c16 (* beta c17)) c18)))))
+    #
     #                    --> (+ (* beta c12) (- (* c15 c13) (* beta c14 c15)) (- (* c16 c18) (* beta c17 c18)))
     #                    --> (+ (* beta (+ c12 (* -c14 c15) (* -c17 c18))) (* -c15 c13) (* -c16 c18)))
     #                    --> (+ (* beta d1) d2))

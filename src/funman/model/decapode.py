@@ -2,8 +2,6 @@ from typing import Dict, List, Union
 
 from pydantic import BaseModel
 
-from funman.translate.decapode import DecapodeEncoder
-
 from .model import Model
 
 
@@ -23,4 +21,6 @@ class DecapodeModel(Model):
         Encoder
             SMT encoder for model
         """
+        from funman.translate.decapode import DecapodeEncoder
+
         return DecapodeEncoder(config=config)

@@ -43,22 +43,40 @@ class FUNMANSimplifier(pysmt.simplifier.Simplifier):
             elif not const.is_one():
                 new_args.append(const)
 
+        # The block below handles the case of distributing a constant over the other terms in a product.  (* c t1 t2) --> (*+ (* c t1) (* c t2))
         new_new_args = []
         if not const.is_one():
             for arg in new_args:
                 if arg != const:
-                    new_arg = self.manager.Times(arg, const)
-                    if not arg.is_symbol():
-                        arg = arg.simplify()
+                    if arg.is_plus() or arg.is_minus():
+                        # Distribute constant over sum
+                        arg_args = [
+                            self.manager.Times(const, a).simplify()
+                            for a in arg.args()
+                        ]
+                        new_arg = (
+                            self.manager.Plus(arg_args)
+                            if arg.is_plus()
+                            else self.manager.Minus(*arg_args)
+                        )
+                    else:
+                        # Fall through case
+                        new_arg = self.manager.Times(arg, const)
+
+                    # if not new_arg.is_symbol():
+                    #     new_arg = new_arg.simplify()
                     new_new_args.append(new_arg)
-                    self.manager.Times(new_args)
+                    # self.manager.Times(new_args)
         else:
             new_new_args = new_args
+
         if len(new_new_args) > 1:
             new_new_args = sorted(new_new_args, key=FNode.node_id)
             return self.manager.Times(new_new_args)
         else:
             return new_new_args[0]
+
+        # Handle combiing terms (* (b))
 
         # new_args = sorted(new_args, key=FNode.node_id)
         # return self.manager.Times(new_args)

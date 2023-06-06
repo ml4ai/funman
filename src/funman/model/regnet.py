@@ -4,7 +4,6 @@ import graphviz
 from pydantic import BaseModel
 
 from funman.representation.representation import Parameter
-from funman.translate.regnet import RegnetEncoder
 
 from .model import Model
 
@@ -25,6 +24,8 @@ class RegnetModel(Model):
         Encoder
             SMT encoder for model
         """
+        from funman.translate.regnet import RegnetEncoder
+
         return RegnetEncoder(
             config=config,
             model=self,
