@@ -1,5 +1,6 @@
 import pysmt
 from pysmt.fnode import FNode
+from sympy import expand, symbols, sympify
 
 
 class FUNMANSimplifier(pysmt.simplifier.Simplifier):
@@ -69,6 +70,11 @@ class FUNMANSimplifier(pysmt.simplifier.Simplifier):
                     # self.manager.Times(new_args)
         else:
             new_new_args = new_args
+
+        ## FIXME conversion to sympy for simplification, needs conversion back to pysmt
+        vars = formula.get_free_variables()
+        var_map = {str(v): symbols(str(v)) for v in vars}
+        expanded_formula = expand(sympify(str(formula), var_map))
 
         if len(new_new_args) > 1:
             new_new_args = sorted(new_new_args, key=FNode.node_id)
@@ -157,3 +163,8 @@ class FUNMANSimplifier(pysmt.simplifier.Simplifier):
                     m_1 = self.manager.Real(-1)
                 res = self.manager.Times(m_1, sub)
         return res
+
+
+class SympyToPysmt(object):
+    def sympyToPysmt(sympy_formula):
+        pass

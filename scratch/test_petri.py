@@ -24,6 +24,14 @@ RESOURCES = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "../resources"
 )
 
+
+thin_thread_files = glob.glob(
+    os.path.join(
+        RESOURCES,
+        "thin-thread-examples/mira_v2/biomodels/BIOMD00000000955/model_askenet.json",
+    )
+)
+
 ensemble_files = glob.glob(
     os.path.join(RESOURCES, "miranet", "ensemble", "*_miranet.json")
 )
