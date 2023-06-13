@@ -1,11 +1,13 @@
 """
 Client API Generation and usage functionality.
 """
+import os
 import sys
-from os import chdir, path
+from pathlib import Path
 
-import openapi_python_client
-from openapi_python_client import Config, MetaType
+import openapi_python_client as opc
+from openapi_python_client import MetaType
+from openapi_python_client.config import Config
 
 
 def make_client(
@@ -16,20 +18,31 @@ def make_client(
     """
     Use openapi-python-client generator to create client.  Adds client package to sys.path.
     """
-    client_path = path.join(install_path, client_name)
-    chdir(install_path)
-    if path.exists(client_path):
-        openapi_python_client.update_existing_client(
-            url=openapi_url,
-            path=None,
-            meta=MetaType.POETRY,
-            config=Config(),
-        )
-    else:
-        openapi_python_client.create_new_client(
-            url=openapi_url,
-            path=None,
-            meta=MetaType.POETRY,
-            config=Config(),
-        )
-    sys.path.append(path.join(install_path, "funman-api-client"))
+    install_dir = Path(install_path).resolve()
+    client_path = install_dir / Path(client_name)
+    prev_cwd = Path.cwd()
+    try:
+        os.chdir(install_dir)
+        if client_path.exists():
+            print(
+                f"Updating existing funman client at {install_dir} from {openapi_url}"
+            )
+            opc.update_existing_client(
+                url=openapi_url,
+                path=None,
+                meta=MetaType.POETRY,
+                config=Config(),
+            )
+        else:
+            print(
+                f"Creating new funman client at {install_dir} from {openapi_url}"
+            )
+            opc.create_new_client(
+                url=openapi_url,
+                path=None,
+                meta=MetaType.POETRY,
+                config=Config(),
+            )
+        sys.path.append(str(client_path))
+    finally:
+        os.chdir(prev_cwd)
