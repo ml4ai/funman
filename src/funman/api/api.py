@@ -6,6 +6,8 @@ Raises
 HTTPException
     HTTPException description
 """
+import sys
+import traceback
 import uuid
 from contextlib import asynccontextmanager
 from typing import Optional
@@ -105,8 +107,9 @@ async def get_queries(
         return response
     except NotFoundFunmanException:
         raise HTTPException(404)
-    except Exception as e:
-        print(f"Internal Server Error ({eid}): {e}")
+    except Exception:
+        print(f"Internal Server Error ({eid}):", file=sys.stderr)
+        traceback.print_exc()
         raise HTTPException(
             status_code=500, detail=f"Internal Server Error: {eid}"
         )
@@ -138,8 +141,9 @@ async def post_queries(
         )
         await storage.add_result(response)
         return response
-    except Exception as e:
-        print(f"Internal Server Error ({eid}): {e}")
+    except Exception:
+        print(f"Internal Server Error ({eid}):", file=sys.stderr)
+        traceback.print_exc()
         raise HTTPException(
             status_code=500, detail=f"Internal Server Error: {eid}"
         )
