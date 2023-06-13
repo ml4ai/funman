@@ -22,6 +22,7 @@ from funman import Funman
 from funman.api.settings import Settings
 from funman.funman import FUNMANConfig
 from funman.model.ensemble import EnsembleModel
+from funman.representation.representation import ParameterSpace
 from funman.server.exception import NotFoundFunmanException
 from funman.server.query import QueryRequest, QueryResponse
 from funman.server.storage import Storage
@@ -136,9 +137,7 @@ async def post_queries(
         f = Funman()
         id = await storage.claim_id()
         result = f.solve(scenario, config=config)
-        response = QueryResponse(
-            id=id, kind=scenario.get_kind(), result=result
-        )
+        response = QueryResponse.from_result(id, request, result)
         await storage.add_result(response)
         return response
     except Exception:

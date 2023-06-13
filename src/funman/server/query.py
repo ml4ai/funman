@@ -16,6 +16,11 @@ from funman.model.query import (
 )
 from funman.model.regnet import RegnetModel
 from funman.representation import Parameter
+from funman.representation.representation import (
+    LABEL_TRUE,
+    ParameterSpace,
+    Point,
+)
 from funman.scenario.consistency import (
     ConsistencyScenario,
     ConsistencyScenarioResult,
@@ -74,5 +79,27 @@ class QueryRequest(BaseModel):
 
 class QueryResponse(BaseModel):
     id: str
-    kind: Literal["consistency", "parameter_synthesis"]
-    result: Union[ConsistencyScenarioResult, ParameterSynthesisScenarioResult]
+    request: QueryRequest
+    parameter_space: ParameterSpace
+
+    @staticmethod
+    def from_result(
+        id: str,
+        request: QueryRequest,
+        result: Union[
+            ConsistencyScenarioResult, ParameterSynthesisScenarioResult
+        ],
+    ):
+        ps = None
+        if isinstance(result, ConsistencyScenarioResult):
+            ps = ParameterSpace()
+            if result.consistent is not None:
+                point = Point(values=result.consistent, label=LABEL_TRUE)
+                ps.true_points.append(point)
+        if isinstance(result, ParameterSynthesisScenarioResult):
+            ps = result.parameter_space
+
+        if ps is None:
+            raise Exception("No ParameterSpace for result")
+
+        return QueryResponse(id=id, request=request, parameter_space=ps)

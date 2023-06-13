@@ -6,8 +6,7 @@ from tempfile import TemporaryDirectory
 from fastapi.testclient import TestClient
 
 from funman.api.api import app, settings
-from funman.scenario.consistency import ConsistencyScenario
-from funman.scenario.parameter_synthesis import ParameterSynthesisScenario
+from funman.representation.representation import ParameterSpace
 from funman.server.query import QueryResponse
 
 FILE_DIRECTORY = Path(__file__).resolve().parent
@@ -40,6 +39,19 @@ class TestAPI(unittest.TestCase):
         self.test_dir.mkdir()
         settings.data_path = str(self.test_dir)
 
+    def check_consistency_success(self, parameter_space: ParameterSpace):
+        assert parameter_space is not None
+        assert len(parameter_space.true_boxes) == 0
+        assert len(parameter_space.false_boxes) == 0
+        assert len(parameter_space.true_points) == 1
+        assert len(parameter_space.false_points) == 0
+
+    def check_parameter_synthesis_success(
+        self, parameter_space: ParameterSpace
+    ):
+        assert parameter_space is not None
+        assert len(parameter_space.true_boxes) > 0
+
     def test_storage(self):
         bilayer_path = (
             RESOURCES / "bilayer" / "CHIME_SIR_dynamics_BiLayer.json"
@@ -70,7 +82,7 @@ class TestAPI(unittest.TestCase):
             )
             assert response.status_code == 200
             data = QueryResponse.parse_raw(response.content.decode())
-            assert data.kind == ConsistencyScenario.get_kind()
+            self.check_consistency_success(data.parameter_space)
             first_id = data.id
 
         with TestClient(app) as client:
@@ -80,7 +92,7 @@ class TestAPI(unittest.TestCase):
             assert response.status_code == 200
             got_data = QueryResponse.parse_raw(response.content.decode())
             assert first_id == got_data.id
-            assert got_data.kind == ConsistencyScenario.get_kind()
+            self.check_consistency_success(data.parameter_space)
 
     def test_api_bad_token(self):
         with TestClient(app) as client:
@@ -123,8 +135,7 @@ class TestAPI(unittest.TestCase):
             )
             assert response.status_code == 200
             data = QueryResponse.parse_raw(response.content.decode())
-            assert data.kind == ConsistencyScenario.get_kind()
-            assert data.result
+            self.check_consistency_success(data.parameter_space)
 
     def test_bilayer_parameter_synthesis(self):
         bilayer_path = (
@@ -171,5 +182,4 @@ class TestAPI(unittest.TestCase):
             )
             assert response.status_code == 200
             data = QueryResponse.parse_raw(response.content.decode())
-            assert data.kind == ParameterSynthesisScenario.get_kind()
-            assert data.result
+            self.check_parameter_synthesis_success(data.parameter_space)
