@@ -7,7 +7,10 @@ from funman.representation.representation import Parameter
 from funman.translate.regnet import RegnetEncoder
 
 from .model import Model
+from .generated_models.regnet import Model as GeneratedRegnet
 
+class GeneratedRegnetModel(Model):
+    regnet: GeneratedRegnet
 
 class RegnetDynamics(BaseModel):
     json_graph: Dict[str, Union[str, Dict[str, List[Dict[str, Any]]]]]

@@ -15,6 +15,7 @@ from funman.model import (
     PetrinetModel,
     QueryTrue,
 )
+from funman.model.petrinet import GeneratedPetriNetModel
 from funman.model.query import (
     QueryAnd,
     QueryEncoded,
@@ -22,7 +23,7 @@ from funman.model.query import (
     QueryGE,
     QueryLE,
 )
-from funman.model.regnet import RegnetModel
+from funman.model.regnet import GeneratedRegnetModel, RegnetModel
 from funman.representation import Parameter
 from funman.representation.representation import ParameterSpace, Point
 from funman.scenario import (
@@ -50,7 +51,7 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
 
     parameters: List[Parameter]
     model: Union[
-        RegnetModel, PetrinetModel, DecapodeModel, BilayerModel, EncodedModel
+        GeneratedPetriNetModel, GeneratedRegnetModel, RegnetModel, PetrinetModel, DecapodeModel, BilayerModel, EncodedModel
     ]
     query: Union[
         QueryAnd, QueryGE, QueryLE, QueryEncoded, QueryFunction, QueryTrue

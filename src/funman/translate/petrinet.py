@@ -41,23 +41,21 @@ class PetrinetEncoder(Encoder):
         state_vars = model._state_vars()
         transitions = model._transitions()
         step_size = next_step - step
-        current_state = [
-            self._encode_state_var(s["sname"], time=step) for s in state_vars
-        ]
-        next_state = [
-            self._encode_state_var(s["sname"], time=next_step)
+        current_state = {
+            model._state_var_name(s): self._encode_state_var(model._state_var_name(s), time=step) for s in state_vars
+        }
+        next_state = {
+            model._state_var_name(s): self._encode_state_var(model._state_var_name(s), time=next_step)
             for s in state_vars
-        ]
+        }
 
         # Each transition corresponds to a term that is the product of current state vars and a parameter
         transition_terms = [
             self._encode_transition_term(
-                i,
                 t,
                 current_state,
                 next_state,
-                model._input_edges(),
-                model._output_edges(),
+                model
             )
             for i, t in enumerate(transitions)
         ]
@@ -95,20 +93,22 @@ class PetrinetEncoder(Encoder):
 
     def _encode_transition_term(
         self,
-        t_index,
+        
         transition,
         current_state,
         next_state,
-        input_edges,
-        output_edges,
+        model
     ):
+        transition_id = model._transition_id(transition)
+        input_edges = model._input_edges()
+        output_edges= model._output_edges()
         ins = [
-            current_state[edge["is"] - 1]
+            current_state[model._edge_source(edge)]
             for edge in input_edges
-            if edge["it"] == t_index + 1
+            if model._edge_target(edge) == transition_id
         ]
         param_symbol = self._encode_state_var(
-            transition["tprop"]["parameter_name"]
+            model._transition_parameter(transition)
         )
 
         return Times([param_symbol] + ins)
@@ -127,5 +127,5 @@ class PetrinetEncoder(Encoder):
         List[str]
             state variable names
         """
-        state_vars = model._state_vars()
-        return [s["sname"] for s in state_vars]
+        state_vars = model._state_var_names()
+        return state_vars

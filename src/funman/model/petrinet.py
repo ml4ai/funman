@@ -7,12 +7,61 @@ from funman.representation.representation import Parameter
 from funman.translate.petrinet import PetrinetEncoder
 
 from .model import Model
-from .generated_models.petrinet import Model as GeneratedPetrinet
+from .generated_models.petrinet import Model as GeneratedPetrinet, State, Transition
 
 
 class GeneratedPetriNetModel(Model):
-    json_graph: GeneratedPetrinet
+    petrinet: GeneratedPetrinet
     
+    def default_encoder(self, config: "FUNMANConfig") -> "Encoder":
+        """
+        Return the default Encoder for the model
+
+        Returns
+        -------
+        Encoder
+            SMT encoder for model
+        """
+        return PetrinetEncoder(
+            config=config,
+            model=self,
+        )
+    
+    def _state_vars(self) -> List[State]:
+        return self.petrinet.model.states.__root__
+
+    def _state_var_names(self) -> List[str]:
+        return [self._state_var_name(s) for s in self._state_vars()]
+
+    def _transitions(self) -> List[Transition]:
+        return self.petrinet.model.transitions.__root__
+    
+    def _state_var_name(self, state_var: State) -> str:
+        return state_var.id
+    
+    def _input_edges(self):
+        return [(i, t.id) for t in self._transitions() for i in t.input]
+    
+    def _edge_source(self, edge):
+        return edge[0]
+ 
+    def _edge_target(self, edge):
+        return edge[1]
+    
+    def _output_edges(self):
+        return [(t.id, o) for t in self._transitions() for o in t.output]
+    
+    def _transition_parameter(self, transition):
+        transition_rates = [r for r in self.petrinet.semantics.ode.rates if r.target == transition.id]
+        parameters = [p for t in transition_rates for p in self._parameter_names() if p in t.expression]
+        assert len(parameters)==1, f"The number of parameters for transition {transition} are not equal to 1, {parameters}"
+        return parameters[0]
+    
+    def _transition_id(self, transition):
+        return transition.id
+
+    def _parameter_names(self):
+        return [p.id for p in self.petrinet.semantics.ode.parameters]
 
 class PetrinetDynamics(BaseModel):
     json_graph: Dict[str, List[Dict[str, Union[int, str, Dict[str, str]]]]]
@@ -44,7 +93,10 @@ class PetrinetModel(Model):
         return self.petrinet.json_graph["S"]
 
     def _state_var_names(self):
-        return [s["sname"] for s in self.petrinet.json_graph["S"]]
+        return [self._state_var_name(s) for s in self.petrinet.json_graph["S"]]
+
+    def _state_var_name(self, state_var: Dict) -> str:
+        return state_var["sname"]
 
     def _transitions(self):
         return self.petrinet.json_graph["T"]
@@ -54,6 +106,20 @@ class PetrinetModel(Model):
 
     def _output_edges(self):
         return self.petrinet.json_graph["O"]
+
+    def _edge_source(self, edge):
+        return edge["is"] - 1 if "is" in edge else edge["ot"] - 1
+ 
+    def _edge_target(self, edge):
+        return edge["it"] - 1 if "it" in edge else edge["os"] - 1
+
+    def _transition_parameter(self, transition):
+        return transition["tprop"]["parameter_name"]
+    
+    def _transition_id(self, transition):
+        return self.transitions.find(transition)+1
+
+
 
     def _parameter_names(self):
         return [t["tprop"]["parameter_name"] for t in self._transitions()]
