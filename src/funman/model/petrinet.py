@@ -7,7 +7,12 @@ from funman.representation.representation import Parameter
 from funman.translate.petrinet import PetrinetEncoder
 
 from .model import Model
+from .generated_models.petrinet import Model as GeneratedPetrinet
 
+
+class GeneratedPetriNetModel(Model):
+    json_graph: GeneratedPetrinet
+    
 
 class PetrinetDynamics(BaseModel):
     json_graph: Dict[str, List[Dict[str, Union[int, str, Dict[str, str]]]]]
