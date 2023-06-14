@@ -10,7 +10,7 @@ import sys
 import traceback
 import uuid
 from contextlib import asynccontextmanager
-from typing import Optional
+from typing import Union
 
 import uvicorn
 from fastapi import Depends, FastAPI, HTTPException, Security, status
@@ -18,28 +18,42 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import APIKeyHeader
 from typing_extensions import Annotated
 
-from funman import Funman
 from funman.api.settings import Settings
-from funman.funman import FUNMANConfig
-from funman.model.ensemble import EnsembleModel
-from funman.representation.representation import ParameterSpace
+from funman.model.bilayer import BilayerModel
+from funman.model.decapode import DecapodeModel
+from funman.model.encoded import EncodedModel
+from funman.model.petrinet import PetrinetModel
+from funman.model.regnet import RegnetModel
 from funman.server.exception import NotFoundFunmanException
-from funman.server.query import QueryRequest, QueryResponse
+from funman.server.query import (
+    FunmanResults,
+    FunmanWorkRequest,
+    FunmanWorkUnit,
+)
 from funman.server.storage import Storage
+from funman.server.worker import FunmanWorker
 
 settings = Settings()
 _storage = Storage()
+_worker = FunmanWorker(_storage)
 
 
+# Rig some services to run while the API is online
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    await _storage.start(settings.data_path)
+    _storage.start(settings.data_path)
+    _worker.start()
     yield
-    await _storage.stop()
+    _worker.stop()
+    _storage.stop()
 
 
 def get_storage():
     return _storage
+
+
+def get_worker():
+    return _worker
 
 
 app = FastAPI(title="funman_api", lifespan=lifespan)
@@ -95,17 +109,15 @@ def read_root():
 
 @app.get(
     "/queries/{query_id}",
-    response_model=QueryResponse,
+    response_model=FunmanResults,
     dependencies=[Depends(_api_key_auth)],
 )
 async def get_queries(
-    query_id: str,
-    storage: Annotated[Storage, Depends(get_storage)],
+    query_id: str, worker: Annotated[FunmanWorker, Depends(get_worker)]
 ):
     eid = uuid.uuid4()
     try:
-        response = await storage.get_result(query_id)
-        return response
+        return worker.get_results(query_id)
     except NotFoundFunmanException:
         raise HTTPException(404)
     except Exception:
@@ -118,28 +130,23 @@ async def get_queries(
 
 @app.post(
     "/queries",
-    response_model=QueryResponse,
+    response_model=FunmanWorkUnit,
     dependencies=[Depends(_api_key_auth)],
 )
 async def post_queries(
-    request: QueryRequest,
-    storage: Annotated[Storage, Depends(get_storage)],
-    config: Optional[FUNMANConfig] = None,
+    model: Union[
+        RegnetModel,
+        PetrinetModel,
+        DecapodeModel,
+        BilayerModel,
+        EncodedModel,
+    ],
+    request: FunmanWorkRequest,
+    worker: Annotated[FunmanWorker, Depends(get_worker)],
 ):
     eid = uuid.uuid4()
     try:
-        if config is None:
-            config = FUNMANConfig()
-
-        # convert to scenario
-        scenario = request.to_scenario()
-
-        f = Funman()
-        id = await storage.claim_id()
-        result = f.solve(scenario, config=config)
-        response = QueryResponse.from_result(id, request, result)
-        await storage.add_result(response)
-        return response
+        return worker.enqueue_work(model, request)
     except Exception:
         print(f"Internal Server Error ({eid}):", file=sys.stderr)
         traceback.print_exc()
