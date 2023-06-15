@@ -1,0 +1,24 @@
+{
+  "init_values": {
+    "S": 9998,
+    "I": 1,
+    "R": 1
+  },
+  "bilayer": {
+    "json_graph": {"Wa":[{"influx":1,"infusion":2},
+			 {"influx":2,"infusion":3}],
+ "Win":[{"arg":1,"call":1},
+ 				{"arg":2,"call":1},
+ 				{"arg":2,"call":2}],
+ "Box":[{"parameter":"beta"},
+ 				{"parameter":"gamma"}],
+ "Qin":[{"variable":"S"},
+ 				{"variable":"I"},
+ 				{"variable":"R"}],
+ "Qout":[{"tanvar":"S'"},
+ 				 {"tanvar":"I'"},
+ 				 {"tanvar":"R'"}],
+ "Wn":[{"efflux":1,"effusion":1},
+ 			 {"efflux":2,"effusion":2}]}
+  }
+}

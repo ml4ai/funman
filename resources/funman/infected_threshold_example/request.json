@@ -1,0 +1,12 @@
+{
+  "query": {
+    "variable": "I",
+    "ub": 130,
+    "at_end": false
+  },
+  "parameters": [],
+  "config": {
+    "tolerance": 1.0e-8,
+    "number_of_processes": 1
+  }
+}
