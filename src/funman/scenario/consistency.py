@@ -2,7 +2,7 @@
 This submodule defines a consistency scenario.  Consistency scenarios specify an existentially quantified model.  If consistent, the solution assigns any unassigned variable, subject to their bounds and other constraints.  
 """
 import threading
-from typing import Dict, Optional, Union
+from typing import Callable, Dict, Optional, Union
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -67,6 +67,7 @@ class ConsistencyScenario(AnalysisScenario, BaseModel):
         self,
         config: "FUNMANConfig",
         haltEvent: Optional[threading.Event] = None,
+        resultsCallback: Optional[Callable[["ParameterSpace"], None]] = None,
     ) -> "AnalysisScenarioResult":
         """
         Check model consistency.
@@ -116,7 +117,12 @@ class ConsistencyScenario(AnalysisScenario, BaseModel):
                 self._encode_timed(num_steps, step_size, config)
                 result[num_steps - num_steps_range.start][
                     step_size - step_size_range.start
-                ] = search.search(self, config=config, haltEvent=haltEvent)
+                ] = search.search(
+                    self,
+                    config=config,
+                    haltEvent=haltEvent,
+                    resultsCallback=resultsCallback,
+                )
                 print(self._results_str(num_steps_range.start, result))
                 print("-" * 80)
                 if result[num_steps - num_steps_range.start][
@@ -141,7 +147,12 @@ class ConsistencyScenario(AnalysisScenario, BaseModel):
             if self._smt_encoder is None:
                 self._smt_encoder = self.model.default_encoder(config)
             self._encode_timed(config.num_steps, config.step_size, config)
-            result = search.search(self, config=config, haltEvent=haltEvent)
+            result = search.search(
+                self,
+                config=config,
+                haltEvent=haltEvent,
+                resultsCallback=resultsCallback,
+            )
             # FIXME this to_dict call assumes result is an unusual type
             consistent = result.to_dict() if result else None
 

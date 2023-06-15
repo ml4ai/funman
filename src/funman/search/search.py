@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from multiprocessing import Array, Queue, Value
 from multiprocessing.managers import SyncManager
 from queue import Queue as SQueue
-from typing import List, Optional
+from typing import Callable, List, Optional
 
 import pysmt
 from pydantic import BaseModel
@@ -85,5 +85,6 @@ class Search(ABC):
         problem: "AnalysisScenario",
         config: Optional["FUNMANConfig"] = None,
         haltEvent: Optional[threading.Event] = None,
+        resultsCallback: Optional[Callable[["ParameterSpace"], None]] = None,
     ) -> SearchEpisode:
         pass

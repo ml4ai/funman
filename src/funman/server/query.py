@@ -105,9 +105,8 @@ class FunmanResults(BaseModel):
     done: bool
     parameter_space: ParameterSpace
 
-    @staticmethod
-    def from_result(
-        work: FunmanWorkUnit,
+    def finalize_result(
+        self,
         result: Union[
             ConsistencyScenarioResult, ParameterSynthesisScenarioResult
         ],
@@ -124,10 +123,5 @@ class FunmanResults(BaseModel):
         if ps is None:
             raise Exception("No ParameterSpace for result")
 
-        return FunmanResults(
-            id=work.id,
-            model=work.model,
-            request=work.request,
-            done=False,
-            parameter_space=ps,
-        )
+        self.parameter_space = ps
+        self.done = True

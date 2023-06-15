@@ -12,7 +12,7 @@ from multiprocessing import Queue, Value
 from multiprocessing.synchronize import Condition, Event, Lock
 from queue import Empty
 from queue import Queue as QueueSP
-from typing import List, Optional, Set, Union
+from typing import Callable, List, Optional, Set, Union
 
 from pysmt.formula import FNode
 from pysmt.logics import QF_NRA
@@ -568,11 +568,8 @@ class BoxSearch(Search):
         l = self._logger(config, process_name=f"search_process_result_handler")
 
         handler: ResultHandler = config._handler
-        true_boxes = []
-        false_boxes = []
+        ps = ParameterSpace()
         dropped_boxes = []
-        true_points = []
-        false_points = []
         break_on_interrupt = False
         try:
             handler.open()
@@ -594,22 +591,22 @@ class BoxSearch(Search):
                     label = inst.label
                     if isinstance(inst, Box):
                         if label == "true":
-                            true_boxes.append(inst)
+                            ps.true_boxes.append(inst)
                         elif label == "false":
-                            false_boxes.append(inst)
+                            ps.false_boxes.append(inst)
                         elif label == "dropped":
                             dropped_boxes.append(inst)
                         else:
                             l.warning(f"Skipping Box with label: {label}")
                     elif isinstance(inst, Point):
                         if label == "true":
-                            true_points.append(inst)
+                            ps.true_points.append(inst)
                         elif label == "false":
-                            false_points.append(inst)
+                            ps.false_points.append(inst)
                         else:
                             l.warning(f"Skipping Point with label: {label}")
                     else:
-                        l.error(f"Skipping invalid object type: {typ}")
+                        l.error(f"Skipping invalid object type: {type}")
 
                     try:
                         handler.process(result)
@@ -621,11 +618,8 @@ class BoxSearch(Search):
         finally:
             handler.close()
         return {
-            "true_boxes": true_boxes,
-            "false_boxes": false_boxes,
+            "parameter_space": ps,
             "dropped_boxes": dropped_boxes,
-            "true_points": true_points,
-            "false_points": false_points,
         }
 
     def _run_handler_step(self, rval, config: "FUNMANConfig", all_results):
@@ -635,10 +629,7 @@ class BoxSearch(Search):
         l = self._logger(config, process_name=f"search_process_result_handler")
 
         handler: ResultHandler = config._handler
-        # true_boxes = []
-        # false_boxes = []
-        # true_points = []
-        # false_points = []
+        ps = all_results.get("parameter_space")
         break_on_interrupt = False
         try:
             # handler.open()
@@ -665,9 +656,9 @@ class BoxSearch(Search):
                     label = inst.label
                     if isinstance(inst, Box):
                         if label == "true":
-                            all_results["true_boxes"].append(inst)
+                            ps.true_boxes.append(inst)
                         elif label == "false":
-                            all_results["false_boxes"].append(inst)
+                            ps.false_boxes.append(inst)
                         elif label == "dropped":
                             all_results["dropped_boxes"].append(inst)
                         elif label == "unknown":
@@ -676,9 +667,9 @@ class BoxSearch(Search):
                             l.warning(f"Skipping Box with label: {label}")
                     elif isinstance(inst, Point):
                         if label == "true":
-                            all_results["true_points"].append(inst)
+                            ps.true_points.append(inst)
                         elif label == "false":
-                            all_results["false_points"].append(inst)
+                            ps.false_points.append(inst)
                         else:
                             l.warning(f"Skipping Point with label: {label}")
                     else:
@@ -703,6 +694,7 @@ class BoxSearch(Search):
         problem: "AnalysisScenario",
         config: "FUNMANConfig",
         haltEvent: Optional[threading.Event] = None,
+        resultsCallback: Optional[Callable[[ParameterSpace], None]] = None,
     ) -> ParameterSpace:
         """
         The BoxSearch.search() creates a BoxSearchEpisode object that stores the
@@ -730,39 +722,44 @@ class BoxSearch(Search):
         if config.number_of_processes > 1:
             return self._search_mp(problem, config, haltEvent=haltEvent)
         else:
-            return self._search_sp(problem, config, haltEvent=haltEvent)
+            return self._search_sp(
+                problem,
+                config,
+                haltEvent=haltEvent,
+                resultsCallback=resultsCallback,
+            )
 
     def _search_sp(
         self,
         problem,
         config: "FUNMANConfig",
         haltEvent: Optional[threading.Event],
+        resultsCallback: Optional[Callable[[ParameterSpace], None]] = None,
     ) -> ParameterSpace:
         episode = BoxSearchEpisode(config=config, problem=problem)
         episode._initialize_boxes(config.num_initial_boxes)
         rval = QueueSP()
         all_results = {
-            "true_boxes": [],
-            "false_boxes": [],
-            "true_points": [],
-            "false_points": [],
+            "parameter_space": ParameterSpace(),
+            "dropped_boxes": [],
         }
+
+        def handler(rval, config: "FUNMANConfig", results):
+            new_results = self._run_handler_step(rval, config, results)
+            if resultsCallback is not None:
+                resultsCallback(new_results.get("parameter_space"))
+            return new_results
+
         config._handler.open()
         self._expand(
             rval,
             episode,
-            handler=self._run_handler_step,
+            handler=handler,
             all_results=all_results,
             haltEvent=haltEvent,
         )
         config._handler.close()
-        parameter_space = ParameterSpace(
-            true_boxes=all_results.get("true_boxes"),
-            false_boxes=all_results.get("false_boxes"),
-            true_points=all_results.get("true_points"),
-            false_points=all_results.get("false_points"),
-        )
-        return parameter_space
+        return all_results["parameter_space"]
 
     def _search_mp(
         self,

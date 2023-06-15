@@ -2,9 +2,10 @@ import queue
 import threading
 from typing import Optional
 
-from funman import Funman
+from funman import Funman, model
 from funman.funman import FUNMANConfig
 from funman.model.model import Model
+from funman.representation.representation import ParameterSpace
 from funman.server.query import (
     FunmanResults,
     FunmanWorkRequest,
@@ -24,6 +25,7 @@ class FunmanWorker:
         self.queue = queue.Queue()
         self.queued_ids = set()
         self.current_id = None
+        self.current_results = None
 
     def enqueue_work(
         self, model: Model, request: FunmanWorkRequest
@@ -60,8 +62,7 @@ class FunmanWorker:
 
     def get_results(self, id: str):
         if self.is_processing_id(id):
-            print("TODO: Get running results")
-            return None
+            return self.current_results
         return self.storage.get_result(id)
 
     def halt(self, id: str):
@@ -79,6 +80,15 @@ class FunmanWorker:
         with self._id_lock:
             return self.current_id
 
+    def _update_current_results(self, results: ParameterSpace):
+        if self.current_results is None:
+            print(
+                "WARNING: Attempted to update results while results was None"
+            )
+            return
+        # TODO handle copy?
+        self.current_results.parameter_space = results
+
     def _run(self):
         print("FunmanWorker starting...")
         while True:
@@ -95,6 +105,14 @@ class FunmanWorker:
 
             with self._id_lock:
                 self.current_id = work.id
+                self.current_results = FunmanResults(
+                    id=work.id,
+                    model=work.model,
+                    request=work.request,
+                    done=False,
+                    parameter_space=ParameterSpace(),
+                )
+
             print(f"Starting work on: {work.id}")
             # convert to scenario
             scenario = work.to_scenario()
@@ -104,16 +122,19 @@ class FunmanWorker:
                 if work.request.config is None
                 else work.request.config
             )
-
             f = Funman()
             self._halt_event.clear()
             result = f.solve(
-                scenario, config=config, haltEvent=self._halt_event
+                scenario,
+                config=config,
+                haltEvent=self._halt_event,
+                resultsCallback=self._update_current_results,
             )
-            response = FunmanResults.from_result(work, result)
-            self.storage.add_result(response)
+            self.current_results.finalize_result(result)
+            self.storage.add_result(self.current_results)
             self.queue.task_done()
             print(f"Completed work on: {work.id}")
             with self._id_lock:
                 self.current_id = None
+                self.current_results = None
         print("FunmanWorker exiting...")

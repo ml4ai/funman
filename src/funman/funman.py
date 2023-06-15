@@ -4,7 +4,7 @@ analysis.
 """
 import logging
 import threading
-from typing import Optional, Union
+from typing import Callable, Optional, Union
 
 import multiprocess as mp
 from pydantic import BaseModel, Field, validator
@@ -93,6 +93,7 @@ class Funman(object):
         problem: "AnalysisScenario",
         config: FUNMANConfig = FUNMANConfig(),
         haltEvent: Optional[threading.Event] = None,
+        resultsCallback: Optional[Callable[["ParameterSpace"], None]] = None,
     ) -> "AnalysisScenarioResult":
         """
         This method is the main entry point for Funman analysis.  Its inputs
@@ -115,4 +116,6 @@ class Funman(object):
             The resulting data, statistics, and other relevant information
             produced by the analysis.
         """
-        return problem.solve(config, haltEvent=haltEvent)
+        return problem.solve(
+            config, haltEvent=haltEvent, resultsCallback=resultsCallback
+        )

@@ -2,7 +2,7 @@
 This module defines the Parameter Synthesis scenario.
 """
 import threading
-from typing import Dict, List, Optional, Union
+from typing import Callable, Dict, List, Optional, Union
 
 from pandas import DataFrame
 from pydantic import BaseModel
@@ -74,6 +74,7 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
         self,
         config: "FUNMANConfig",
         haltEvent: Optional[threading.Event] = None,
+        resultsCallback: Optional[Callable[["ParameterSpace"], None]] = None,
     ) -> "ParameterSynthesisScenarioResult":
         """
         Synthesize parameters for a model.  Use the BoxSearch algorithm to
@@ -122,7 +123,12 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
                 num_steps = configuration["num_steps"]
                 step_size = configuration["step_size"]
                 self._encode_timed(num_steps, step_size, config)
-                r = search.search(self, config=config, haltEvent=haltEvent)
+                r = search.search(
+                    self,
+                    config=config,
+                    haltEvent=haltEvent,
+                    resultsCallback=resultsCallback,
+                )
                 result.append(
                     {
                         "num_steps": num_steps,
@@ -144,7 +150,10 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
                 p: minus(p.ub, p.lb) for p in self.parameters
             }
             parameter_space: ParameterSpace = search.search(
-                self, config, haltEvent=haltEvent
+                self,
+                config,
+                haltEvent=haltEvent,
+                resultsCallback=resultsCallback,
             )
 
         return ParameterSynthesisScenarioResult(
