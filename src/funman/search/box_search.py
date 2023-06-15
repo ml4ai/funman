@@ -5,6 +5,7 @@ This module defines the BoxSearch class and supporting classes.
 import logging
 import multiprocessing as mp
 import os
+import threading
 import traceback
 from datetime import datetime
 from multiprocessing import Queue, Value
@@ -429,6 +430,7 @@ class BoxSearch(Search):
         idle_flags: Optional[List[Event]] = None,
         handler: Optional["ResultHandler"] = None,
         all_results=None,
+        haltEvent: Optional[threading.Event] = None,
     ):
         """
         A single search process will evaluate and expand the boxes in the
@@ -475,6 +477,8 @@ class BoxSearch(Search):
                 self._initialize_encoding(solver, episode)
                 print("Initialized dynamics of model")
                 while True:
+                    if haltEvent is not None and haltEvent.is_set():
+                        break
                     try:
                         box: Box = episode._get_unknown()
                         rval.put(box.dict())
@@ -695,7 +699,10 @@ class BoxSearch(Search):
         return all_results
 
     def search(
-        self, problem: "AnalysisScenario", config: "FUNMANConfig"
+        self,
+        problem: "AnalysisScenario",
+        config: "FUNMANConfig",
+        haltEvent: Optional[threading.Event] = None,
     ) -> ParameterSpace:
         """
         The BoxSearch.search() creates a BoxSearchEpisode object that stores the
@@ -721,11 +728,16 @@ class BoxSearch(Search):
         # problem.encode()
 
         if config.number_of_processes > 1:
-            return self._search_mp(problem, config)
+            return self._search_mp(problem, config, haltEvent=haltEvent)
         else:
-            return self._search_sp(problem, config)
+            return self._search_sp(problem, config, haltEvent=haltEvent)
 
-    def _search_sp(self, problem, config: "FUNMANConfig") -> ParameterSpace:
+    def _search_sp(
+        self,
+        problem,
+        config: "FUNMANConfig",
+        haltEvent: Optional[threading.Event],
+    ) -> ParameterSpace:
         episode = BoxSearchEpisode(config=config, problem=problem)
         episode._initialize_boxes(config.num_initial_boxes)
         rval = QueueSP()
@@ -741,15 +753,9 @@ class BoxSearch(Search):
             episode,
             handler=self._run_handler_step,
             all_results=all_results,
+            haltEvent=haltEvent,
         )
         config._handler.close()
-        # rval.put(None)
-
-        # all_results = self._run_handler(rval, config)
-        # episode._true_boxes = all_results.get("true_boxes")
-        # episode.false_boxes = all_results.get("false_boxes")
-        # episode._true_points = all_results.get("true_points")
-        # episode._false_points = all_results.get("false_points")
         parameter_space = ParameterSpace(
             true_boxes=all_results.get("true_boxes"),
             false_boxes=all_results.get("false_boxes"),
@@ -758,7 +764,12 @@ class BoxSearch(Search):
         )
         return parameter_space
 
-    def _search_mp(self, problem, config: "FUNMANConfig") -> ParameterSpace:
+    def _search_mp(
+        self,
+        problem,
+        config: "FUNMANConfig",
+        haltEvent: Optional[threading.Event],
+    ) -> ParameterSpace:
         l = mp.get_logger()
         l.setLevel(LOG_LEVEL)
         processes = config.number_of_processes
@@ -806,9 +817,15 @@ class BoxSearch(Search):
                     if config._wait_action is not None:
                         while not starmap_result.ready():
                             config._wait_action.run()
-                    starmap_result.wait()
+                    if haltEvent is None:
+                        starmap_result.wait()
+                    else:
+                        while not starmap_result.wait(0.5):
+                            if haltEvent.is_set():
+                                break
+
                 except KeyboardInterrupt:
-                    l.warninging("--- Received Keyboard Interrupt ---")
+                    l.warning("--- Received Keyboard Interrupt ---")
 
                 rval.put(None)
                 l.info("Waiting for result handler process")
@@ -819,10 +836,6 @@ class BoxSearch(Search):
                     l.error("Result handler failed to exit")
                 all_results = rval_handler_process.get()
 
-                # episode._true_boxes = all_results.get("true_boxes")
-                # episode._false_boxes = all_results.get("false_boxes")
-                # episode._true_points = all_results.get("true_points")
-                # episode._false_points = all_results.get("false_points")
                 parameter_space = ParameterSpace(
                     true_boxes=all_results.get("true_boxes"),
                     false_boxes=all_results.get("false_boxes"),

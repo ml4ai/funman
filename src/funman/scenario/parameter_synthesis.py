@@ -1,6 +1,7 @@
 """
 This module defines the Parameter Synthesis scenario.
 """
+import threading
 from typing import Dict, List, Optional, Union
 
 from pandas import DataFrame
@@ -70,7 +71,9 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
         return "parameter_synthesis"
 
     def solve(
-        self, config: "FUNMANConfig"
+        self,
+        config: "FUNMANConfig",
+        haltEvent: Optional[threading.Event] = None,
     ) -> "ParameterSynthesisScenarioResult":
         """
         Synthesize parameters for a model.  Use the BoxSearch algorithm to
@@ -119,7 +122,7 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
                 num_steps = configuration["num_steps"]
                 step_size = configuration["step_size"]
                 self._encode_timed(num_steps, step_size, config)
-                r = search.search(self, config=config)
+                r = search.search(self, config=config, haltEvent=haltEvent)
                 result.append(
                     {
                         "num_steps": num_steps,
@@ -140,7 +143,9 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
             self._original_parameter_widths = {
                 p: minus(p.ub, p.lb) for p in self.parameters
             }
-            parameter_space: ParameterSpace = search.search(self, config)
+            parameter_space: ParameterSpace = search.search(
+                self, config, haltEvent=haltEvent
+            )
 
         return ParameterSynthesisScenarioResult(
             parameter_space=parameter_space, scenario=self

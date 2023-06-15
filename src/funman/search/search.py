@@ -1,4 +1,5 @@
 import datetime
+import threading
 from abc import ABC, abstractmethod
 from multiprocessing import Array, Queue, Value
 from multiprocessing.managers import SyncManager
@@ -83,5 +84,6 @@ class Search(ABC):
         self,
         problem: "AnalysisScenario",
         config: Optional["FUNMANConfig"] = None,
+        haltEvent: Optional[threading.Event] = None,
     ) -> SearchEpisode:
         pass

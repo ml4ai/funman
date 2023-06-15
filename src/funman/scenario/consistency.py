@@ -1,7 +1,7 @@
 """
 This submodule defines a consistency scenario.  Consistency scenarios specify an existentially quantified model.  If consistent, the solution assigns any unassigned variable, subject to their bounds and other constraints.  
 """
-
+import threading
 from typing import Dict, Optional, Union
 
 import matplotlib.pyplot as plt
@@ -63,7 +63,11 @@ class ConsistencyScenario(AnalysisScenario, BaseModel):
     def get_kind(cls) -> str:
         return "consistency"
 
-    def solve(self, config: "FUNMANConfig") -> "AnalysisScenarioResult":
+    def solve(
+        self,
+        config: "FUNMANConfig",
+        haltEvent: Optional[threading.Event] = None,
+    ) -> "AnalysisScenarioResult":
         """
         Check model consistency.
 
@@ -112,7 +116,7 @@ class ConsistencyScenario(AnalysisScenario, BaseModel):
                 self._encode_timed(num_steps, step_size, config)
                 result[num_steps - num_steps_range.start][
                     step_size - step_size_range.start
-                ] = search.search(self, config=config)
+                ] = search.search(self, config=config, haltEvent=haltEvent)
                 print(self._results_str(num_steps_range.start, result))
                 print("-" * 80)
                 if result[num_steps - num_steps_range.start][
@@ -137,7 +141,7 @@ class ConsistencyScenario(AnalysisScenario, BaseModel):
             if self._smt_encoder is None:
                 self._smt_encoder = self.model.default_encoder(config)
             self._encode_timed(config.num_steps, config.step_size, config)
-            result = search.search(self, config=config)
+            result = search.search(self, config=config, haltEvent=haltEvent)
             # FIXME this to_dict call assumes result is an unusual type
             consistent = result.to_dict() if result else None
 

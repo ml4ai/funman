@@ -1,4 +1,6 @@
+import threading
 from abc import ABC, abstractclassmethod, abstractmethod
+from typing import Optional
 
 from pydantic import BaseModel
 
@@ -13,7 +15,9 @@ class AnalysisScenario(ABC, BaseModel):
         pass
 
     @abstractmethod
-    def solve(self, config: "FUNMANConfig"):
+    def solve(
+        self, config: "FUNMANConfig", haltEvent: Optional[threading.Event]
+    ):
         pass
 
     @abstractmethod

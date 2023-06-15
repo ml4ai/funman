@@ -1,3 +1,4 @@
+import threading
 from typing import Optional
 
 from pysmt.logics import QF_NRA
@@ -11,7 +12,10 @@ from .search import Search, SearchEpisode
 
 class SMTCheck(Search):
     def search(
-        self, problem, config: Optional["FUNMANConfig"] = None
+        self,
+        problem,
+        config: Optional["FUNMANConfig"] = None,
+        haltEvent: Optional[threading.Event] = None,
     ) -> "SearchEpisode":
         episode = SearchEpisode(config=config, problem=problem)
         result = self.expand(problem, episode)

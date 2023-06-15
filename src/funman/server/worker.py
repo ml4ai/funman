@@ -14,6 +14,7 @@ from funman.server.query import (
 
 class FunmanWorker:
     def __init__(self, storage):
+        self._halt_event = threading.Event()
         self._stop_event = threading.Event()
         self._thread = None
         self._id_lock = threading.Lock()
@@ -66,7 +67,8 @@ class FunmanWorker:
     def halt(self, id: str):
         with self._id_lock:
             if id == self.current_id:
-                print(f"TODO: Halt {id}")
+                print(f"Halting {id}")
+                self._halt_event.set()
                 return
             with self._set_lock:
                 if id in self.queued_ids:
@@ -104,7 +106,10 @@ class FunmanWorker:
             )
 
             f = Funman()
-            result = f.solve(scenario, config=config)
+            self._halt_event.clear()
+            result = f.solve(
+                scenario, config=config, haltEvent=self._halt_event
+            )
             response = FunmanResults.from_result(work, result)
             self.storage.add_result(response)
             self.queue.task_done()
