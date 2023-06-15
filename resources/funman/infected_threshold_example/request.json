@@ -4,7 +4,20 @@
     "ub": 130,
     "at_end": false
   },
-  "parameters": [],
+  "parameters": [
+    {
+        "name": "beta",
+        "lb": 0.0000335,
+        "ub": 0.0001005,
+        "label": "all"
+    },
+    {
+        "name": "gamma",
+        "lb": 0.07142857,
+        "ub": 0.07142857,
+        "label": "all"
+    }
+  ],
   "config": {
     "tolerance": 1.0e-8,
     "number_of_processes": 1
