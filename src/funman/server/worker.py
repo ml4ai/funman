@@ -1,5 +1,6 @@
 import queue
 import threading
+from typing import Optional
 
 from funman import Funman
 from funman.funman import FUNMANConfig
@@ -16,9 +17,11 @@ class FunmanWorker:
         self._stop_event = threading.Event()
         self._thread = None
         self._id_lock = threading.Lock()
+        self._set_lock = threading.Lock()
 
         self.storage = storage
         self.queue = queue.Queue()
+        self.queued_ids = set()
         self.current_id = None
 
     def enqueue_work(
@@ -27,6 +30,8 @@ class FunmanWorker:
         id = self.storage.claim_id()
         work = FunmanWorkUnit(id=id, model=model, request=request)
         self.queue.put(work)
+        with self._set_lock:
+            self.queued_ids.add(work.id)
         return work
 
     def _get_work(self):
@@ -58,12 +63,34 @@ class FunmanWorker:
             return None
         return self.storage.get_result(id)
 
+    def halt(self, id: str):
+        with self._id_lock:
+            if id == self.current_id:
+                print(f"TODO: Halt {id}")
+                return
+            with self._set_lock:
+                if id in self.queued_ids:
+                    self.queued_ids.remove(id)
+                return
+
+    def get_current(self) -> Optional[str]:
+        with self._id_lock:
+            return self.current_id
+
     def _run(self):
         print("FunmanWorker starting...")
         while True:
             if self._stop_event.is_set():
                 break
             work: FunmanWorkUnit = self._get_work()
+
+            # skip work that is no longer in the queued_ids set
+            # since that likely indicated it has been halted
+            # before starting
+            with self._set_lock:
+                if work.id not in self.queued_ids:
+                    continue
+
             with self._id_lock:
                 self.current_id = work.id
             print(f"Starting work on: {work.id}")

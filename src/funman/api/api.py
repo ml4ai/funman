@@ -9,8 +9,8 @@ HTTPException
 import sys
 import traceback
 import uuid
-from contextlib import asynccontextmanager
-from typing import Union
+from contextlib import asynccontextmanager, contextmanager
+from typing import Optional, Union
 
 import uvicorn
 from fastapi import Depends, FastAPI, HTTPException, Security, status
@@ -94,6 +94,19 @@ app.add_middleware(
 )
 
 
+@contextmanager
+def internal_error_handler():
+    eid = uuid.uuid4()
+    try:
+        yield
+    except Exception:
+        print(f"Internal Server Error ({eid}):", file=sys.stderr)
+        traceback.print_exc()
+        raise HTTPException(
+            status_code=500, detail=f"Internal Server Error: {eid}"
+        )
+
+
 @app.get("/", dependencies=[Depends(_api_key_auth)])
 def read_root():
     """
@@ -108,6 +121,29 @@ def read_root():
 
 
 @app.get(
+    "/queries/{query_id}/halt",
+    response_model=str,
+    dependencies=[Depends(_api_key_auth)],
+)
+async def halt(
+    query_id: str, worker: Annotated[FunmanWorker, Depends(get_worker)]
+):
+    with internal_error_handler():
+        worker.halt(query_id)
+        return "Success"
+
+
+@app.get(
+    "/queries/current",
+    response_model=Optional[str],
+    dependencies=[Depends(_api_key_auth)],
+)
+async def get_current(worker: Annotated[FunmanWorker, Depends(get_worker)]):
+    with internal_error_handler():
+        return worker.get_current()
+
+
+@app.get(
     "/queries/{query_id}",
     response_model=FunmanResults,
     dependencies=[Depends(_api_key_auth)],
@@ -115,17 +151,11 @@ def read_root():
 async def get_queries(
     query_id: str, worker: Annotated[FunmanWorker, Depends(get_worker)]
 ):
-    eid = uuid.uuid4()
-    try:
-        return worker.get_results(query_id)
-    except NotFoundFunmanException:
-        raise HTTPException(404)
-    except Exception:
-        print(f"Internal Server Error ({eid}):", file=sys.stderr)
-        traceback.print_exc()
-        raise HTTPException(
-            status_code=500, detail=f"Internal Server Error: {eid}"
-        )
+    with internal_error_handler():
+        try:
+            return worker.get_results(query_id)
+        except NotFoundFunmanException:
+            raise HTTPException(404)
 
 
 @app.post(
@@ -144,15 +174,8 @@ async def post_queries(
     request: FunmanWorkRequest,
     worker: Annotated[FunmanWorker, Depends(get_worker)],
 ):
-    eid = uuid.uuid4()
-    try:
+    with internal_error_handler():
         return worker.enqueue_work(model, request)
-    except Exception:
-        print(f"Internal Server Error ({eid}):", file=sys.stderr)
-        traceback.print_exc()
-        raise HTTPException(
-            status_code=500, detail=f"Internal Server Error: {eid}"
-        )
 
 
 if __name__ == "__main__":
