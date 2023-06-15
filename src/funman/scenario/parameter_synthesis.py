@@ -90,6 +90,7 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
         else:
             search = config._search()
 
+        self._extract_non_overriden_parameters()
         self._filter_parameters()
 
         if self.model.structural_parameter_bounds:
@@ -140,6 +141,13 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
         return ParameterSynthesisScenarioResult(
             parameter_space=parameter_space, scenario=self
         )
+
+    def _extract_non_overriden_parameters(self):
+        # If a model has parameters that are not overridden by the scenario, then add them to the scenario
+        model_parameters = self.model._parameter_names()
+        self.parameters += [
+            Parameter(name=p, lb=self.model._parameter_lb(p), ub=self.model._parameter_ub(p)) for p in model_parameters
+        ]
 
     def _filter_parameters(self):
         # If the scenario has parameters that are not in the model, then remove them from the scenario

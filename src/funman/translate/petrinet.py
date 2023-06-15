@@ -42,52 +42,56 @@ class PetrinetEncoder(Encoder):
         transitions = model._transitions()
         step_size = next_step - step
         current_state = {
-            model._state_var_name(s): self._encode_state_var(model._state_var_name(s), time=step) for s in state_vars
+            model._state_var_id(s): self._encode_state_var(model._state_var_name(s), time=step) for s in state_vars
         }
         next_state = {
-            model._state_var_name(s): self._encode_state_var(model._state_var_name(s), time=next_step)
+            model._state_var_id(s): self._encode_state_var(model._state_var_name(s), time=next_step)
             for s in state_vars
         }
 
         # Each transition corresponds to a term that is the product of current state vars and a parameter
-        transition_terms = [
+        transition_terms = {
+            model._transition_id(t):
             self._encode_transition_term(
                 t,
                 current_state,
                 next_state,
                 model
             )
-            for i, t in enumerate(transitions)
-        ]
+            for t in transitions
+        }
 
         # for each var, next state is the net flow for the var: sum(inflow) - sum(outflow)
         net_flows = []
-        for v_index, var in enumerate(state_vars):
+        for var in state_vars:
             state_var_flows = []
-            for t_index, transition in enumerate(transitions):
+            for transition in transitions:
+                state_var_id = model._state_var_id(var)
+
+                transition_id =  model._transition_id(transition)
                 outflow = model._num_flow_from_state_to_transition(
-                    v_index + 1, t_index + 1
+                   state_var_id, transition_id
                 )
                 inflow = model._flow_into_state_via_transition(
-                    v_index + 1, t_index + 1
+                    state_var_id, transition_id
                 )
                 net_flow = inflow - outflow
 
                 if net_flow != 0:
                     state_var_flows.append(
                         Times(
-                            Real(net_flow) * transition_terms[t_index]
+                            Real(net_flow) * transition_terms[transition_id]
                         ).simplify()
                     )
             if len(state_var_flows) > 0:
                 flows = Plus(
                     Times(Real(step_size), Plus(state_var_flows)).simplify(),
-                    current_state[v_index],
+                    current_state[state_var_id],
                 ).simplify()
             else:
-                flows = current_state[v_index]
+                flows = current_state[state_var_id]
 
-            net_flows.append(Equals(next_state[v_index], flows))
+            net_flows.append(Equals(next_state[state_var_id], flows))
 
         return And(net_flows)
 

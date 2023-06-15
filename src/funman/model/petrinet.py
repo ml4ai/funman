@@ -1,3 +1,4 @@
+from abc import ABC
 from typing import Dict, List, Union
 
 import graphviz
@@ -10,7 +11,143 @@ from .model import Model
 from .generated_models.petrinet import Model as GeneratedPetrinet, State, Transition
 
 
-class GeneratedPetriNetModel(Model):
+class AbstractPetriNetModel(Model):
+    def _num_flow_from_state_to_transition(
+        self, state_id: Union[str, int], transition_id: Union[str, int]
+    ) -> int:
+        return len(
+            [
+                edge
+                for edge in self._input_edges()
+                if self._edge_source(edge) == state_id and self._edge_target(edge) == transition_id
+            ]
+        )
+
+    def _num_flow_from_transition_to_state(
+        self, state_id: Union[str, int], transition_id: Union[str, int]
+    ) -> int:
+        return len(
+            [
+                edge
+                for edge in self._output_edges()
+                if self._edge_source(edge) ==  transition_id and self._edge_target(edge) == state_id
+            ]
+        )
+
+
+
+    def _num_flow_from_transition(self, transition_id: Union[str, int]) -> int:
+        return len(
+            [
+                edge
+                for edge in self._output_edges()
+                if self._edge_source(edge) == transition_id
+            ]
+        )
+
+    def _num_flow_into_transition(self, transition_id: Union[str, int]) -> int:
+        return len(
+            [
+                edge
+                for edge in self._input_edges()
+                if self._edge_target(edge) == transition_id
+            ]
+        )
+
+    def _flow_into_state_via_transition(
+        self, state_id: Union[str, int], transition_id: Union[str, int]
+    ) -> float:
+        num_flow_to_transition = self._num_flow_into_transition(
+            transition_id
+        )
+        num_inflow = self._num_flow_from_transition_to_state(
+            state_id, transition_id
+        )
+        num_transition_outputs = self._num_flow_from_transition(
+            transition_id
+        )
+        if num_transition_outputs > 0:
+            return (
+                num_inflow / num_transition_outputs
+            ) * num_flow_to_transition
+        else:
+            return 0
+
+
+    def _parameters(self) -> List[Parameter]:
+        param_names = self._parameter_names()
+        param_values = self._parameter_values()
+        params = [
+            Parameter(
+                name=p,
+                lb=self.parameter_bounds[p][0],
+                ub=self.parameter_bounds[p][1],
+            )
+            for p in param_names
+            if self.parameter_bounds
+            and p not in param_values
+            and p in self.parameter_bounds
+            and self.parameter_bounds[p]
+        ]
+        params += [
+            Parameter(
+                name=p,
+                lb=param_values[p],
+                ub=param_values[p],
+            )
+            for p in param_names
+            if p in param_values
+        ]
+
+        return params
+
+
+    def to_dot(self, values={}):
+        """
+        Create a dot object for visualizing the graph.
+
+        Returns
+        -------
+        graphviz.Digraph
+            The graph represented by self.
+        """
+        dot = graphviz.Digraph(
+            name=f"petrinet",
+            graph_attr={},
+        )
+
+        state_vars = self._state_vars()
+        transitions = self._transitions()
+
+        for _, var in enumerate(state_vars):
+            state_var_id = self._state_var_id(var)
+            state_var_name = self._state_var_name(var)
+            for transition in transitions:
+                transition_id = self._transition_id(transition)
+                transition_parameter = self._transition_parameter(transition)
+                transition_parameter_value = self._parameter_values()[transition_parameter]
+                transition_name = f"{transition_id}({transition_parameter}) = {transition_parameter_value}"
+                dot.node(transition_name, _attributes={"shape": "box"})
+                # state var to transition
+                for edge in self._input_edges():
+                    if self._edge_source(edge) == state_var_id and self._edge_target(edge) == transition_id:
+                        dot.edge(state_var_name, transition_name)
+                # transition to state var
+                for edge in self._output_edges():
+                    if self._edge_source(edge) == transition_id and self._edge_target(edge) == state_var_id:
+                        flow = self._flow_into_state_via_transition(
+                            state_var_id, transition_id
+                        ) / self._num_flow_from_transition_to_state(
+                            state_var_id, transition_id
+                        )
+                        dot.edge(
+                            transition_name, state_var_name, label=f"{flow}"
+                        )
+
+        return dot
+
+
+class GeneratedPetriNetModel(AbstractPetriNetModel):
     petrinet: GeneratedPetrinet
     
     def default_encoder(self, config: "FUNMANConfig") -> "Encoder":
@@ -26,7 +163,22 @@ class GeneratedPetriNetModel(Model):
             config=config,
             model=self,
         )
+
+    def _get_init_value(self, var: str):
+        value = Model._get_init_value(self, var)
+        if value is None:
+            initials = self.petrinet.semantics.ode.initials
+            value = next(i.expression for i in initials if i.target == var)
+        return value
+
+    def _parameter_lb(self, param_name: str):
+        return next((p.distribution.parameters['minimum'] if p.distribution else p.value) for p in self.petrinet.semantics.ode.parameters if p.id == param_name)
     
+    def _parameter_ub(self, param_name: str):
+        return next((p.distribution.parameters['maximum'] if p.distribution else p.value) for p in self.petrinet.semantics.ode.parameters if p.id == param_name)
+
+
+
     def _state_vars(self) -> List[State]:
         return self.petrinet.model.states.__root__
 
@@ -60,8 +212,15 @@ class GeneratedPetriNetModel(Model):
     def _transition_id(self, transition):
         return transition.id
 
+    def _state_var_id(self, state_var):
+        return self._state_var_name(state_var)
+
+
     def _parameter_names(self):
         return [p.id for p in self.petrinet.semantics.ode.parameters]
+    
+    def _parameter_values(self):
+        return {p.id:p.value for p in self.petrinet.semantics.ode.parameters}
 
 class PetrinetDynamics(BaseModel):
     json_graph: Dict[str, List[Dict[str, Union[int, str, Dict[str, str]]]]]
@@ -72,7 +231,7 @@ class PetrinetDynamics(BaseModel):
     #     self._initialize_from_json()
 
 
-class PetrinetModel(Model):
+class PetrinetModel(AbstractPetriNetModel):
     petrinet: PetrinetDynamics
 
     def default_encoder(self, config: "FUNMANConfig") -> "Encoder":
@@ -117,8 +276,10 @@ class PetrinetModel(Model):
         return transition["tprop"]["parameter_name"]
     
     def _transition_id(self, transition):
-        return self.transitions.find(transition)+1
+        return self._transitions().find(transition)+1
 
+    def _state_var_id(self, state_var):
+        return self._state_vars().find(state_var)+1
 
 
     def _parameter_names(self):
@@ -130,128 +291,4 @@ class PetrinetModel(Model):
             for t in self._transitions()
         }
 
-    def _parameters(self) -> List[Parameter]:
-        param_names = self._parameter_names()
-        param_values = self._parameter_values()
-        params = [
-            Parameter(
-                name=p,
-                lb=self.parameter_bounds[p][0],
-                ub=self.parameter_bounds[p][1],
-            )
-            for p in param_names
-            if self.parameter_bounds
-            and p not in param_values
-            and p in self.parameter_bounds
-            and self.parameter_bounds[p]
-        ]
-        params += [
-            Parameter(
-                name=p,
-                lb=param_values[p],
-                ub=param_values[p],
-            )
-            for p in param_names
-            if p in param_values
-        ]
 
-        return params
-
-    def _num_flow_from_transition_to_state(
-        self, state_index: int, transition_index: int
-    ) -> int:
-        return len(
-            [
-                edge
-                for edge in self._output_edges()
-                if edge["os"] == state_index and edge["ot"] == transition_index
-            ]
-        )
-
-    def _num_flow_from_state_to_transition(
-        self, state_index: int, transition_index: int
-    ) -> int:
-        return len(
-            [
-                edge
-                for edge in self._input_edges()
-                if edge["is"] == state_index and edge["it"] == transition_index
-            ]
-        )
-
-    def _num_flow_from_transition(self, transition_index: int) -> int:
-        return len(
-            [
-                edge
-                for edge in self._output_edges()
-                if edge["ot"] == transition_index
-            ]
-        )
-
-    def _num_flow_into_transition(self, transition_index: int) -> int:
-        return len(
-            [
-                edge
-                for edge in self._input_edges()
-                if edge["it"] == transition_index
-            ]
-        )
-
-    def _flow_into_state_via_transition(
-        self, state_index: int, transition_index: int
-    ) -> float:
-        num_flow_to_transition = self._num_flow_into_transition(
-            transition_index
-        )
-        num_inflow = self._num_flow_from_transition_to_state(
-            state_index, transition_index
-        )
-        num_transition_outputs = self._num_flow_from_transition(
-            transition_index
-        )
-        if num_transition_outputs > 0:
-            return (
-                num_inflow / num_transition_outputs
-            ) * num_flow_to_transition
-        else:
-            return 0
-
-    def to_dot(self, values={}):
-        """
-        Create a dot object for visualizing the graph.
-
-        Returns
-        -------
-        graphviz.Digraph
-            The graph represented by self.
-        """
-        dot = graphviz.Digraph(
-            name=f"petrinet",
-            graph_attr={},
-        )
-
-        state_vars = self._state_vars()
-        transitions = self._transitions()
-
-        for v_index, var in enumerate(state_vars):
-            state_var_name = var["sname"]
-            for t_index, transition in enumerate(transitions):
-                transition_name = f"{transition['tname']}({transition['tprop']['parameter_name']}) = {transition['tprop']['parameter_value']}"
-                dot.node(transition_name, _attributes={"shape": "box"})
-                # state var to transition
-                for edge in self._input_edges():
-                    if edge["is"] == v_index + 1 and edge["it"] == t_index + 1:
-                        dot.edge(state_var_name, transition_name)
-                # transition to state var
-                for edge in self._output_edges():
-                    if edge["os"] == v_index + 1 and edge["ot"] == t_index + 1:
-                        flow = self._flow_into_state_via_transition(
-                            v_index + 1, t_index + 1
-                        ) / self._num_flow_from_transition_to_state(
-                            v_index + 1, t_index + 1
-                        )
-                        dot.edge(
-                            transition_name, state_var_name, label=f"{flow}"
-                        )
-
-        return dot
