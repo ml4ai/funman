@@ -6,19 +6,11 @@ from pydantic import BaseModel
 from funman.representation.representation import Parameter
 from funman.translate.regnet import RegnetEncoder
 
-from .model import Model
 from .generated_models.regnet import Model as GeneratedRegnet
-
-class GeneratedRegnetModel(Model):
-    regnet: GeneratedRegnet
-
-class RegnetDynamics(BaseModel):
-    json_graph: Dict[str, Union[str, Dict[str, List[Dict[str, Any]]]]]
+from .model import Model
 
 
-class RegnetModel(Model):
-    regnet: RegnetDynamics
-
+class AbstractRegnetModel(Model):
     def default_encoder(self, config: "FUNMANConfig") -> "Encoder":
         """
         Return the default Encoder for the model
@@ -32,6 +24,18 @@ class RegnetModel(Model):
             config=config,
             model=self,
         )
+
+
+class GeneratedRegnetModel(AbstractRegnetModel):
+    regnet: GeneratedRegnet
+
+
+class RegnetDynamics(BaseModel):
+    json_graph: Dict[str, Union[str, Dict[str, List[Dict[str, Any]]]]]
+
+
+class RegnetModel(AbstractRegnetModel):
+    regnet: RegnetDynamics
 
     def _get_init_value(self, var: str):
         value = Model._get_init_value(self, var)

@@ -2,12 +2,13 @@ import json
 import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from time import sleep
 
 from fastapi.testclient import TestClient
 
 from funman.api.api import app, settings
 from funman.representation.representation import ParameterSpace
-from funman.server.query import QueryResponse
+from funman.server.query import FunmanResults, FunmanWorkUnit
 
 FILE_DIRECTORY = Path(__file__).resolve().parent
 API_BASE_PATH = FILE_DIRECTORY / ".."
@@ -81,7 +82,7 @@ class TestAPI(unittest.TestCase):
                 headers={"token": f"{TEST_API_TOKEN}"},
             )
             assert response.status_code == 200
-            data = QueryResponse.parse_raw(response.content.decode())
+            data = FunmanWorkUnit.parse_raw(response.content.decode())
             self.check_consistency_success(data.parameter_space)
             first_id = data.id
 
@@ -90,7 +91,7 @@ class TestAPI(unittest.TestCase):
                 f"/queries/{first_id}", headers={"token": f"{TEST_API_TOKEN}"}
             )
             assert response.status_code == 200
-            got_data = QueryResponse.parse_raw(response.content.decode())
+            got_data = FunmanWorkUnit.parse_raw(response.content.decode())
             assert first_id == got_data.id
             self.check_consistency_success(data.parameter_space)
 
@@ -134,7 +135,7 @@ class TestAPI(unittest.TestCase):
                 headers={"token": f"{TEST_API_TOKEN}"},
             )
             assert response.status_code == 200
-            data = QueryResponse.parse_raw(response.content.decode())
+            data = FunmanWorkUnit.parse_raw(response.content.decode())
             self.check_consistency_success(data.parameter_space)
 
     def test_bilayer_parameter_synthesis(self):
@@ -181,5 +182,30 @@ class TestAPI(unittest.TestCase):
                 headers={"token": f"{TEST_API_TOKEN}"},
             )
             assert response.status_code == 200
-            data = QueryResponse.parse_raw(response.content.decode())
+            data = FunmanWorkUnit.parse_raw(response.content.decode())
             self.check_parameter_synthesis_success(data.parameter_space)
+
+    def test_amr_petri_net(self):
+        # Alternative example
+        EXAMPLE_DIR = RESOURCES / "common_model" / "petrinet"
+        MODEL_PATH = EXAMPLE_DIR / "sir.json"
+        REQUEST_PATH = EXAMPLE_DIR / "request.json"
+        model = json.loads(MODEL_PATH.read_bytes())
+        request = json.loads(REQUEST_PATH.read_bytes())
+        with TestClient(app) as client:
+            response = client.post(
+                "/queries",
+                json={"model": model, "request": request},
+                headers={"token": f"{TEST_API_TOKEN}"},
+            )
+            assert response.status_code == 200
+            work_unit = FunmanWorkUnit.parse_raw(response.content.decode())
+            assert work_unit.id
+            sleep(2)
+            response = client.get(
+                f"/queries/{work_unit.id}",
+                headers={"token": f"{TEST_API_TOKEN}"},
+            )
+            assert response.status_code == 200
+            results = FunmanResults.parse_raw(response.content.decode())
+            assert results

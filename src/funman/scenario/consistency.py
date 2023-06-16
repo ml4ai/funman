@@ -13,7 +13,7 @@ from funman.model.bilayer import BilayerModel, validator
 from funman.model.decapode import DecapodeModel
 from funman.model.encoded import EncodedModel
 from funman.model.ensemble import EnsembleModel
-from funman.model.petrinet import PetrinetModel
+from funman.model.petrinet import GeneratedPetriNetModel, PetrinetModel
 from funman.model.query import (
     QueryAnd,
     QueryEncoded,
@@ -21,7 +21,7 @@ from funman.model.query import (
     QueryLE,
     QueryTrue,
 )
-from funman.model.regnet import RegnetModel
+from funman.model.regnet import GeneratedRegnetModel, RegnetModel
 from funman.scenario import AnalysisScenario, AnalysisScenarioResult
 from funman.translate import Encoder
 from funman.translate.translate import Encoding
@@ -47,6 +47,8 @@ class ConsistencyScenario(AnalysisScenario, BaseModel):
         extra = "forbid"
 
     model: Union[
+        GeneratedRegnetModel,
+        GeneratedPetriNetModel,
         RegnetModel,
         EnsembleModel,
         PetrinetModel,

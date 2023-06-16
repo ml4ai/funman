@@ -13,6 +13,8 @@ from funman.model import (
     BilayerModel,
     DecapodeModel,
     EncodedModel,
+    GeneratedPetriNetModel,
+    GeneratedRegnetModel,
     PetrinetModel,
     QueryTrue,
 )
@@ -52,7 +54,13 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
 
     parameters: List[Parameter]
     model: Union[
-        GeneratedPetriNetModel, GeneratedRegnetModel, RegnetModel, PetrinetModel, DecapodeModel, BilayerModel, EncodedModel
+        GeneratedPetriNetModel,
+        GeneratedRegnetModel,
+        RegnetModel,
+        PetrinetModel,
+        DecapodeModel,
+        BilayerModel,
+        EncodedModel,
     ]
     query: Union[
         QueryAnd, QueryGE, QueryLE, QueryEncoded, QueryFunction, QueryTrue
@@ -166,7 +174,12 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
         # If a model has parameters that are not overridden by the scenario, then add them to the scenario
         model_parameters = self.model._parameter_names()
         self.parameters += [
-            Parameter(name=p, lb=self.model._parameter_lb(p), ub=self.model._parameter_ub(p)) for p in model_parameters
+            Parameter(
+                name=p,
+                lb=self.model._parameter_lb(p),
+                ub=self.model._parameter_ub(p),
+            )
+            for p in model_parameters
         ]
 
     def _filter_parameters(self):

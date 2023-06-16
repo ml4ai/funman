@@ -7,15 +7,9 @@ from funman.model.bilayer import BilayerModel
 from funman.model.decapode import DecapodeModel
 from funman.model.encoded import EncodedModel
 from funman.model.ensemble import EnsembleModel
-from funman.model.petrinet import PetrinetModel
-from funman.model.query import (
-    QueryAnd,
-    QueryEncoded,
-    QueryFunction,
-    QueryLE,
-    QueryTrue,
-)
-from funman.model.regnet import RegnetModel
+from funman.model.petrinet import GeneratedPetriNetModel, PetrinetModel
+from funman.model.query import QueryAnd, QueryFunction, QueryLE, QueryTrue
+from funman.model.regnet import GeneratedRegnetModel, RegnetModel
 from funman.representation import Parameter
 from funman.representation.representation import (
     LABEL_TRUE,
@@ -40,7 +34,7 @@ class LabeledParameter(Parameter):
 
 
 class FunmanWorkRequest(BaseModel):
-    query: Union[QueryAnd, QueryLE, QueryEncoded, QueryFunction, QueryTrue]
+    query: Union[QueryAnd, QueryLE, QueryFunction, QueryTrue]
     parameters: Optional[List[LabeledParameter]] = None
     config: Optional[FUNMANConfig] = None
 
@@ -59,7 +53,8 @@ class FunmanWorkUnit(BaseModel):
         PetrinetModel,
         DecapodeModel,
         BilayerModel,
-        EncodedModel,
+        GeneratedRegnetModel,
+        GeneratedPetriNetModel,
     ]
     request: FunmanWorkRequest
 
@@ -95,6 +90,8 @@ class FunmanWorkUnit(BaseModel):
 class FunmanResults(BaseModel):
     id: str
     model: Union[
+        GeneratedRegnetModel,
+        GeneratedPetriNetModel,
         RegnetModel,
         PetrinetModel,
         DecapodeModel,

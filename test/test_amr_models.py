@@ -1,12 +1,10 @@
-import glob
 import json
 import os
 import unittest
 
 from funman_demo.handlers import RealtimeResultPlotter, ResultCacheWriter
-from funman.funman import FUNMANConfig, Funman
 
-
+from funman.funman import Funman, FUNMANConfig
 from funman.model import Model
 from funman.model.generated_models.petrinet import Model as GeneratedPetrinet
 from funman.model.generated_models.regnet import Model as GeneratedRegnet

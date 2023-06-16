@@ -115,7 +115,7 @@ class TypingSemantics(BaseModel):
     )
     type_map: Optional[List[List[str]]] = Field(
         None,
-        description='A map between the (state and transition) nodes of the model and the (state and transition) nodes of the type system',
+        description="A map between the (state and transition) nodes of the model and the (state and transition) nodes of the type system",
     )
 
 
@@ -131,7 +131,7 @@ class Semantics(BaseModel):
     ode: Optional[OdeSemantics] = None
     typing: Optional[TypingSemantics] = Field(
         None,
-        description='(Optional) Information for aligning models for stratification',
+        description="(Optional) Information for aligning models for stratification",
     )
 
 
@@ -140,7 +140,7 @@ class Model(BaseModel):
         extra = Extra.allow
 
     name: str
-    schema_: AnyUrl = Field(..., alias='schema')
+    schema_: AnyUrl = Field(..., alias="schema")
     schema_name: Optional[str] = None
     description: str
     model_version: Optional[str] = None
@@ -148,7 +148,7 @@ class Model(BaseModel):
     model: Model1
     semantics: Optional[Semantics] = Field(
         None,
-        description='Information specific to a given semantics (e.g., ODEs) associated with a model.',
+        description="Information specific to a given semantics (e.g., ODEs) associated with a model.",
     )
     metadata: Optional[Dict[str, Any]] = Field(
         None,

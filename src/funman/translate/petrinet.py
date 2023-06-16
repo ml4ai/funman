@@ -42,21 +42,22 @@ class PetrinetEncoder(Encoder):
         transitions = model._transitions()
         step_size = next_step - step
         current_state = {
-            model._state_var_id(s): self._encode_state_var(model._state_var_name(s), time=step) for s in state_vars
+            model._state_var_id(s): self._encode_state_var(
+                model._state_var_name(s), time=step
+            )
+            for s in state_vars
         }
         next_state = {
-            model._state_var_id(s): self._encode_state_var(model._state_var_name(s), time=next_step)
+            model._state_var_id(s): self._encode_state_var(
+                model._state_var_name(s), time=next_step
+            )
             for s in state_vars
         }
 
         # Each transition corresponds to a term that is the product of current state vars and a parameter
         transition_terms = {
-            model._transition_id(t):
-            self._encode_transition_term(
-                t,
-                current_state,
-                next_state,
-                model
+            model._transition_id(t): self._encode_transition_term(
+                t, current_state, next_state, model
             )
             for t in transitions
         }
@@ -68,9 +69,9 @@ class PetrinetEncoder(Encoder):
             for transition in transitions:
                 state_var_id = model._state_var_id(var)
 
-                transition_id =  model._transition_id(transition)
+                transition_id = model._transition_id(transition)
                 outflow = model._num_flow_from_state_to_transition(
-                   state_var_id, transition_id
+                    state_var_id, transition_id
                 )
                 inflow = model._flow_into_state_via_transition(
                     state_var_id, transition_id
@@ -96,16 +97,11 @@ class PetrinetEncoder(Encoder):
         return And(net_flows)
 
     def _encode_transition_term(
-        self,
-        
-        transition,
-        current_state,
-        next_state,
-        model
+        self, transition, current_state, next_state, model
     ):
         transition_id = model._transition_id(transition)
         input_edges = model._input_edges()
-        output_edges= model._output_edges()
+        output_edges = model._output_edges()
         ins = [
             current_state[model._edge_source(edge)]
             for edge in input_edges

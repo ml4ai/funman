@@ -66,7 +66,7 @@ class Model1(BaseModel):
 
 class Model(BaseModel):
     name: str
-    schema_: AnyUrl = Field(..., alias='schema')
+    schema_: AnyUrl = Field(..., alias="schema")
     schema_name: Optional[str] = None
     description: str
     model_version: Optional[str] = None
