@@ -4,6 +4,9 @@
 
 Pipfile.lock
 
+*.json
+!resources/**/*.json
+
 dist/
 dist.bkp/
 
@@ -305,5 +308,4 @@ scratch/funman.code-workspace
 ./*.smt2
 gmon.out
 *.png
-*.json
 *.smt2

@@ -1,4 +1,5 @@
-from typing import Optional
+import threading
+from typing import Callable, Optional
 
 from pysmt.logics import QF_NRA
 from pysmt.shortcuts import And, Solver
@@ -11,7 +12,11 @@ from .search import Search, SearchEpisode
 
 class SMTCheck(Search):
     def search(
-        self, problem, config: Optional["FUNMANConfig"] = None
+        self,
+        problem,
+        config: Optional["FUNMANConfig"] = None,
+        haltEvent: Optional[threading.Event] = None,
+        resultsCallback: Optional[Callable[["ParameterSpace"], None]] = None,
     ) -> "SearchEpisode":
         episode = SearchEpisode(config=config, problem=problem)
         result = self.expand(problem, episode)
