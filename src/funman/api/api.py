@@ -100,6 +100,8 @@ def internal_error_handler():
     eid = uuid.uuid4()
     try:
         yield
+    except HTTPException:
+        raise
     except Exception:
         print(f"Internal Server Error ({eid}):", file=sys.stderr)
         traceback.print_exc()

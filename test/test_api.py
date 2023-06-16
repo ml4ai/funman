@@ -13,11 +13,6 @@ from funman.server.query import FunmanResults, FunmanWorkUnit
 FILE_DIRECTORY = Path(__file__).resolve().parent
 API_BASE_PATH = FILE_DIRECTORY / ".."
 RESOURCES = API_BASE_PATH / "resources"
-API_SERVER_HOST = "0.0.0.0"
-API_SERVER_PORT = 8190
-SERVER_URL = f"http://{API_SERVER_HOST}:{API_SERVER_PORT}"
-OPENAPI_URL = f"{SERVER_URL}/openapi.json"
-CLIENT_NAME = "funman-api-client"
 
 TEST_OUT = FILE_DIRECTORY / "out"
 TEST_OUT.mkdir(parents=True, exist_ok=True)
@@ -39,6 +34,19 @@ class TestAPI(unittest.TestCase):
         self.test_dir = Path(self._tmpdir.name) / self._testMethodName
         self.test_dir.mkdir()
         settings.data_path = str(self.test_dir)
+
+    def wait_for_done(self, client, id, wait_time=1.0, steps=10):
+        while True:
+            sleep(wait_time)
+            response = client.get(
+                f"/queries/{id}", headers={"token": f"{TEST_API_TOKEN}"}
+            )
+            assert response.status_code == 200
+            data = FunmanResults.parse_raw(response.content.decode())
+            if data.done:
+                return data
+            steps -= 1
+            assert steps > 0
 
     def check_consistency_success(self, parameter_space: ParameterSpace):
         assert parameter_space is not None
@@ -62,36 +70,44 @@ class TestAPI(unittest.TestCase):
         infected_threshold = 130
         init_values = {"S": 9998, "I": 1, "R": 1}
 
+        lb = 0.000067 * (1 - 0.5)
+        ub = 0.000067 * (1 + 0.5)
+
         first_id = None
         with TestClient(app) as client:
             response = client.post(
                 "/queries",
                 json={
-                    "request": {
-                        "model": {
-                            "init_values": init_values,
-                            "bilayer": {"json_graph": bilayer_json},
+                    "model": {
+                        "init_values": init_values,
+                        "bilayer": {"json_graph": bilayer_json},
+                        "parameter_bounds": {
+                            "beta": [lb, ub],
+                            "gamma": [1.0 / 14.0, 1.0 / 14.0],
                         },
+                    },
+                    "request": {
                         "query": {
                             "variable": "I",
                             "ub": infected_threshold,
                             "at_end": False,
                         },
-                    }
+                    },
                 },
                 headers={"token": f"{TEST_API_TOKEN}"},
             )
             assert response.status_code == 200
-            data = FunmanWorkUnit.parse_raw(response.content.decode())
+            work_unit = FunmanWorkUnit.parse_raw(response.content.decode())
+            first_id = work_unit.id
+            data = self.wait_for_done(client, first_id)
             self.check_consistency_success(data.parameter_space)
-            first_id = data.id
 
         with TestClient(app) as client:
             response = client.get(
                 f"/queries/{first_id}", headers={"token": f"{TEST_API_TOKEN}"}
             )
             assert response.status_code == 200
-            got_data = FunmanWorkUnit.parse_raw(response.content.decode())
+            got_data = FunmanResults.parse_raw(response.content.decode())
             assert first_id == got_data.id
             self.check_consistency_success(data.parameter_space)
 
@@ -120,22 +136,23 @@ class TestAPI(unittest.TestCase):
             response = client.post(
                 "/queries",
                 json={
+                    "model": {
+                        "init_values": init_values,
+                        "bilayer": {"json_graph": bilayer_json},
+                    },
                     "request": {
-                        "model": {
-                            "init_values": init_values,
-                            "bilayer": {"json_graph": bilayer_json},
-                        },
                         "query": {
                             "variable": "I",
                             "ub": infected_threshold,
                             "at_end": False,
                         },
-                    }
+                    },
                 },
                 headers={"token": f"{TEST_API_TOKEN}"},
             )
             assert response.status_code == 200
-            data = FunmanWorkUnit.parse_raw(response.content.decode())
+            work_unit = FunmanWorkUnit.parse_raw(response.content.decode())
+            data = self.wait_for_done(client, work_unit.id)
             self.check_consistency_success(data.parameter_space)
 
     def test_bilayer_parameter_synthesis(self):
@@ -154,15 +171,15 @@ class TestAPI(unittest.TestCase):
             response = client.post(
                 "/queries",
                 json={
-                    "request": {
-                        "model": {
-                            "init_values": init_values,
-                            "bilayer": {"json_graph": bilayer_json},
-                            "parameter_bounds": {
-                                "beta": [lb, ub],
-                                "gamma": [1.0 / 14.0, 1.0 / 14.0],
-                            },
+                    "model": {
+                        "init_values": init_values,
+                        "bilayer": {"json_graph": bilayer_json},
+                        "parameter_bounds": {
+                            "beta": [lb, ub],
+                            "gamma": [1.0 / 14.0, 1.0 / 14.0],
                         },
+                    },
+                    "request": {
                         "query": {
                             "variable": "I",
                             "ub": infected_threshold,
@@ -176,13 +193,17 @@ class TestAPI(unittest.TestCase):
                                 "label": "all",
                             }
                         ],
+                        "config": {
+                            "tolerance": 1.0e-8,
+                            "number_of_processes": 1,
+                        },
                     },
-                    "config": {"tolerance": 1.0e-8, "number_of_processes": 1},
                 },
                 headers={"token": f"{TEST_API_TOKEN}"},
             )
             assert response.status_code == 200
-            data = FunmanWorkUnit.parse_raw(response.content.decode())
+            work_unit = FunmanWorkUnit.parse_raw(response.content.decode())
+            data = self.wait_for_done(client, work_unit.id)
             self.check_parameter_synthesis_success(data.parameter_space)
 
     def test_amr_petri_net(self):
@@ -200,12 +221,5 @@ class TestAPI(unittest.TestCase):
             )
             assert response.status_code == 200
             work_unit = FunmanWorkUnit.parse_raw(response.content.decode())
-            assert work_unit.id
-            sleep(2)
-            response = client.get(
-                f"/queries/{work_unit.id}",
-                headers={"token": f"{TEST_API_TOKEN}"},
-            )
-            assert response.status_code == 200
-            results = FunmanResults.parse_raw(response.content.decode())
-            assert results
+            data = self.wait_for_done(client, work_unit.id)
+            assert data

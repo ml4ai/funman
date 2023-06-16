@@ -37,9 +37,6 @@ class FunmanWorker:
             self.queued_ids.add(work.id)
         return work
 
-    def _get_work(self):
-        return self.queue.get()
-
     def start(self):
         if self._thread is not None:
             raise Exception("FunmanWorker already started")
@@ -53,8 +50,9 @@ class FunmanWorker:
         self._stop_event.set()
         self._thread.join(timeout=timeout)
         if self._thread.is_alive():
-            # TODO kill thread
-            pass
+            # TODO kill thread?
+            print("Thread did not close")
+        self._thread = None
 
     def is_processing_id(self, id: str):
         with self._id_lock:
@@ -94,7 +92,10 @@ class FunmanWorker:
         while True:
             if self._stop_event.is_set():
                 break
-            work: FunmanWorkUnit = self._get_work()
+            try:
+                work: FunmanWorkUnit = self.queue.get(timeout=0.5)
+            except queue.Empty:
+                continue
 
             # skip work that is no longer in the queued_ids set
             # since that likely indicated it has been halted
