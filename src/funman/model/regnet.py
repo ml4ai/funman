@@ -6,7 +6,10 @@ from pydantic import BaseModel
 from funman.representation.representation import Parameter
 from funman.translate.regnet import RegnetEncoder
 
+from .generated_models.regnet import Edge as GeneratedRegnetEdge
 from .generated_models.regnet import Model as GeneratedRegnet
+from .generated_models.regnet import Parameter as GeneratedRegnetParameter
+from .generated_models.regnet import Vertice as GeneratedRegnetVertice
 from .model import Model
 
 
@@ -25,57 +28,26 @@ class AbstractRegnetModel(Model):
             model=self,
         )
 
-
-class GeneratedRegnetModel(AbstractRegnetModel):
-    regnet: GeneratedRegnet
-
-
-class RegnetDynamics(BaseModel):
-    json_graph: Dict[str, Union[str, Dict[str, List[Dict[str, Any]]]]]
-
-
-class RegnetModel(AbstractRegnetModel):
-    regnet: RegnetDynamics
-
-    def _get_init_value(self, var: str):
-        value = Model._get_init_value(self, var)
-        if value is None:
-            state_var = next(s for s in self._state_vars() if s["id"] == var)
-            if "initial" in state_var:
-                value = state_var["initial"]
-        return value
-
-    def _state_vars(self):
-        return self.regnet.json_graph["model"]["vertices"]
-
-    def _state_var_names(self):
-        return [s["id"] for s in self._state_vars()]
-
-    def _transitions(self):
-        return self.regnet.json_graph["model"]["edges"]
-
-    def _input_edges(self):
-        return self.regnet.json_graph["I"]
-
-    def _output_edges(self):
-        return self.regnet.json_graph["O"]
+    def _state_var(self, var_id: str):
+        state_vars = self._state_vars()
+        try:
+            state_var = next(
+                s for s in state_vars if self._vertice_id(s) == var_id
+            )
+            return state_var
+        except StopIteration as e:
+            raise Exception(f"Could not find state var with id {var_id}: {e}")
 
     def _parameter_names(self):
         transition_parameters = [
-            e["id"]
-            for e in self.regnet.json_graph["model"]["edges"]
-            if "rate_constant" not in e["properties"]
+            self._transition_rate_constant(e)
+            for e in self._transitions()
+            if isinstance(self._transition_rate_constant(e), str)
         ]
         declared_parameters = [
-            t["id"] for t in self.regnet.json_graph["model"]["parameters"]
+            self._parameter_id(t) for t in self._declared_parameters()
         ]
         return declared_parameters + transition_parameters
-
-    def _parameter_values(self):
-        return {
-            t["id"]: t["value"]
-            for t in self.regnet.json_graph["model"]["parameters"]
-        }
 
     def _parameters(self) -> List[Parameter]:
         param_names = self._parameter_names()
@@ -103,6 +75,125 @@ class RegnetModel(AbstractRegnetModel):
         ]
 
         return params
+
+
+class GeneratedRegnetModel(AbstractRegnetModel):
+    regnet: GeneratedRegnet
+
+    def _transitions(self) -> List[GeneratedRegnetEdge]:
+        return self.regnet.model.edges
+
+    def _state_vars(self) -> List[GeneratedRegnetVertice]:
+        return self.regnet.model.vertices
+
+    def _state_var_names(self) -> List[str]:
+        return [s.id for s in self._state_vars()]
+
+    def _transition_source(self, transition: GeneratedRegnetEdge):
+        return transition.source
+
+    def _transition_target(self, transition: GeneratedRegnetEdge):
+        return transition.target
+
+    def _transition_sign(self, transition: GeneratedRegnetEdge):
+        return transition.sign
+
+    def _vertice_id(self, vertice: GeneratedRegnetVertice):
+        return vertice.id
+
+    def _vertice_sign(self, vertice: GeneratedRegnetVertice):
+        return vertice.sign
+
+    def _vertice_rate_constant(self, vertex: GeneratedRegnetVertice):
+        return vertex.rate_constant.__root__
+
+    def _parameter_id(self, parameter: GeneratedRegnetParameter):
+        return parameter.id
+
+    def _declared_parameters(self) -> List[GeneratedRegnetParameter]:
+        return self.regnet.model.parameters
+
+    def _parameter_values(self):
+        return {
+            self._parameter_id(t): t.value
+            for t in self.regnet.model.parameters
+        }
+
+    def _transition_rate_constant(self, transitition: GeneratedRegnetEdge):
+        return (
+            transitition.properties.rate_constant.__root__
+            if transitition.properties
+            and transitition.properties.rate_constant
+            else transitition.id
+        )
+
+
+class RegnetDynamics(BaseModel):
+    json_graph: Dict[str, Union[str, Dict[str, List[Dict[str, Any]]]]]
+
+
+class RegnetModel(AbstractRegnetModel):
+    regnet: RegnetDynamics
+
+    def _get_init_value(self, var: str):
+        value = Model._get_init_value(self, var)
+        if value is None:
+            state_var = next(s for s in self._state_vars() if s["id"] == var)
+            if "initial" in state_var:
+                value = state_var["initial"]
+        return value
+
+    def _state_vars(self):
+        return self.regnet.json_graph["model"]["vertices"]
+
+    def _state_var_names(self):
+        return [s["id"] for s in self._state_vars()]
+
+    def _vertice_id(self, vertice):
+        return vertice["id"]
+
+    def _vertice_sign(self, vertice):
+        return vertice["sign"]
+
+    def _vertice_rate_constant(self, vertex):
+        return vertex["rate_constant"]
+
+    def _transitions(self):
+        return self.regnet.json_graph["model"]["edges"]
+
+    def _transition_source(self, transition):
+        return transition["source"]
+
+    def _transition_target(self, transition):
+        return transition["target"]
+
+    def _transition_sign(self, transition):
+        return transition["sign"]
+
+    def _transition_rate_constant(self, transition):
+        return (
+            transition["properties"]["rate_constant"]
+            if "rate_constant" in transition["properties"]
+            else transition["id"]
+        )
+
+    def _parameter_id(self, parameter):
+        return parameter["id"]
+
+    def _declared_parameters(self):
+        return self.regnet.json_graph["model"]["parameters"]
+
+    def _input_edges(self):
+        return self.regnet.json_graph["I"]
+
+    def _output_edges(self):
+        return self.regnet.json_graph["O"]
+
+    def _parameter_values(self):
+        return {
+            t["id"]: t["value"]
+            for t in self.regnet.json_graph["model"]["parameters"]
+        }
 
     def _num_flow_from_transition_to_state(
         self, state_index: int, transition_index: int

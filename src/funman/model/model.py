@@ -75,3 +75,9 @@ class Model(ABC, BaseModel):
 
     def _parameters(self) -> List[Parameter]:
         return []
+
+    def _parameter_lb(self, param_name: str):
+        return None
+
+    def _parameter_ub(self, param_name: str):
+        return None

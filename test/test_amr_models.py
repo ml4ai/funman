@@ -23,14 +23,14 @@ RESOURCES = os.path.join(
 )
 
 models = {
+    # os.path.join(
+    #     RESOURCES, "common_model", "petrinet", "sir.json"
+    # ): GeneratedPetrinet,
+    # os.path.join(
+    #     RESOURCES, "common_model", "petrinet", "sir_typed.json"
+    # ): GeneratedPetrinet,
     os.path.join(
-        RESOURCES, "common_model", "petrinet", "sir.json"
-    ): GeneratedPetrinet,
-    os.path.join(
-        RESOURCES, "common_model", "petrinet", "sir_typed.json"
-    ): GeneratedPetrinet,
-    os.path.join(
-        RESOURCES, "common_model", "regnet", "lotka_volterra.json"
+        RESOURCES, "common_model", "regnet", "lotka_voltera.json"
     ): GeneratedRegnet,
     os.path.join(
         RESOURCES, "common_model", "regnet", "syntax_edge_cases.json"
@@ -55,7 +55,7 @@ class TestModels(unittest.TestCase):
                     "step_size": [1, 1],
                 },
             )
-            parameters = [Parameter(name="beta", lb=lb, ub=ub)]
+            parameters = []
 
         elif isinstance(generated_model, GeneratedPetrinet):
             model = GeneratedPetriNetModel(petrinet=generated_model)

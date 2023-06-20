@@ -53,11 +53,12 @@ class RegnetEncoder(Encoder):
 
         # Each transition corresponds to a term that is the product of current state vars and a parameter
         edge_terms = [
-            self._encode_transition_term(t, current_state) for t in transitions
+            self._encode_transition_term(model, t, current_state)
+            for t in transitions
         ]
 
         self_terms = [
-            self._encode_self_term(s, current_state) for s in state_vars
+            self._encode_self_term(model, s, current_state) for s in state_vars
         ]
         transition_terms = edge_terms + self_terms
 
@@ -87,23 +88,22 @@ class RegnetEncoder(Encoder):
         else:
             return Symbol(rate, REAL)
 
-    def _encode_self_term(self, vertex, current_state):
-        src = tgt = vertex["id"]
-        sign = 1 if vertex["sign"] else -1
-        rate = vertex["rate_constant"]
+    def _encode_self_term(
+        self, model: "AbstractRegnetModel", vertex, current_state
+    ):
+        src = tgt = model._vertice_id(vertex)
+
+        sign = 1 if model._vertice_sign(vertex) else -1
+        rate = model._vertice_rate_constant(vertex)
 
         return tgt, self._encode_term(sign, src, None, rate, current_state)
 
-    def _encode_transition_term(self, transition, current_state):
-        src = transition["source"]
-        tgt = transition["target"]
-        sign = 1 if transition["sign"] else -1
+    def _encode_transition_term(self, model, transition, current_state):
+        src = model._transition_source(transition)
+        tgt = model._transition_target(transition)
+        sign = 1 if model._transition_sign(transition) else -1
 
-        rate = (
-            transition["properties"]["rate_constant"]
-            if "rate_constant" in transition["properties"]
-            else transition["id"]
-        )
+        rate = model._transition_rate_constant(transition)
 
         return tgt, self._encode_term(sign, src, tgt, rate, current_state)
 
