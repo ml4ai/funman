@@ -26,6 +26,7 @@ from funman.model.query import (
 )
 from funman.representation import Parameter
 from funman.representation.representation import Box, Interval, Point
+from funman.representation.symbol import ModelSymbol
 
 
 class Encoding(BaseModel):
@@ -429,8 +430,8 @@ class Encoder(ABC, BaseModel):
     def _query_variable_name(self, query):
         return (
             query.variable
-            if query.model is None
-            else f"model_{query.model.name}_{query.variable}"
+            if not isinstance(query.variable, ModelSymbol)
+            else str(query.variable)
         )
 
     def _encode_query_and(self, model_encoding, query):

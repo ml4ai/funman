@@ -112,7 +112,13 @@ class FunmanResults(BaseModel):
         if isinstance(result, ConsistencyScenarioResult):
             ps = ParameterSpace()
             if result.consistent is not None:
-                point = Point(values=result.consistent, label=LABEL_TRUE)
+                parameter_values = {
+                    k: v
+                    for k, v in result.consistent.items()
+                    if k
+                    in [p.name for p in result.scenario.model._parameters()]
+                }
+                point = Point(values=parameter_values, label=LABEL_TRUE)
                 ps.true_points.append(point)
         if isinstance(result, ParameterSynthesisScenarioResult):
             ps = result.parameter_space

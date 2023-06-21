@@ -294,19 +294,27 @@ class PetrinetModel(AbstractPetriNetModel):
         return self.petrinet.json_graph["O"]
 
     def _edge_source(self, edge):
-        return edge["is"] - 1 if "is" in edge else edge["ot"] - 1
+        return edge["is"] if "is" in edge else edge["ot"]
 
     def _edge_target(self, edge):
-        return edge["it"] - 1 if "it" in edge else edge["os"] - 1
+        return edge["it"] if "it" in edge else edge["os"]
 
     def _transition_parameter(self, transition):
         return transition["tprop"]["parameter_name"]
 
     def _transition_id(self, transition):
-        return self._transitions().find(transition) + 1
+        return next(
+            i + 1
+            for i, s in enumerate(self._transitions())
+            if s["tname"] == transition["tname"]
+        )
 
     def _state_var_id(self, state_var):
-        return self._state_vars().find(state_var) + 1
+        return next(
+            i + 1
+            for i, s in enumerate(self._state_vars())
+            if s["sname"] == state_var["sname"]
+        )
 
     def _parameter_names(self):
         return [t["tprop"]["parameter_name"] for t in self._transitions()]

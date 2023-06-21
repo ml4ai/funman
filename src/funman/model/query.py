@@ -6,6 +6,8 @@ from typing import List, Union
 from pydantic import BaseModel
 from pysmt.formula import FNode
 
+from funman.representation.symbol import ModelSymbol
+
 
 class Query(BaseModel):
     """
@@ -57,7 +59,7 @@ class QueryLE(Query):
         apply the constraint to the last timepoint of a scenario only, by default False
     """
 
-    variable: str
+    variable: Union[str, ModelSymbol]
     ub: float
     at_end: bool = False
 
@@ -76,7 +78,7 @@ class QueryGE(Query):
         apply the constraint to the last timepoint of a scenario only, by default False
     """
 
-    variable: str
+    variable: Union[str, ModelSymbol]
     lb: float
     at_end: bool = False
 
@@ -95,7 +97,7 @@ class QueryEquals(Query):
         apply the constraint to the last timepoint of a scenario only, by default False
     """
 
-    variable: str
+    variable: Union[str, ModelSymbol]
     value: float
     at_end: bool = False
 

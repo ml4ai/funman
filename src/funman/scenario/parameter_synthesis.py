@@ -173,7 +173,8 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
     def _extract_non_overriden_parameters(self):
         # If a model has parameters that are not overridden by the scenario, then add them to the scenario
         model_parameters = self.model._parameter_names()
-        self.parameters = []
+        model_parameters = [] if model_parameters is None else model_parameters
+        non_overriden_parameters = []
         for p in model_parameters:
             bounds = {}
             lb = self.model._parameter_lb(p)
@@ -182,7 +183,8 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
             ub = self.model._parameter_ub(p)
             if ub:
                 bounds["ub"] = ub
-            self.parameters.append(Parameter(name=p, **bounds))
+            non_overriden_parameters.append(Parameter(name=p, **bounds))
+        self.parameters += non_overriden_parameters
 
     def _filter_parameters(self):
         # If the scenario has parameters that are not in the model, then remove them from the scenario

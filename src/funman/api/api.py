@@ -168,9 +168,9 @@ async def get_queries(
 )
 async def post_queries(
     model: Union[
-        RegnetModel,
         GeneratedPetriNet,
         GeneratedRegNet,
+        RegnetModel,
         PetrinetModel,
         DecapodeModel,
         BilayerModel,
@@ -184,17 +184,17 @@ async def post_queries(
 
 def _wrap_with_internal_model(
     model: Union[
-        RegnetModel,
         GeneratedPetriNet,
         GeneratedRegNet,
+        RegnetModel,
         PetrinetModel,
         DecapodeModel,
         BilayerModel,
     ]
 ) -> Union[
-    RegnetModel,
     GeneratedPetriNetModel,
     GeneratedRegnetModel,
+    RegnetModel,
     PetrinetModel,
     DecapodeModel,
     BilayerModel,
