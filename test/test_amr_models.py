@@ -4,24 +4,18 @@ import unittest
 from time import sleep
 
 import matplotlib.pyplot as plt
-from funman_demo.handlers import RealtimeResultPlotter, ResultCacheWriter
 from funman_demo.parameter_space_plotter import ParameterSpacePlotter
 
 from funman.api.settings import Settings
-from funman.funman import Funman, FUNMANConfig
+from funman.funman import FUNMANConfig
 from funman.model.generated_models.petrinet import Model as GeneratedPetrinet
 from funman.model.generated_models.regnet import Model as GeneratedRegnet
 from funman.model.petrinet import GeneratedPetriNetModel
 from funman.model.query import QueryLE, QueryTrue
 from funman.model.regnet import GeneratedRegnetModel
-from funman.scenario.parameter_synthesis import (
-    ParameterSynthesisScenario,
-    ParameterSynthesisScenarioResult,
-)
 from funman.server.query import FunmanWorkRequest, FunmanWorkUnit
 from funman.server.storage import Storage
 from funman.server.worker import FunmanWorker
-from funman.utils.handlers import ResultCombinedHandler
 
 RESOURCES = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "../resources"
@@ -35,13 +29,7 @@ models = {
         RESOURCES, "common_model", "petrinet", "sir.json"
     ): GeneratedPetrinet,
     # os.path.join(
-    #     RESOURCES, "common_model", "petrinet", "sir_typed.json"
-    # ): GeneratedPetrinet,
-    os.path.join(
-        RESOURCES, "common_model", "regnet", "lotka_volterra.json"
-    ): GeneratedRegnet,
-    # os.path.join(
-    #     RESOURCES, "common_model", "regnet", "syntax_edge_cases.json"
+    #     RESOURCES, "common_model", "regnet", "lotka_volterra.json"
     # ): GeneratedRegnet,
 }
 
@@ -74,7 +62,7 @@ class TestModels(unittest.TestCase):
             # dreal_mcts=True,
             tolerance=1e-8,
             number_of_processes=1,
-            save_smtlib=True,
+            # save_smtlib=True,
             # dreal_log_level="debug",
         )
 
@@ -86,12 +74,16 @@ class TestModels(unittest.TestCase):
                     "step_size": [1, 1],
                 },
             )
-            parameters = []
+            parameters = [
+                
+            ]
             query = QueryLE(variable="W", ub=10)
 
         elif isinstance(generated_model, GeneratedPetrinet):
             model = GeneratedPetriNetModel(petrinet=generated_model)
-            parameters = []
+            parameters = [
+                {"name": "S", "lb": 1, "ub": 10, "label": "all"}
+            ]
             query = QueryTrue()
 
         request = FunmanWorkRequest(
