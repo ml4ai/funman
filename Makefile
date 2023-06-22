@@ -405,3 +405,8 @@ generate-api-client:
 update-api-client:
 	openapi-python-client update --url http://0.0.0.0:8190/openapi.json
 
+generate-amr-classes:
+	datamodel-codegen --input-file-type jsonschema  --url https://raw.githubusercontent.com/DARPA-ASKEM/Model-Representations/main/base_schema.json --output src/funman/model/generated_models/base_schema.py
+	#datamodel-codegen --input-file-type jsonschema --url https://raw.githubusercontent.com/danbryce/Model-Representations/main/metadata_schema.json --output src/funman/model/generated_models/metadata_schema.py
+	datamodel-codegen --input-file-type jsonschema --url https://raw.githubusercontent.com/DARPA-ASKEM/Model-Representations/main/petrinet/petrinet_schema.json  --output src/funman/model/generated_models/petrinet_schema.py
+	datamodel-codegen --input-file-type jsonschema --url https://raw.githubusercontent.com/DARPA-ASKEM/Model-Representations/main/regnet/regnet_schema.json  --output src/funman/model/generated_models/regnet_schema.py
