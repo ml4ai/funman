@@ -107,7 +107,6 @@ class ParameterSpacePlotter:
             for p in self.ps.true_points:
                 self.plot_add_point(p, self.color_map[t], self.shape_map[t])
         if show:
-            print("show")
             plt.show(block=False)
 
     def plot_add_point(self, point: Point, color="r", shape="x", alpha=0.2):
