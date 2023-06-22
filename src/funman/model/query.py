@@ -1,20 +1,20 @@
 """
 This module defines all Query classes.  Queries are combined with Model objects in Scenarios to determine whether the model satisfies the query.
 """
-from typing import Generic, List, TypeVar, Union
+from typing import List, Union
 
-from pydantic.generics import GenericModel
+from pydantic import BaseModel
 from pysmt.formula import FNode
 
-ModelT = TypeVar("ModelT")
+from funman.representation.symbol import ModelSymbol
 
 
-class Query(GenericModel, Generic[ModelT]):
+class Query(BaseModel):
     """
     Abstract base class for queries.
     """
 
-    model: ModelT
+    pass
 
 
 class QueryFunction(Query):
@@ -59,7 +59,7 @@ class QueryLE(Query):
         apply the constraint to the last timepoint of a scenario only, by default False
     """
 
-    variable: str
+    variable: Union[str, ModelSymbol]
     ub: float
     at_end: bool = False
 
@@ -78,7 +78,7 @@ class QueryGE(Query):
         apply the constraint to the last timepoint of a scenario only, by default False
     """
 
-    variable: str
+    variable: Union[str, ModelSymbol]
     lb: float
     at_end: bool = False
 
@@ -97,7 +97,7 @@ class QueryEquals(Query):
         apply the constraint to the last timepoint of a scenario only, by default False
     """
 
-    variable: str
+    variable: Union[str, ModelSymbol]
     value: float
     at_end: bool = False
 

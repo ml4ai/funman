@@ -42,3 +42,10 @@ class Server(uvicorn.Server):
         finally:
             self.should_exit = True
             thread.join()
+
+    def start_in_thread(self):
+        thread = threading.Thread(target=self.run)
+        thread.start()
+        while not self.started:
+            time.sleep(1e-3)
+        return thread

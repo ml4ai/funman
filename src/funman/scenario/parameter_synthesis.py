@@ -1,7 +1,8 @@
 """
 This module defines the Parameter Synthesis scenario.
 """
-from typing import Dict, List, Union
+import threading
+from typing import Callable, Dict, List, Optional, Union
 
 from pandas import DataFrame
 from pydantic import BaseModel
@@ -12,9 +13,12 @@ from funman.model import (
     BilayerModel,
     DecapodeModel,
     EncodedModel,
+    GeneratedPetriNetModel,
+    GeneratedRegnetModel,
     PetrinetModel,
     QueryTrue,
 )
+from funman.model.petrinet import GeneratedPetriNetModel
 from funman.model.query import (
     QueryAnd,
     QueryEncoded,
@@ -22,7 +26,7 @@ from funman.model.query import (
     QueryGE,
     QueryLE,
 )
-from funman.model.regnet import RegnetModel
+from funman.model.regnet import GeneratedRegnetModel, RegnetModel
 from funman.representation import Parameter
 from funman.representation.representation import ParameterSpace, Point
 from funman.scenario import (
@@ -50,21 +54,36 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
 
     parameters: List[Parameter]
     model: Union[
-        RegnetModel, PetrinetModel, DecapodeModel, BilayerModel, EncodedModel
+        GeneratedPetriNetModel,
+        GeneratedRegnetModel,
+        RegnetModel,
+        PetrinetModel,
+        DecapodeModel,
+        BilayerModel,
+        EncodedModel,
     ]
     query: Union[
         QueryAnd, QueryGE, QueryLE, QueryEncoded, QueryFunction, QueryTrue
-    ] = None
+    ]
     _search: str = "BoxSearch"
-    _smt_encoder: Encoder = None  # TODO set to model.default_encoder()
-    _model_encoding: Encoding = None
-    _query_encoding: Encoding = None
-    _assume_model: FNode = None
-    _assume_query: FNode = None
+    _smt_encoder: Optional[
+        Encoder
+    ] = None  # TODO set to model.default_encoder()
+    _model_encoding: Optional[Encoding] = None
+    _query_encoding: Optional[Encoding] = None
+    _assume_model: Optional[FNode] = None
+    _assume_query: Optional[FNode] = None
     _original_parameter_widths: Dict[str, float] = {}
 
+    @classmethod
+    def get_kind(cls) -> str:
+        return "parameter_synthesis"
+
     def solve(
-        self, config: "FUNMANConfig"
+        self,
+        config: "FUNMANConfig",
+        haltEvent: Optional[threading.Event] = None,
+        resultsCallback: Optional[Callable[["ParameterSpace"], None]] = None,
     ) -> "ParameterSynthesisScenarioResult":
         """
         Synthesize parameters for a model.  Use the BoxSearch algorithm to
@@ -89,6 +108,7 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
         else:
             search = config._search()
 
+        self._extract_non_overriden_parameters()
         self._filter_parameters()
 
         if self.model.structural_parameter_bounds:
@@ -113,7 +133,12 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
                 num_steps = configuration["num_steps"]
                 step_size = configuration["step_size"]
                 self._encode_timed(num_steps, step_size, config)
-                r = search.search(self, config=config)
+                r = search.search(
+                    self,
+                    config=config,
+                    haltEvent=haltEvent,
+                    resultsCallback=resultsCallback,
+                )
                 result.append(
                     {
                         "num_steps": num_steps,
@@ -134,11 +159,32 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
             self._original_parameter_widths = {
                 p: minus(p.ub, p.lb) for p in self.parameters
             }
-            parameter_space: ParameterSpace = search.search(self, config)
+            parameter_space: ParameterSpace = search.search(
+                self,
+                config,
+                haltEvent=haltEvent,
+                resultsCallback=resultsCallback,
+            )
 
         return ParameterSynthesisScenarioResult(
             parameter_space=parameter_space, scenario=self
         )
+
+    def _extract_non_overriden_parameters(self):
+        # If a model has parameters that are not overridden by the scenario, then add them to the scenario
+        model_parameters = self.model._parameter_names()
+        model_parameters = [] if model_parameters is None else model_parameters
+        non_overriden_parameters = []
+        for p in model_parameters:
+            bounds = {}
+            lb = self.model._parameter_lb(p)
+            if lb:
+                bounds["lb"] = lb
+            ub = self.model._parameter_ub(p)
+            if ub:
+                bounds["ub"] = ub
+            non_overriden_parameters.append(Parameter(name=p, **bounds))
+        self.parameters += non_overriden_parameters
 
     def _filter_parameters(self):
         # If the scenario has parameters that are not in the model, then remove them from the scenario

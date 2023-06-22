@@ -6,55 +6,102 @@ Raises
 HTTPException
     HTTPException description
 """
-import os
+import sys
+import traceback
+import uuid
+from contextlib import asynccontextmanager, contextmanager
 from typing import Optional, Union
 
 import uvicorn
-from fastapi import Body, Depends, FastAPI, HTTPException, Security, status
+from fastapi import Depends, FastAPI, HTTPException, Security, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.security import APIKeyQuery
+from fastapi.openapi.utils import get_openapi
+from fastapi.security import APIKeyHeader
+from typing_extensions import Annotated
 
-from funman import Funman
-from funman.funman import FUNMANConfig
-from funman.scenario import AnalysisScenarioResultException
-from funman.scenario.consistency import (
-    ConsistencyScenario,
-    ConsistencyScenarioResult,
+from funman import __version__ as FunmanVersion
+from funman.api.settings import Settings
+from funman.model.bilayer import BilayerModel
+from funman.model.decapode import DecapodeModel
+from funman.model.generated_models.petrinet import Model as GeneratedPetriNet
+from funman.model.generated_models.regnet import Model as GeneratedRegNet
+from funman.model.petrinet import GeneratedPetriNetModel, PetrinetModel
+from funman.model.regnet import GeneratedRegnetModel, RegnetModel
+from funman.server.exception import NotFoundFunmanException
+from funman.server.query import (
+    FunmanResults,
+    FunmanWorkRequest,
+    FunmanWorkUnit,
 )
-from funman.scenario.parameter_synthesis import (
-    ParameterSynthesisScenario,
-    ParameterSynthesisScenarioResult,
-)
-from funman.scenario.simulation import (
-    SimulationScenario,
-    SimulationScenarioResult,
-)
+from funman.server.storage import Storage
+from funman.server.worker import FunmanWorker
 
-_FUNMAN_API_TOKEN = os.getenv("FUNMAN_API_TOKEN", None)
-api_key_query = APIKeyQuery(name="token", auto_error=False)
+settings = Settings()
+_storage = Storage()
+_worker = FunmanWorker(_storage)
 
 
-def _api_key_auth(api_key: str = Security(api_key_query)):
+# Rig some services to run while the API is online
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    _storage.start(settings.data_path)
+    _worker.start()
+    yield
+    _worker.stop()
+    _storage.stop()
+
+
+def get_storage():
+    return _storage
+
+
+def get_worker():
+    return _worker
+
+
+app = FastAPI(title="funman_api", lifespan=lifespan)
+
+
+def custom_openapi():
+    if app.openapi_schema:
+        return app.openapi_schema
+    openapi_schema = get_openapi(
+        title="FUNMAN API",
+        version=FunmanVersion,
+        description="Functional Model Analysis",
+        routes=app.routes,
+    )
+    app.openapi_schema = openapi_schema
+    return app.openapi_schema
+
+
+app.openapi = custom_openapi
+
+api_key_header = APIKeyHeader(name="token", auto_error=False)
+
+
+def _api_key_auth(api_key: str = Security(api_key_header)):
     # bypass key auth if no token is provided
-    if _FUNMAN_API_TOKEN is None:
+    if settings.funman_api_token is None:
         print("WARNING: Running without API token")
         return
 
     # ensure the token is a non-empty string
-    if not isinstance(_FUNMAN_API_TOKEN, str) or _FUNMAN_API_TOKEN == "":
+    if (
+        not isinstance(settings.funman_api_token, str)
+        or settings.funman_api_token == ""
+    ):
         print("ERROR: API token is either empty or not a string")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal Server Error",
         )
 
-    if api_key != _FUNMAN_API_TOKEN:
+    if api_key != settings.funman_api_token:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Forbidden"
         )
 
-
-app = FastAPI(title="funman_api")
 
 origins = ["*"]
 
@@ -65,6 +112,21 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@contextmanager
+def internal_error_handler():
+    eid = uuid.uuid4()
+    try:
+        yield
+    except HTTPException:
+        raise
+    except Exception:
+        print(f"Internal Server Error ({eid}):", file=sys.stderr)
+        traceback.print_exc()
+        raise HTTPException(
+            status_code=500, detail=f"Internal Server Error: {eid}"
+        )
 
 
 @app.get("/", dependencies=[Depends(_api_key_auth)])
@@ -80,116 +142,90 @@ def read_root():
     return {}
 
 
-@app.put(
-    "/solve/consistency",
-    response_model=Union[
-        ConsistencyScenarioResult, AnalysisScenarioResultException
-    ],
+@app.get(
+    "/queries/{query_id}/halt",
+    response_model=str,
     dependencies=[Depends(_api_key_auth)],
 )
-async def solve_consistency(
-    scenario: ConsistencyScenario,
-    config: Optional[FUNMANConfig] = FUNMANConfig(),
+async def halt(
+    query_id: str, worker: Annotated[FunmanWorker, Depends(get_worker)]
 ):
-    """
-    Solve a consisistency scenario.
-
-    Parameters
-    ----------
-    scenario : ConsistencyScenario
-        the scenario to solve
-    config : Optional[FUNMANConfig], optional
-        solver configuration, by default FUNMANConfig()
-
-    Returns
-    -------
-    ConsistencyScenarioResult
-        the scenario result
-    """
-    try:
-        f = Funman()
-        result = f.solve(scenario, config=config)
-    except Exception as e:
-        # print(e)
-        # raise e
-        return AnalysisScenarioResultException(
-            exception=f"Failed to solve scenario due to internal exception: {e}"
-        )
-    return result
+    with internal_error_handler():
+        worker.halt(query_id)
+        return "Success"
 
 
-@app.put(
-    "/solve/parameter_synthesis",
-    response_model=Union[
-        ParameterSynthesisScenarioResult, AnalysisScenarioResultException
-    ],
+@app.get(
+    "/queries/current",
+    response_model=Optional[str],
     dependencies=[Depends(_api_key_auth)],
 )
-async def solve_parameter_synthesis(
-    scenario: ParameterSynthesisScenario,
-    config: Optional[FUNMANConfig] = FUNMANConfig(),
-):
-    """
-    Solve a Parameter Synthesis Scenario
-
-    Parameters
-    ----------
-    scenario : ParameterSynthesisScenario
-        the scenario to solve
-    config : Optional[FUNMANConfig], optional
-        solver configuration, by default FUNMANConfig()
-
-    Returns
-    -------
-        ParameterSynthesisScenarioResult
-    """
-    try:
-        f = Funman()
-        result = f.solve(scenario, config=config)
-    except Exception as e:
-        # print(e)
-        # raise e
-        return AnalysisScenarioResultException(
-            exception=f"Failed to solve scenario due to internal exception: {e}"
-        )
-    return result
+async def get_current(worker: Annotated[FunmanWorker, Depends(get_worker)]):
+    with internal_error_handler():
+        return worker.get_current()
 
 
-@app.put(
-    "/solve/simulation",
-    response_model=Union[
-        SimulationScenarioResult, AnalysisScenarioResultException
-    ],
+@app.get(
+    "/queries/{query_id}",
+    response_model=FunmanResults,
+    response_model_exclude_defaults=True,
     dependencies=[Depends(_api_key_auth)],
 )
-async def solve_simulation(
-    scenario: SimulationScenario,
-    config: Optional[FUNMANConfig] = FUNMANConfig(),
+async def get_queries(
+    query_id: str, worker: Annotated[FunmanWorker, Depends(get_worker)]
 ):
-    """
-    Solve a simulation scenario
+    with internal_error_handler():
+        try:
+            return worker.get_results(query_id)
+        except NotFoundFunmanException:
+            raise HTTPException(404)
 
-    Parameters
-    ----------
-    scenario : SimulationScenario
-        the scenario to solve
-    config : Optional[FUNMANConfig], optional
-        solver configuration, by default FUNMANConfig()
 
-    Returns
-    -------
-    SimulationScenarioResult
-    """
-    try:
-        f = Funman()
-        result = f.solve(scenario, config=config)
-    except Exception as e:
-        # print(e)
-        # raise e
-        return AnalysisScenarioResultException(
-            exception=f"Failed to solve scenario due to internal exception: {e}"
-        )
-    return result
+@app.post(
+    "/queries",
+    response_model=FunmanWorkUnit,
+    response_model_exclude_defaults=True,
+    dependencies=[Depends(_api_key_auth)],
+)
+async def post_queries(
+    model: Union[
+        GeneratedPetriNet,
+        GeneratedRegNet,
+        RegnetModel,
+        PetrinetModel,
+        DecapodeModel,
+        BilayerModel,
+    ],
+    request: FunmanWorkRequest,
+    worker: Annotated[FunmanWorker, Depends(get_worker)],
+):
+    with internal_error_handler():
+        return worker.enqueue_work(_wrap_with_internal_model(model), request)
+
+
+def _wrap_with_internal_model(
+    model: Union[
+        GeneratedPetriNet,
+        GeneratedRegNet,
+        RegnetModel,
+        PetrinetModel,
+        DecapodeModel,
+        BilayerModel,
+    ]
+) -> Union[
+    GeneratedPetriNetModel,
+    GeneratedRegnetModel,
+    RegnetModel,
+    PetrinetModel,
+    DecapodeModel,
+    BilayerModel,
+]:
+    if isinstance(model, GeneratedPetriNet):
+        return GeneratedPetriNetModel(petrinet=model)
+    elif isinstance(model, GeneratedRegNet):
+        return GeneratedRegnetModel(regnet=model)
+    else:
+        return model
 
 
 if __name__ == "__main__":

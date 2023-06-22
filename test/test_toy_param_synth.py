@@ -25,7 +25,7 @@ class TestCompilation(unittest.TestCase):
             query=QueryTrue(),
         )
         funman = Funman()
-        config = FUNMANConfig()
+        config = FUNMANConfig(number_of_processes=1)
         result = funman.solve(scenario, config)
 
     def test_toy_2d(self):
@@ -52,7 +52,7 @@ class TestCompilation(unittest.TestCase):
             query=QueryTrue(),
         )
         funman = Funman()
-        config = FUNMANConfig(tolerance=1e-1)
+        config = FUNMANConfig(tolerance=1e-1, number_of_processes=1)
         result = funman.solve(scenario, config=config)
         assert result
 

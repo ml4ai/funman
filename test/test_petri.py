@@ -12,6 +12,7 @@ from funman.model import EnsembleModel, PetrinetModel, QueryLE
 from funman.model.petrinet import PetrinetDynamics
 from funman.model.query import QueryAnd
 from funman.representation.representation import Parameter
+from funman.representation.symbol import ModelSymbol
 from funman.scenario import (
     ConsistencyScenario,
     ConsistencyScenarioResult,
@@ -80,7 +81,8 @@ class TestUseCases(unittest.TestCase):
         )
 
         query = QueryLE(
-            variable="Infected", ub=infected_threshold, model=model
+            variable=ModelSymbol(name="Infected", model=model.name),
+            ub=infected_threshold,
         )
 
         return model, query

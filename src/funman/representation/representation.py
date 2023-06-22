@@ -15,6 +15,8 @@ from pysmt.shortcuts import GE, LE, LT, REAL, TRUE, And, Equals, Real, Symbol
 import funman.utils.math_utils as math_utils
 from funman.constants import BIG_NUMBER, NEG_INFINITY, POS_INFINITY
 
+from .symbol import ModelSymbol
+
 l = logging.getLogger(__name__)
 
 
@@ -43,7 +45,7 @@ class Parameter(BaseModel):
         extra = "forbid"
         # arbitrary_types_allowed = True
 
-    name: str
+    name: Union[str, ModelSymbol]
     lb: Union[str, float] = NEG_INFINITY
     ub: Union[str, float] = POS_INFINITY
     _symbol: FNode = None

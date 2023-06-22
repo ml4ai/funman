@@ -41,74 +41,74 @@ class PetrinetEncoder(Encoder):
         state_vars = model._state_vars()
         transitions = model._transitions()
         step_size = next_step - step
-        current_state = [
-            self._encode_state_var(s["sname"], time=step) for s in state_vars
-        ]
-        next_state = [
-            self._encode_state_var(s["sname"], time=next_step)
+        current_state = {
+            model._state_var_id(s): self._encode_state_var(
+                model._state_var_name(s), time=step
+            )
             for s in state_vars
-        ]
+        }
+        next_state = {
+            model._state_var_id(s): self._encode_state_var(
+                model._state_var_name(s), time=next_step
+            )
+            for s in state_vars
+        }
 
         # Each transition corresponds to a term that is the product of current state vars and a parameter
-        transition_terms = [
-            self._encode_transition_term(
-                i,
-                t,
-                current_state,
-                next_state,
-                model._input_edges(),
-                model._output_edges(),
+        transition_terms = {
+            model._transition_id(t): self._encode_transition_term(
+                t, current_state, next_state, model
             )
-            for i, t in enumerate(transitions)
-        ]
+            for t in transitions
+        }
 
         # for each var, next state is the net flow for the var: sum(inflow) - sum(outflow)
         net_flows = []
-        for v_index, var in enumerate(state_vars):
+        for var in state_vars:
             state_var_flows = []
-            for t_index, transition in enumerate(transitions):
+            for transition in transitions:
+                state_var_id = model._state_var_id(var)
+
+                transition_id = model._transition_id(transition)
                 outflow = model._num_flow_from_state_to_transition(
-                    v_index + 1, t_index + 1
+                    state_var_id, transition_id
                 )
                 inflow = model._flow_into_state_via_transition(
-                    v_index + 1, t_index + 1
+                    state_var_id, transition_id
                 )
                 net_flow = inflow - outflow
 
                 if net_flow != 0:
                     state_var_flows.append(
                         Times(
-                            Real(net_flow) * transition_terms[t_index]
+                            Real(net_flow) * transition_terms[transition_id]
                         ).simplify()
                     )
             if len(state_var_flows) > 0:
                 flows = Plus(
                     Times(Real(step_size), Plus(state_var_flows)).simplify(),
-                    current_state[v_index],
+                    current_state[state_var_id],
                 ).simplify()
             else:
-                flows = current_state[v_index]
+                flows = current_state[state_var_id]
 
-            net_flows.append(Equals(next_state[v_index], flows))
+            net_flows.append(Equals(next_state[state_var_id], flows))
 
         return And(net_flows)
 
     def _encode_transition_term(
-        self,
-        t_index,
-        transition,
-        current_state,
-        next_state,
-        input_edges,
-        output_edges,
+        self, transition, current_state, next_state, model
     ):
+        transition_id = model._transition_id(transition)
+        input_edges = model._input_edges()
+        output_edges = model._output_edges()
         ins = [
-            current_state[edge["is"] - 1]
+            current_state[model._edge_source(edge)]
             for edge in input_edges
-            if edge["it"] == t_index + 1
+            if model._edge_target(edge) == transition_id
         ]
         param_symbol = self._encode_state_var(
-            transition["tprop"]["parameter_name"]
+            model._transition_parameter(transition)
         )
 
         return Times([param_symbol] + ins)
@@ -127,5 +127,5 @@ class PetrinetEncoder(Encoder):
         List[str]
             state variable names
         """
-        state_vars = model._state_vars()
-        return [s["sname"] for s in state_vars]
+        state_vars = model._state_var_names()
+        return state_vars
