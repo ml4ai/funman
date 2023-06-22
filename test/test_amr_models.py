@@ -70,22 +70,29 @@ class TestModels(unittest.TestCase):
             model = GeneratedRegnetModel(
                 regnet=generated_model,
                 structural_parameter_bounds={
-                    "num_steps": [2, 2],
+                    "num_steps": [1, 2],
+                    "step_size": [1, 1],
+                },
+            )
+            parameters = []
+            query = QueryLE(variable="W", ub=10)
+
+        elif isinstance(generated_model, GeneratedPetrinet):
+            model = GeneratedPetriNetModel(
+                petrinet=generated_model,
+                structural_parameter_bounds={
+                    "num_steps": [1, 10],
                     "step_size": [1, 1],
                 },
             )
             parameters = [
-                
+                {"name": "S0", "lb": 1000, "ub": 1000, "label": "any"},
+                {"name": "I0", "lb": 1, "ub": 1, "label": "any"},
+                {"name": "R0", "lb": 0, "ub": 0, "label": "any"},
+                {"name": "beta", "lb": 2.6e-7, "ub": 2.8e-7, "label": "all"},
+                {"name": "gamma", "lb": 0.1, "ub": 0.18, "label": "all"},
             ]
-            query = QueryLE(variable="W", ub=10)
-
-        elif isinstance(generated_model, GeneratedPetrinet):
-            model = GeneratedPetriNetModel(petrinet=generated_model)
-            parameters = [
-                {"name": "S", "lb": 1, "ub": 10, "label": "all"}
-            ]
-            query = QueryTrue()
-
+            query = {"variable": "I", "ub": 130, "at_end": False}
         request = FunmanWorkRequest(
             query=query, parameters=parameters, config=config
         )
@@ -102,17 +109,17 @@ class TestModels(unittest.TestCase):
         sleep(2)  # need to sleep until worker has a chance to start working
         while True:
             if self._worker.is_processing_id(work_unit.id):
-                sleep(1)
+                results = self._worker.get_results(work_unit.id)
+                ParameterSpacePlotter(
+                    results.parameter_space, plot_points=True
+                ).plot(show=True)
+                plt.savefig(f"{out_dir}/{model.__module__}.png")
+                sleep(2)
             else:
                 results = self._worker.get_results(work_unit.id)
                 break
 
         assert results
-
-        ParameterSpacePlotter(results.parameter_space, plot_points=True).plot(
-            show=True
-        )
-        plt.savefig(f"{out_dir}/{model.name}.png")
 
         assert True
 
