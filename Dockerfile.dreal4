@@ -47,8 +47,9 @@ RUN BAZEL_TARGET_ARCH=$(echo "$BAZEL_TARGET_ARCH" | sed 's/amd64/x86_64/') \
       exit 1 ; \
     fi
 
+ARG DREAL_REPO_URL
 ARG DREAL_COMMIT_TAG
-RUN git clone --depth=1 https://github.com/dreal/dreal4.git /dreal4 \
+RUN git clone --depth=1 ${DREAL_REPO_URL} /dreal4 \
     && cd /dreal4 \
     && git fetch --depth=1 origin ${DREAL_COMMIT_TAG} \
     && git checkout ${DREAL_COMMIT_TAG}

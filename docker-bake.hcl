@@ -13,8 +13,11 @@ variable "IBEX_BRANCH" {
 variable "BAZEL_VERSION" {
   default = "6.0.0"
 }
+variable "DREAL_REPO_URL" {
+  default = "https://github.com/danbryce/dreal4.git"
+}
 variable "DREAL_COMMIT_TAG" {
-  default = "cf35b198bd3e9a9366740c6c9e244955a81bc229"
+  default = "39b0822d90b277331c08ade4e68a51ec3b814fb4"
 }
 variable "AUTOMATES_COMMIT_TAG" {
   default = "e5fb635757aa57007615a75371f55dd4a24851e0"
@@ -68,6 +71,7 @@ target "funman-dreal4" {
     SIFT_REGISTRY_ROOT = compose_registry("${DOCKER_REGISTRY}","${DOCKER_ORG}")
     IBEX_TAG = "${VERSION}-${IBEX_BRANCH}"
     BAZEL_VERSION = "${BAZEL_VERSION}" 
+    DREAL_REPO_URL = "${DREAL_REPO_URL}"
     DREAL_COMMIT_TAG = "${DREAL_COMMIT_TAG}"
   }
   dockerfile = "Dockerfile.dreal4"

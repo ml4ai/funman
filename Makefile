@@ -1,5 +1,5 @@
 # -----------------------------------------------------------------
-#  Deployment
+#  Base Image Construction
 
 OUTPUT_TYPE_LOCAL=$(OUTPUT_TYPE)
 OUTPUT_TYPE_MULTI=$(OUTPUT_TYPE)
@@ -40,7 +40,7 @@ multiplatform-build-api: multiplatform-build-git
 	docker buildx bake funman-api-multiplatform --${OUTPUT_TYPE_MULTI}
 
 # -----------------------------------------------------------------
-#  Development environment 
+#  Development Container Utils
 
 REGISTRY?=localhost
 DREAL_LOCAL_REPO?=../dreal4
