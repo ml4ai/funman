@@ -128,6 +128,19 @@ target "funman-api" {
   tags = tag("funman-api", "", "")
 }
 
+target "funman-dev" {
+  context = "."
+  contexts = {
+    baseapp = "target:funman-dreal4"
+  }
+  args = {
+    SIFT_REGISTRY_ROOT = "${DOCKER_REGISTRY}/${DOCKER_ORG}/"
+    DREAL_TAG = "${VERSION}-${DREAL_COMMIT_TAG}"
+  }
+  dockerfile = "Dockerfile"
+  tags = tag("funman-dev", "", "latest")
+}
+
 target "funman-ibex-multiplatform" {
   inherits = ["_platforms", "funman-ibex"]
 }
