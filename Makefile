@@ -9,40 +9,64 @@ override OUTPUT_TYPE_LOCAL = load
 override OUTPUT_TYPE_MULTI = push
 endif
 
+DOCKER_ORG_LOCAL=$(DOCKER_ORG)
+DOCKER_ORG_MULTI=$(DOCKER_ORG)
+
+ifndef DOCKER_ORG
+override DOCKER_ORG_LOCAL = siftech
+override DOCKER_ORG_MULTI = siftech
+endif
+
+REGISTRY?=localhost
+
 build-ibex: 
-	DOCKER_REGISTRY=${REGISTRY} docker buildx bake funman-ibex --${OUTPUT_TYPE_LOCAL}
+	DOCKER_ORG=${DOCKER_ORG_LOCAL} \
+	DOCKER_REGISTRY=${REGISTRY} \
+	docker buildx bake funman-ibex --${OUTPUT_TYPE_LOCAL}
 
 multiplatform-build-ibex:
+	DOCKER_ORG=${DOCKER_ORG_MULTI} \
 	docker buildx bake funman-ibex-multiplatform --${OUTPUT_TYPE_MULTI}
 
 build-dreal4: build-ibex
-	DOCKER_REGISTRY=${REGISTRY} docker buildx bake funman-dreal4 --${OUTPUT_TYPE_LOCAL}
+	DOCKER_ORG=${DOCKER_ORG_LOCAL} \
+	DOCKER_REGISTRY=${REGISTRY} \
+	docker buildx bake funman-dreal4 --${OUTPUT_TYPE_LOCAL}
 
 multiplatform-build-dreal4: multiplatform-build-ibex
+	DOCKER_ORG=${DOCKER_ORG_MULTI} \
 	docker buildx bake funman-dreal4-multiplatform --${OUTPUT_TYPE_MULTI}
 
 build-base: build-dreal4
-	DOCKER_REGISTRY=${REGISTRY} docker buildx bake funman-base --${OUTPUT_TYPE_LOCAL}
+	DOCKER_ORG=${DOCKER_ORG_LOCAL} \yy
+	DOCKER_REGISTRY=${REGISTRY} \
+	docker buildx bake funman-base --${OUTPUT_TYPE_LOCAL}
 
 multiplatform-build-base: multiplatform-build-dreal4
+	DOCKER_ORG=${DOCKER_ORG_MULTI} \
 	docker buildx bake funman-base-multiplatform --${OUTPUT_TYPE_MULTI}
 
 build-git: build-base
-	DOCKER_REGISTRY=${REGISTRY} docker buildx bake funman-git --${OUTPUT_TYPE_LOCAL}
+	DOCKER_ORG=${DOCKER_ORG_LOCAL} \
+	DOCKER_REGISTRY=${REGISTRY} \
+	docker buildx bake funman-git --${OUTPUT_TYPE_LOCAL}
 
 multiplatform-build-git: multiplatform-build-base
+	DOCKER_ORG=${DOCKER_ORG_MULTI} \
 	docker buildx bake funman-git-multiplatform --${OUTPUT_TYPE_MULTI}
 
 build-api: build-git
-	DOCKER_REGISTRY=${REGISTRY} docker buildx bake funman-api --${OUTPUT_TYPE_LOCAL}
+	DOCKER_ORG=${DOCKER_ORG_LOCAL} \
+	DOCKER_REGISTRY=${REGISTRY} \
+	docker buildx bake funman-api --${OUTPUT_TYPE_LOCAL}
 
 multiplatform-build-api: multiplatform-build-git
+	DOCKER_ORG=${DOCKER_ORG_MULTI} \
 	docker buildx bake funman-api-multiplatform --${OUTPUT_TYPE_MULTI}
 
 # -----------------------------------------------------------------
 #  Development Container Utils
 
-REGISTRY?=localhost
 DREAL_LOCAL_REPO?=../dreal4
 
 DEV_NAME:=funman-dev
@@ -50,7 +74,7 @@ DEV_TAG:=local-latest
 DEV_TAGGED_NAME:=$(DEV_NAME):$(DEV_TAG)
 
 DEV_REGISTRY:=localhost:5000
-DEV_ORG:=darpa-askem
+DEV_ORG:=siftech
 DEV_IMAGE:=${DEV_REGISTRY}/${DEV_ORG}/${DEV_TAGGED_NAME}
 
 DEV_CONTAINER:=funman-dev
@@ -68,7 +92,9 @@ FUNMAN_DEV_DOCKERFILE=Dockerfile.root
 endif
 
 build-development-environment: build-dreal4
-	DOCKER_REGISTRY=${REGISTRY} docker buildx bake funman-dev --${OUTPUT_TYPE_LOCAL}
+	DOCKER_ORG=${DEV_ORG} \
+	DOCKER_REGISTRY=${REGISTRY} \
+	docker buildx bake funman-dev --${OUTPUT_TYPE_LOCAL}
 
 local-registry:
 	docker start local_registry \
@@ -87,8 +113,7 @@ use-docker-driver: local-registry
 dev: use-docker-driver
 	OUTPUT_TYPE=push \
   REGISTRY=${DEV_REGISTRY} \
-	$(MAKE) build-development-environment \
-	&& echo docker pull $${REGISTRY}/darpa-askem/${DEV_TAGGED_NAME}
+	$(MAKE) build-development-environment
 
 run-dev-container:
 	@FUNMAN_HOME=$(if $(filter 0,$(FUNMAN_SKIP_USER_ARGS)),/home/$$USER,/root) \
