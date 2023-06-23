@@ -42,7 +42,7 @@ jobs:
         uses: docker/login-action@v2
         with:
           registry: 'ghcr.io'
-          username: ${{ github.repository_owner }}
+          username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       # 2.4 - Setup QEMU for platform emulation
@@ -55,7 +55,7 @@ jobs:
 
       - name: Run make file
         run: |
-          make -f Makefile.uncharted multiplatform-build-api
+          make -f Makefile multiplatform-build-api
 
   # # Build and Publish all targets associated with specified group
   # bake:
