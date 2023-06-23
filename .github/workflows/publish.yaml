@@ -12,6 +12,10 @@ on:
   pull_request:
     branches: ['main']
 
+permissions:
+  contents: read
+  packages: write
+
 jobs:
   # Call the Tag Generator to generate an image tag to use
   tag-generator:
