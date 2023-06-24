@@ -14,9 +14,7 @@ l = logging.getLogger(__file__)
 l.setLevel(logging.INFO)
 
 
-def plot_parameter_space(
-    ps: ParameterSpace, alpha: float = 0.2, clear=False, plot_points=False
-):
+def plot_parameter_space(ps: ParameterSpace, alpha: float = 0.2, clear=False):
     custom_lines = [
         Line2D([0], [0], color="g", lw=4, alpha=alpha),
         Line2D([0], [0], color="r", lw=4, alpha=alpha),
@@ -26,16 +24,10 @@ def plot_parameter_space(
     plt.ylabel("beta_1")
     plt.legend(custom_lines, ["true", "false"])
     for b1 in ps.true_boxes:
-        pass
         BoxPlotter.plot2DBoxList(b1, color="g", alpha=alpha)
     for b1 in ps.false_boxes:
-        pass
         BoxPlotter.plot2DBoxList(b1, color="r", alpha=alpha)
-    if plot_points:
-        for p in ps.true_points:
-            pass
-        for p in ps.false_points:
-            pass
+    # plt.show(block=True)
     if clear:
         clear_output(wait=True)
 

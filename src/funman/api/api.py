@@ -15,9 +15,11 @@ from typing import Optional, Union
 import uvicorn
 from fastapi import Depends, FastAPI, HTTPException, Security, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.openapi.utils import get_openapi
 from fastapi.security import APIKeyHeader
 from typing_extensions import Annotated
 
+from funman import __version__ as FunmanVersion
 from funman.api.settings import Settings
 from funman.model.bilayer import BilayerModel
 from funman.model.decapode import DecapodeModel
@@ -58,6 +60,23 @@ def get_worker():
 
 
 app = FastAPI(title="funman_api", lifespan=lifespan)
+
+
+def custom_openapi():
+    if app.openapi_schema:
+        return app.openapi_schema
+    openapi_schema = get_openapi(
+        title="FUNMAN API",
+        version=FunmanVersion,
+        description="Functional Model Analysis",
+        routes=app.routes,
+    )
+    app.openapi_schema = openapi_schema
+    return app.openapi_schema
+
+
+app.openapi = custom_openapi
+
 api_key_header = APIKeyHeader(name="token", auto_error=False)
 
 
@@ -149,6 +168,7 @@ async def get_current(worker: Annotated[FunmanWorker, Depends(get_worker)]):
 @app.get(
     "/queries/{query_id}",
     response_model=FunmanResults,
+    response_model_exclude_defaults=True,
     dependencies=[Depends(_api_key_auth)],
 )
 async def get_queries(
@@ -164,6 +184,7 @@ async def get_queries(
 @app.post(
     "/queries",
     response_model=FunmanWorkUnit,
+    response_model_exclude_defaults=True,
     dependencies=[Depends(_api_key_auth)],
 )
 async def post_queries(
