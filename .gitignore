@@ -310,3 +310,4 @@ gmon.out
 *.png
 *.smt2
 funman.code-workspace
+root.code-workspace

@@ -54,6 +54,7 @@ class BoxSearchEpisode(SearchEpisode):
 
     # problem: ParameterSynthesisScenario
     statistics: SearchStatistics = None
+    structural_configuration: Dict[str, int] = {}
     _true_boxes: List[Box] = []
     _false_boxes: List[Box] = []
     _true_points: Set[Point] = set({})
@@ -693,6 +694,7 @@ class BoxSearch(Search):
         self,
         problem: "AnalysisScenario",
         config: "FUNMANConfig",
+        structural_configuration: Dict[str, int] = {},
         haltEvent: Optional[threading.Event] = None,
         resultsCallback: Optional[Callable[[ParameterSpace], None]] = None,
     ) -> ParameterSpace:
@@ -720,12 +722,18 @@ class BoxSearch(Search):
         # problem.encode()
 
         if config.number_of_processes > 1:
-            return self._search_mp(problem, config, haltEvent=haltEvent)
+            return self._search_mp(
+                problem,
+                config,
+                haltEvent=haltEvent,
+                structural_configuration=structural_configuration,
+            )
         else:
             return self._search_sp(
                 problem,
                 config,
                 haltEvent=haltEvent,
+                structural_configuration=structural_configuration,
                 resultsCallback=resultsCallback,
             )
 
@@ -734,9 +742,14 @@ class BoxSearch(Search):
         problem,
         config: "FUNMANConfig",
         haltEvent: Optional[threading.Event],
+        structural_configuration: Dict[str, int] = {},
         resultsCallback: Optional[Callable[[ParameterSpace], None]] = None,
     ) -> ParameterSpace:
-        episode = BoxSearchEpisode(config=config, problem=problem)
+        episode = BoxSearchEpisode(
+            config=config,
+            problem=problem,
+            structural_configuration=structural_configuration,
+        )
         episode._initialize_boxes(config.num_initial_boxes)
         rval = QueueSP()
         all_results = {
@@ -766,6 +779,7 @@ class BoxSearch(Search):
         problem,
         config: "FUNMANConfig",
         haltEvent: Optional[threading.Event],
+        structural_configuration: Dict[str, int] = {},
     ) -> ParameterSpace:
         l = mp.get_logger()
         l.setLevel(LOG_LEVEL)
@@ -773,7 +787,10 @@ class BoxSearch(Search):
         with mp.Manager() as manager:
             rval = manager.Queue()
             episode = BoxSearchEpisodeMP(
-                config=config, problem=problem, manager=manager
+                config=config,
+                problem=problem,
+                manager=manager,
+                structural_configuration=structural_configuration,
             )
 
             expand_count = processes - 1
