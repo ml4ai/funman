@@ -138,18 +138,19 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
                 r = search.search(
                     self,
                     config=config,
+                    structural_configuration=configuration,
                     haltEvent=haltEvent,
                     resultsCallback=resultsCallback,
                 )
-                result.append(
-                    {
-                        "num_steps": num_steps,
-                        "step_size": step_size,
-                        "parameter_space": r,
-                    }
-                )
-                print(self._results_str(result))
-                print("-" * 80)
+                # result.append(
+                #     {
+                #         "num_steps": num_steps,
+                #         "step_size": step_size,
+                #         "parameter_space": r,
+                #     }
+                # )
+                # print(self._results_str(result))
+                # print("-" * 80)
 
             parameter_space = ParameterSpace._from_configurations(result)
         else:

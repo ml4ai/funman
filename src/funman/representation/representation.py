@@ -28,6 +28,16 @@ Label = Literal["true", "false", "unknown", "dropped"]
 
 
 class Parameter(BaseModel):
+    name: Union[str, ModelSymbol]
+    lb: Union[str, float] = NEG_INFINITY
+    ub: Union[str, float] = POS_INFINITY
+
+
+class StructureParameter(Parameter):
+    pass
+
+
+class ModelParameter(BaseModel):
     """
     A parameter is a free variable for a Model.  It has the following attributes:
 
@@ -45,9 +55,6 @@ class Parameter(BaseModel):
         extra = "forbid"
         # arbitrary_types_allowed = True
 
-    name: Union[str, ModelSymbol]
-    lb: Union[str, float] = NEG_INFINITY
-    ub: Union[str, float] = POS_INFINITY
     _symbol: FNode = None
 
     def symbol(self):
