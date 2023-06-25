@@ -110,7 +110,7 @@ class FunmanResults(BaseModel):
     ):
         ps = None
         if isinstance(result, ConsistencyScenarioResult):
-            ps = ParameterSpace()
+            ps = ParameterSpace(num_dimensions=0)
             if result.consistent is not None:
                 parameter_values = {
                     k: v

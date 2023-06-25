@@ -1008,7 +1008,7 @@ class ParameterSpace(BaseModel):
     are represented as a collection of boxes that are either known to be true or
     known to be false.
     """
-
+    num_dimensions: int = None
     true_boxes: List[Box] = []
     false_boxes: List[Box] = []
     true_points: List[Point] = []

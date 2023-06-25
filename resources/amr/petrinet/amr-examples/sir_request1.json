@@ -11,7 +11,7 @@
       "name": "gamma", 
       "lb": 0.1,
       "ub": 0.18,
-      "label": "any"
+      "label": "all"
     },
     {
       "name": "S0",
@@ -35,6 +35,7 @@
   "config": {
     "tolerance": 1.0e-8,
     "number_of_processes": 1,
-    "save_smtlib": true
+    "solver": "dreal",
+    "dreal_mcts": "true"
   }
 }

@@ -111,6 +111,8 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
         self._extract_non_overriden_parameters()
         self._filter_parameters()
 
+        num_parameters = len(self.parameters) + len(self.model.structural_parameter_bounds)
+
         if self.model.structural_parameter_bounds:
             if self._smt_encoder is None:
                 self._smt_encoder = self.model.default_encoder(config)
@@ -166,6 +168,7 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
                 resultsCallback=resultsCallback,
             )
 
+        parameter_space.num_dimensions = num_parameters
         return ParameterSynthesisScenarioResult(
             parameter_space=parameter_space, scenario=self
         )
