@@ -25,6 +25,15 @@ variable "DREAL_COMMIT_TAG" {
 variable "AUTOMATES_COMMIT_TAG" {
   default = "e5fb635757aa57007615a75371f55dd4a24851e0"
 }
+variable "FUNMAN_DEV_UNAME" {
+  default = "funman"
+}
+variable "FUNMAN_DEV_UID" {
+  default = "1000"
+}
+variable "FUNMAN_DEV_GID" {
+  default = "1000"
+}
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -57,7 +66,7 @@ target "_platforms" {
 }
 
 target "funman-ibex" {
-  context = "./ibex"
+  context = "./docker/ibex"
   args = {
     IBEX_BRANCH = "${IBEX_BRANCH}"
     ENABLE_DEBUG = "${DEBUG_IBEX}"
@@ -67,7 +76,7 @@ target "funman-ibex" {
 }
 
 target "funman-dreal4" {
-  context = "."
+  context = "./docker/dreal4"
   contexts = {
     baseapp = "target:funman-ibex"
   }
@@ -83,7 +92,7 @@ target "funman-dreal4" {
 }
 
 target "funman-base" {
-  context = "./deploy/base"
+  context = "./docker/base"
   contexts = {
     baseapp = "target:funman-dreal4"
   }
@@ -97,7 +106,7 @@ target "funman-base" {
 }
 
 target "funman-pypi" {
-  context = "./deploy/pypi"
+  context = "./docker/pypi"
   contexts = {
     baseapp = "target:funman-base"
   }
@@ -118,12 +127,12 @@ target "funman-git" {
     SIFT_REGISTRY_ROOT = "${DOCKER_REGISTRY}/${DOCKER_ORG}/"
     FROM_TAG = "${VERSION}-${AUTOMATES_COMMIT_TAG}"
   }
-  dockerfile = "./deploy/git/Dockerfile"
+  dockerfile = "./docker/git/Dockerfile"
   tags = tag("funman-git", "", "")
 }
 
 target "funman-api" {
-  context = "./deploy/api"
+  context = "./docker/api"
   contexts = {
     baseapp = "target:funman-git"
   }
@@ -144,8 +153,24 @@ target "funman-dev" {
   args = {
     SIFT_REGISTRY_ROOT = "${DOCKER_REGISTRY}/${DOCKER_ORG}/"
     DREAL_TAG = "${VERSION}-${DREAL_COMMIT_TAG}"
+    UNAME = "${FUNMAN_DEV_UNAME}"
+    UID = "${FUNMAN_DEV_UID}"
+    GID = "${FUNMAN_DEV_GID}"
   }
-  dockerfile = "Dockerfile"
+  dockerfile = "./docker/dev/user/Dockerfile"
+  tags = tag("funman-dev", "", "latest")
+}
+
+target "funman-dev-as-root" {
+  context = "."
+  contexts = {
+    baseapp = "target:funman-dreal4"
+  }
+  args = {
+    SIFT_REGISTRY_ROOT = "${DOCKER_REGISTRY}/${DOCKER_ORG}/"
+    DREAL_TAG = "${VERSION}-${DREAL_COMMIT_TAG}"
+  }
+  dockerfile = "./docker/dev/root/Dockerfile.root"
   tags = tag("funman-dev", "", "latest")
 }
 

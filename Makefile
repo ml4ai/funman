@@ -83,12 +83,10 @@ MAKE:=make --no-print-directory
 FUNMAN_BASE_PORT?=21000
 ifeq (,$(wildcard .docker-as-root))
 FUNMAN_SKIP_USER_ARGS=0
-FUNMAN_USER=$(shell echo $$USER)
-FUNMAN_DEV_DOCKERFILE=Dockerfile
+FUNMAN_DEV_TARGET=funman-dev
 else
 FUNMAN_SKIP_USER_ARGS=1
-FUNMAN_USER=
-FUNMAN_DEV_DOCKERFILE=Dockerfile.root
+FUNMAN_DEV_TARGET=funman-dev-as-root
 endif
 
 DEBUG_IBEX?=no
@@ -96,7 +94,10 @@ DEBUG_IBEX?=no
 build-development-environment: build-dreal4
 	DOCKER_ORG=${DEV_ORG} \
 	DOCKER_REGISTRY=${REGISTRY} \
-	docker buildx bake funman-dev --${OUTPUT_TYPE_LOCAL}
+	$(if $(filter 0,$(FUNMAN_SKIP_USER_ARGS)),FUNMAN_DEV_UNAME=$(shell echo $$USER)) \
+	$(if $(filter 0,$(FUNMAN_SKIP_USER_ARGS)),FUNMAN_DEV_UID=$(shell echo $$(id -u))) \
+	$(if $(filter 0,$(FUNMAN_SKIP_USER_ARGS)),FUNMAN_DEV_GID=$(shell echo $$(id -g))) \
+	docker buildx bake ${FUNMAN_DEV_TARGET} --${OUTPUT_TYPE_LOCAL}
 
 local-registry:
 	docker start local_registry \
