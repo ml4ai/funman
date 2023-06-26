@@ -10,6 +10,9 @@ variable "VERSION" {
 variable "IBEX_BRANCH" {
   default = "ibex-2.8.5_using_mathlib-2.1.1"
 }
+variable "DEBUG_IBEX" {
+  default = "no"
+}
 variable "BAZEL_VERSION" {
   default = "6.0.0"
 }
@@ -57,6 +60,7 @@ target "funman-ibex" {
   context = "./ibex"
   args = {
     IBEX_BRANCH = "${IBEX_BRANCH}"
+    ENABLE_DEBUG = "${DEBUG_IBEX}"
   }
   dockerfile = "Dockerfile"
   tags = tag("funman-ibex", "", "${IBEX_BRANCH}")

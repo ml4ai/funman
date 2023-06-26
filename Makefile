@@ -91,6 +91,8 @@ FUNMAN_USER=
 FUNMAN_DEV_DOCKERFILE=Dockerfile.root
 endif
 
+DEBUG_IBEX?=no
+
 build-development-environment: build-dreal4
 	DOCKER_ORG=${DEV_ORG} \
 	DOCKER_REGISTRY=${REGISTRY} \
@@ -111,6 +113,12 @@ use-docker-driver: local-registry
 			--driver-opt network=host
 
 dev: use-docker-driver
+	OUTPUT_TYPE=push \
+  REGISTRY=${DEV_REGISTRY} \
+	$(MAKE) build-development-environment
+
+debug: 
+	DEBUG_IBEX=yes \
 	OUTPUT_TYPE=push \
   REGISTRY=${DEV_REGISTRY} \
 	$(MAKE) build-development-environment
@@ -163,3 +171,102 @@ delete-dev-container-if-out-of-date: pull-dev-container
 		  $(MAKE) delete-dev-container ; \
 		fi \
 	fi
+
+docker-as-root:
+	touch .docker-as-root
+
+# -----------------------------------------------------------------
+#  API Client
+generate-api-client:
+	pip install openapi-python-client
+	openapi-python-client --install-completion
+	uvicorn funman.api.api:app --host 0.0.0.0 --port 8190 &
+	sleep 1
+	openapi-python-client generate --url http://0.0.0.0:8190/openapi.json
+	pip install -e funman-api-client
+
+update-api-client:
+	openapi-python-client update --url http://0.0.0.0:8190/openapi.json
+
+# -----------------------------------------------------------------
+#  Utils
+venv:
+	test -d .venv || python -m venv .venv
+	source .venv/bin/activate && pip install -Ur requirements-dev.txt
+	source .venv/bin/activate && pip install -Ur requirements-dev-extras.txt
+
+format:
+	pycln --config pyproject.toml .
+	isort --settings-path pyproject.toml .
+	black --config pyproject.toml .
+	
+FUNMAN_VERSION ?= 0.0.0
+CMD_UPDATE_VERSION = sed -i -E 's/^__version__ = \"[0-9]+\.[0-9]+\.[0-9]+((a|b|rc)[0-9]*)?\"/__version__ = \"${FUNMAN_VERSION}\"/g'
+update-versions:
+	@test "${FUNMAN_VERSION}" != "0.0.0" || (echo "ERROR: FUNMAN_VERSION must be set" && exit 1)
+	@${CMD_UPDATE_VERSION} auxiliary_packages/funman_demo/src/funman_demo/_version.py
+	@${CMD_UPDATE_VERSION} auxiliary_packages/funman_dreal/src/funman_dreal/_version.py
+	@${CMD_UPDATE_VERSION} src/funman/_version.py
+
+# -----------------------------------------------------------------
+#  Distribution
+dist: update-versions
+	mkdir -p dist
+	mkdir -p dist.bkp
+	rsync -av --ignore-existing --remove-source-files dist/ dist.bkp/
+	python -m build --outdir ./dist .
+	python -m build --outdir ./dist auxiliary_packages/funman_demo
+	python -m build --outdir ./dist auxiliary_packages/funman_dreal
+
+check-test-release: dist
+	@echo -e "\nReleasing the following packages to TestPyPI:"
+	@ls -1 dist | sed -e 's/^/    /'
+	@echo -n -e "\nAre you sure? [y/N] " && read ans && [ $${ans:-N} = y ]
+
+test-release: check-test-release
+	python3 -m twine upload --repository testpypi dist/*
+
+check-release: dist
+	@echo -e "\nReleasing the following packages to PyPI:"
+	@ls -1 dist | sed -e 's/^/    /'
+	@echo -n -e "\nAre you sure? [y/N] " && read ans && [ $${ans:-N} = y ]
+
+release: check-release
+	python3 -m twine upload dist/
+
+# -----------------------------------------------------------------
+#  Docs and Pages
+#  TODO: This can probably be automated
+DOCS_REMOTE ?= origin
+
+docs:
+	sphinx-apidoc -f -o ./docs/source ./src/funman -t ./docs/apidoc_templates --no-toc  
+	mkdir -p ./docs/source/_static
+	mkdir -p ./docs/source/_templates
+	pyreverse \
+		-k \
+		-d ./docs/source/_static \
+		./src/funman
+	cd docs && $(MAKE) clean html
+
+init-pages:
+	@if [ -n "$$(git ls-remote --exit-code $(DOCS_REMOTE) gh-pages)" ]; then echo "GitHub Pages already initialized"; exit 1; fi;
+	git switch --orphan gh-pages
+	git commit --allow-empty -m "initial pages"
+	git push -u $(DOCS_REMOTE) gh-pages
+	git checkout main
+	git branch -D gh-pages
+
+deploy-pages:
+	mv docs/build/html www
+	touch www/.nojekyll
+	rm www/.buildinfo || true
+	git checkout --track $(DOCS_REMOTE)/gh-pages
+	rm -r docs || true
+	mv www docs
+	git add -f docs
+	git commit -m "update pages" || true
+	git push $(DOCS_REMOTE)
+	git checkout main
+	git branch -D gh-pages
+
