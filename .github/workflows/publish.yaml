@@ -26,7 +26,6 @@ jobs:
     runs-on: ubuntu-22.04
     needs:
       - tag-generator
-      - targets
 
     steps:
       - name: Set env variables for bakefiles
