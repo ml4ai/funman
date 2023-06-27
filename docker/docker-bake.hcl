@@ -59,6 +59,14 @@ function "compose_registry" {
 
 # ----------------------------------------------------------------------------------------------------------------------
 
+group "multiplatform-api" {
+  targets = ["funman-ibex-multiplatform",
+             "funman-dreal4-multiplatform",
+             "funman-base-multiplatform",
+             "funman-git-multiplatform",
+             "funman-api-multiplatform"]
+}
+
 # ----------------------------------------------------------------------------------------------------------------------
 
 target "_platforms" {
@@ -179,13 +187,25 @@ target "funman-ibex-multiplatform" {
 }
 target "funman-dreal4-multiplatform" {
   inherits = ["_platforms", "funman-dreal4"]
+  contexts = {
+    baseapp = "target:funman-ibex-multiplatform"
+  }
 }
 target "funman-base-multiplatform" {
   inherits = ["_platforms", "funman-base"]
+  contexts = {
+    baseapp = "target:funman-dreal4-multiplatform"
+  }
 }
 target "funman-git-multiplatform" {
   inherits = ["_platforms", "funman-git"]
+  contexts = {
+    baseapp = "target:funman-base-multiplatform"
+  }
 }
 target "funman-api-multiplatform" {
   inherits = ["_platforms", "funman-api"]
+  contexts = {
+    baseapp = "target:funman-git-multiplatform"
+  }
 }
