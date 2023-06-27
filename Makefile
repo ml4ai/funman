@@ -93,7 +93,7 @@ endif
 
 DEBUG_IBEX?=no
 
-build-development-environment: build-dreal4
+build-development-environment:
 	DOCKER_ORG=${DEV_ORG} \
 	DOCKER_REGISTRY=${REGISTRY} \
 	$(if $(filter 0,$(FUNMAN_SKIP_USER_ARGS)),FUNMAN_DEV_UNAME=$(shell echo $$USER)) \

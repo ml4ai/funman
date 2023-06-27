@@ -86,7 +86,7 @@ target "funman-ibex" {
 target "funman-dreal4" {
   context = "./docker/dreal4"
   contexts = {
-    baseapp = "target:funman-ibex"
+    "${DOCKER_REGISTRY}/${DOCKER_ORG}/funman-ibex:${VERSION}-${IBEX_BRANCH}" = "target:funman-ibex"
   }
   args = {
     SIFT_REGISTRY_ROOT = compose_registry("${DOCKER_REGISTRY}","${DOCKER_ORG}")
@@ -102,7 +102,7 @@ target "funman-dreal4" {
 target "funman-base" {
   context = "./docker/base"
   contexts = {
-    baseapp = "target:funman-dreal4"
+    "${DOCKER_REGISTRY}/${DOCKER_ORG}/funman-dreal4:${VERSION}-${DREAL_COMMIT_TAG}" = "target:funman-dreal4"
   }
   args = {
     SIFT_REGISTRY_ROOT = "${DOCKER_REGISTRY}/${DOCKER_ORG}/"
@@ -116,7 +116,7 @@ target "funman-base" {
 target "funman-pypi" {
   context = "./docker/pypi"
   contexts = {
-    baseapp = "target:funman-base"
+    "${DOCKER_REGISTRY}/${DOCKER_ORG}/funman-base:${VERSION}-${AUTOMATES_COMMIT_TAG}" = "target:funman-base"
   }
   args = {
     SIFT_REGISTRY_ROOT = "${DOCKER_REGISTRY}/${DOCKER_ORG}/"
@@ -129,7 +129,7 @@ target "funman-pypi" {
 target "funman-git" {
   context = "."
   contexts = {
-    baseapp = "target:funman-base"
+    "${DOCKER_REGISTRY}/${DOCKER_ORG}/funman-base:${VERSION}-${AUTOMATES_COMMIT_TAG}" = "target:funman-base"
   }
   args = {
     SIFT_REGISTRY_ROOT = "${DOCKER_REGISTRY}/${DOCKER_ORG}/"
@@ -142,7 +142,7 @@ target "funman-git" {
 target "funman-api" {
   context = "./docker/api"
   contexts = {
-    baseapp = "target:funman-git"
+    "${DOCKER_REGISTRY}/${DOCKER_ORG}/funman-git:${VERSION}" = "target:funman-git"
   }
   args = {
     SIFT_REGISTRY_ROOT = "${DOCKER_REGISTRY}/${DOCKER_ORG}/"
@@ -156,7 +156,7 @@ target "funman-api" {
 target "funman-dev" {
   context = "."
   contexts = {
-    baseapp = "target:funman-dreal4"
+    "${DOCKER_REGISTRY}/${DOCKER_ORG}/funman-dreal4:${VERSION}-${DREAL_COMMIT_TAG}" = "target:funman-dreal4"
   }
   args = {
     SIFT_REGISTRY_ROOT = "${DOCKER_REGISTRY}/${DOCKER_ORG}/"
@@ -172,7 +172,7 @@ target "funman-dev" {
 target "funman-dev-as-root" {
   context = "."
   contexts = {
-    baseapp = "target:funman-dreal4"
+    "${DOCKER_REGISTRY}/${DOCKER_ORG}/funman-dreal4:${VERSION}-${DREAL_COMMIT_TAG}" = "target:funman-dreal4"
   }
   args = {
     SIFT_REGISTRY_ROOT = "${DOCKER_REGISTRY}/${DOCKER_ORG}/"
@@ -188,24 +188,24 @@ target "funman-ibex-multiplatform" {
 target "funman-dreal4-multiplatform" {
   inherits = ["_platforms", "funman-dreal4"]
   contexts = {
-    baseapp = "target:funman-ibex-multiplatform"
+    "${DOCKER_REGISTRY}/${DOCKER_ORG}/funman-ibex:${VERSION}-${IBEX_BRANCH}" = "target:funman-ibex-multiplatform"
   }
 }
 target "funman-base-multiplatform" {
   inherits = ["_platforms", "funman-base"]
   contexts = {
-    baseapp = "target:funman-dreal4-multiplatform"
+    "${DOCKER_REGISTRY}/${DOCKER_ORG}/funman-dreal4:${VERSION}-${DREAL_COMMIT_TAG}" = "target:funman-dreal4-multiplatform"
   }
 }
 target "funman-git-multiplatform" {
   inherits = ["_platforms", "funman-git"]
   contexts = {
-    baseapp = "target:funman-base-multiplatform"
+    "${DOCKER_REGISTRY}/${DOCKER_ORG}/funman-base:${VERSION}-${AUTOMATES_COMMIT_TAG}" = "target:funman-base-multiplatform"
   }
 }
 target "funman-api-multiplatform" {
   inherits = ["_platforms", "funman-api"]
   contexts = {
-    baseapp = "target:funman-git-multiplatform"
+    "${DOCKER_REGISTRY}/${DOCKER_ORG}/funman-git:${VERSION}" = "target:funman-git-multiplatform"
   }
 }
