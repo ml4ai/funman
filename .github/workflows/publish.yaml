@@ -57,17 +57,68 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
-      # 2.6 - Build and push Docker Images
+      # TODO the following bake actions can probably be collapsed into
+      # a template. For now they are just inlined to test caching.
+
+      # ibex
       - name: Build Images using BuildX Bake
         uses: docker/bake-action@v3.1.0
         with:
           files: |
             ./docker/docker-bake.hcl
-          targets: multiplatform-api
+          targets: funman-ibex-multiplatform
           push: true
           set: |
-            *.cache-from=type=gha
-            *.cache-to=type=gha,mode=max
+            *.cache-from=type=gha,scope=build-funman-ibex-multiplatform
+            *.cache-to=type=gha,scope=build-funman-ibex-multiplatform,mode=max
+
+      # dreal
+      - name: Build Images using BuildX Bake
+        uses: docker/bake-action@v3.1.0
+        with:
+          files: |
+            ./docker/docker-bake.hcl
+          targets: funman-dreal4-multiplatform
+          push: true
+          set: |
+            *.cache-from=type=gha,scope=build-funman-dreal4-multiplatform
+            *.cache-to=type=gha,scope=build-funman-dreal4-multiplatform,mode=max
+
+      # base
+      - name: Build Images using BuildX Bake
+        uses: docker/bake-action@v3.1.0
+        with:
+          files: |
+            ./docker/docker-bake.hcl
+          targets: funman-base-multiplatform
+          push: true
+          set: |
+            *.cache-from=type=gha,scope=build-funman-base-multiplatform
+            *.cache-to=type=gha,scope=build-funman-base-multiplatform,mode=max
+
+      # git
+      - name: Build Images using BuildX Bake
+        uses: docker/bake-action@v3.1.0
+        with:
+          files: |
+            ./docker/docker-bake.hcl
+          targets: funman-git-multiplatform
+          push: true
+          set: |
+            *.cache-from=type=gha,scope=build-funman-git-multiplatform
+            *.cache-to=type=gha,scope=build-funman-git-multiplatform,mode=max
+
+      # api
+      - name: Build Images using BuildX Bake
+        uses: docker/bake-action@v3.1.0
+        with:
+          files: |
+            ./docker/docker-bake.hcl
+          targets: funman-api-multiplatform
+          push: true
+          set: |
+            *.cache-from=type=gha,scope=build-funman-api-multiplatform
+            *.cache-to=type=gha,scope=build-funman-api-multiplatform,mode=max
 
   # # Build and Publish all targets associated with specified group
   # bake:
