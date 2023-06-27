@@ -5,6 +5,7 @@ This module defines the abstract base classes for the model encoder classes in f
 from abc import ABC, abstractmethod
 from typing import Dict, List, Set, Tuple, Union
 
+
 import pysmt
 from numpy import isin
 from pydantic import BaseModel, Extra
@@ -25,7 +26,12 @@ from funman.model.query import (
     QueryTrue,
 )
 from funman.representation import Parameter
-from funman.representation.representation import Box, Interval, Point
+from funman.representation.representation import (
+    Box,
+    Interval,
+    ModelParameter,
+    Point,
+)
 from funman.representation.symbol import ModelSymbol
 
 
@@ -76,8 +82,8 @@ class Encoder(ABC, BaseModel):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        model = kwargs["model"]
-        self._encode_timed_model_elements(model)
+        scenario = kwargs["scenario"]
+        self._encode_timed_model_elements(scenario)
 
     def _symbols(self, formula: FNode) -> Dict[str, Dict[str, FNode]]:
         symbols = {}
@@ -255,9 +261,10 @@ class Encoder(ABC, BaseModel):
         timing = f"_{time}" if time is not None else ""
         return Symbol(f"{var}{timing}", REAL)
 
-    def _get_structural_configurations(self, model: Model):
+    def _get_structural_configurations(self, scenario: "AnalysisScenario"):
         configurations: List[Dict[str, int]] = []
-        if len(model.structural_parameter_bounds) == 0:
+        structure_parameters = scenario.structure_parameters()
+        if len(structure_parameters) == 0:
             self._min_time_point = 0
             self._min_step_size = 1
             num_steps = [1, self.config.num_steps]
@@ -271,16 +278,16 @@ class Encoder(ABC, BaseModel):
                 }
             )
         else:
-            num_steps = model.structural_parameter_bounds["num_steps"]
-            step_size = model.structural_parameter_bounds["step_size"]
-            self._min_time_point = num_steps[0]
-            self._min_step_size = step_size[0]
-            max_step_size = step_size[1]
-            max_step_index = num_steps[1] * max_step_size
+            num_steps = scenario.structure_parameter("num_steps")
+            step_size = scenario.structure_parameter("step_size")
+            self._min_time_point = int(num_steps.lb)
+            self._min_step_size = int(step_size.lb)
+            max_step_size = int(step_size.ub)
+            max_step_index = int(num_steps.ub) * int(max_step_size)
             configurations += [
                 {"num_steps": ns, "step_size": ss}
-                for ns in range(num_steps[0], num_steps[1] + 1)
-                for ss in range(step_size[0], step_size[1] + 1)
+                for ns in range(int(num_steps.lb), int(num_steps.ub) + 1)
+                for ss in range(int(step_size.lb), int(step_size.ub) + 1)
             ]
         return configurations, max_step_index, max_step_size
 
@@ -322,23 +329,15 @@ class Encoder(ABC, BaseModel):
             ]
         )
 
-    def _encode_untimed_constraints(self, model: Model) -> FNode:
+    def _encode_untimed_constraints(
+        self, scenario: "AnalysisScenario"
+    ) -> FNode:
         untimed_constraints = []
-        parameters = model._parameters()
-
-        # If parameter_bounds exist, then override those encoded in the original model
-        overridden_parameters = [
-            (
-                p
-                if p.name not in model.parameter_bounds
-                else Parameter(
-                    name=p.name,
-                    lb=model.parameter_bounds[p.name][0],
-                    ub=model.parameter_bounds[p.name][1],
-                )
-            )
-            for p in parameters
-        ]
+        parameters = [
+            p
+            for p in scenario.model._parameters()
+            if p not in scenario.parameters
+        ] + scenario.parameters
 
         # Create bounds on parameters, but not necessarily synthesize the parameters
         untimed_constraints.append(
@@ -346,7 +345,8 @@ class Encoder(ABC, BaseModel):
                 Box(
                     bounds={
                         p.name: Interval(lb=p.lb, ub=p.ub)
-                        for p in overridden_parameters
+                        for p in parameters
+                        if isinstance(p, ModelParameter)
                     },
                     closed_upper_bound=True,
                 )
@@ -355,7 +355,8 @@ class Encoder(ABC, BaseModel):
 
         return And(untimed_constraints).simplify()
 
-    def _encode_timed_model_elements(self, model: Model):
+    def _encode_timed_model_elements(self, scenario: "AnalysisScenario"):
+        model = scenario.model
         self._timed_symbols = self._get_timed_symbols(model)
         self._untimed_symbols = self._get_untimed_symbols(model)
 
@@ -363,7 +364,7 @@ class Encoder(ABC, BaseModel):
             configurations,
             max_step_index,
             max_step_size,
-        ) = self._get_structural_configurations(model)
+        ) = self._get_structural_configurations(scenario)
         self._timed_model_elements = {
             "init": self._define_init(model),
             "time_step_constraints": [
@@ -371,7 +372,7 @@ class Encoder(ABC, BaseModel):
                 for j in range(max_step_index)
             ],
             "configurations": configurations,
-            "untimed_constraints": self._encode_untimed_constraints(model),
+            "untimed_constraints": self._encode_untimed_constraints(scenario),
             "timed_parameters": [
                 [None for i in range(max_step_size)]
                 for j in range(max_step_index)

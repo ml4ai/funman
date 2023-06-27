@@ -7,7 +7,7 @@ from IPython.display import clear_output
 from matplotlib.lines import Line2D
 
 from funman.representation.representation import Box, Interval, Point
-from funman.scenario import ParameterSpace
+from funman.representation import ParameterSpace
 
 
 class ParameterSpacePlotter:
@@ -57,6 +57,9 @@ class ParameterSpacePlotter:
         return box
 
     def initialize_figure(self):
+        if self.dim == 0:
+            return
+
         fig, axs = plt.subplots(
             self.dim,
             self.dim,

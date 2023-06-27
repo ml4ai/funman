@@ -1,4 +1,4 @@
-from typing import List, Literal, Optional, Union
+from typing import Dict, List, Literal, Optional, Union
 
 from pydantic import BaseModel
 
@@ -12,9 +12,13 @@ from funman.model.query import QueryAnd, QueryFunction, QueryLE, QueryTrue
 from funman.model.regnet import GeneratedRegnetModel, RegnetModel
 from funman.representation import Parameter
 from funman.representation.representation import (
+    LABEL_ANY,
     LABEL_TRUE,
+    LabeledParameter,
     ParameterSpace,
     Point,
+    StructureParameter,
+    ModelParameter
 )
 from funman.scenario.consistency import (
     ConsistencyScenario,
@@ -25,18 +29,13 @@ from funman.scenario.parameter_synthesis import (
     ParameterSynthesisScenarioResult,
 )
 
-LABEL_ANY = "any"
-LABEL_ALL = "all"
-
-
-class LabeledParameter(Parameter):
-    label: Literal["any", "all"] = LABEL_ANY
 
 
 class FunmanWorkRequest(BaseModel):
     query: Union[QueryAnd, QueryLE, QueryFunction, QueryTrue]
     parameters: Optional[List[LabeledParameter]] = None
     config: Optional[FUNMANConfig] = None
+    structure_parameters: Optional[List[LabeledParameter]] = None
 
 
 class FunmanWorkUnit(BaseModel):
@@ -76,11 +75,12 @@ class FunmanWorkUnit(BaseModel):
         # resolve all 'any' parameters to a Parameter object
         parameters = []
         for data in self.request.parameters:
-            # skip any parameters that are not of kind 'any'
-            if data.label != LABEL_ALL:
-                continue
             parameters.append(
-                Parameter(name=data.name, ub=data.ub, lb=data.lb)
+                ModelParameter(name=data.name, ub=data.ub, lb=data.lb, label=data.label)
+            )
+        for data in self.request.structure_parameters:
+            parameters.append(
+                StructureParameter(name=data.name, ub=data.ub, lb=data.lb, label=data.label)
             )
         return ParameterSynthesisScenario(
             model=self.model, query=self.request.query, parameters=parameters

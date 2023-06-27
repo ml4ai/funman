@@ -12,7 +12,7 @@ from multiprocessing import Queue, Value
 from multiprocessing.synchronize import Condition, Event, Lock
 from queue import Empty
 from queue import Queue as QueueSP
-from typing import Callable, List, Optional, Set, Union
+from typing import Callable, Dict, List, Optional, Set, Union
 
 from pysmt.formula import FNode
 from pysmt.logics import QF_NRA
@@ -24,6 +24,7 @@ from funman.representation.representation import (
     LABEL_TRUE,
     LABEL_UNKNOWN,
     Interval,
+    ModelParameter,
 )
 from funman.search import Box, ParameterSpace, Point, Search, SearchEpisode
 from funman.search.search import SearchStaticsMP, SearchStatistics
@@ -85,7 +86,7 @@ class BoxSearchEpisode(SearchEpisode):
     #     self.iteration = manager.Value("i", 0) if manager else 0
 
     def _initialize_boxes(self, expander_count):
-        initial_box = self._initial_box()
+        # initial_box = self._initial_box()
         # if not self.add_unknown(initial_box):
         #     l.exception(
         #         f"Did not add an initial box (of width {initial_box.width()}), try reducing config.tolerance, currently {self.config.tolerance}"
@@ -109,7 +110,14 @@ class BoxSearchEpisode(SearchEpisode):
     def _initial_box(self) -> Box:
         return Box(
             bounds={
-                p.name: Interval(lb=p.lb, ub=p.ub)
+                p.name: (
+                    Interval(lb=p.lb, ub=p.ub)
+                    if isinstance(p, ModelParameter)
+                    else Interval(
+                        lb=self.structural_configuration[p.name],
+                        ub=self.structural_configuration[p.name],
+                    )
+                )
                 for p in self.problem.parameters
             }
         )
@@ -163,9 +171,7 @@ class BoxSearchEpisode(SearchEpisode):
 
     def _add_false_point(self, point: Point):
         if point in self._true_points:
-            l.error(
-                f"Point: {point} is marked false, but already marked true."
-            )
+            l.error(f"Point: {point} is marked false, but already marked true.")
         point.label = LABEL_FALSE
         self._false_points.add(point)
 
@@ -178,9 +184,7 @@ class BoxSearchEpisode(SearchEpisode):
 
     def _add_true_point(self, point: Point):
         if point in self._false_points:
-            l.error(
-                f"Point: {point} is marked true, but already marked false."
-            )
+            l.error(f"Point: {point} is marked true, but already marked false.")
         point.label = LABEL_TRUE
         self._true_points.add(point)
 
@@ -207,8 +211,13 @@ class BoxSearchEpisode(SearchEpisode):
         point = Point(
             values={
                 # p.name: float(model.assignment[p.symbol()].constant_value())
-                p.name: float(model.get_py_value(p.symbol()))
+                p.name: (
+                    float(model.get_py_value(p.symbol()))
+                    if isinstance(p, ModelParameter)
+                    else self.structural_configuration[p.name]
+                )
                 for p in self.problem.parameters
+                if p.is_synthesized()
             }
         )
         return point
@@ -320,7 +329,11 @@ class BoxSearch(Search):
 
     def _initialize_box(self, solver, box, episode):
         solver.push(1)
-        formula = episode.problem._smt_encoder.box_to_smt(box)
+
+        projected_box = box.project(episode.problem.model_parameters()).project(
+            episode.problem.synthesized_parameters()
+        )
+        formula = episode.problem._smt_encoder.box_to_smt(projected_box)
         episode._formula_stack.append(formula)
         solver.add_assertion(formula)
 
@@ -694,7 +707,6 @@ class BoxSearch(Search):
         self,
         problem: "AnalysisScenario",
         config: "FUNMANConfig",
-        structural_configuration: Dict[str, int] = {},
         haltEvent: Optional[threading.Event] = None,
         resultsCallback: Optional[Callable[[ParameterSpace], None]] = None,
     ) -> ParameterSpace:
@@ -726,14 +738,12 @@ class BoxSearch(Search):
                 problem,
                 config,
                 haltEvent=haltEvent,
-                structural_configuration=structural_configuration,
             )
         else:
             return self._search_sp(
                 problem,
                 config,
                 haltEvent=haltEvent,
-                structural_configuration=structural_configuration,
                 resultsCallback=resultsCallback,
             )
 
@@ -742,20 +752,15 @@ class BoxSearch(Search):
         problem,
         config: "FUNMANConfig",
         haltEvent: Optional[threading.Event],
-        structural_configuration: Dict[str, int] = {},
         resultsCallback: Optional[Callable[[ParameterSpace], None]] = None,
     ) -> ParameterSpace:
-        episode = BoxSearchEpisode(
-            config=config,
-            problem=problem,
-            structural_configuration=structural_configuration,
-        )
-        episode._initialize_boxes(config.num_initial_boxes)
-        rval = QueueSP()
         all_results = {
-            "parameter_space": ParameterSpace(),
+            "parameter_space": ParameterSpace(
+                num_dimensions=problem.num_dimensions()
+            ),
             "dropped_boxes": [],
         }
+        rval = QueueSP()
 
         def handler(rval, config: "FUNMANConfig", results):
             new_results = self._run_handler_step(rval, config, results)
@@ -764,13 +769,28 @@ class BoxSearch(Search):
             return new_results
 
         config._handler.open()
-        self._expand(
-            rval,
-            episode,
-            handler=handler,
-            all_results=all_results,
-            haltEvent=haltEvent,
-        )
+
+        for (
+            structural_configuration
+        ) in problem._smt_encoder._timed_model_elements["configurations"]:
+            problem._encode_timed(
+                structural_configuration["num_steps"],
+                structural_configuration["step_size"],
+                config,
+            )
+            episode = BoxSearchEpisode(
+                config=config,
+                problem=problem,
+                structural_configuration=structural_configuration,
+            )
+            episode._initialize_boxes(config.num_initial_boxes)
+            self._expand(
+                rval,
+                episode,
+                handler=handler,
+                all_results=all_results,
+                haltEvent=haltEvent,
+            )
         config._handler.close()
         return all_results["parameter_space"]
 
@@ -779,7 +799,6 @@ class BoxSearch(Search):
         problem,
         config: "FUNMANConfig",
         haltEvent: Optional[threading.Event],
-        structural_configuration: Dict[str, int] = {},
     ) -> ParameterSpace:
         l = mp.get_logger()
         l.setLevel(LOG_LEVEL)

@@ -7,6 +7,8 @@ import logging
 from functools import total_ordering
 from statistics import mean as average
 from typing import Dict, List, Literal, Optional, Union
+import hashlib
+
 
 from pydantic import BaseModel
 from pysmt.fnode import FNode
@@ -26,18 +28,35 @@ LABEL_UNKNOWN: Literal["unknown"] = "unknown"
 LABEL_DROPPED: Literal["dropped"] = "dropped"
 Label = Literal["true", "false", "unknown", "dropped"]
 
+LABEL_ANY = "any"
+LABEL_ALL = "all"
+
 
 class Parameter(BaseModel):
     name: Union[str, ModelSymbol]
-    lb: Union[str, float] = NEG_INFINITY
-    ub: Union[str, float] = POS_INFINITY
+    lb: Union[float, str] = NEG_INFINITY
+    ub: Union[float, str] = POS_INFINITY
+
+    def width(self) -> Union[str, float]:
+        return math_utils.minus(self.ub, self.lb)
+
+    def __hash__(self):
+        return abs(hash(self.name))
 
 
-class StructureParameter(Parameter):
-    pass
+class LabeledParameter(Parameter):
+    label: Literal["any", "all"] = LABEL_ANY
+
+    def is_synthesized(self) -> bool:
+        return self.label == LABEL_ALL and self.width() > 0.0
 
 
-class ModelParameter(BaseModel):
+class StructureParameter(LabeledParameter):
+    def is_synthesized(self):
+        return True
+
+
+class ModelParameter(LabeledParameter):
     """
     A parameter is a free variable for a Model.  It has the following attributes:
 
@@ -93,10 +112,7 @@ class ModelParameter(BaseModel):
             # don't attempt to compare against unrelated types
             return NotImplemented
 
-        return self.name == other.name and (
-            not (self.symbol() and other.symbol())
-            or (self.symbol().symbol_name() == other.symbol().symbol_name())
-        )
+        return self.name == other.name
 
     def __hash__(self):
         # necessary for instances to behave sanely in dicts and sets.
@@ -444,13 +460,13 @@ class Box(BaseModel):
     def __hash__(self):
         return int(sum([i.__hash__() for _, i in self.bounds.items()]))
 
-    def project(self, vars: List[str]) -> "Box":
+    def project(self, vars: Union[List[Parameter], List[str]]) -> "Box":
         """
         Takes a subset of selected variables (vars_list) of a given box (b) and returns another box that is given by b's values for only the selected variables.
 
         Parameters
         ----------
-        vars : List[str]
+        vars : Union[List[Parameter], List[str]]
             variables to project onto
 
         Returns
@@ -459,8 +475,21 @@ class Box(BaseModel):
             projected box
 
         """
-        bp = copy.copy(self)
-        bp.bounds = {k: v for k, v in bp.bounds.items() if k in vars}
+        bp = copy.deepcopy(self)
+        if len(vars) > 0:
+            if isinstance(vars[0], str):
+                bp.bounds = {k: v for k, v in bp.bounds.items() if k in vars}
+            elif isinstance(vars[0], Parameter):
+                vars_str = [v.name for v in vars]
+                bp.bounds = {
+                    k: v for k, v in bp.bounds.items() if k in vars_str
+                }
+            else:
+                raise Exception(
+                    f"Unknown type {type(vars[0])} used as intput to Box.project()"
+                )
+        else:
+            bp.bounds = {}
         return bp
 
     def _merge(self, other: "Box") -> "Box":
@@ -1015,6 +1044,7 @@ class ParameterSpace(BaseModel):
     are represented as a collection of boxes that are either known to be true or
     known to be false.
     """
+
     num_dimensions: int = None
     true_boxes: List[Box] = []
     false_boxes: List[Box] = []

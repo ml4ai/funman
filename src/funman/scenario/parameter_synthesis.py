@@ -4,6 +4,7 @@ This module defines the Parameter Synthesis scenario.
 import threading
 from typing import Callable, Dict, List, Optional, Union
 
+
 from pandas import DataFrame
 from pydantic import BaseModel
 from pysmt.formula import FNode
@@ -27,8 +28,13 @@ from funman.model.query import (
     QueryLE,
 )
 from funman.model.regnet import GeneratedRegnetModel, RegnetModel
-from funman.representation import Parameter
-from funman.representation.representation import ParameterSpace, Point
+from funman.representation import Parameter, StructureParameter, ModelParameter
+from funman.representation.representation import (
+    ModelParameter,
+    ParameterSpace,
+    Point,
+    StructureParameter,
+)
 from funman.scenario import (
     AnalysisScenario,
     AnalysisScenarioResult,
@@ -111,75 +117,58 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
         self._extract_non_overriden_parameters()
         self._filter_parameters()
 
-        num_parameters = len(self.parameters) + len(self.model.structural_parameter_bounds)
+        num_parameters = len(self.parameters)
+        if self._smt_encoder is None:
+            self._smt_encoder = self.model.default_encoder(config, self)
 
-        if self.model.structural_parameter_bounds:
-            if self._smt_encoder is None:
-                self._smt_encoder = self.model.default_encoder(config)
-
-            # FIXME these ranges are also computed in the encoder
-            num_steps_range = range(
-                self.model.structural_parameter_bounds["num_steps"][0],
-                self.model.structural_parameter_bounds["num_steps"][1] + 1,
-            )
-            step_size_range = range(
-                self.model.structural_parameter_bounds["step_size"][0],
-                self.model.structural_parameter_bounds["step_size"][1] + 1,
-            )
-            result = []
-
-            consistent = None
-            for configuration in self._smt_encoder._timed_model_elements[
-                "configurations"
-            ]:
-                num_steps = configuration["num_steps"]
-                step_size = configuration["step_size"]
-                self._encode_timed(num_steps, step_size, config)
-                r = search.search(
-                    self,
-                    config=config,
-                    structural_configuration=configuration,
-                    haltEvent=haltEvent,
-                    resultsCallback=resultsCallback,
-                )
-                # result.append(
-                #     {
-                #         "num_steps": num_steps,
-                #         "step_size": step_size,
-                #         "parameter_space": r,
-                #     }
-                # )
-                # print(self._results_str(result))
-                # print("-" * 80)
-
-            parameter_space = ParameterSpace._from_configurations(result)
-        else:
-            # self._encode(config)
-            if self._smt_encoder is None:
-                self._smt_encoder = self.model.default_encoder(config)
-            self._encode_timed(config.num_steps, config.step_size, config)
-
-            self._original_parameter_widths = {
-                p: minus(p.ub, p.lb) for p in self.parameters
-            }
-            parameter_space: ParameterSpace = search.search(
-                self,
-                config,
-                haltEvent=haltEvent,
-                resultsCallback=resultsCallback,
-            )
+        self._original_parameter_widths = {
+            p: minus(p.ub, p.lb) for p in self.parameters
+        }
+        parameter_space: ParameterSpace = search.search(
+            self,
+            config,
+            haltEvent=haltEvent,
+            resultsCallback=resultsCallback,
+        )
 
         parameter_space.num_dimensions = num_parameters
         return ParameterSynthesisScenarioResult(
             parameter_space=parameter_space, scenario=self
         )
 
+    def num_dimensions(self):
+        """
+        Return the number of parameters (dimensions) that are synthesized.  A parameter is synthesized if it has a domain with width greater than zero and it is either labeled as LABEL_ALL or is a structural parameter (which are LABEL_ALL by default).
+        """
+        return len([p for p in self.parameters if p.is_synthesized()])
+
+    def structure_parameters(self):
+        return [p for p in self.parameters if isinstance(p, StructureParameter)]
+
+    def model_parameters(self):
+        return [p for p in self.parameters if isinstance(p, ModelParameter)]
+
+    def synthesized_parameters(self):
+        return [p for p in self.parameters if p.is_synthesized()]
+
+    def structure_parameter(self, name: str) -> StructureParameter:
+        return next(p for p in self.parameters if p.name == name)
+
     def _extract_non_overriden_parameters(self):
+        from funman.server.query import LABEL_ANY
+
         # If a model has parameters that are not overridden by the scenario, then add them to the scenario
         model_parameters = self.model._parameter_names()
         model_parameters = [] if model_parameters is None else model_parameters
         non_overriden_parameters = []
-        for p in model_parameters:
+        for p in [
+            param
+            for param in model_parameters
+            if param
+            not in [
+                overridden_param.name for overridden_param in self.parameters
+            ]
+        ]:
             bounds = {}
             lb = self.model._parameter_lb(p)
             if lb:
@@ -187,16 +176,22 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
             ub = self.model._parameter_ub(p)
             if ub:
                 bounds["ub"] = ub
-            non_overriden_parameters.append(Parameter(name=p, **bounds))
+            non_overriden_parameters.append(
+                ModelParameter(name=p, **bounds, label=LABEL_ANY)
+            )
         self.parameters += non_overriden_parameters
 
     def _filter_parameters(self):
         # If the scenario has parameters that are not in the model, then remove them from the scenario
         model_parameters = self.model._parameter_names()
         if model_parameters is not None:
-            self.parameters = [
-                p for p in self.parameters if p.name in model_parameters
+            filtered_parameters = [
+                p
+                for p in self.parameters
+                if p.name in model_parameters
+                or isinstance(p, StructureParameter)
             ]
+            self.parameters = filtered_parameters
 
     def _results_str(self, result: List[Dict]):
         return "\n".join(

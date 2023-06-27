@@ -1,48 +1,17 @@
 {
-  "query": {
-    "queries": [
-      {
-        "variable": "S",
-        "lb": 0.0
-      },
-      {
-        "variable": "S",
-        "ub": 1001.0
-      },
-      {
-        "variable": "I",
-        "lb": 0.0
-      },
-      {
-        "variable": "I",
-        "ub": 1001.0
-      },
-      {
-        "variable": "I",
-        "ub": 200.0
-      },
-      {
-        "variable": "R",
-        "lb": 0.0
-      },
-      {
-        "variable": "R",
-        "ub": 1001.0
-      }
-    ]
-  },
+  "query": {},
   "parameters": [
     {
       "name": "beta",
-      "lb": 0.0002603,
-      "ub": 0.0002803,
+      "lb": 2.6e-7,
+      "ub": 2.8e-7,
       "label": "all"
     },
     {
       "name": "gamma",
       "lb": 0.1,
       "ub": 0.18,
-      "label": "any"
+      "label": "all"
     },
     {
       "name": "S0",
@@ -66,8 +35,8 @@
   "structure_parameters": [
     {
       "name": "num_steps",
-      "lb": 7,
-      "ub": 7,
+      "lb": 1,
+      "ub": 3,
       "label": "all"
     },
     {
@@ -81,7 +50,6 @@
     "tolerance": 1.0e-8,
     "number_of_processes": 1,
     "solver": "dreal",
-    "dreal_mcts": "true",
-    "dreal_precision": 0.1
+    "dreal_mcts": "true"
   }
 }

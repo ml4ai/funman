@@ -72,6 +72,9 @@ class AbstractPetriNetModel(Model):
     def _parameters(self) -> List[Parameter]:
         param_names = self._parameter_names()
         param_values = self._parameter_values()
+
+        # Get Parameter Bounds in FunmanModel (potentially wrapping an AMR model),
+        # if they are overriden by the outer model.
         params = [
             Parameter(
                 name=p,
@@ -80,10 +83,11 @@ class AbstractPetriNetModel(Model):
             )
             for p in param_names
             if self.parameter_bounds
-            and p not in param_values
-            and p in self.parameter_bounds
-            and self.parameter_bounds[p]
+            # and p not in param_values
+            and p in self.parameter_bounds and self.parameter_bounds[p]
         ]
+
+        # Get values from wrapped model if not overridden by outer model
         params += [
             Parameter(
                 name=p,
@@ -91,7 +95,7 @@ class AbstractPetriNetModel(Model):
                 ub=param_values[p],
             )
             for p in param_names
-            if p in param_values
+            if p in param_values and p not in self.parameter_bounds
         ]
 
         return params
@@ -152,7 +156,9 @@ class AbstractPetriNetModel(Model):
 class GeneratedPetriNetModel(AbstractPetriNetModel):
     petrinet: GeneratedPetrinet
 
-    def default_encoder(self, config: "FUNMANConfig") -> "Encoder":
+    def default_encoder(
+        self, config: "FUNMANConfig", scenario: "AnalysisScenario"
+    ) -> "Encoder":
         """
         Return the default Encoder for the model
 
@@ -163,7 +169,7 @@ class GeneratedPetriNetModel(AbstractPetriNetModel):
         """
         return PetrinetEncoder(
             config=config,
-            model=self,
+            scenario=scenario,
         )
 
     def _get_init_value(self, var: str):

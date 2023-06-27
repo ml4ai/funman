@@ -24,16 +24,16 @@ RESOURCES = os.path.join(
 out_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "out")
 
 
-models = {
-     GeneratedPetrinet, GeneratedRegnet
-}
+models = {GeneratedPetrinet, GeneratedRegnet}
 
-AMR_EXAMPLES_DIR= os.path.join(
-        RESOURCES, "amr", "petrinet", "amr-examples"
-    )
+AMR_EXAMPLES_DIR = os.path.join(RESOURCES, "amr", "petrinet", "amr-examples")
 
 cases = [
-    (os.path.join(AMR_EXAMPLES_DIR, "sir.json"), os.path.join(AMR_EXAMPLES_DIR, "sir_request1.json"))
+    (os.path.join(AMR_EXAMPLES_DIR, "sir.json"), os.path.join(AMR_EXAMPLES_DIR, "sir_request1.json")),
+    # (
+    #     os.path.join(AMR_EXAMPLES_DIR, "sir.json"),
+    #     os.path.join(AMR_EXAMPLES_DIR, "sir_request2.json"),
+    # )
 ]
 
 if not os.path.exists(out_dir):
@@ -58,20 +58,20 @@ class TestModels(unittest.TestCase):
     def get_model(self, model_file: str):
         for model in models:
             try:
-                m = _wrap_with_internal_model(pydantic.parse_file_as(model, model_file))
+                m = _wrap_with_internal_model(
+                    pydantic.parse_file_as(model, model_file)
+                )
                 return m
             except Exception as e:
                 pass
         raise Exception(f"Could not determine the Model type of {model_file}")
 
-
     def run_instance(self, case: Tuple[str, str]):
-        (model_file, request_file) = case 
+        (model_file, request_file) = case
 
-        
         model = self.get_model(model_file)
         request = pydantic.parse_file_as(FunmanWorkRequest, request_file)
-        
+
         work_unit: FunmanWorkUnit = self._worker.enqueue_work(
             model=model, request=request
         )
