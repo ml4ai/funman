@@ -63,19 +63,20 @@
     {
       "name": "num_steps",
       "lb": 1,
-      "ub": 10,
+      "ub": 4,
       "label": "all"
     },
     {
       "name": "step_size",
-      "lb": 1,
-      "ub": 1,
+      "lb": 5,
+      "ub": 5,
       "label": "all"
     }
   ],
   "config": {
     "solver": "dreal",
     "dreal_mcts": true,
-    "dreal_precision": 10
+    "dreal_precision": 1,
+    "tolerance": 1e-2
   }
 }
