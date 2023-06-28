@@ -36,7 +36,7 @@ class AnalysisScenario(ABC, BaseModel):
         """
         Return the number of parameters (dimensions) that are synthesized.  A parameter is synthesized if it has a domain with width greater than zero and it is either labeled as LABEL_ALL or is a structural parameter (which are LABEL_ALL by default).
         """
-        return len([p for p in self.parameters if p.is_synthesized()])
+        return len([p for p in self.parameters])
 
     def structure_parameters(self):
         return [p for p in self.parameters if isinstance(p, StructureParameter)]
@@ -55,8 +55,6 @@ class AnalysisScenarioResult(ABC):
     """
     Abstract class for AnalysisScenario result data.
     """
-
-    parameter_space: ParameterSpace
 
     @abstractmethod
     def plot(self, **kwargs):

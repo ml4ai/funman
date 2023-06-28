@@ -30,7 +30,18 @@ AMR_EXAMPLES_DIR = os.path.join(RESOURCES, "amr")
 AMR_PETRI_DIR = os.path.join(AMR_EXAMPLES_DIR, "petrinet", "amr-examples")
 AMR_REGNET_DIR = os.path.join(AMR_EXAMPLES_DIR, "regnet", "amr-examples")
 
+SKEMA_PETRI_DIR = os.path.join(AMR_EXAMPLES_DIR, "petrinet", "skema")
+SKEMA_REGNET_DIR = os.path.join(AMR_EXAMPLES_DIR, "regnet", "skema")
+
 cases = [
+    # (
+    #     os.path.join(SKEMA_PETRI_DIR, "linked_petrinet.json"),
+    #     os.path.join(SKEMA_PETRI_DIR, "sir_request_skema1.json"),
+    # ),
+    (
+        os.path.join(SKEMA_PETRI_DIR, "linked_petrinet.json"),
+        os.path.join(SKEMA_PETRI_DIR, "sir_request_skema2.json"),
+    ),
     # (
     #     os.path.join(AMR_PETRI_DIR, "sir.json"),
     #     os.path.join(AMR_PETRI_DIR, "sir_request1.json"),
@@ -39,10 +50,14 @@ cases = [
     #     os.path.join(AMR_EXAMPLES_DIR, "sir.json"),
     #     os.path.join(AMR_EXAMPLES_DIR, "sir_request2.json"),
     # )
-    (
-        os.path.join(AMR_REGNET_DIR, "lotka_volterra.json"),
-        os.path.join(AMR_REGNET_DIR, "lotka_volterra_request1.json"),
-    ),
+    # (
+    #     os.path.join(AMR_REGNET_DIR, "lotka_volterra.json"),
+    #     os.path.join(AMR_REGNET_DIR, "lotka_volterra_request_any1.json"),
+    # ),
+    # (
+    #     os.path.join(AMR_REGNET_DIR, "lotka_volterra.json"),
+    #     os.path.join(AMR_REGNET_DIR, "lotka_volterra_request1.json"),
+    # ),
 ]
 
 if not os.path.exists(out_dir):
@@ -88,14 +103,19 @@ class TestModels(unittest.TestCase):
         while True:
             if self._worker.is_processing_id(work_unit.id):
                 results = self._worker.get_results(work_unit.id)
-                ParameterSpacePlotter(
-                    results.parameter_space, plot_points=True
-                ).plot(show=True)
-                plt.savefig(f"{out_dir}/{model.__module__}.png")
-                sleep(2)
+                # ParameterSpacePlotter(
+                #     results.parameter_space, plot_points=True
+                # ).plot(show=True)
+                # plt.savefig(f"{out_dir}/{model.__module__}.png")
+                sleep(1)
             else:
                 results = self._worker.get_results(work_unit.id)
                 break
+
+        ParameterSpacePlotter(results.parameter_space, plot_points=True).plot(
+            show=True
+        )
+        plt.savefig(f"{out_dir}/{model.__module__}.png")
 
         assert results
 

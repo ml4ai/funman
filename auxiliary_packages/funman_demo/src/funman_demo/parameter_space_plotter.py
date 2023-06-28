@@ -128,8 +128,8 @@ class ParameterSpacePlotter:
                     alpha=alpha,
                     s=3,
                 )
-                self.fig.canvas.draw()
-                self.fig.canvas.flush_events()
+                # self.fig.canvas.draw()
+                # self.fig.canvas.flush_events()
 
     def plotNDBox(self, box, color="g", alpha=0.2):
         for i in range(self.dim):

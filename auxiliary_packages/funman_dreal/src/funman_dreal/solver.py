@@ -429,7 +429,7 @@ class DRealNative(Solver, SmtLibBasicSolver, SmtLibIgnoreMixin):
         # self.context.config.use_worklist_fixpoint = True
         self.model = None
         if "solver_options" in options:
-            if "dreal_precision" in options:
+            if "dreal_precision" in options["solver_options"]:
                 self.config.precision = options["solver_options"][
                     "dreal_precision"
                 ]

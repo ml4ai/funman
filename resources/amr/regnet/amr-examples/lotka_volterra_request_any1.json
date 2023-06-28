@@ -49,7 +49,7 @@
     {
       "name": "num_steps",
       "lb": 1,
-      "ub": 1,
+      "ub": 20,
       "label": "all"
     },
     {

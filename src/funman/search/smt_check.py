@@ -1,3 +1,5 @@
+import json
+import sys
 import threading
 from typing import Callable, Optional
 from funman.representation.representation import (
@@ -14,6 +16,12 @@ from funman.utils.smtlib_utils import smtlibscript_from_formula_list
 # import funman.search as search
 from .search import Search, SearchEpisode
 
+import logging
+
+l = logging.getLogger(__file__)
+logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
+l.setLevel(logging.INFO)
+
 
 class SMTCheck(Search):
     def search(
@@ -27,9 +35,11 @@ class SMTCheck(Search):
             num_dimensions=problem.num_dimensions()
         )
         models = {}
+        consistent = {}
         for (
             structural_configuration
         ) in problem._smt_encoder._timed_model_elements["configurations"]:
+            l.info(f"Solving configuration: {structural_configuration}")
             problem._encode_timed(
                 structural_configuration["num_steps"],
                 structural_configuration["step_size"],
@@ -44,17 +54,22 @@ class SMTCheck(Search):
             result = self.expand(problem, episode, parameter_space)
 
             result_dict = result.to_dict() if result else None
-            parameter_values = {
-                k: v
-                for k, v in result_dict.items()
-                if k in [p.name for p in problem.parameters]
-            }
-            point = Point(values=parameter_values, label=LABEL_TRUE)
-            models[point] = result
-            parameter_space.true_points.append(point)
+            l.info(f"Result: {json.dumps(result_dict, indent=4)}")
+            if result_dict:
+                parameter_values = {
+                    k: v
+                    for k, v in result_dict.items()
+                    if k in [p.name for p in problem.parameters]
+                }
+                for k, v in structural_configuration.items():
+                    parameter_values[k] = v
+                point = Point(values=parameter_values, label=LABEL_TRUE)
+                models[point] = result
+                consistent[point] = result_dict
+                parameter_space.true_points.append(point)
             resultsCallback(parameter_space)
 
-        return parameter_space, models
+        return parameter_space, models, consistent
 
     def expand(self, problem, episode, parameter_space):
         if episode.config.solver == "dreal":

@@ -74,9 +74,7 @@ class FunmanWorkUnit(BaseModel):
             )
 
         if self.request.parameters is None or all(
-            p.label == LABEL_ANY
-            for p in self.request.parameters
-            if isinstance(p, ModelParameter)
+            p.label == LABEL_ANY for p in self.request.parameters
         ):
             return ConsistencyScenario(
                 model=self.model,
@@ -117,16 +115,7 @@ class FunmanResults(BaseModel):
     ):
         ps = None
         if isinstance(result, ConsistencyScenarioResult):
-            ps = ParameterSpace(num_dimensions=0)
-            if result.consistent is not None:
-                parameter_values = {
-                    k: v
-                    for k, v in result.consistent.items()
-                    if k
-                    in [p.name for p in result.scenario.parameters]
-                }
-                point = Point(values=parameter_values, label=LABEL_TRUE)
-                ps.true_points.append(point)
+            ps = result.parameter_space
         if isinstance(result, ParameterSynthesisScenarioResult):
             ps = result.parameter_space
 

@@ -69,8 +69,6 @@ class AbstractPetriNetModel(Model):
         else:
             return 0
 
-
-
     def to_dot(self, values={}):
         """
         Create a dot object for visualizing the graph.
@@ -146,8 +144,11 @@ class GeneratedPetriNetModel(AbstractPetriNetModel):
     def _get_init_value(self, var: str):
         value = Model._get_init_value(self, var)
         if value is None:
-            initials = self.petrinet.semantics.ode.initials
-            value = next(i.expression for i in initials if i.target == var)
+            if hasattr(self.petrinet.semantics, "ode"):
+                initials = self.petrinet.semantics.ode.initials
+                value = next(i.expression for i in initials if i.target == var)
+            else:
+                value = f"{var}0"
         return value
 
     def _parameter_lb(self, param_name: str):
@@ -197,21 +198,24 @@ class GeneratedPetriNetModel(AbstractPetriNetModel):
         return [(t.id, o) for t in self._transitions() for o in t.output]
 
     def _transition_parameter(self, transition):
-        transition_rates = [
-            r
-            for r in self.petrinet.semantics.ode.rates
-            if r.target == transition.id
-        ]
-        parameters = [
-            p
-            for t in transition_rates
-            for p in self._parameter_names()
-            if p in t.expression
-        ]
-        assert (
-            len(parameters) == 1
-        ), f"The number of parameters for transition {transition} are not equal to 1, {parameters}"
-        return parameters[0]
+        if hasattr(self.petrinet.semantics, "ode"):
+            transition_rates = [
+                r
+                for r in self.petrinet.semantics.ode.rates
+                if r.target == transition.id
+            ]
+            parameters = [
+                p
+                for t in transition_rates
+                for p in self._parameter_names()
+                if p in t.expression
+            ]
+            assert (
+                len(parameters) == 1
+            ), f"The number of parameters for transition {transition} are not equal to 1, {parameters}"
+            return parameters[0]
+        else:
+            return transition.id
 
     def _transition_id(self, transition):
         return transition.id
@@ -220,10 +224,19 @@ class GeneratedPetriNetModel(AbstractPetriNetModel):
         return self._state_var_name(state_var)
 
     def _parameter_names(self):
-        return [p.id for p in self.petrinet.semantics.ode.parameters]
+        if hasattr(self.petrinet.semantics, "ode"):
+            return [p.id for p in self.petrinet.semantics.ode.parameters]
+        else:
+            # Create a parameter for each transition and initial state variable
+            return [t.id for t in self.petrinet.model.transitions.__root__] + [f"{s.id}0" for s in self.petrinet.model.states.__root__]
 
     def _parameter_values(self):
-        return {p.id: p.value for p in self.petrinet.semantics.ode.parameters}
+        if hasattr(self.petrinet.semantics, "ode"):
+            return {
+                p.id: p.value for p in self.petrinet.semantics.ode.parameters
+            }
+        else:
+            return {}
 
 
 class PetrinetDynamics(BaseModel):

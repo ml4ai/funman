@@ -55,7 +55,7 @@ class BoxSearchEpisode(SearchEpisode):
 
     # problem: ParameterSynthesisScenario
     statistics: SearchStatistics = None
-    
+
     _true_boxes: List[Box] = []
     _false_boxes: List[Box] = []
     _true_points: Set[Point] = set({})
@@ -487,9 +487,9 @@ class BoxSearch(Search):
                 solver_options=opts,
             ) as solver:
                 l.info(f"{process_name} entering process loop")
-                print("Starting initializing dynamics of model")
+                # print("Starting initializing dynamics of model")
                 self._initialize_encoding(solver, episode)
-                print("Initialized dynamics of model")
+                # print("Initialized dynamics of model")
                 while True:
                     if haltEvent is not None and haltEvent.is_set():
                         break

@@ -15,7 +15,7 @@
       },
       {
         "variable": "I",
-        "ub": 200.0
+        "ub": 500.0
       },
       {
         "variable": "R",
@@ -29,15 +29,11 @@
   },
   "parameters": [
     {
-      "name": "beta",
-      "lb": 0.0002603,
-      "ub": 0.0002803,
-      "label": "all"
+      "name": "\u03b2",
+      "label": "any"
     },
     {
-      "name": "gamma",
-      "lb": 0.1,
-      "ub": 0.18,
+      "name": "\u03b3",
       "label": "any"
     },
     {
@@ -63,7 +59,7 @@
     {
       "name": "num_steps",
       "lb": 1,
-      "ub": 7,
+      "ub": 10,
       "label": "all"
     },
     {
@@ -75,6 +71,6 @@
   ],
   "config": {
     "solver": "dreal",
-    "dreal_mcts": false
+    "dreal_mcts": true
   }
 }

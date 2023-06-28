@@ -242,7 +242,7 @@ class ParameterSynthesisScenarioResult(AnalysisScenarioResult, BaseModel):
 
     # episode: SearchEpisode
     scenario: ParameterSynthesisScenario
-    
+    parameter_space: ParameterSpace
 
     def plot(self, **kwargs):
         """

@@ -3,7 +3,7 @@ This submodule defines a consistency scenario.  Consistency scenarios specify an
 """
 import threading
 from typing import Callable, Dict, Optional, Union
-from funman.representation.representation import Point
+from funman.representation.representation import ParameterSpace, Point
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -96,14 +96,16 @@ class ConsistencyScenario(AnalysisScenario, BaseModel):
         if self._smt_encoder is None:
             self._smt_encoder = self.model.default_encoder(config, self)
 
-        parameter_space, models = search.search(
+        parameter_space, models, consistent = search.search(
             self,
             config=config,
             haltEvent=haltEvent,
             resultsCallback=resultsCallback,
         )
         scenario_result = ConsistencyScenarioResult(
-            scenario=self, parameter_space=parameter_space
+            scenario=self,
+            consistent=consistent,
+            parameter_space=parameter_space,
         )
         scenario_result._models = models
 
@@ -170,6 +172,7 @@ class ConsistencyScenarioResult(AnalysisScenarioResult, BaseModel):
         arbitrary_types_allowed = True
 
     scenario: ConsistencyScenario
+    parameter_space: ParameterSpace
     consistent: Dict[Point, Dict[str, float]] = None
     _models: Dict[Point, pysmt_Model] = None
 
