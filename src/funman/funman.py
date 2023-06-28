@@ -60,7 +60,7 @@ class FUNMANConfig(BaseModel):
     """Factor used to relax initial state values bounds"""
     save_smtlib: bool = False
     """Whether to save each smt invocation as an SMTLib file"""
-    dreal_precision: float = 0.001
+    dreal_precision: float = 1
     """Precision delta for dreal solver"""
     dreal_log_level: str = "off"
     """Constraint noise term to relax constraints"""

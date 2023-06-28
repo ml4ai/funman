@@ -112,7 +112,7 @@ class ParameterSpacePlotter:
         if show:
             plt.show(block=False)
 
-    def plot_add_point(self, point: Point, color="r", shape="x", alpha=0.2):
+    def plot_add_point(self, point: Point, color="r", shape="x", alpha=0.9):
         for i in range(self.dim):
             for j in range(self.dim):
                 if i < j:
@@ -126,7 +126,7 @@ class ParameterSpacePlotter:
                     color=color,
                     marker=shape,
                     alpha=alpha,
-                    s=3,
+                    s=4,
                 )
                 # self.fig.canvas.draw()
                 # self.fig.canvas.flush_events()

@@ -15,7 +15,7 @@
       },
       {
         "variable": "I",
-        "ub": 200.0
+        "ub": 300.0
       },
       {
         "variable": "R",
@@ -38,7 +38,7 @@
       "name": "gamma",
       "lb": 0.1,
       "ub": 0.18,
-      "label": "any"
+      "label": "all"
     },
     {
       "name": "S0",
@@ -62,19 +62,19 @@
   "structure_parameters": [
     {
       "name": "num_steps",
-      "lb": 1,
-      "ub": 7,
+      "lb": 5,
+      "ub": 5,
       "label": "all"
     },
     {
       "name": "step_size",
-      "lb": 1,
-      "ub": 1,
+      "lb": 10,
+      "ub": 10,
       "label": "all"
     }
   ],
   "config": {
     "solver": "dreal",
-    "dreal_mcts": false
+    "tolerance": 1e-6
   }
 }

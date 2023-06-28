@@ -29,15 +29,15 @@
   },
   "parameters": [
     {
-      "name": "\u03b2",
-      "lb": 0.0,
-      "ub": 0.1,
+      "name": "beta",
+      "lb": 0.0002603,
+      "ub": 0.0004,
       "label": "all"
     },
     {
-      "name": "\u03b3",
-      "lb": 0.1,
-      "ub": 0.2,
+      "name": "gamma",
+      "lb": 0.0999,
+      "ub": 0.1,
       "label": "all"
     },
     {
@@ -68,15 +68,13 @@
     },
     {
       "name": "step_size",
-      "lb": 5,
-      "ub": 5,
+      "lb": 10,
+      "ub": 10,
       "label": "all"
     }
   ],
   "config": {
     "solver": "dreal",
-    "dreal_mcts": true,
-    "dreal_precision": 1,
-    "tolerance": 1e-2
+    "tolerance": 1e-5
   }
 }

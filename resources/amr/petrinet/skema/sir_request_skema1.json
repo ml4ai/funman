@@ -59,13 +59,13 @@
     {
       "name": "num_steps",
       "lb": 1,
-      "ub": 10,
+      "ub": 15,
       "label": "all"
     },
     {
       "name": "step_size",
-      "lb": 1,
-      "ub": 1,
+      "lb": 5,
+      "ub": 5,
       "label": "all"
     }
   ],

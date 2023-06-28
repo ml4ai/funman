@@ -22,14 +22,14 @@
   "parameters": [
     {
       "name": "alpha",
-      "lb": 0.63,
-      "ub": 0.67,
+      "lb": 0.6,
+      "ub": 0.7,
       "label": "all"
     },
     {
       "name": "beta",
-      "lb": 1.3,
-      "ub": 1.35,
+      "lb": 1.2,
+      "ub": 1.4,
       "label": "all"
     },
     {
@@ -49,13 +49,13 @@
     {
       "name": "num_steps",
       "lb": 1,
-      "ub": 20,
+      "ub": 10,
       "label": "all"
     },
     {
       "name": "step_size",
-      "lb": 1,
-      "ub": 1,
+      "lb": 2,
+      "ub": 2,
       "label": "all"
     }
   ],
@@ -63,6 +63,6 @@
     "solver": "dreal",
     "dreal_mcts": true,
     "tolerance": 0.05,
-    "dreal_precision": 1
+    "dreal_precision": 10
   }
 }
