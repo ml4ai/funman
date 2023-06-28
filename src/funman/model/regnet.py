@@ -14,7 +14,9 @@ from .model import Model
 
 
 class AbstractRegnetModel(Model):
-    def default_encoder(self, config: "FUNMANConfig") -> "Encoder":
+    def default_encoder(
+        self, config: "FUNMANConfig", scenario: "AnalysisScenario"
+    ) -> "Encoder":
         """
         Return the default Encoder for the model
 
@@ -25,7 +27,7 @@ class AbstractRegnetModel(Model):
         """
         return RegnetEncoder(
             config=config,
-            model=self,
+            scenario=scenario,
         )
 
     def _state_var(self, var_id: str):
@@ -48,33 +50,6 @@ class AbstractRegnetModel(Model):
             self._parameter_id(t) for t in self._declared_parameters()
         ]
         return declared_parameters + transition_parameters
-
-    def _parameters(self) -> List[Parameter]:
-        param_names = self._parameter_names()
-        param_values = self._parameter_values()
-        params = [
-            Parameter(
-                name=p,
-                lb=self.parameter_bounds[p][0],
-                ub=self.parameter_bounds[p][1],
-            )
-            for p in param_names
-            if self.parameter_bounds
-            and p not in param_values
-            and p in self.parameter_bounds
-            and self.parameter_bounds[p]
-        ]
-        params += [
-            Parameter(
-                name=p,
-                lb=param_values[p],
-                ub=param_values[p],
-            )
-            for p in param_names
-            if p in param_values
-        ]
-
-        return params
 
 
 class GeneratedRegnetModel(AbstractRegnetModel):
@@ -115,17 +90,22 @@ class GeneratedRegnetModel(AbstractRegnetModel):
 
     def _parameter_values(self):
         return {
-            self._parameter_id(t): t.value
-            for t in self.regnet.model.parameters
+            self._parameter_id(t): t.value for t in self.regnet.model.parameters
         }
 
     def _transition_rate_constant(self, transitition: GeneratedRegnetEdge):
         return (
             transitition.properties.rate_constant.__root__
-            if transitition.properties
-            and transitition.properties.rate_constant
+            if transitition.properties and transitition.properties.rate_constant
             else transitition.id
         )
+
+    def _get_init_value(self, var: str):
+        value = Model._get_init_value(self, var)
+        if value is None:
+            state_var = next(s for s in self._state_vars() if s.id == var)
+            value = state_var.initial.__root__
+        return value
 
 
 class RegnetDynamics(BaseModel):

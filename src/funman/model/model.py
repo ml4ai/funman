@@ -5,11 +5,10 @@ import copy
 import uuid
 from abc import ABC, abstractmethod
 from typing import Dict, List
+from funman.representation.representation import Parameter
 
 from pydantic import BaseModel
 from pysmt.formula import FNode
-
-
 
 
 class Model(ABC, BaseModel):
@@ -60,6 +59,37 @@ class Model(ABC, BaseModel):
 
         return vars
 
+    def _parameters(self) -> List[Parameter]:
+        param_names = self._parameter_names()
+        param_values = self._parameter_values()
+
+        # Get Parameter Bounds in FunmanModel (potentially wrapping an AMR model),
+        # if they are overriden by the outer model.
+        params = [
+            Parameter(
+                name=p,
+                lb=self.parameter_bounds[p][0],
+                ub=self.parameter_bounds[p][1],
+            )
+            for p in param_names
+            if self.parameter_bounds
+            # and p not in param_values
+            and p in self.parameter_bounds and self.parameter_bounds[p]
+        ]
+
+        # Get values from wrapped model if not overridden by outer model
+        params += [
+            Parameter(
+                name=p,
+                lb=param_values[p],
+                ub=param_values[p],
+            )
+            for p in param_names
+            if p in param_values and p not in self.parameter_bounds
+        ]
+
+        return params
+
     def _parameter_names(self) -> List[str]:
         return []
 
@@ -71,9 +101,6 @@ class Model(ABC, BaseModel):
 
     def _parameter_values(self):
         return {}
-
-    def _parameters(self) -> List["Parameter"]:
-        return []
 
     def _parameter_lb(self, param_name: str):
         return None

@@ -26,14 +26,23 @@ out_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "out")
 
 models = {GeneratedPetrinet, GeneratedRegnet}
 
-AMR_EXAMPLES_DIR = os.path.join(RESOURCES, "amr", "petrinet", "amr-examples")
+AMR_EXAMPLES_DIR = os.path.join(RESOURCES, "amr")
+AMR_PETRI_DIR = os.path.join(AMR_EXAMPLES_DIR, "petrinet", "amr-examples")
+AMR_REGNET_DIR = os.path.join(AMR_EXAMPLES_DIR, "regnet", "amr-examples")
 
 cases = [
-    (os.path.join(AMR_EXAMPLES_DIR, "sir.json"), os.path.join(AMR_EXAMPLES_DIR, "sir_request1.json")),
+    # (
+    #     os.path.join(AMR_PETRI_DIR, "sir.json"),
+    #     os.path.join(AMR_PETRI_DIR, "sir_request1.json"),
+    # ),
     # (
     #     os.path.join(AMR_EXAMPLES_DIR, "sir.json"),
     #     os.path.join(AMR_EXAMPLES_DIR, "sir_request2.json"),
     # )
+    (
+        os.path.join(AMR_REGNET_DIR, "lotka_volterra.json"),
+        os.path.join(AMR_REGNET_DIR, "lotka_volterra_request1.json"),
+    ),
 ]
 
 if not os.path.exists(out_dir):

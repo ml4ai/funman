@@ -55,7 +55,7 @@ class BoxSearchEpisode(SearchEpisode):
 
     # problem: ParameterSynthesisScenario
     statistics: SearchStatistics = None
-    structural_configuration: Dict[str, int] = {}
+    
     _true_boxes: List[Box] = []
     _false_boxes: List[Box] = []
     _true_points: Set[Point] = set({})
@@ -217,7 +217,7 @@ class BoxSearchEpisode(SearchEpisode):
                     else self.structural_configuration[p.name]
                 )
                 for p in self.problem.parameters
-                if p.is_synthesized()
+                # if p.is_synthesized()
             }
         )
         return point

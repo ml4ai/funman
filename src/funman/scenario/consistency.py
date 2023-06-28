@@ -3,6 +3,7 @@ This submodule defines a consistency scenario.  Consistency scenarios specify an
 """
 import threading
 from typing import Callable, Dict, Optional, Union
+from funman.representation.representation import Point
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -92,78 +93,20 @@ class ConsistencyScenario(AnalysisScenario, BaseModel):
         else:
             search = config._search()
 
-        if self.model.structural_parameter_bounds:
-            if self._smt_encoder is None:
-                self._smt_encoder = self.model.default_encoder(config)
+        if self._smt_encoder is None:
+            self._smt_encoder = self.model.default_encoder(config, self)
 
-            # FIXME these ranges are also computed in the encoder
-            num_steps_range = range(
-                self.model.structural_parameter_bounds["num_steps"][0],
-                self.model.structural_parameter_bounds["num_steps"][1] + 1,
-            )
-            step_size_range = range(
-                self.model.structural_parameter_bounds["step_size"][0],
-                self.model.structural_parameter_bounds["step_size"][1] + 1,
-            )
-            result = [
-                [None for i in range(len(step_size_range))]
-                for j in range(len(num_steps_range))
-            ]
+        parameter_space, models = search.search(
+            self,
+            config=config,
+            haltEvent=haltEvent,
+            resultsCallback=resultsCallback,
+        )
+        scenario_result = ConsistencyScenarioResult(
+            scenario=self, parameter_space=parameter_space
+        )
+        scenario_result._models = models
 
-            consistent = None
-            for configuration in self._smt_encoder._timed_model_elements[
-                "configurations"
-            ]:
-                num_steps = configuration["num_steps"]
-                step_size = configuration["step_size"]
-                self._encode_timed(num_steps, step_size, config)
-                result[num_steps - num_steps_range.start][
-                    step_size - step_size_range.start
-                ] = search.search(
-                    self,
-                    config=config,
-                    haltEvent=haltEvent,
-                    resultsCallback=resultsCallback,
-                )
-                print(self._results_str(num_steps_range.start, result))
-                print("-" * 80)
-                if result[num_steps - num_steps_range.start][
-                    step_size - step_size_range.start
-                ]:
-                    consistent = result[num_steps - num_steps_range.start][
-                        step_size - step_size_range.start
-                    ].to_dict()
-                    break
-            # consistent = [
-            #     [result[j][i].to_dict() for i in range(len(step_size_range))]
-            #     for j in range(len(num_steps_range))
-            # ]
-            scenario_result = ConsistencyScenarioResult(
-                scenario=self, consistent=consistent
-            )
-            scenario_result._model = result[num_steps - num_steps_range.start][
-                step_size - step_size_range.start
-            ]
-        else:
-            # self._encode(config)
-            if self._smt_encoder is None:
-                self._smt_encoder = self.model.default_encoder(config)
-            self._encode_timed(config.num_steps, config.step_size, config)
-            result = search.search(
-                self,
-                config=config,
-                haltEvent=haltEvent,
-                resultsCallback=resultsCallback,
-            )
-            # FIXME this to_dict call assumes result is an unusual type
-            consistent = result.to_dict() if result else None
-
-            scenario_result = ConsistencyScenarioResult(
-                scenario=self, consistent=consistent
-            )
-            scenario_result._model = (
-                result  # Constructor won't assign this private attr :(
-            )
         return scenario_result
 
     def _results_str(self, starting_steps, result):
@@ -179,9 +122,7 @@ class ConsistencyScenario(AnalysisScenario, BaseModel):
                                 (
                                     "F"
                                     if s is None
-                                    else (
-                                        "T" if (s is not None and s) else " "
-                                    )
+                                    else ("T" if (s is not None and s) else " ")
                                 )
                                 for s in t
                             ]
@@ -229,13 +170,13 @@ class ConsistencyScenarioResult(AnalysisScenarioResult, BaseModel):
         arbitrary_types_allowed = True
 
     scenario: ConsistencyScenario
-    consistent: Dict[str, float] = None
-    _model: pysmt_Model = None
+    consistent: Dict[Point, Dict[str, float]] = None
+    _models: Dict[Point, pysmt_Model] = None
 
-    def _parameters(self):
-        if self.consistent:
+    def _parameters(self, point: Point):
+        if point in self.consistent:
             parameters = self.scenario._smt_encoder.parameter_values(
-                self.scenario.model, self.consistent
+                self.scenario.model, self.consistent[point]
             )
             return parameters
         else:
@@ -243,7 +184,7 @@ class ConsistencyScenarioResult(AnalysisScenarioResult, BaseModel):
                 f"Cannot get parameter values for an inconsistent scenario."
             )
 
-    def dataframe(self, interpolate="linear"):
+    def dataframe(self, point: Point, interpolate="linear"):
         """
         Extract a timeseries as a Pandas dataframe.
 
@@ -264,7 +205,7 @@ class ConsistencyScenarioResult(AnalysisScenarioResult, BaseModel):
         """
         if self.consistent:
             timeseries = self.scenario._smt_encoder.symbol_timeseries(
-                self.scenario._model_encoding, self._model
+                self.scenario._model_encoding, self._model[point]
             )
             df = pd.DataFrame.from_dict(timeseries)
             if interpolate:
@@ -275,7 +216,7 @@ class ConsistencyScenarioResult(AnalysisScenarioResult, BaseModel):
                 f"Cannot create dataframe for an inconsistent scenario."
             )
 
-    def plot(self, variables=None, **kwargs):
+    def plot(self, point: Point, variables=None, **kwargs):
         """
         Plot the results in a matplotlib plot.
 
@@ -286,14 +227,12 @@ class ConsistencyScenarioResult(AnalysisScenarioResult, BaseModel):
         """
         if self.consistent:
             if variables is not None:
-                ax = self.dataframe()[variables].plot(marker="o", **kwargs)
+                ax = self.dataframe(point)[variables].plot(marker="o", **kwargs)
             else:
-                ax = self.dataframe().plot(marker="o", **kwargs)
+                ax = self.dataframe(point).plot(marker="o", **kwargs)
             plt.show(block=False)
         else:
-            raise Exception(
-                f"Cannot plot result for an inconsistent scenario."
-            )
+            raise Exception(f"Cannot plot result for an inconsistent scenario.")
         return ax
 
     def __repr__(self) -> str:

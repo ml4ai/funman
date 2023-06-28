@@ -58,7 +58,6 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
         smart_union = True
         extra = "forbid"
 
-    parameters: List[Parameter]
     model: Union[
         GeneratedPetriNetModel,
         GeneratedRegnetModel,
@@ -136,24 +135,6 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
             parameter_space=parameter_space, scenario=self
         )
 
-    def num_dimensions(self):
-        """
-        Return the number of parameters (dimensions) that are synthesized.  A parameter is synthesized if it has a domain with width greater than zero and it is either labeled as LABEL_ALL or is a structural parameter (which are LABEL_ALL by default).
-        """
-        return len([p for p in self.parameters if p.is_synthesized()])
-
-    def structure_parameters(self):
-        return [p for p in self.parameters if isinstance(p, StructureParameter)]
-
-    def model_parameters(self):
-        return [p for p in self.parameters if isinstance(p, ModelParameter)]
-
-    def synthesized_parameters(self):
-        return [p for p in self.parameters if p.is_synthesized()]
-
-    def structure_parameter(self, name: str) -> StructureParameter:
-        return next(p for p in self.parameters if p.name == name)
-
     def _extract_non_overriden_parameters(self):
         from funman.server.query import LABEL_ANY
 
@@ -171,11 +152,13 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
         ]:
             bounds = {}
             lb = self.model._parameter_lb(p)
-            if lb:
-                bounds["lb"] = lb
             ub = self.model._parameter_ub(p)
-            if ub:
+            if ub and lb:
                 bounds["ub"] = ub
+                bounds["lb"] = lb
+            else:
+                value = self.model._parameter_values()[p]
+                bounds["lb"] = bounds["ub"] = value
             non_overriden_parameters.append(
                 ModelParameter(name=p, **bounds, label=LABEL_ANY)
             )
@@ -259,7 +242,7 @@ class ParameterSynthesisScenarioResult(AnalysisScenarioResult, BaseModel):
 
     # episode: SearchEpisode
     scenario: ParameterSynthesisScenario
-    parameter_space: ParameterSpace
+    
 
     def plot(self, **kwargs):
         """

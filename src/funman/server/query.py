@@ -18,7 +18,7 @@ from funman.representation.representation import (
     ParameterSpace,
     Point,
     StructureParameter,
-    ModelParameter
+    ModelParameter,
 )
 from funman.scenario.consistency import (
     ConsistencyScenario,
@@ -28,7 +28,6 @@ from funman.scenario.parameter_synthesis import (
     ParameterSynthesisScenario,
     ParameterSynthesisScenarioResult,
 )
-
 
 
 class FunmanWorkRequest(BaseModel):
@@ -60,11 +59,29 @@ class FunmanWorkUnit(BaseModel):
     def to_scenario(
         self,
     ) -> Union[ConsistencyScenario, ParameterSynthesisScenario]:
+        parameters = []
+        for data in self.request.parameters:
+            parameters.append(
+                ModelParameter(
+                    name=data.name, ub=data.ub, lb=data.lb, label=data.label
+                )
+            )
+        for data in self.request.structure_parameters:
+            parameters.append(
+                StructureParameter(
+                    name=data.name, ub=data.ub, lb=data.lb, label=data.label
+                )
+            )
+
         if self.request.parameters is None or all(
-            p.label == LABEL_ANY for p in self.request.parameters
+            p.label == LABEL_ANY
+            for p in self.request.parameters
+            if isinstance(p, ModelParameter)
         ):
             return ConsistencyScenario(
-                model=self.model, query=self.request.query
+                model=self.model,
+                query=self.request.query,
+                parameters=parameters,
             )
 
         if isinstance(self.model, EnsembleModel):
@@ -72,16 +89,6 @@ class FunmanWorkUnit(BaseModel):
                 "TODO handle EnsembleModel for ParameterSynthesisScenario"
             )
 
-        # resolve all 'any' parameters to a Parameter object
-        parameters = []
-        for data in self.request.parameters:
-            parameters.append(
-                ModelParameter(name=data.name, ub=data.ub, lb=data.lb, label=data.label)
-            )
-        for data in self.request.structure_parameters:
-            parameters.append(
-                StructureParameter(name=data.name, ub=data.ub, lb=data.lb, label=data.label)
-            )
         return ParameterSynthesisScenario(
             model=self.model, query=self.request.query, parameters=parameters
         )
@@ -116,7 +123,7 @@ class FunmanResults(BaseModel):
                     k: v
                     for k, v in result.consistent.items()
                     if k
-                    in [p.name for p in result.scenario.model._parameters()]
+                    in [p.name for p in result.scenario.parameters]
                 }
                 point = Point(values=parameter_values, label=LABEL_TRUE)
                 ps.true_points.append(point)

@@ -66,7 +66,7 @@
   "structure_parameters": [
     {
       "name": "num_steps",
-      "lb": 7,
+      "lb": 1,
       "ub": 7,
       "label": "all"
     },
@@ -77,11 +77,5 @@
       "label": "all"
     }
   ],
-  "config": {
-    "tolerance": 1.0e-8,
-    "number_of_processes": 1,
-    "solver": "dreal",
-    "dreal_mcts": "true",
-    "dreal_precision": 0.1
-  }
+  "config": {}
 }

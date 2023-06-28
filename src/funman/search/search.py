@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from multiprocessing import Array, Queue, Value
 from multiprocessing.managers import SyncManager
 from queue import Queue as SQueue
-from typing import Callable, List, Optional
+from typing import Callable, Dict, List, Optional
 
 import pysmt
 from pydantic import BaseModel
@@ -66,6 +66,7 @@ class SearchEpisode(BaseModel):
         arbitrary_types_allowed = True
         underscore_attrs_are_private = True
 
+    structural_configuration: Dict[str, int] = {}
     problem: AnalysisScenario
     config: FUNMANConfig
     statistics: SearchStatistics = None

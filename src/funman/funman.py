@@ -29,12 +29,12 @@ class FUNMANConfig(BaseModel):
         underscore_attrs_are_private = True
         arbitrary_types_allowed = True
 
-    tolerance: float = 0.1
+    tolerance: float = 1e-8
     """Algorithm-specific tolerance for approximation, used by BoxSearch"""
 
     queue_timeout: int = 1
     """Multiprocessing queue timeout, used by BoxSearch"""
-    number_of_processes: int = mp.cpu_count()
+    number_of_processes: int = 1  # mp.cpu_count()
     """Number of BoxSearch processes"""
     _handler: Union[
         ResultCombinedHandler, NoopResultHandler, ResultHandler
@@ -48,7 +48,7 @@ class FUNMANConfig(BaseModel):
     # episode_type: =None,
     _search: str = None
     """Name of search algorithm to use"""
-    solver: str = "z3"
+    solver: str = "dreal"  # "z3"
     """Name of pysmt solver to use"""
     num_steps: int = 2
     """Number of timesteps to encode"""
@@ -60,13 +60,13 @@ class FUNMANConfig(BaseModel):
     """Factor used to relax initial state values bounds"""
     save_smtlib: bool = False
     """Whether to save each smt invocation as an SMTLib file"""
-    dreal_precision: float = 0.001
+    dreal_precision: float = 0.1
     """Precision delta for dreal solver"""
     dreal_log_level: str = "off"
     """Constraint noise term to relax constraints"""
     constraint_noise: float = 0.0
     """Use MCTS in dreal"""
-    dreal_mcts = False
+    dreal_mcts = True
 
     @validator("solver")
     def import_dreal(cls, v):

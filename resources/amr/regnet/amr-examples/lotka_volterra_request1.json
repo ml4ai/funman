@@ -1,0 +1,68 @@
+{
+  "query": {
+    "queries": [
+      {
+        "variable": "R",
+        "lb": 0.0
+      },
+      {
+        "variable": "R",
+        "ub": 100000.0
+      },
+      {
+        "variable": "W",
+        "lb": 0.0
+      },
+      {
+        "variable": "W",
+        "ub": 100000.0
+      }
+    ]
+  },
+  "parameters": [
+    {
+      "name": "alpha",
+      "lb": 0.63,
+      "ub": 0.67,
+      "label": "any"
+    },
+    {
+      "name": "beta",
+      "lb": 1.3,
+      "ub": 1.35,
+      "label": "any"
+    },
+    {
+      "name": "W0",
+      "lb": 0,
+      "ub": 0.1,
+      "label": "any"
+    },
+    {
+      "name": "R0",
+      "lb": 0.9,
+      "ub": 1,
+      "label": "any"
+    }
+  ],
+  "structure_parameters": [
+    {
+      "name": "num_steps",
+      "lb": 1,
+      "ub": 1,
+      "label": "all"
+    },
+    {
+      "name": "step_size",
+      "lb": 1,
+      "ub": 1,
+      "label": "all"
+    }
+  ],
+  "config": {
+    "solver": "dreal",
+    "dreal_mcts": true,
+    "tolerance": 0.001,
+    "save_smtlib": true
+  }
+}
