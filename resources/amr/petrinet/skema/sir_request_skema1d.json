@@ -30,14 +30,10 @@
   "parameters": [
     {
       "name": "\u03b2",
-      "lb": 0.0,
-      "ub": 0.1,
       "label": "all"
     },
     {
       "name": "\u03b3",
-      "lb": 0.1,
-      "ub": 0.2,
       "label": "all"
     },
     {
@@ -76,7 +72,6 @@
   "config": {
     "solver": "dreal",
     "dreal_mcts": true,
-    "dreal_precision": 1,
     "tolerance": 1e-2
   }
 }

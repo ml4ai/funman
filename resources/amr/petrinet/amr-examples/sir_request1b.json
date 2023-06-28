@@ -30,14 +30,14 @@
   "parameters": [
     {
       "name": "beta",
-      "lb": 2.6e-7,
-      "ub": 2.8e-7,
+      "lb": 0.00026,
+      "ub": 0.0004,
       "label": "all"
     },
     {
       "name": "gamma",
-      "lb": 0.1,
-      "ub": 0.18,
+      "lb": 0.0999,
+      "ub": 0.1,
       "label": "all"
     },
     {
@@ -75,6 +75,6 @@
   ],
   "config": {
     "solver": "dreal",
-    "tolerance": 1e-6
+    "tolerance": 1e-5
   }
 }
