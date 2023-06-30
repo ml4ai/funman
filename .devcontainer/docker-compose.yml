@@ -1,0 +1,13 @@
+version: '3'
+services:
+  funman-dev:
+    image: localhost:5000/siftech/funman-dev:local-latest
+    pull_policy: always
+    tty: true
+    volumes:
+      - ..:/home/${USER}/funman
+      - ../../dreal4:/home/${USER}/dreal4
+    deploy:
+      resources:
+        limits:
+          cpus: '5'
