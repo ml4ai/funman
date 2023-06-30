@@ -19,7 +19,7 @@ endif
 
 REGISTRY?=localhost
 
-DOCKER_BAKE=docker buildx bake -f ./docker/docker-bake.hcl --print
+DOCKER_BAKE=docker buildx bake -f ./docker/docker-bake.hcl
 
 build-ibex: 
 	DOCKER_ORG=${DOCKER_ORG_LOCAL} \
