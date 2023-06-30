@@ -19,7 +19,7 @@ endif
 
 REGISTRY?=localhost
 
-DOCKER_BAKE=docker buildx bake -f ./docker/docker-bake.hcl
+DOCKER_BAKE=docker buildx bake -f ./docker/docker-bake.hcl --print
 
 build-ibex: 
 	DOCKER_ORG=${DOCKER_ORG_LOCAL} \
@@ -96,6 +96,12 @@ ifdef TARGET_ARCH
 override FUNMAN_DEV_TARGET_ARCH=--set=*.platform=$(TARGET_ARCH)
 endif
 
+FUNMAN_DEV_NO_CACHE=
+ifdef NO_CACHE
+override FUNMAN_DEV_NO_CACHE=--no-cache
+endif
+
+
 DEBUG_IBEX?=no
 
 build-development-environment:
@@ -104,7 +110,7 @@ build-development-environment:
 	$(if $(filter 0,$(FUNMAN_SKIP_USER_ARGS)),FUNMAN_DEV_UNAME=$(shell echo $$USER)) \
 	$(if $(filter 0,$(FUNMAN_SKIP_USER_ARGS)),FUNMAN_DEV_UID=$(shell echo $$(id -u))) \
 	$(if $(filter 0,$(FUNMAN_SKIP_USER_ARGS)),FUNMAN_DEV_GID=$(shell echo $$(id -g))) \
-	${DOCKER_BAKE} ${FUNMAN_DEV_TARGET} --${OUTPUT_TYPE_LOCAL} ${FUNMAN_DEV_TARGET_ARCH}
+	${DOCKER_BAKE} ${FUNMAN_DEV_TARGET} --${OUTPUT_TYPE_LOCAL} ${FUNMAN_DEV_TARGET_ARCH} ${FUNMAN_DEV_NO_CACHE}
 
 local-registry:
 	docker start local_registry \
@@ -125,10 +131,10 @@ dev: use-docker-driver
 	REGISTRY=${DEV_REGISTRY} \
 	$(MAKE) build-development-environment
 
-dev-amd64: use-docker-driver
+dev-amd64:
 	TARGET_ARCH=amd64 $(MAKE) dev
 
-dev-arm64: use-docker-driver
+dev-arm64:
 	TARGET_ARCH=arm64 $(MAKE) dev
 
 debug: 
