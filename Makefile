@@ -99,7 +99,7 @@ endif
 DEBUG_IBEX?=no
 
 build-development-environment:
-	echo DOCKER_ORG=${DEV_ORG} \
+	DOCKER_ORG=${DEV_ORG} \
 	DOCKER_REGISTRY=${REGISTRY} \
 	$(if $(filter 0,$(FUNMAN_SKIP_USER_ARGS)),FUNMAN_DEV_UNAME=$(shell echo $$USER)) \
 	$(if $(filter 0,$(FUNMAN_SKIP_USER_ARGS)),FUNMAN_DEV_UID=$(shell echo $$(id -u))) \
