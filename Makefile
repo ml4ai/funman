@@ -132,10 +132,10 @@ dev: use-docker-driver
 	$(MAKE) build-development-environment
 
 dev-amd64:
-	TARGET_ARCH=amd64 $(MAKE) dev
+	TARGET_ARCH=linux/amd64 $(MAKE) dev
 
 dev-arm64:
-	TARGET_ARCH=arm64 $(MAKE) dev
+	TARGET_ARCH=linux/arm64 $(MAKE) dev
 
 debug: 
 	DEBUG_IBEX=yes \
