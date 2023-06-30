@@ -91,15 +91,20 @@ FUNMAN_SKIP_USER_ARGS=1
 FUNMAN_DEV_TARGET=funman-dev-as-root
 endif
 
+FUNMAN_DEV_TARGET_ARCH=
+ifdef TARGET_ARCH
+override FUNMAN_DEV_TARGET_ARCH=--set=*.platform=$(TARGET_ARCH)
+endif
+
 DEBUG_IBEX?=no
 
 build-development-environment:
-	DOCKER_ORG=${DEV_ORG} \
+	echo DOCKER_ORG=${DEV_ORG} \
 	DOCKER_REGISTRY=${REGISTRY} \
 	$(if $(filter 0,$(FUNMAN_SKIP_USER_ARGS)),FUNMAN_DEV_UNAME=$(shell echo $$USER)) \
 	$(if $(filter 0,$(FUNMAN_SKIP_USER_ARGS)),FUNMAN_DEV_UID=$(shell echo $$(id -u))) \
 	$(if $(filter 0,$(FUNMAN_SKIP_USER_ARGS)),FUNMAN_DEV_GID=$(shell echo $$(id -g))) \
-	${DOCKER_BAKE} ${FUNMAN_DEV_TARGET} --${OUTPUT_TYPE_LOCAL}
+	${DOCKER_BAKE} ${FUNMAN_DEV_TARGET} --${OUTPUT_TYPE_LOCAL} ${FUNMAN_DEV_TARGET_ARCH}
 
 local-registry:
 	docker start local_registry \
@@ -117,13 +122,19 @@ use-docker-driver: local-registry
 
 dev: use-docker-driver
 	OUTPUT_TYPE=push \
-  REGISTRY=${DEV_REGISTRY} \
+	REGISTRY=${DEV_REGISTRY} \
 	$(MAKE) build-development-environment
+
+dev-amd64: use-docker-driver
+	TARGET_ARCH=amd64 $(MAKE) dev
+
+dev-arm64: use-docker-driver
+	TARGET_ARCH=arm64 $(MAKE) dev
 
 debug: 
 	DEBUG_IBEX=yes \
 	OUTPUT_TYPE=push \
-  REGISTRY=${DEV_REGISTRY} \
+	REGISTRY=${DEV_REGISTRY} \
 	$(MAKE) build-development-environment
 
 run-dev-container:
@@ -142,8 +153,8 @@ run-dev-container:
 		--cpus=5 \
 		--cap-add=SYS_PTRACE \
 		--name ${DEV_CONTAINER} \
-                -p 127.0.0.1:$(FUNMAN_BASE_PORT):8888 \
-                -p 127.0.0.1:$$(($(FUNMAN_BASE_PORT) + 1)):8190 \
+		-p 127.0.0.1:$(FUNMAN_BASE_PORT):8888 \
+		-p 127.0.0.1:$$(($(FUNMAN_BASE_PORT) + 1)):8190 \
 		-v $$PWD:$$FUNMAN_HOME/funman:rw $$DREAL_LOCAL_VOLUME_CMD $$DREAL_LOCAL_VOLUME_ARG \
 		${DEV_IMAGE}
 
