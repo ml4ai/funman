@@ -30,17 +30,18 @@ ENV VIRTUAL_ENV="/funman_venv"
 RUN python3 -m venv $VIRTUAL_ENV
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
+ARG AUTOMATES_COMMIT_TAG
 # Install automates
 RUN git clone --depth=1 https://github.com/danbryce/automates.git automates \
     && cd automates \
-    && git fetch --depth=1 origin e5fb635757aa57007615a75371f55dd4a24851e0 \
-    && git checkout e5fb635757aa57007615a75371f55dd4a24851e0
+    && git fetch --depth=1 origin ${AUTOMATES_COMMIT_TAG} \
+    && git checkout ${AUTOMATES_COMMIT_TAG}
 RUN pip install -e automates
 
 RUN pip install --no-cache-dir z3-solver
 RUN pip install --no-cache-dir graphviz
-RUN pip install --no-cache-dir pydantic
-RUN pip install --no-cache-dir fastapi
+RUN pip install --no-cache-dir pydantic==1.10.9
+RUN pip install --no-cache-dir fastapi==0.98.0
 
 RUN pip install --no-cache-dir --upgrade setuptools pip
 RUN pip install --no-cache-dir wheel

@@ -1,0 +1,37 @@
+OUTPUT_TYPE_LOCAL=$(OUTPUT_TYPE)
+OUTPUT_TYPE_MULTI=$(OUTPUT_TYPE)
+
+ifndef OUTPUT_TYPE
+override OUTPUT_TYPE_LOCAL = load
+override OUTPUT_TYPE_MULTI = push
+endif
+
+build-ibex: 
+	DOCKER_REGISTRY=localhost docker buildx bake funman-ibex --${OUTPUT_TYPE_LOCAL}
+
+multiplatform-build-ibex:
+	docker buildx bake funman-ibex-multiplatform --${OUTPUT_TYPE_MULTI}
+
+build-dreal4: build-ibex
+	DOCKER_REGISTRY=localhost docker buildx bake funman-dreal4 --${OUTPUT_TYPE_LOCAL}
+
+multiplatform-build-dreal4: multiplatform-build-ibex
+	docker buildx bake funman-dreal4-multiplatform --${OUTPUT_TYPE_MULTI}
+
+build-base: build-dreal4
+	DOCKER_REGISTRY=localhost docker buildx bake funman-base --${OUTPUT_TYPE_LOCAL}
+
+multiplatform-build-base: multiplatform-build-dreal4
+	docker buildx bake funman-base-multiplatform --${OUTPUT_TYPE_MULTI}
+
+build-git: build-base
+	DOCKER_REGISTRY=localhost docker buildx bake funman-git --${OUTPUT_TYPE_LOCAL}
+
+multiplatform-build-git: multiplatform-build-base
+	docker buildx bake funman-git-multiplatform --${OUTPUT_TYPE_MULTI}
+
+build-api: build-git
+	DOCKER_REGISTRY=localhost docker buildx bake funman-api --${OUTPUT_TYPE_LOCAL}
+
+multiplatform-build-api: multiplatform-build-git
+	docker buildx bake funman-api-multiplatform --${OUTPUT_TYPE_MULTI}

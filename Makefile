@@ -1,77 +1,263 @@
-DOCS_REMOTE ?= origin
-DEV_CONTAINER ?= funman-dev
-DEV_NAME ?= funman-dev
-LOCAL_REGISTRY_PORT?=5000
+# -----------------------------------------------------------------
+#  Base Image Construction
 
-LOCAL_REGISTRY=localhost:$(LOCAL_REGISTRY_PORT)
-SIFT_REGISTRY_ROOT=$(LOCAL_REGISTRY)/sift/
-FUNMAN_BRANCH?=main
+OUTPUT_TYPE_LOCAL=$(OUTPUT_TYPE)
+OUTPUT_TYPE_MULTI=$(OUTPUT_TYPE)
+
+ifndef OUTPUT_TYPE
+override OUTPUT_TYPE_LOCAL = load
+override OUTPUT_TYPE_MULTI = push
+endif
+
+DOCKER_ORG_LOCAL=$(DOCKER_ORG)
+DOCKER_ORG_MULTI=$(DOCKER_ORG)
+
+ifndef DOCKER_ORG
+override DOCKER_ORG_LOCAL = siftech
+override DOCKER_ORG_MULTI = siftech
+endif
+
+REGISTRY?=localhost
+
+DOCKER_BAKE=docker buildx bake -f ./docker/docker-bake.hcl
+
+build-ibex: 
+	DOCKER_ORG=${DOCKER_ORG_LOCAL} \
+	DOCKER_REGISTRY=${REGISTRY} \
+	${DOCKER_BAKE} funman-ibex --${OUTPUT_TYPE_LOCAL}
+
+multiplatform-build-ibex:
+	DOCKER_ORG=${DOCKER_ORG_MULTI} \
+	${DOCKER_BAKE} funman-ibex-multiplatform --${OUTPUT_TYPE_MULTI}
+
+build-dreal4: build-ibex
+	DOCKER_ORG=${DOCKER_ORG_LOCAL} \
+	DOCKER_REGISTRY=${REGISTRY} \
+	${DOCKER_BAKE} funman-dreal4 --${OUTPUT_TYPE_LOCAL}
+
+multiplatform-build-dreal4: multiplatform-build-ibex
+	DOCKER_ORG=${DOCKER_ORG_MULTI} \
+	${DOCKER_BAKE} funman-dreal4-multiplatform --${OUTPUT_TYPE_MULTI}
+
+build-base: build-dreal4
+	DOCKER_ORG=${DOCKER_ORG_LOCAL} \yy
+	DOCKER_REGISTRY=${REGISTRY} \
+	${DOCKER_BAKE} funman-base --${OUTPUT_TYPE_LOCAL}
+
+multiplatform-build-base: multiplatform-build-dreal4
+	DOCKER_ORG=${DOCKER_ORG_MULTI} \
+	${DOCKER_BAKE} funman-base-multiplatform --${OUTPUT_TYPE_MULTI}
+
+build-git: build-base
+	DOCKER_ORG=${DOCKER_ORG_LOCAL} \
+	DOCKER_REGISTRY=${REGISTRY} \
+	${DOCKER_BAKE} funman-git --${OUTPUT_TYPE_LOCAL}
+
+multiplatform-build-git: multiplatform-build-base
+	DOCKER_ORG=${DOCKER_ORG_MULTI} \
+	${DOCKER_BAKE} funman-git-multiplatform --${OUTPUT_TYPE_MULTI}
+
+build-api: build-git
+	DOCKER_ORG=${DOCKER_ORG_LOCAL} \
+	DOCKER_REGISTRY=${REGISTRY} \
+	${DOCKER_BAKE} funman-api --${OUTPUT_TYPE_LOCAL}
+
+multiplatform-build-api: multiplatform-build-git
+	DOCKER_ORG=${DOCKER_ORG_MULTI} \
+	${DOCKER_BAKE} funman-api-multiplatform --${OUTPUT_TYPE_MULTI}
+
+# -----------------------------------------------------------------
+#  Development Container Utils
+
+DREAL_LOCAL_REPO?=../dreal4
+
+DEV_NAME:=funman-dev
+DEV_TAG:=local-latest
+DEV_TAGGED_NAME:=$(DEV_NAME):$(DEV_TAG)
+
+DEV_REGISTRY:=localhost:5000
+DEV_ORG:=siftech
+DEV_IMAGE:=${DEV_REGISTRY}/${DEV_ORG}/${DEV_TAGGED_NAME}
+
+DEV_CONTAINER:=funman-dev
+MAKE:=make --no-print-directory
 
 FUNMAN_BASE_PORT?=21000
 ifeq (,$(wildcard .docker-as-root))
 FUNMAN_SKIP_USER_ARGS=0
-FUNMAN_USER=$(shell echo $$USER)
-FUNMAN_DEV_DOCKERFILE=Dockerfile
+FUNMAN_DEV_TARGET=funman-dev
 else
 FUNMAN_SKIP_USER_ARGS=1
-FUNMAN_USER=
-FUNMAN_DEV_DOCKERFILE=Dockerfile.root
+FUNMAN_DEV_TARGET=funman-dev-as-root
 endif
 
-IBEX_NAME=funman-ibex
-DREAL_NAME=funman-dreal4
+FUNMAN_DEV_TARGET_ARCH=
+ifdef TARGET_ARCH
+override FUNMAN_DEV_TARGET_ARCH=--set=*.platform=$(TARGET_ARCH)
+endif
+
+FUNMAN_DEV_NO_CACHE=
+ifdef NO_CACHE
+override FUNMAN_DEV_NO_CACHE=--no-cache
+endif
+
 
 DEBUG_IBEX?=no
 
-DREAL_LOCAL_REPO?=../dreal4
+build-development-environment:
+	DOCKER_ORG=${DEV_ORG} \
+	DOCKER_REGISTRY=${REGISTRY} \
+	$(if $(filter 0,$(FUNMAN_SKIP_USER_ARGS)),FUNMAN_DEV_UNAME=$(shell echo $$USER)) \
+	$(if $(filter 0,$(FUNMAN_SKIP_USER_ARGS)),FUNMAN_DEV_UID=$(shell echo $$(id -u))) \
+	$(if $(filter 0,$(FUNMAN_SKIP_USER_ARGS)),FUNMAN_DEV_GID=$(shell echo $$(id -g))) \
+	${DOCKER_BAKE} ${FUNMAN_DEV_TARGET} --${OUTPUT_TYPE_LOCAL} ${FUNMAN_DEV_TARGET_ARCH} ${FUNMAN_DEV_NO_CACHE}
 
-FUNMAN_VERSION ?= 0.0.0
-CMD_UPDATE_VERSION = sed -i -E 's/^__version__ = \"[0-9]+\.[0-9]+\.[0-9]+((a|b|rc)[0-9]*)?\"/__version__ = \"${FUNMAN_VERSION}\"/g'
-SHELL_GET_TARGET_ARCH := $(shell test ! -z $(TARGET_ARCH) && echo $(TARGET_ARCH) || \
-	arch \
-	| sed s/x86_64/amd64/g \
-	| sed s/i386/amd64/g \
-	| sed s/aarch64/arm64/g \
-)
-TARGET_OS=linux
+local-registry:
+	docker start local_registry \
+		|| docker run -d \
+			--name local_registry \
+			--network host \
+			registry:2
 
-TARGET_TAG=$(TARGET_OS)-$(SHELL_GET_TARGET_ARCH)
-IBEX_TAGGED_NAME=$(IBEX_NAME):$(TARGET_TAG)
-DREAL_TAGGED_NAME=$(DREAL_NAME):$(TARGET_TAG)
-DEV_TAGGED_NAME=$(DEV_NAME):$(TARGET_TAG)
+use-docker-driver: local-registry
+	docker buildx use funman-builder \
+		|| docker buildx create \
+			--name funman-builder \
+			--use \
+			--driver-opt network=host
 
-DEPLOY_BASE_NAME = funman-base
-DEPLOY_GIT_NAME = funman-git
-DEPLOY_PYPI_NAME = funman-pypi
-DEPLOY_TAGGED_BASE_NAME=$(DEPLOY_BASE_NAME):$(TARGET_TAG)
-DEPLOY_TAGGED_GIT_NAME=$(DEPLOY_GIT_NAME):$(TARGET_TAG)
-DEPLOY_TAGGED_PYPI_NAME=$(DEPLOY_PYPI_NAME):$(TARGET_TAG)
+dev: use-docker-driver
+	OUTPUT_TYPE=push \
+	REGISTRY=${DEV_REGISTRY} \
+	$(MAKE) build-development-environment
 
-DEPLOY_API_NAME = funman-api-server
-DEPLOY_TAGGED_API_NAME=$(DEPLOY_API_NAME):$(TARGET_TAG)
+dev-amd64:
+	TARGET_ARCH=linux/amd64 $(MAKE) dev
 
-MULTIPLATFORM_TAG=multiplatform
+dev-arm64:
+	TARGET_ARCH=linux/arm64 $(MAKE) dev
 
-DOCKER_HUB_PLATFORMS=linux/arm64,linux/amd64
-DOCKER_HUB_ORG?=jladwigsift
-DOCKER_HUB_TAG?=hackathon-1
+debug: 
+	DEBUG_IBEX=yes \
+	OUTPUT_TYPE=push \
+	REGISTRY=${DEV_REGISTRY} \
+	$(MAKE) build-development-environment
 
-TERARIUM_HOST_PORT?=8190
-TERARIUM_API_KEY?=
+run-dev-container:
+	@FUNMAN_HOME=$(if $(filter 0,$(FUNMAN_SKIP_USER_ARGS)),/home/$$USER,/root) \
+	&& if [ -e "$(DREAL_LOCAL_REPO)" ] ; then \
+		DREAL_LOCAL_VOLUME_CMD=-v ; \
+		DREAL_LOCAL_VOLUME_ARG=$$(realpath $(DREAL_LOCAL_REPO)):$$FUNMAN_HOME/dreal4:rw ; \
+	else \
+		echo "WARNING: Dreal4 repo not found at $(DREAL_LOCAL_REPO)" ; \
+		DREAL_LOCAL_VOLUME_CMD= ; \
+		DREAL_LOCAL_VOLUME_ARG= ; \
+	fi \
+	&& docker run \
+		-d \
+		-it \
+		--cpus=5 \
+		--cap-add=SYS_PTRACE \
+		--name ${DEV_CONTAINER} \
+		-p 127.0.0.1:$(FUNMAN_BASE_PORT):8888 \
+		-p 127.0.0.1:$$(($(FUNMAN_BASE_PORT) + 1)):8190 \
+		-v $$PWD:$$FUNMAN_HOME/funman:rw $$DREAL_LOCAL_VOLUME_CMD $$DREAL_LOCAL_VOLUME_ARG \
+		${DEV_IMAGE}
 
-TERARIUM_ENV_ARGS:= $(if $(TERARIUM_API_KEY),-e FUNMAN_API_TOKEN=$(TERARIUM_API_KEY),)
+launch-dev-container:
+	@$(MAKE) delete-dev-container-if-out-of-date
+	@docker container inspect ${DEV_CONTAINER} > /dev/null 2>&1 \
+		|| $(MAKE) run-dev-container
+	@test $$(docker container inspect -f '{{.State.Running}}' ${DEV_CONTAINER}) == 'true' > /dev/null 2>&1 \
+		|| docker start ${DEV_CONTAINER}
+	@docker attach ${DEV_CONTAINER}
 
-MAKE := make --no-print-directory
+delete-dev-container:
+	@echo "Deleting dev container:"
+	docker stop ${DEV_CONTAINER}
+	docker rm ${DEV_CONTAINER}
 
-.PHONY: docs
+pull-dev-container:
+	docker pull ${DEV_IMAGE}
+
+delete-dev-container-if-out-of-date: pull-dev-container
+	@if (docker container inspect ${DEV_CONTAINER} > /dev/null 2>&1) ; then \
+		FUNMAN_CONTAINER_SHA=$$(docker inspect -f '{{.Image}}' ${DEV_CONTAINER}) ; \
+		FUNMAN_IMAGE_SHA=$$(docker images --no-trunc --quiet ${DEV_IMAGE}) ; \
+		if [ "$$FUNMAN_IMAGE_SHA" != "$$FUNMAN_CONTAINER_SHA" ] ; then \
+		  echo "Dev container out of date:" ; \
+			echo "  Container: $$FUNMAN_CONTAINER_SHA" ; \
+			echo "  Image: $$FUNMAN_IMAGE_SHA" ; \
+		  $(MAKE) delete-dev-container ; \
+		fi \
+	fi
 
 docker-as-root:
 	touch .docker-as-root
 
+# -----------------------------------------------------------------
+#  API Client
+generate-api-client:
+	pip install openapi-python-client
+	openapi-python-client --install-completion
+	uvicorn funman.api.api:app --host 0.0.0.0 --port 8190 &
+	sleep 1
+	openapi-python-client generate --url http://0.0.0.0:8190/openapi.json
+	pip install -e funman-api-client
+
+update-api-client:
+	openapi-python-client update --url http://0.0.0.0:8190/openapi.json
+
+# -----------------------------------------------------------------
+#  Utils
 venv:
 	test -d .venv || python -m venv .venv
 	source .venv/bin/activate && pip install -Ur requirements-dev.txt
 	source .venv/bin/activate && pip install -Ur requirements-dev-extras.txt
+
+format:
+	pycln --config pyproject.toml .
+	isort --settings-path pyproject.toml .
+	black --config pyproject.toml .
+	
+FUNMAN_VERSION ?= 0.0.0
+CMD_UPDATE_VERSION = sed -i -E 's/^__version__ = \"[0-9]+\.[0-9]+\.[0-9]+((a|b|rc)[0-9]*)?\"/__version__ = \"${FUNMAN_VERSION}\"/g'
+update-versions:
+	@test "${FUNMAN_VERSION}" != "0.0.0" || (echo "ERROR: FUNMAN_VERSION must be set" && exit 1)
+	@${CMD_UPDATE_VERSION} auxiliary_packages/funman_demo/src/funman_demo/_version.py
+	@${CMD_UPDATE_VERSION} auxiliary_packages/funman_dreal/src/funman_dreal/_version.py
+	@${CMD_UPDATE_VERSION} src/funman/_version.py
+
+# -----------------------------------------------------------------
+#  Distribution
+dist: update-versions
+	mkdir -p dist
+	mkdir -p dist.bkp
+	rsync -av --ignore-existing --remove-source-files dist/ dist.bkp/
+	python -m build --outdir ./dist .
+	python -m build --outdir ./dist auxiliary_packages/funman_demo
+	python -m build --outdir ./dist auxiliary_packages/funman_dreal
+
+check-test-release: dist
+	@echo -e "\nReleasing the following packages to TestPyPI:"
+	@ls -1 dist | sed -e 's/^/    /'
+	@echo -n -e "\nAre you sure? [y/N] " && read ans && [ $${ans:-N} = y ]
+
+test-release: check-test-release
+	python3 -m twine upload --repository testpypi dist/*
+
+check-release: dist
+	@echo -e "\nReleasing the following packages to PyPI:"
+	@ls -1 dist | sed -e 's/^/    /'
+	@echo -n -e "\nAre you sure? [y/N] " && read ans && [ $${ans:-N} = y ]
+
+release: check-release
+	python3 -m twine upload dist/
+
+# -----------------------------------------------------------------
+#  Docs and Pages
+#  TODO: This can probably be automated
+DOCS_REMOTE ?= origin
 
 docs:
 	sphinx-apidoc -f -o ./docs/source ./src/funman -t ./docs/apidoc_templates --no-toc  
@@ -103,307 +289,6 @@ deploy-pages:
 	git push $(DOCS_REMOTE)
 	git checkout main
 	git branch -D gh-pages
-
-local-registry:
-	docker start local_registry \
-		|| docker run -d \
-			--name local_registry \
-			--network host \
-			registry:2
-
-use-docker-driver: local-registry
-	docker buildx use funman-builder \
-		|| docker buildx create \
-			--name funman-builder \
-			--use \
-			--driver-opt network=host
-
-build-ibex: use-docker-driver
-	DOCKER_BUILDKIT=1 docker buildx build \
-		--output "type=docker" \
-		--build-arg ENABLE_DEBUG=$(DEBUG_IBEX) \
-		--platform $(TARGET_OS)/$(SHELL_GET_TARGET_ARCH) \
-		--tag $(IBEX_TAGGED_NAME) \
-		-f ./ibex/Dockerfile ./ibex
-	docker tag $(IBEX_TAGGED_NAME) $(SIFT_REGISTRY_ROOT)$(IBEX_TAGGED_NAME)
-	docker push $(SIFT_REGISTRY_ROOT)$(IBEX_TAGGED_NAME)
-
-multiplatform-build-ibex: use-docker-driver
-	DOCKER_BUILDKIT=1 docker buildx build \
-		--network=host \
-		--output "type=registry" \
-		--platform linux/arm64,linux/amd64 \
-		--tag $(SIFT_REGISTRY_ROOT)$(IBEX_NAME):$(MULTIPLATFORM_TAG) \
-		-f ./ibex/Dockerfile ./ibex
-
-build-dreal: use-docker-driver build-ibex
-	DOCKER_BUILDKIT=1 docker buildx build \
-		--output "type=docker" \
-		--platform $(TARGET_OS)/$(SHELL_GET_TARGET_ARCH) \
-		--build-arg SIFT_REGISTRY_ROOT=$(SIFT_REGISTRY_ROOT) \
-		-t $(DREAL_TAGGED_NAME) \
-		-f ./Dockerfile.dreal4 .
-	docker tag $(DREAL_TAGGED_NAME) $(SIFT_REGISTRY_ROOT)$(DREAL_TAGGED_NAME)
-	docker push $(SIFT_REGISTRY_ROOT)$(DREAL_TAGGED_NAME)
-
-multiplatform-build-dreal: use-docker-driver multiplatform-build-ibex
-	DOCKER_BUILDKIT=1 docker buildx build \
-		--network=host \
-		--output "type=registry" \
-		--platform linux/arm64,linux/amd64 \
-		--build-arg SIFT_REGISTRY_ROOT=$(SIFT_REGISTRY_ROOT) \
-		--build-arg IBEX_TAG=$(MULTIPLATFORM_TAG) \
-		--tag $(SIFT_REGISTRY_ROOT)$(DREAL_NAME):$(MULTIPLATFORM_TAG) \
-		-f ./Dockerfile.dreal4 .
-
-build-docker: use-docker-driver build-dreal
-	DOCKER_BUILDKIT=1 docker buildx build \
-		--output "type=docker" \
-		--platform $(TARGET_OS)/$(SHELL_GET_TARGET_ARCH) \
-		--build-arg SIFT_REGISTRY_ROOT=$(SIFT_REGISTRY_ROOT) \
-		$(if $(filter 0,$(FUNMAN_SKIP_USER_ARGS)), --build-arg UNAME=$(FUNMAN_USER)) \
-		$(if $(filter 0,$(FUNMAN_SKIP_USER_ARGS)), --build-arg UID=$$(id -u)) \
-		$(if $(filter 0,$(FUNMAN_SKIP_USER_ARGS)), --build-arg GID=$$(id -g)) \
-		-t ${DEV_TAGGED_NAME} -f ./$(FUNMAN_DEV_DOCKERFILE) .
-	docker tag $(DEV_TAGGED_NAME) $(SIFT_REGISTRY_ROOT)$(DEV_TAGGED_NAME)
-	docker push $(SIFT_REGISTRY_ROOT)$(DEV_TAGGED_NAME)
-
-multiplatform: use-docker-driver multiplatform-build-dreal
-	DOCKER_BUILDKIT=1 docker buildx build \
-		--network=host \
-		--output "type=registry" \
-		--platform linux/arm64,linux/amd64 \
-		--build-arg SIFT_REGISTRY_ROOT=$(SIFT_REGISTRY_ROOT) \
-		--build-arg DREAL_TAG=$(MULTIPLATFORM_TAG) \
-		--tag $(SIFT_REGISTRY_ROOT)$(DEV_NAME):$(MULTIPLATFORM_TAG) \
-		-f ./Dockerfile .
-
-build: build-docker
-
-debug: 
-	DEBUG_IBEX=yes make build-docker
-
-build-deploy-base: use-docker-driver build-dreal
-	DOCKER_BUILDKIT=1 docker buildx build \
-		--output "type=docker" \
-		--platform $(TARGET_OS)/$(SHELL_GET_TARGET_ARCH) \
-		--build-arg SIFT_REGISTRY_ROOT=$(SIFT_REGISTRY_ROOT) \
-		-t ${DEPLOY_TAGGED_BASE_NAME} ./deploy/base
-	docker tag $(DEPLOY_TAGGED_BASE_NAME) $(SIFT_REGISTRY_ROOT)$(DEPLOY_TAGGED_BASE_NAME)
-	docker push $(SIFT_REGISTRY_ROOT)$(DEPLOY_TAGGED_BASE_NAME)
-
-build-deploy-git: use-docker-driver build-dreal build-deploy-base
-	DOCKER_BUILDKIT=1 docker buildx build --no-cache \
-		--output "type=docker" \
-		--platform $(TARGET_OS)/$(SHELL_GET_TARGET_ARCH) \
-		--build-arg SIFT_REGISTRY_ROOT=$(SIFT_REGISTRY_ROOT) \
-		--build-arg FUNMAN_BRANCH=$(FUNMAN_BRANCH) \
-		-t ${DEPLOY_TAGGED_GIT_NAME} ./deploy/git
-	docker tag $(DEPLOY_TAGGED_GIT_NAME) $(SIFT_REGISTRY_ROOT)$(DEPLOY_TAGGED_GIT_NAME)
-	docker push $(SIFT_REGISTRY_ROOT)$(DEPLOY_TAGGED_GIT_NAME)
-
-build-deploy-pypi: use-docker-driver build-dreal build-deploy-base
-	DOCKER_BUILDKIT=1 docker buildx build --no-cache \
-		--output "type=docker" \
-		--platform $(TARGET_OS)/$(SHELL_GET_TARGET_ARCH) \
-		--build-arg SIFT_REGISTRY_ROOT=$(SIFT_REGISTRY_ROOT) \
-		-t ${DEPLOY_TAGGED_PYPI_NAME} ./deploy/pypi
-	docker tag $(DEPLOY_TAGGED_PYPI_NAME) $(SIFT_REGISTRY_ROOT)$(DEPLOY_TAGGED_PYPI_NAME)
-	docker push $(SIFT_REGISTRY_ROOT)$(DEPLOY_TAGGED_PYPI_NAME)
-
-build-deploy-api-from-git: use-docker-driver build-dreal build-deploy-git
-	DOCKER_BUILDKIT=1 docker buildx build --no-cache \
-		--output "type=docker" \
-		--platform $(TARGET_OS)/$(SHELL_GET_TARGET_ARCH) \
-		--build-arg SIFT_REGISTRY_ROOT=$(SIFT_REGISTRY_ROOT) \
-		--build-arg FROM_IMAGE=$(DEPLOY_GIT_NAME) \
-		--build-arg FUNMAN_BRANCH=$(FUNMAN_BRANCH) \
-		-t ${DEPLOY_TAGGED_API_NAME} ./deploy/api
-	docker tag $(DEPLOY_TAGGED_API_NAME) $(SIFT_REGISTRY_ROOT)$(DEPLOY_TAGGED_API_NAME)
-	docker push $(SIFT_REGISTRY_ROOT)$(DEPLOY_TAGGED_API_NAME)
-
-build-deploy-api-from-pypi: use-docker-driver build-dreal build-deploy-pypi
-	DOCKER_BUILDKIT=1 docker buildx build --no-cache \
-		--output "type=docker" \
-		--platform $(TARGET_OS)/$(SHELL_GET_TARGET_ARCH) \
-		--build-arg SIFT_REGISTRY_ROOT=$(SIFT_REGISTRY_ROOT) \
-		--build-arg FROM_IMAGE=$(DEPLOY_PYPI_NAME) \
-		-t ${DEPLOY_TAGGED_API_NAME} ./deploy/api
-	docker tag $(DEPLOY_TAGGED_API_NAME) $(SIFT_REGISTRY_ROOT)$(DEPLOY_TAGGED_API_NAME)
-	docker push $(SIFT_REGISTRY_ROOT)$(DEPLOY_TAGGED_API_NAME)
-
-run-api-server:
-	docker run -it --rm -p 127.0.0.1:8190:8190 $(DEPLOY_TAGGED_API_NAME)
-
-run-docker:
-	@FUNMAN_HOME=$(if $(filter 0,$(FUNMAN_SKIP_USER_ARGS)),/home/$$USER,/root) \
-	&& if [ -e "$(DREAL_LOCAL_REPO)" ] ; then \
-		DREAL_LOCAL_VOLUME_CMD=-v ; \
-		DREAL_LOCAL_VOLUME_ARG=$$(realpath $(DREAL_LOCAL_REPO)):$$FUNMAN_HOME/dreal4:rw ; \
-	else \
-		echo "WARNING: Dreal4 repo not found at $(DREAL_LOCAL_REPO)" ; \
-		DREAL_LOCAL_VOLUME_CMD= ; \
-		DREAL_LOCAL_VOLUME_ARG= ; \
-	fi \
-	&& docker run \
-		-d \
-		-it \
-		--cpus=5 \
-		--cap-add=SYS_PTRACE \
-		--name ${DEV_CONTAINER} \
-                -p 127.0.0.1:$(FUNMAN_BASE_PORT):8888 \
-                -p 127.0.0.1:$$(($(FUNMAN_BASE_PORT) + 1)):8190 \
-		-v $$PWD:$$FUNMAN_HOME/funman:rw $$DREAL_LOCAL_VOLUME_CMD $$DREAL_LOCAL_VOLUME_ARG \
-		${DEV_TAGGED_NAME}
-
-
-run-docker-se:
-	docker run \
-		-d \
-		-it \
-		--cpus=8 \
-		--name ${DEV_CONTAINER} \
-		-p 127.0.0.1:8888:8888 \
-		-v $$PWD:/home/$$USER/funman:Z \
-		--userns=keep-id \
-		${DEV_TAGGED_NAME}
-
-delete-dev-container:
-	@echo "Deleting dev container:"
-	docker stop ${DEV_CONTAINER}
-	docker rm ${DEV_CONTAINER}
-
-delete-dev-container-if-out-of-date:
-	@if (docker container inspect ${DEV_CONTAINER} > /dev/null 2>&1) ; then \
-		FUNMAN_CONTAINER_SHA=$$(docker inspect -f '{{.Image}}' ${DEV_CONTAINER}) ; \
-		FUNMAN_IMAGE_SHA=$$(docker images --no-trunc --quiet ${DEV_TAGGED_NAME}) ; \
-		if [ "$$FUNMAN_IMAGE_SHA" != "$$FUNMAN_CONTAINER_SHA" ] ; then \
-		  echo "Dev container out of date:" ; \
-			echo "  Container: $$FUNMAN_CONTAINER_SHA" ; \
-			echo "  Image: $$FUNMAN_IMAGE_SHA" ; \
-		  $(MAKE) delete-dev-container ; \
-		fi \
-	fi
-
-launch-dev-container:
-	@$(MAKE) delete-dev-container-if-out-of-date
-	@docker container inspect ${DEV_CONTAINER} > /dev/null 2>&1 \
-		|| $(MAKE) run-docker TARGET_ARCH=$(SHELL_GET_TARGET_ARCH)
-	@test $$(docker container inspect -f '{{.State.Running}}' ${DEV_CONTAINER}) == 'true' > /dev/null 2>&1 \
-		|| docker start ${DEV_CONTAINER}
-	@docker attach ${DEV_CONTAINER}
-
-rm-dev-container:
-	@docker container rm ${DEV_CONTAINER}
-
-install-pre-commit-hooks:
-	@pre-commit install
-
-format:
-	pycln --config pyproject.toml .
-	isort --settings-path pyproject.toml .
-	black --config pyproject.toml .
-
-update-versions:
-	@test "${FUNMAN_VERSION}" != "0.0.0" || (echo "ERROR: FUNMAN_VERSION must be set" && exit 1)
-	@${CMD_UPDATE_VERSION} auxiliary_packages/funman_demo/src/funman_demo/_version.py
-	@${CMD_UPDATE_VERSION} auxiliary_packages/funman_dreal/src/funman_dreal/_version.py
-	@${CMD_UPDATE_VERSION} src/funman/_version.py
-
-dist: update-versions
-	mkdir -p dist
-	mkdir -p dist.bkp
-	rsync -av --ignore-existing --remove-source-files dist/ dist.bkp/
-	python -m build --outdir ./dist .
-	python -m build --outdir ./dist auxiliary_packages/funman_demo
-	python -m build --outdir ./dist auxiliary_packages/funman_dreal
-
-check-test-release: dist
-	@echo -e "\nReleasing the following packages to TestPyPI:"
-	@ls -1 dist | sed -e 's/^/    /'
-	@echo -n -e "\nAre you sure? [y/N] " && read ans && [ $${ans:-N} = y ]
-
-test-release: check-test-release
-	python3 -m twine upload --repository testpypi dist/*
-
-check-release: dist
-	@echo -e "\nReleasing the following packages to PyPI:"
-	@ls -1 dist | sed -e 's/^/    /'
-	@echo -n -e "\nAre you sure? [y/N] " && read ans && [ $${ans:-N} = y ]
-
-release: check-release
-	python3 -m twine upload dist/*
-
-# TODO simplify the targets
-docker-hub:
-	# build ibex
-	DOCKER_BUILDKIT=1 docker buildx build \
-		--network=host \
-		--output "type=registry" \
-		--platform $(DOCKER_HUB_PLATFORMS) \
-		--tag $(DOCKER_HUB_ORG)/$(IBEX_NAME):$(DOCKER_HUB_TAG) \
-		-f ./ibex/Dockerfile ./ibex
-	
-	# build dreal
-	DOCKER_BUILDKIT=1 docker buildx build \
-		--network=host \
-		--output "type=registry" \
-		--platform $(DOCKER_HUB_PLATFORMS) \
-		--build-arg SIFT_REGISTRY_ROOT=$(DOCKER_HUB_ORG)/ \
-		--build-arg IBEX_TAG=$(DOCKER_HUB_TAG) \
-		--tag $(DOCKER_HUB_ORG)/$(DREAL_NAME):$(DOCKER_HUB_TAG) \
-		-f ./Dockerfile.dreal4 .
-	
-	# build funman-base
-	DOCKER_BUILDKIT=1 docker buildx build \
-		--network=host \
-		--output "type=registry" \
-		--platform $(DOCKER_HUB_PLATFORMS) \
-		--build-arg SIFT_REGISTRY_ROOT=$(DOCKER_HUB_ORG)/ \
-		--build-arg DREAL_TAG=$(DOCKER_HUB_TAG) \
-		--tag $(DOCKER_HUB_ORG)/$(DEPLOY_BASE_NAME):$(DOCKER_HUB_TAG) \
-		./deploy/base
-	
-	# build funman-git
-	DOCKER_BUILDKIT=1 docker buildx build \
-		--network=host \
-		--output "type=registry" \
-		--platform $(DOCKER_HUB_PLATFORMS) \
-		--build-arg SIFT_REGISTRY_ROOT=$(DOCKER_HUB_ORG)/ \
-		--build-arg FUNMAN_BRANCH=$(FUNMAN_BRANCH) \
-		--build-arg FROM_TAG=$(DOCKER_HUB_TAG) \
-		--tag $(DOCKER_HUB_ORG)/$(DEPLOY_GIT_NAME):$(DOCKER_HUB_TAG) \
-		./deploy/git
-	
-	# build funman-api-server
-	DOCKER_BUILDKIT=1 docker buildx build \
-		--network=host \
-		--output "type=registry" \
-		--platform $(DOCKER_HUB_PLATFORMS) \
-		--build-arg SIFT_REGISTRY_ROOT=$(DOCKER_HUB_ORG)/ \
-		--build-arg FROM_IMAGE=$(DEPLOY_GIT_NAME) \
-		--build-arg FROM_TAG=$(DOCKER_HUB_TAG) \
-		--tag $(DOCKER_HUB_ORG)/$(DEPLOY_API_NAME):$(DOCKER_HUB_TAG) \
-		./deploy/api
-
-build-terarium:
-	docker build ./deploy/terarium
-
-run-terarium:
-	docker run -it --rm \
-		-p 0.0.0.0:$(TERARIUM_HOST_PORT):8190 $(TERARIUM_ENV_ARGS) \
-		$(DOCKER_HUB_ORG)/$(DEPLOY_API_NAME):$(DOCKER_HUB_TAG)
-
-generate-api-client:
-	pip install openapi-python-client
-	openapi-python-client --install-completion
-	uvicorn funman.api.api:app --host 0.0.0.0 --port 8190 &
-	sleep 1
-	openapi-python-client generate --url http://0.0.0.0:8190/openapi.json
-	pip install -e funman-api-client
-
-update-api-client:
-	openapi-python-client update --url http://0.0.0.0:8190/openapi.json
 
 generate-amr-classes:
 	datamodel-codegen --input-file-type jsonschema  --url https://raw.githubusercontent.com/DARPA-ASKEM/Model-Representations/main/base_schema.json --output src/funman/model/generated_models/base_schema.py

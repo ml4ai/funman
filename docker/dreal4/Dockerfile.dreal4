@@ -30,7 +30,7 @@ RUN apt update && apt install -y --no-install-recommends \
 
 # Install bazel
 
-ARG BAZEL_VERSION=6.0.0 
+ARG BAZEL_VERSION
 ARG BAZEL_TARGET_ARCH=${TARGETARCH}
 ARG BAZEL_TARGET_OS=${TARGETOS}
 RUN BAZEL_TARGET_ARCH=$(echo "$BAZEL_TARGET_ARCH" | sed 's/amd64/x86_64/') \
@@ -47,10 +47,12 @@ RUN BAZEL_TARGET_ARCH=$(echo "$BAZEL_TARGET_ARCH" | sed 's/amd64/x86_64/') \
       exit 1 ; \
     fi
 
-RUN git clone --depth=1 https://github.com/dreal/dreal4.git /dreal4 \
+ARG DREAL_REPO_URL
+ARG DREAL_COMMIT_TAG
+RUN git clone --depth=1 ${DREAL_REPO_URL} /dreal4 \
     && cd /dreal4 \
-    && git fetch --depth=1 origin cf35b198bd3e9a9366740c6c9e244955a81bc229 \
-    && git checkout cf35b198bd3e9a9366740c6c9e244955a81bc229
+    && git fetch --depth=1 origin ${DREAL_COMMIT_TAG} \
+    && git checkout ${DREAL_COMMIT_TAG}
 
 WORKDIR /dreal4
 
