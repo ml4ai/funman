@@ -331,7 +331,7 @@ class BoxSearch(Search):
         solver.push(1)
 
         projected_box = box.project(episode.problem.model_parameters()).project(
-            episode.problem.synthesized_parameters()
+            episode.problem.model_parameters()
         )
         formula = episode.problem._smt_encoder.box_to_smt(projected_box)
         episode._formula_stack.append(formula)

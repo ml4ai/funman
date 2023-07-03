@@ -11,6 +11,8 @@ from pysmt.shortcuts import (
     Real,
     Symbol,
     Times,
+    GE,
+    LE,
 )
 
 from funman.model.model import Model
@@ -94,7 +96,46 @@ class PetrinetEncoder(Encoder):
 
             net_flows.append(Equals(next_state[state_var_id], flows))
 
-        return And(net_flows)
+        compartmental_bounds = self._encode_compartmental_bounds(
+            model, next_step
+        )
+
+        return And(net_flows + [compartmental_bounds])
+
+    def _define_init(self, model: Model, init_time: int = 0) -> FNode:
+        state_var_names = model._state_var_names()
+        compartmental_bounds = self._encode_compartmental_bounds(model, 0)
+        return And(
+            And(
+                [
+                    self._define_init_term(model, var, init_time)
+                    for var in state_var_names
+                ]
+            ),
+            compartmental_bounds,
+        )
+
+    def _encode_compartmental_bounds(self, model: "Model", step):
+        bounds = []
+        for var in model._state_vars():
+            lb = GE(
+                self._encode_state_var(model._state_var_name(var), time=step),
+                Real(0.0),
+            )
+            ub = LE(
+                self._encode_state_var(model._state_var_name(var), time=step),
+                Plus(
+                    [
+                        self._encode_state_var(
+                            model._state_var_name(var1), time=step
+                        )
+                        for var1 in model._state_vars()
+                    ]
+                ),
+            )
+            bounds += [lb, ub]
+
+        return And(bounds)
 
     def _encode_transition_term(
         self, transition, current_state, next_state, model

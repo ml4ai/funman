@@ -453,7 +453,8 @@ class DRealNative(Solver, SmtLibBasicSolver, SmtLibIgnoreMixin):
         self.symbols = {}
 
     def __del__(self):
-        self.context.Exit()
+        self.context.Exit()  # Exit() only logs within dreal
+        self.context = None
 
     @clear_pending_pop
     def add_assertion(self, formula, named=None):

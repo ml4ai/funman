@@ -197,7 +197,7 @@ class Encoder(ABC, BaseModel):
             And(
                 [
                     self._timed_model_elements["init"],
-                    self._timed_model_elements["untimed_constraints"],
+                    # self._timed_model_elements["untimed_constraints"],
                 ]
                 + constraints
             ).simplify(),
