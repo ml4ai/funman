@@ -105,19 +105,21 @@ class TestModels(unittest.TestCase):
         while True:
             if self._worker.is_processing_id(work_unit.id):
                 results = self._worker.get_results(work_unit.id)
-                # ParameterSpacePlotter(
-                #     results.parameter_space, plot_points=True
-                # ).plot(show=True)
-                # plt.savefig(f"{out_dir}/{model.__module__}.png")
+                ParameterSpacePlotter(
+                    results.parameter_space, plot_points=True
+                ).plot(show=False)
+                plt.savefig(f"{out_dir}/{model.__module__}.png")
+                plt.close()
                 sleep(1)
             else:
                 results = self._worker.get_results(work_unit.id)
                 break
 
         ParameterSpacePlotter(results.parameter_space, plot_points=True).plot(
-            show=True
+            show=False
         )
         plt.savefig(f"{out_dir}/{model.__module__}.png")
+        plt.close()
 
         assert results
 
