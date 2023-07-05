@@ -37,7 +37,7 @@ cases = [
     # ok
     # (
     #     os.path.join(SKEMA_PETRI_DIR, "linked_petrinet.json"),
-    #     os.path.join(SKEMA_PETRI_DIR, "sir_request_skema1.json"),
+    #     os.path.join(SKEMA_PETRI_DIR, "sir_request_skema1c.json"),
     # ),
     # ok
     # (
@@ -46,7 +46,7 @@ cases = [
     # ),
     (
         os.path.join(AMR_PETRI_DIR, "sir.json"),
-        os.path.join(AMR_PETRI_DIR, "sir_request1.json"),
+        os.path.join(AMR_PETRI_DIR, "sir_request1b.json"),
     ),
     # (
     #     os.path.join(AMR_EXAMPLES_DIR, "sir.json"),
@@ -105,12 +105,12 @@ class TestModels(unittest.TestCase):
         while True:
             if self._worker.is_processing_id(work_unit.id):
                 results = self._worker.get_results(work_unit.id)
-                ParameterSpacePlotter(
-                    results.parameter_space, plot_points=True
-                ).plot(show=False)
-                plt.savefig(f"{out_dir}/{model.__module__}.png")
-                plt.close()
-                sleep(1)
+                # ParameterSpacePlotter(
+                #     results.parameter_space, plot_points=True
+                # ).plot(show=False)
+                # plt.savefig(f"{out_dir}/{model.__module__}.png")
+                # plt.close()
+                sleep(10)
             else:
                 results = self._worker.get_results(work_unit.id)
                 break

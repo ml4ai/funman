@@ -3,6 +3,9 @@ import os
 from functools import partial
 from queue import Queue
 from typing import Dict, List
+from timeit import default_timer
+from contextlib import contextmanager
+
 
 import docker
 import dreal
@@ -35,6 +38,11 @@ from funman.utils.smtlib_utils import FUNMANSmtPrinter
 #         os.path.join(benchmark_path, smt2_file),
 #         os.path.join(out_dir, smt2_file),
 #     )
+
+import logging
+
+l = logging.getLogger(__name__)
+l.setLevel(logging.DEBUG)
 
 
 # TODO find a better way to determine if solver was successful
@@ -451,6 +459,16 @@ class DRealNative(Solver, SmtLibBasicSolver, SmtLibIgnoreMixin):
         # self.to = self.environment.typeso
         self.LOGICS = DReal.LOGICS
         self.symbols = {}
+        l.debug("Created new Solver ...")
+
+    @contextmanager
+    def elapsed_timer(self):
+        start = default_timer()
+        elapser = lambda: default_timer() - start
+        try:
+            yield elapser
+        finally:
+            elapser = None
 
     def __del__(self):
         self.context.Exit()  # Exit() only logs within dreal
@@ -461,6 +479,11 @@ class DRealNative(Solver, SmtLibBasicSolver, SmtLibIgnoreMixin):
         # print(f"Assert({formula})")
 
         f = self.converter.convert(formula)
+
+        # Convert Variable to a Formula
+        if isinstance(f, dreal.Variable) and f.get_type() == dreal.Variable.Bool:
+            f = dreal.And(f, f)
+
 
         deps = formula.get_free_variables()
         # Declare all variables
@@ -508,7 +531,12 @@ class DRealNative(Solver, SmtLibBasicSolver, SmtLibIgnoreMixin):
 
     def check_sat(self):
         # print("CheckSat()")
-        result = self.context.CheckSat()
+        with self.elapsed_timer() as t:
+            result = self.context.CheckSat()
+            elapsed_base_dreal = t()
+        l.debug(
+            f"{('delta-sat' if result else 'unsat' )} took {elapsed_base_dreal}s"
+        )
         # result = dreal.CheckSatisfiability(self.assertion, 0.001)
         self.model = result
         return result

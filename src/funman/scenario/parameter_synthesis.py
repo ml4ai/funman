@@ -211,23 +211,19 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
         return self._model_encoding, self._query_encoding
 
     def _encode_timed(self, num_steps, step_size, config: "FUNMANConfig"):
-        self._assume_model = Symbol("assume_model")
+        # self._assume_model = Symbol("assume_model")
         self._assume_query = Symbol("assume_query")
         # This will overwrite the _model_encoding for each configuration, but the encoder will retain components of the configurations.
         self._model_encoding = self._smt_encoder.encode_model_timed(
             self.model, num_steps, step_size
         )
-        self._model_encoding._formula = Iff(
-            self._assume_model, self._model_encoding._formula
-        )
+        # self._model_encoding.assume(self._assume_model)
 
         # This will create a new formula for each query without caching them (its typically inexpensive)
         self._query_encoding = self._smt_encoder.encode_query(
-            self._model_encoding, self.query
+            self.query, num_steps, step_size
         )
-        self._query_encoding._formula = Iff(
-            self._assume_query, self._query_encoding._formula
-        )
+        self._query_encoding.assume(self._assume_query)
         return self._model_encoding, self._query_encoding
 
 

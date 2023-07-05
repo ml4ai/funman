@@ -2,28 +2,8 @@
   "query": {
     "queries": [
       {
-        "variable": "S",
-        "lb": 0.0
-      },
-      {
-        "variable": "S",
-        "ub": 1001.0
-      },
-      {
-        "variable": "I",
-        "lb": 0.0
-      },
-      {
         "variable": "I",
         "ub": 300.0
-      },
-      {
-        "variable": "R",
-        "lb": 0.0
-      },
-      {
-        "variable": "R",
-        "ub": 1001.0
       }
     ]
   },
@@ -62,8 +42,8 @@
   "structure_parameters": [
     {
       "name": "num_steps",
-      "lb": 5,
-      "ub": 5,
+      "lb": 7,
+      "ub": 10,
       "label": "all"
     },
     {
@@ -75,6 +55,7 @@
   ],
   "config": {
     "solver": "dreal",
-    "tolerance": 1e-5
+    "tolerance": 1e-8,
+    "dreal_mcts": true
   }
 }

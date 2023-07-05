@@ -11,7 +11,18 @@ from numpy import isin
 from pydantic import BaseModel, Extra
 from pysmt.constants import Numeral
 from pysmt.formula import FNode
-from pysmt.shortcuts import GE, LE, LT, REAL, TRUE, And, Equals, Real, Symbol
+from pysmt.shortcuts import (
+    GE,
+    LE,
+    LT,
+    REAL,
+    TRUE,
+    And,
+    Equals,
+    Real,
+    Symbol,
+    Iff,
+)
 from pysmt.solvers.solver import Model as pysmtModel
 
 from funman.constants import NEG_INFINITY, POS_INFINITY
@@ -36,6 +47,10 @@ from funman.representation.symbol import ModelSymbol
 
 
 class Encoding(BaseModel):
+    pass
+
+
+class FlatEncoding(BaseModel):
     """
     An encoding comprises a formula over a set of symbols.
 
@@ -48,9 +63,49 @@ class Encoding(BaseModel):
     _formula: FNode = None
     _symbols: Union[List[FNode], Dict[str, Dict[str, FNode]]] = None
 
+    def encoding(self):
+        return _formula
+
+    def assume(self, assumption: FNode):
+        _formula = Iff(assumption, _formula)
+
     # @validator("formula")
     # def set_symbols(cls, v: FNode):
     #     cls.symbols = Symbol(v, REAL)
+
+
+class LayeredEncoding(BaseModel):
+    """
+    An encoding comprises a formula over a set of symbols.
+
+    """
+
+    class Config:
+        arbitrary_types_allowed = True
+        extra = Extra.allow
+
+    _layers: List[
+        Tuple[FNode, Union[List[FNode], Dict[str, Dict[str, FNode]]]]
+    ] = []
+    # @validator("formula")
+    # def set_symbols(cls, v: FNode):
+    #     cls.symbols = Symbol(v, REAL)
+
+    def encoding(self, layers=None):
+        if layers:
+            return And([self._layers[i][0] for i in layers])
+        else:
+            return And([l[0] for l in self._layers])
+
+    def assume(self, assumption: FNode, layers=None):
+        if layers:
+            for i, l in enumerate(self._layers):
+                (f, s) = l
+                self._layers = [
+                    ((Iff(assumption, f), s) if i in layers else (f, s))
+                ]
+        else:
+            self._layers = [(Iff(assumption, f), s) for (f, s) in self._layers]
 
 
 class EncodingOptions(object):
@@ -145,7 +200,7 @@ class Encoder(ABC, BaseModel):
         )
         # parameters = model._parameters()
 
-        constraints = []
+        constraints = [self._timed_model_elements["init"]]
 
         for i, timepoint in enumerate(transition_timepoints):
             c = self._timed_model_elements["time_step_constraints"][timepoint][
@@ -193,18 +248,18 @@ class Encoder(ABC, BaseModel):
         #         ),
         #     )
 
-        formula = And(
-            And(
-                [
-                    self._timed_model_elements["init"],
-                    # self._timed_model_elements["untimed_constraints"],
-                ]
-                + constraints
-            ).simplify(),
-            (model._extra_constraints if model._extra_constraints else TRUE()),
-        ).simplify()
-        symbols = self._symbols(formula)
-        return Encoding(_formula=formula, _symbols=symbols)
+        # formula = And(
+        #     And(
+        #         [
+        #             ,
+        #             # self._timed_model_elements["untimed_constraints"],
+        #         ]
+        #         + constraints
+        #     ).simplify(),
+        #     (model._extra_constraints if model._extra_constraints else TRUE()),
+        # ).simplify()
+        # symbols = self._symbols(formula)
+        return LayeredEncoding(_layers=[(c, c.get_free_variables()) for c in constraints])
 
     def parameter_values(
         self, model: Model, pysmtModel: pysmtModel
@@ -396,7 +451,9 @@ class Encoder(ABC, BaseModel):
         transition_timepoints = range(0, step_size * num_steps, step_size)
         return list(state_timepoints), list(transition_timepoints)
 
-    def encode_query(self, model_encoding: Encoding, query: Query) -> Encoding:
+    def encode_query(
+        self, query: Query, num_steps: int, step_size: int
+    ) -> Encoding:
         """
         Encode a query into an SMTLib formula.
 
@@ -419,7 +476,7 @@ class Encoder(ABC, BaseModel):
         }
 
         if type(query) in query_handlers:
-            return query_handlers[type(query)](model_encoding, query)
+            return query_handlers[type(query)](query, num_steps, step_size)
         else:
             raise NotImplementedError(
                 f"Do not know how to encode query of type {type(query)}"
@@ -435,37 +492,40 @@ class Encoder(ABC, BaseModel):
             else str(query.variable)
         )
 
-    def _encode_query_and(self, model_encoding, query):
-        encodings = [
-            self.encode_query(model_encoding, q) for q in query.queries
+    def _encode_query_and(self, query, num_steps, step_size):
+        queries = [self.encode_query(q, num_steps, step_size)
+                    for q in query.queries]
+        timepoints = range(0, (step_size*num_steps)+1, step_size)
+        q_layers = [q._layers
+                    for q in queries]
+        layers = [
+            (And([q_layer[i][0] for q_layer in q_layers]), {s for q_layer in q_layers for s in q_layer[i][1] })
+            for i, t in enumerate(timepoints)
         ]
-        return Encoding(_formula=And([e._formula for e in encodings]))
-
-    def _encode_query_le(self, model_encoding, query):
-        query_variable_name = self._query_variable_name(query)
-        if query_variable_name not in model_encoding._symbols:
-            raise Exception(
-                f"Could not encode QueryLE because {query_variable_name} does not appear in the model_encoding symbols."
-            )
-        timepoints = model_encoding._symbols[query_variable_name]
-        return Encoding(
-            _formula=And([LE(s, Real(query.ub)) for s in timepoints.values()])
+        return LayeredEncoding(
+            _layers=layers
+            
         )
 
-    def _encode_query_ge(self, model_encoding, query):
+    def _encode_query_le(self, query, num_steps, step_size):
         query_variable_name = self._query_variable_name(query)
-
-        if query_variable_name not in model_encoding._symbols:
-            raise Exception(
-                f"Could not encode QueryGE because {query_variable_name} does not appear in the model_encoding symbols."
-            )
-        timepoints = model_encoding._symbols[query_variable_name]
-        return Encoding(
-            _formula=And([GE(s, Real(query.lb)) for s in timepoints.values()])
+        timepoints = range(0, (step_size*num_steps)+1, step_size)
+        layers = [LE(self._encode_state_var(var=query.variable, time=s), Real(query.ub)) for s in timepoints]
+        return LayeredEncoding(
+            _layers=[(l, l.get_free_variables()) for l in layers]
         )
 
-    def _encode_query_true(self, model_encoding, query):
-        return Encoding(_formula=TRUE())
+    def _encode_query_ge(self, query, num_steps, step_size):
+        query_variable_name = self._query_variable_name(query)
+        timepoints = range(0, (step_size*num_steps)+1, step_size)
+        layers = [GE(self._encode_state_var(var=query.variable, time=s), Real(query.lb)) for s in timepoints]
+        return LayeredEncoding(
+            _layers=[(l, l.get_free_variables()) for l in layers]
+        )
+
+    def _encode_query_true(self, query, num_steps, step_size):
+        timepoints = range(0, (step_size*num_steps)+1, step_size)
+        return LayeredEncoding(_layers=[(TRUE(), []) for t in timepoints])
 
     def symbol_timeseries(
         self, model_encoding, pysmtModel: pysmtModel

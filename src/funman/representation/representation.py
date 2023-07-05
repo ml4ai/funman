@@ -460,6 +460,22 @@ class Box(BaseModel):
     def __hash__(self):
         return int(sum([i.__hash__() for _, i in self.bounds.items()]))
 
+    def advance(self):
+        # Advancing a box means that we move the time step forward until it exhausts the possible number of steps
+        if "num_steps" in self.bounds and self.bounds["num_steps"].lb < self.bounds["num_steps"].ub:
+            advanced_box = Box(bounds = {n:(itv if n != "num_steps" else Interval(lb=itv.lb+1, ub=itv.ub)) for n, itv in self.bounds.items()})
+            return advanced_box
+        else:
+            None
+
+    def current_step(self):
+        # Restrict bounds on num_steps to the lower bound (i.e., the current step)
+        if "num_steps" in self.bounds:
+            current_step_box = Box(bounds = {n:(itv if n != "num_steps" else Interval(lb=itv.lb, ub=itv.lb)) for n, itv in self.bounds.items()})
+            return current_step_box
+        else:
+            None
+
     def project(self, vars: Union[List[Parameter], List[str]]) -> "Box":
         """
         Takes a subset of selected variables (vars_list) of a given box (b) and returns another box that is given by b's values for only the selected variables.
