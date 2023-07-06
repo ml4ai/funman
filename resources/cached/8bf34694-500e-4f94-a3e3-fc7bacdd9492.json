@@ -1,0 +1,3063 @@
+{
+    "id": "8bf34694-500e-4f94-a3e3-fc7bacdd9492",
+    "model": {
+        "name": "model_4a4f21d9-8d14-4083-a920-57a629848584",
+        "init_values": {},
+        "parameter_bounds": {},
+        "petrinet": {
+            "name": "SIR Model",
+            "schema_": "https://raw.githubusercontent.com/DARPA-ASKEM/Model-Representations/petrinet_v0.1/petrinet/petrinet_schema.json",
+            "schema_name": "petrinet",
+            "description": "SIR model created by Ben, Micah, Brandon",
+            "model_version": "0.1",
+            "properties": null,
+            "model": {
+                "states": [
+                    {
+                        "id": "S",
+                        "name": "Susceptible",
+                        "description": "Number of individuals that are 'susceptible' to a disease infection",
+                        "grounding": {
+                            "identifiers": {
+                                "ido": "0000514"
+                            },
+                            "modifiers": null
+                        },
+                        "units": {
+                            "expression": "person",
+                            "expression_mathml": "<ci>person</ci>"
+                        }
+                    },
+                    {
+                        "id": "I",
+                        "name": "Infected",
+                        "description": "Number of individuals that are 'infected' by a disease",
+                        "grounding": {
+                            "identifiers": {
+                                "ido": "0000511"
+                            },
+                            "modifiers": null
+                        },
+                        "units": {
+                            "expression": "person",
+                            "expression_mathml": "<ci>person</ci>"
+                        }
+                    },
+                    {
+                        "id": "R",
+                        "name": "Recovered",
+                        "description": "Number of individuals that have 'recovered' from a disease infection",
+                        "grounding": {
+                            "identifiers": {
+                                "ido": "0000592"
+                            },
+                            "modifiers": null
+                        },
+                        "units": {
+                            "expression": "person",
+                            "expression_mathml": "<ci>person</ci>"
+                        }
+                    }
+                ],
+                "transitions": [
+                    {
+                        "id": "inf",
+                        "input": [
+                            "S",
+                            "I"
+                        ],
+                        "output": [
+                            "I",
+                            "I"
+                        ],
+                        "grounding": null,
+                        "properties": {
+                            "name": "Infection",
+                            "description": "Infective process between individuals",
+                            "grounding": null
+                        }
+                    },
+                    {
+                        "id": "rec",
+                        "input": [
+                            "I"
+                        ],
+                        "output": [
+                            "R"
+                        ],
+                        "grounding": null,
+                        "properties": {
+                            "name": "Recovery",
+                            "description": "Recovery process of a infected individual",
+                            "grounding": null
+                        }
+                    }
+                ]
+            },
+            "semantics": {
+                "ode": {
+                    "rates": [
+                        {
+                            "target": "inf",
+                            "expression": "S*I*beta",
+                            "expression_mathml": "<apply><times/><ci>S</ci><ci>I</ci><ci>beta</ci></apply>"
+                        },
+                        {
+                            "target": "rec",
+                            "expression": "I*gamma",
+                            "expression_mathml": "<apply><times/><ci>I</ci><ci>gamma</ci></apply>"
+                        }
+                    ],
+                    "initials": [
+                        {
+                            "target": "S",
+                            "expression": "S0",
+                            "expression_mathml": "<ci>S0</ci>"
+                        },
+                        {
+                            "target": "I",
+                            "expression": "I0",
+                            "expression_mathml": "<ci>I0</ci>"
+                        },
+                        {
+                            "target": "R",
+                            "expression": "R0",
+                            "expression_mathml": "<ci>R0</ci>"
+                        }
+                    ],
+                    "parameters": [
+                        {
+                            "id": "beta",
+                            "name": "\u03b2",
+                            "description": "infection rate",
+                            "value": 2.7e-07,
+                            "grounding": null,
+                            "distribution": {
+                                "type": "StandardUniform1",
+                                "parameters": {
+                                    "minimum": 2.6e-07,
+                                    "maximum": 2.8e-07
+                                }
+                            },
+                            "units": {
+                                "expression": "1/(person*day)",
+                                "expression_mathml": "<apply><divide/><cn>1</cn><apply><times/><ci>person</ci><ci>day</ci></apply></apply>"
+                            }
+                        },
+                        {
+                            "id": "gamma",
+                            "name": "\u03b3",
+                            "description": "recovery rate",
+                            "value": 0.14,
+                            "grounding": {
+                                "identifiers": {
+                                    "askemo": "0000013"
+                                },
+                                "modifiers": null
+                            },
+                            "distribution": {
+                                "type": "StandardUniform1",
+                                "parameters": {
+                                    "minimum": 0.1,
+                                    "maximum": 0.18
+                                }
+                            },
+                            "units": {
+                                "expression": "1/day",
+                                "expression_mathml": "<apply><divide/><cn>1</cn><ci>day</ci></apply>"
+                            }
+                        },
+                        {
+                            "id": "S0",
+                            "name": "S\u2080",
+                            "description": "Total susceptible population at timestep 0",
+                            "value": 1000.0,
+                            "grounding": null,
+                            "distribution": null,
+                            "units": null
+                        },
+                        {
+                            "id": "I0",
+                            "name": "I\u2080",
+                            "description": "Total infected population at timestep 0",
+                            "value": 1.0,
+                            "grounding": null,
+                            "distribution": null,
+                            "units": null
+                        },
+                        {
+                            "id": "R0",
+                            "name": "R\u2080",
+                            "description": "Total recovered population at timestep 0",
+                            "value": 0.0,
+                            "grounding": null,
+                            "distribution": null,
+                            "units": null
+                        }
+                    ],
+                    "time": {
+                        "id": "t",
+                        "units": {
+                            "expression": "day",
+                            "expression_mathml": "<ci>day</ci>"
+                        }
+                    }
+                },
+                "typing": null
+            },
+            "metadata": {
+                "processed_at": 1682964953,
+                "processed_by": "mit:process-node1",
+                "variable_statements": [
+                    {
+                        "id": "v0",
+                        "variable": {
+                            "id": "v0",
+                            "name": "VE",
+                            "metadata": [
+                                {
+                                    "type": "text_annotation",
+                                    "value": " Vaccine Effectiveness"
+                                },
+                                {
+                                    "type": "text_annotation",
+                                    "value": " Vaccine Effectiveness"
+                                }
+                            ],
+                            "dkg_groundings": [],
+                            "column": [
+                                {
+                                    "id": "9-2",
+                                    "name": "new_persons_vaccinated",
+                                    "dataset": {
+                                        "id": "9",
+                                        "name": "usa-vaccinations.csv",
+                                        "metadata": "https://github.com/DARPA-ASKEM/program-milestones/blob/main/6-month-milestone/evaluation/scenario_3/ta_1/google-health-data/usa-vaccinations.csv"
+                                    }
+                                },
+                                {
+                                    "id": "9-3",
+                                    "name": "cumulative_persons_vaccinated",
+                                    "dataset": {
+                                        "id": "9",
+                                        "name": "usa-vaccinations.csv",
+                                        "metadata": "https://github.com/DARPA-ASKEM/program-milestones/blob/main/6-month-milestone/evaluation/scenario_3/ta_1/google-health-data/usa-vaccinations.csv"
+                                    }
+                                }
+                            ],
+                            "paper": {
+                                "id": "COVID-19 Vaccine Effectiveness by Product and Timing in New York State",
+                                "file_directory": "https://www.medrxiv.org/content/10.1101/2021.10.08.21264595v1",
+                                "doi": "10.1101/2021.10.08.21264595"
+                            },
+                            "equations": []
+                        },
+                        "metadata": [],
+                        "provenance": {
+                            "method": "MIT annotation",
+                            "description": "text, dataset, formula annotation (chunwei@mit.edu)"
+                        }
+                    }
+                ]
+            }
+        }
+    },
+    "request": {
+        "query": {
+            "queries": [
+                {
+                    "variable": "I",
+                    "ub": 300.0,
+                    "at_end": false
+                }
+            ]
+        },
+        "parameters": [
+            {
+                "name": "beta",
+                "lb": 0.00026,
+                "ub": 0.0004,
+                "label": "all"
+            },
+            {
+                "name": "gamma",
+                "lb": 0.0999,
+                "ub": 0.1,
+                "label": "all"
+            },
+            {
+                "name": "S0",
+                "lb": 1000.0,
+                "ub": 1000.0,
+                "label": "any"
+            },
+            {
+                "name": "I0",
+                "lb": 1.0,
+                "ub": 1.0,
+                "label": "any"
+            },
+            {
+                "name": "R0",
+                "lb": 0.0,
+                "ub": 0.0,
+                "label": "any"
+            }
+        ],
+        "config": {
+            "tolerance": 1e-05,
+            "queue_timeout": 1,
+            "number_of_processes": 1,
+            "wait_timeout": null,
+            "wait_action_timeout": 0.05,
+            "solver": "dreal",
+            "num_steps": 2,
+            "step_size": 1,
+            "num_initial_boxes": 1,
+            "save_smtlib": false,
+            "dreal_precision": 0.001,
+            "dreal_log_level": "off",
+            "constraint_noise": 0.0,
+            "initial_state_tolerance": 0.0,
+            "dreal_mcts": true
+        },
+        "structure_parameters": [
+            {
+                "name": "num_steps",
+                "lb": 6.0,
+                "ub": 8.0,
+                "label": "all"
+            },
+            {
+                "name": "step_size",
+                "lb": 10.0,
+                "ub": 10.0,
+                "label": "all"
+            }
+        ]
+    },
+    "done": true,
+    "parameter_space": {
+        "num_dimensions": 7,
+        "true_boxes": [
+            {
+                "type": "box",
+                "label": "true",
+                "bounds": {
+                    "beta": {
+                        "lb": 0.00026,
+                        "ub": 0.0002698895218092676
+                    },
+                    "gamma": {
+                        "lb": 0.09994448886001625,
+                        "ub": 0.1
+                    },
+                    "S0": {
+                        "lb": 1000.0,
+                        "ub": 1000.0
+                    },
+                    "I0": {
+                        "lb": 1.0,
+                        "ub": 1.0
+                    },
+                    "R0": {
+                        "lb": 0.0,
+                        "ub": 0.0
+                    },
+                    "num_steps": {
+                        "lb": 6.0,
+                        "ub": 6.0
+                    },
+                    "step_size": {
+                        "lb": 10.0,
+                        "ub": 10.0
+                    }
+                }
+            },
+            {
+                "type": "box",
+                "label": "true",
+                "bounds": {
+                    "beta": {
+                        "lb": 0.00026,
+                        "ub": 0.0002699878672787889
+                    },
+                    "gamma": {
+                        "lb": 0.09991966663735075,
+                        "ub": 0.09994448886001625
+                    },
+                    "S0": {
+                        "lb": 1000.0,
+                        "ub": 1000.0
+                    },
+                    "I0": {
+                        "lb": 1.0,
+                        "ub": 1.0
+                    },
+                    "R0": {
+                        "lb": 0.0,
+                        "ub": 0.0
+                    },
+                    "num_steps": {
+                        "lb": 6.0,
+                        "ub": 6.0
+                    },
+                    "step_size": {
+                        "lb": 10.0,
+                        "ub": 10.0
+                    }
+                }
+            },
+            {
+                "type": "box",
+                "label": "true",
+                "bounds": {
+                    "beta": {
+                        "lb": 0.0002698895218092676,
+                        "ub": 0.0002750717391929691
+                    },
+                    "gamma": {
+                        "lb": 0.09994448886001625,
+                        "ub": 0.09996445171889992
+                    },
+                    "S0": {
+                        "lb": 1000.0,
+                        "ub": 1000.0
+                    },
+                    "I0": {
+                        "lb": 1.0,
+                        "ub": 1.0
+                    },
+                    "R0": {
+                        "lb": 0.0,
+                        "ub": 0.0
+                    },
+                    "num_steps": {
+                        "lb": 6.0,
+                        "ub": 6.0
+                    },
+                    "step_size": {
+                        "lb": 10.0,
+                        "ub": 10.0
+                    }
+                }
+            },
+            {
+                "type": "box",
+                "label": "true",
+                "bounds": {
+                    "beta": {
+                        "lb": 0.0002699878672787889,
+                        "ub": 0.0002752752267441693
+                    },
+                    "gamma": {
+                        "lb": 0.09992988860351106,
+                        "ub": 0.09994448886001625
+                    },
+                    "S0": {
+                        "lb": 1000.0,
+                        "ub": 1000.0
+                    },
+                    "I0": {
+                        "lb": 1.0,
+                        "ub": 1.0
+                    },
+                    "R0": {
+                        "lb": 0.0,
+                        "ub": 0.0
+                    },
+                    "num_steps": {
+                        "lb": 6.0,
+                        "ub": 6.0
+                    },
+                    "step_size": {
+                        "lb": 10.0,
+                        "ub": 10.0
+                    }
+                }
+            },
+            {
+                "type": "box",
+                "label": "true",
+                "bounds": {
+                    "beta": {
+                        "lb": 0.00026,
+                        "ub": 0.0002688468736212598
+                    },
+                    "gamma": {
+                        "lb": 0.09990778187041463,
+                        "ub": 0.09991966663735075
+                    },
+                    "S0": {
+                        "lb": 1000.0,
+                        "ub": 1000.0
+                    },
+                    "I0": {
+                        "lb": 1.0,
+                        "ub": 1.0
+                    },
+                    "R0": {
+                        "lb": 0.0,
+                        "ub": 0.0
+                    },
+                    "num_steps": {
+                        "lb": 6.0,
+                        "ub": 6.0
+                    },
+                    "step_size": {
+                        "lb": 10.0,
+                        "ub": 10.0
+                    }
+                }
+            },
+            {
+                "type": "box",
+                "label": "true",
+                "bounds": {
+                    "beta": {
+                        "lb": 0.00026,
+                        "ub": 0.0002713348284137808
+                    },
+                    "gamma": {
+                        "lb": 0.0999,
+                        "ub": 0.09990778187041463
+                    },
+                    "S0": {
+                        "lb": 1000.0,
+                        "ub": 1000.0
+                    },
+                    "I0": {
+                        "lb": 1.0,
+                        "ub": 1.0
+                    },
+                    "R0": {
+                        "lb": 0.0,
+                        "ub": 0.0
+                    },
+                    "num_steps": {
+                        "lb": 6.0,
+                        "ub": 6.0
+                    },
+                    "step_size": {
+                        "lb": 10.0,
+                        "ub": 10.0
+                    }
+                }
+            },
+            {
+                "type": "box",
+                "label": "true",
+                "bounds": {
+                    "beta": {
+                        "lb": 0.0002698895218092676,
+                        "ub": 0.00027348540894443866
+                    },
+                    "gamma": {
+                        "lb": 0.09997560648133946,
+                        "ub": 0.1
+                    },
+                    "S0": {
+                        "lb": 1000.0,
+                        "ub": 1000.0
+                    },
+                    "I0": {
+                        "lb": 1.0,
+                        "ub": 1.0
+                    },
+                    "R0": {
+                        "lb": 0.0,
+                        "ub": 0.0
+                    },
+                    "num_steps": {
+                        "lb": 6.0,
+                        "ub": 6.0
+                    },
+                    "step_size": {
+                        "lb": 10.0,
+                        "ub": 10.0
+                    }
+                }
+            },
+            {
+                "type": "box",
+                "label": "true",
+                "bounds": {
+                    "beta": {
+                        "lb": 0.0002698895218092676,
+                        "ub": 0.0002737674874908264
+                    },
+                    "gamma": {
+                        "lb": 0.09996445171889992,
+                        "ub": 0.09997560648133946
+                    },
+                    "S0": {
+                        "lb": 1000.0,
+                        "ub": 1000.0
+                    },
+                    "I0": {
+                        "lb": 1.0,
+                        "ub": 1.0
+                    },
+                    "R0": {
+                        "lb": 0.0,
+                        "ub": 0.0
+                    },
+                    "num_steps": {
+                        "lb": 6.0,
+                        "ub": 6.0
+                    },
+                    "step_size": {
+                        "lb": 10.0,
+                        "ub": 10.0
+                    }
+                }
+            },
+            {
+                "type": "box",
+                "label": "true",
+                "bounds": {
+                    "beta": {
+                        "lb": 0.0002750717391929691,
+                        "ub": 0.0002759298858838159
+                    },
+                    "gamma": {
+                        "lb": 0.09994448886001625,
+                        "ub": 0.09996445171889992
+                    },
+                    "S0": {
+                        "lb": 1000.0,
+                        "ub": 1000.0
+                    },
+                    "I0": {
+                        "lb": 1.0,
+                        "ub": 1.0
+                    },
+                    "R0": {
+                        "lb": 0.0,
+                        "ub": 0.0
+                    },
+                    "num_steps": {
+                        "lb": 6.0,
+                        "ub": 6.0
+                    },
+                    "step_size": {
+                        "lb": 10.0,
+                        "ub": 10.0
+                    }
+                }
+            },
+            {
+                "type": "box",
+                "label": "true",
+                "bounds": {
+                    "beta": {
+                        "lb": 0.0002699878672787889,
+                        "ub": 0.00027354054485575075
+                    },
+                    "gamma": {
+                        "lb": 0.09991966663735075,
+                        "ub": 0.09992988860351106
+                    },
+                    "S0": {
+                        "lb": 1000.0,
+                        "ub": 1000.0
+                    },
+                    "I0": {
+                        "lb": 1.0,
+                        "ub": 1.0
+                    },
+                    "R0": {
+                        "lb": 0.0,
+                        "ub": 0.0
+                    },
+                    "num_steps": {
+                        "lb": 6.0,
+                        "ub": 6.0
+                    },
+                    "step_size": {
+                        "lb": 10.0,
+                        "ub": 10.0
+                    }
+                }
+            },
+            {
+                "type": "box",
+                "label": "true",
+                "bounds": {
+                    "beta": {
+                        "lb": 0.0002737674874908264,
+                        "ub": 0.0002754987757217389
+                    },
+                    "gamma": {
+                        "lb": 0.09996445171889992,
+                        "ub": 0.09997560648133946
+                    },
+                    "S0": {
+                        "lb": 1000.0,
+                        "ub": 1000.0
+                    },
+                    "I0": {
+                        "lb": 1.0,
+                        "ub": 1.0
+                    },
+                    "R0": {
+                        "lb": 0.0,
+                        "ub": 0.0
+                    },
+                    "num_steps": {
+                        "lb": 6.0,
+                        "ub": 6.0
+                    },
+                    "step_size": {
+                        "lb": 10.0,
+                        "ub": 10.0
+                    }
+                }
+            },
+            {
+                "type": "box",
+                "label": "true",
+                "bounds": {
+                    "beta": {
+                        "lb": 0.00027354054485575075,
+                        "ub": 0.0002757516727826837
+                    },
+                    "gamma": {
+                        "lb": 0.09991966663735075,
+                        "ub": 0.09992988860351106
+                    },
+                    "S0": {
+                        "lb": 1000.0,
+                        "ub": 1000.0
+                    },
+                    "I0": {
+                        "lb": 1.0,
+                        "ub": 1.0
+                    },
+                    "R0": {
+                        "lb": 0.0,
+                        "ub": 0.0
+                    },
+                    "num_steps": {
+                        "lb": 6.0,
+                        "ub": 6.0
+                    },
+                    "step_size": {
+                        "lb": 10.0,
+                        "ub": 10.0
+                    }
+                }
+            },
+            {
+                "type": "box",
+                "label": "true",
+                "bounds": {
+                    "beta": {
+                        "lb": 0.00027348540894443866,
+                        "ub": 0.00027577680830868717
+                    },
+                    "gamma": {
+                        "lb": 0.09997800286440131,
+                        "ub": 0.09998936360124483
+                    },
+                    "S0": {
+                        "lb": 1000.0,
+                        "ub": 1000.0
+                    },
+                    "I0": {
+                        "lb": 1.0,
+                        "ub": 1.0
+                    },
+                    "R0": {
+                        "lb": 0.0,
+                        "ub": 0.0
+                    },
+                    "num_steps": {
+                        "lb": 6.0,
+                        "ub": 6.0
+                    },
+                    "step_size": {
+                        "lb": 10.0,
+                        "ub": 10.0
+                    }
+                }
+            },
+            {
+                "type": "box",
+                "label": "true",
+                "bounds": {
+                    "beta": {
+                        "lb": 0.0002752752267441693,
+                        "ub": 0.0002759102174062845
+                    },
+                    "gamma": {
+                        "lb": 0.09993197909960037,
+                        "ub": 0.09994448886001625
+                    },
+                    "S0": {
+                        "lb": 1000.0,
+                        "ub": 1000.0
+                    },
+                    "I0": {
+                        "lb": 1.0,
+                        "ub": 1.0
+                    },
+                    "R0": {
+                        "lb": 0.0,
+                        "ub": 0.0
+                    },
+                    "num_steps": {
+                        "lb": 6.0,
+                        "ub": 6.0
+                    },
+                    "step_size": {
+                        "lb": 10.0,
+                        "ub": 10.0
+                    }
+                }
+            }
+        ],
+        "false_boxes": [
+            {
+                "type": "box",
+                "label": "false",
+                "bounds": {
+                    "beta": {
+                        "lb": 0.0002917408653584097,
+                        "ub": 0.0004
+                    },
+                    "gamma": {
+                        "lb": 0.09994448886001625,
+                        "ub": 0.1
+                    },
+                    "S0": {
+                        "lb": 1000.0,
+                        "ub": 1000.0
+                    },
+                    "I0": {
+                        "lb": 1.0,
+                        "ub": 1.0
+                    },
+                    "R0": {
+                        "lb": 0.0,
+                        "ub": 0.0
+                    },
+                    "num_steps": {
+                        "lb": 6.0,
+                        "ub": 8.0
+                    },
+                    "step_size": {
+                        "lb": 10.0,
+                        "ub": 10.0
+                    }
+                }
+            },
+            {
+                "type": "box",
+                "label": "false",
+                "bounds": {
+                    "beta": {
+                        "lb": 0.0002870259265207357,
+                        "ub": 0.0004
+                    },
+                    "gamma": {
+                        "lb": 0.0999,
+                        "ub": 0.09994448886001625
+                    },
+                    "S0": {
+                        "lb": 1000.0,
+                        "ub": 1000.0
+                    },
+                    "I0": {
+                        "lb": 1.0,
+                        "ub": 1.0
+                    },
+                    "R0": {
+                        "lb": 0.0,
+                        "ub": 0.0
+                    },
+                    "num_steps": {
+                        "lb": 6.0,
+                        "ub": 8.0
+                    },
+                    "step_size": {
+                        "lb": 10.0,
+                        "ub": 10.0
+                    }
+                }
+            },
+            {
+                "type": "box",
+                "label": "false",
+                "bounds": {
+                    "beta": {
+                        "lb": 0.00026,
+                        "ub": 0.0002698895218092676
+                    },
+                    "gamma": {
+                        "lb": 0.09994448886001625,
+                        "ub": 0.1
+                    },
+                    "S0": {
+                        "lb": 1000.0,
+                        "ub": 1000.0
+                    },
+                    "I0": {
+                        "lb": 1.0,
+                        "ub": 1.0
+                    },
+                    "R0": {
+                        "lb": 0.0,
+                        "ub": 0.0
+                    },
+                    "num_steps": {
+                        "lb": 7.0,
+                        "ub": 8.0
+                    },
+                    "step_size": {
+                        "lb": 10.0,
+                        "ub": 10.0
+                    }
+                }
+            },
+            {
+                "type": "box",
+                "label": "false",
+                "bounds": {
+                    "beta": {
+                        "lb": 0.00027973957899261133,
+                        "ub": 0.0002870259265207357
+                    },
+                    "gamma": {
+                        "lb": 0.0999,
+                        "ub": 0.09991966663735075
+                    },
+                    "S0": {
+                        "lb": 1000.0,
+                        "ub": 1000.0
+                    },
+                    "I0": {
+                        "lb": 1.0,
+                        "ub": 1.0
+                    },
+                    "R0": {
+                        "lb": 0.0,
+                        "ub": 0.0
+                    },
+                    "num_steps": {
+                        "lb": 6.0,
+                        "ub": 8.0
+                    },
+                    "step_size": {
+                        "lb": 10.0,
+                        "ub": 10.0
+                    }
+                }
+            },
+            {
+                "type": "box",
+                "label": "false",
+                "bounds": {
+                    "beta": {
+                        "lb": 0.00027671486550926436,
+                        "ub": 0.0002917408653584097
+                    },
+                    "gamma": {
+                        "lb": 0.09994448886001625,
+                        "ub": 0.09996445171889992
+                    },
+                    "S0": {
+                        "lb": 1000.0,
+                        "ub": 1000.0
+                    },
+                    "I0": {
+                        "lb": 1.0,
+                        "ub": 1.0
+                    },
+                    "R0": {
+                        "lb": 0.0,
+                        "ub": 0.0
+                    },
+                    "num_steps": {
+                        "lb": 6.0,
+                        "ub": 8.0
+                    },
+                    "step_size": {
+                        "lb": 10.0,
+                        "ub": 10.0
+                    }
+                }
+            },
+            {
+                "type": "box",
+                "label": "false",
+                "bounds": {
+                    "beta": {
+                        "lb": 0.00026,
+                        "ub": 0.0002699878672787889
+                    },
+                    "gamma": {
+                        "lb": 0.09991966663735075,
+                        "ub": 0.09994448886001625
+                    },
+                    "S0": {
+                        "lb": 1000.0,
+                        "ub": 1000.0
+                    },
+                    "I0": {
+                        "lb": 1.0,
+                        "ub": 1.0
+                    },
+                    "R0": {
+                        "lb": 0.0,
+                        "ub": 0.0
+                    },
+                    "num_steps": {
+                        "lb": 7.0,
+                        "ub": 8.0
+                    },
+                    "step_size": {
+                        "lb": 10.0,
+                        "ub": 10.0
+                    }
+                }
+            },
+            {
+                "type": "box",
+                "label": "false",
+                "bounds": {
+                    "beta": {
+                        "lb": 0.0002780265532901586,
+                        "ub": 0.0002917408653584097
+                    },
+                    "gamma": {
+                        "lb": 0.09997560648133946,
+                        "ub": 0.1
+                    },
+                    "S0": {
+                        "lb": 1000.0,
+                        "ub": 1000.0
+                    },
+                    "I0": {
+                        "lb": 1.0,
+                        "ub": 1.0
+                    },
+                    "R0": {
+                        "lb": 0.0,
+                        "ub": 0.0
+                    },
+                    "num_steps": {
+                        "lb": 6.0,
+                        "ub": 8.0
+                    },
+                    "step_size": {
+                        "lb": 10.0,
+                        "ub": 10.0
+                    }
+                }
+            },
+            {
+                "type": "box",
+                "label": "false",
+                "bounds": {
+                    "beta": {
+                        "lb": 0.00027919942432386814,
+                        "ub": 0.0002917408653584097
+                    },
+                    "gamma": {
+                        "lb": 0.09996445171889992,
+                        "ub": 0.09997560648133946
+                    },
+                    "S0": {
+                        "lb": 1000.0,
+                        "ub": 1000.0
+                    },
+                    "I0": {
+                        "lb": 1.0,
+                        "ub": 1.0
+                    },
+                    "R0": {
+                        "lb": 0.0,
+                        "ub": 0.0
+                    },
+                    "num_steps": {
+                        "lb": 6.0,
+                        "ub": 8.0
+                    },
+                    "step_size": {
+                        "lb": 10.0,
+                        "ub": 10.0
+                    }
+                }
+            },
+            {
+                "type": "box",
+                "label": "false",
+                "bounds": {
+                    "beta": {
+                        "lb": 0.0002768411123117237,
+                        "ub": 0.0002870259265207357
+                    },
+                    "gamma": {
+                        "lb": 0.09991966663735075,
+                        "ub": 0.09992988860351106
+                    },
+                    "S0": {
+                        "lb": 1000.0,
+                        "ub": 1000.0
+                    },
+                    "I0": {
+                        "lb": 1.0,
+                        "ub": 1.0
+                    },
+                    "R0": {
+                        "lb": 0.0,
+                        "ub": 0.0
+                    },
+                    "num_steps": {
+                        "lb": 6.0,
+                        "ub": 8.0
+                    },
+                    "step_size": {
+                        "lb": 10.0,
+                        "ub": 10.0
+                    }
+                }
+            },
+            {
+                "type": "box",
+                "label": "false",
+                "bounds": {
+                    "beta": {
+                        "lb": 0.0002698895218092676,
+                        "ub": 0.0002750717391929691
+                    },
+                    "gamma": {
+                        "lb": 0.09994448886001625,
+                        "ub": 0.09996445171889992
+                    },
+                    "S0": {
+                        "lb": 1000.0,
+                        "ub": 1000.0
+                    },
+                    "I0": {
+                        "lb": 1.0,
+                        "ub": 1.0
+                    },
+                    "R0": {
+                        "lb": 0.0,
+                        "ub": 0.0
+                    },
+                    "num_steps": {
+                        "lb": 7.0,
+                        "ub": 8.0
+                    },
+                    "step_size": {
+                        "lb": 10.0,
+                        "ub": 10.0
+                    }
+                }
+            },
+            {
+                "type": "box",
+                "label": "false",
+                "bounds": {
+                    "beta": {
+                        "lb": 0.0002789670470172453,
+                        "ub": 0.0002870259265207357
+                    },
+                    "gamma": {
+                        "lb": 0.09992988860351106,
+                        "ub": 0.09994448886001625
+                    },
+                    "S0": {
+                        "lb": 1000.0,
+                        "ub": 1000.0
+                    },
+                    "I0": {
+                        "lb": 1.0,
+                        "ub": 1.0
+                    },
+                    "R0": {
+                        "lb": 0.0,
+                        "ub": 0.0
+                    },
+                    "num_steps": {
+                        "lb": 6.0,
+                        "ub": 8.0
+                    },
+                    "step_size": {
+                        "lb": 10.0,
+                        "ub": 10.0
+                    }
+                }
+            },
+            {
+                "type": "box",
+                "label": "false",
+                "bounds": {
+                    "beta": {
+                        "lb": 0.0002699878672787889,
+                        "ub": 0.0002752752267441693
+                    },
+                    "gamma": {
+                        "lb": 0.09992988860351106,
+                        "ub": 0.09994448886001625
+                    },
+                    "S0": {
+                        "lb": 1000.0,
+                        "ub": 1000.0
+                    },
+                    "I0": {
+                        "lb": 1.0,
+                        "ub": 1.0
+                    },
+                    "R0": {
+                        "lb": 0.0,
+                        "ub": 0.0
+                    },
+                    "num_steps": {
+                        "lb": 7.0,
+                        "ub": 8.0
+                    },
+                    "step_size": {
+                        "lb": 10.0,
+                        "ub": 10.0
+                    }
+                }
+            },
+            {
+                "type": "box",
+                "label": "false",
+                "bounds": {
+                    "beta": {
+                        "lb": 0.00026,
+                        "ub": 0.0002688468736212598
+                    },
+                    "gamma": {
+                        "lb": 0.09990778187041463,
+                        "ub": 0.09991966663735075
+                    },
+                    "S0": {
+                        "lb": 1000.0,
+                        "ub": 1000.0
+                    },
+                    "I0": {
+                        "lb": 1.0,
+                        "ub": 1.0
+                    },
+                    "R0": {
+                        "lb": 0.0,
+                        "ub": 0.0
+                    },
+                    "num_steps": {
+                        "lb": 7.0,
+                        "ub": 8.0
+                    },
+                    "step_size": {
+                        "lb": 10.0,
+                        "ub": 10.0
+                    }
+                }
+            },
+            {
+                "type": "box",
+                "label": "false",
+                "bounds": {
+                    "beta": {
+                        "lb": 0.00026,
+                        "ub": 0.0002713348284137808
+                    },
+                    "gamma": {
+                        "lb": 0.0999,
+                        "ub": 0.09990778187041463
+                    },
+                    "S0": {
+                        "lb": 1000.0,
+                        "ub": 1000.0
+                    },
+                    "I0": {
+                        "lb": 1.0,
+                        "ub": 1.0
+                    },
+                    "R0": {
+                        "lb": 0.0,
+                        "ub": 0.0
+                    },
+                    "num_steps": {
+                        "lb": 7.0,
+                        "ub": 8.0
+                    },
+                    "step_size": {
+                        "lb": 10.0,
+                        "ub": 10.0
+                    }
+                }
+            },
+            {
+                "type": "box",
+                "label": "false",
+                "bounds": {
+                    "beta": {
+                        "lb": 0.0002698895218092676,
+                        "ub": 0.00027348540894443866
+                    },
+                    "gamma": {
+                        "lb": 0.09997560648133946,
+                        "ub": 0.1
+                    },
+                    "S0": {
+                        "lb": 1000.0,
+                        "ub": 1000.0
+                    },
+                    "I0": {
+                        "lb": 1.0,
+                        "ub": 1.0
+                    },
+                    "R0": {
+                        "lb": 0.0,
+                        "ub": 0.0
+                    },
+                    "num_steps": {
+                        "lb": 7.0,
+                        "ub": 8.0
+                    },
+                    "step_size": {
+                        "lb": 10.0,
+                        "ub": 10.0
+                    }
+                }
+            },
+            {
+                "type": "box",
+                "label": "false",
+                "bounds": {
+                    "beta": {
+                        "lb": 0.0002698895218092676,
+                        "ub": 0.0002737674874908264
+                    },
+                    "gamma": {
+                        "lb": 0.09996445171889992,
+                        "ub": 0.09997560648133946
+                    },
+                    "S0": {
+                        "lb": 1000.0,
+                        "ub": 1000.0
+                    },
+                    "I0": {
+                        "lb": 1.0,
+                        "ub": 1.0
+                    },
+                    "R0": {
+                        "lb": 0.0,
+                        "ub": 0.0
+                    },
+                    "num_steps": {
+                        "lb": 7.0,
+                        "ub": 8.0
+                    },
+                    "step_size": {
+                        "lb": 10.0,
+                        "ub": 10.0
+                    }
+                }
+            },
+            {
+                "type": "box",
+                "label": "false",
+                "bounds": {
+                    "beta": {
+                        "lb": 0.0002750717391929691,
+                        "ub": 0.0002759298858838159
+                    },
+                    "gamma": {
+                        "lb": 0.09994448886001625,
+                        "ub": 0.09996445171889992
+                    },
+                    "S0": {
+                        "lb": 1000.0,
+                        "ub": 1000.0
+                    },
+                    "I0": {
+                        "lb": 1.0,
+                        "ub": 1.0
+                    },
+                    "R0": {
+                        "lb": 0.0,
+                        "ub": 0.0
+                    },
+                    "num_steps": {
+                        "lb": 7.0,
+                        "ub": 8.0
+                    },
+                    "step_size": {
+                        "lb": 10.0,
+                        "ub": 10.0
+                    }
+                }
+            },
+            {
+                "type": "box",
+                "label": "false",
+                "bounds": {
+                    "beta": {
+                        "lb": 0.00027646679756353904,
+                        "ub": 0.0002789670470172453
+                    },
+                    "gamma": {
+                        "lb": 0.09992988860351106,
+                        "ub": 0.09994448886001625
+                    },
+                    "S0": {
+                        "lb": 1000.0,
+                        "ub": 1000.0
+                    },
+                    "I0": {
+                        "lb": 1.0,
+                        "ub": 1.0
+                    },
+                    "R0": {
+                        "lb": 0.0,
+                        "ub": 0.0
+                    },
+                    "num_steps": {
+                        "lb": 6.0,
+                        "ub": 8.0
+                    },
+                    "step_size": {
+                        "lb": 10.0,
+                        "ub": 10.0
+                    }
+                }
+            },
+            {
+                "type": "box",
+                "label": "false",
+                "bounds": {
+                    "beta": {
+                        "lb": 0.0002699878672787889,
+                        "ub": 0.00027354054485575075
+                    },
+                    "gamma": {
+                        "lb": 0.09991966663735075,
+                        "ub": 0.09992988860351106
+                    },
+                    "S0": {
+                        "lb": 1000.0,
+                        "ub": 1000.0
+                    },
+                    "I0": {
+                        "lb": 1.0,
+                        "ub": 1.0
+                    },
+                    "R0": {
+                        "lb": 0.0,
+                        "ub": 0.0
+                    },
+                    "num_steps": {
+                        "lb": 7.0,
+                        "ub": 8.0
+                    },
+                    "step_size": {
+                        "lb": 10.0,
+                        "ub": 10.0
+                    }
+                }
+            },
+            {
+                "type": "box",
+                "label": "false",
+                "bounds": {
+                    "beta": {
+                        "lb": 0.000276693062249563,
+                        "ub": 0.00027919942432386814
+                    },
+                    "gamma": {
+                        "lb": 0.09996445171889992,
+                        "ub": 0.09997560648133946
+                    },
+                    "S0": {
+                        "lb": 1000.0,
+                        "ub": 1000.0
+                    },
+                    "I0": {
+                        "lb": 1.0,
+                        "ub": 1.0
+                    },
+                    "R0": {
+                        "lb": 0.0,
+                        "ub": 0.0
+                    },
+                    "num_steps": {
+                        "lb": 6.0,
+                        "ub": 8.0
+                    },
+                    "step_size": {
+                        "lb": 10.0,
+                        "ub": 10.0
+                    }
+                }
+            },
+            {
+                "type": "box",
+                "label": "false",
+                "bounds": {
+                    "beta": {
+                        "lb": 0.0002737674874908264,
+                        "ub": 0.0002754987757217389
+                    },
+                    "gamma": {
+                        "lb": 0.09996445171889992,
+                        "ub": 0.09997560648133946
+                    },
+                    "S0": {
+                        "lb": 1000.0,
+                        "ub": 1000.0
+                    },
+                    "I0": {
+                        "lb": 1.0,
+                        "ub": 1.0
+                    },
+                    "R0": {
+                        "lb": 0.0,
+                        "ub": 0.0
+                    },
+                    "num_steps": {
+                        "lb": 7.0,
+                        "ub": 8.0
+                    },
+                    "step_size": {
+                        "lb": 10.0,
+                        "ub": 10.0
+                    }
+                }
+            },
+            {
+                "type": "box",
+                "label": "false",
+                "bounds": {
+                    "beta": {
+                        "lb": 0.00027641066070264547,
+                        "ub": 0.0002768411123117237
+                    },
+                    "gamma": {
+                        "lb": 0.09991966663735075,
+                        "ub": 0.09992988860351106
+                    },
+                    "S0": {
+                        "lb": 1000.0,
+                        "ub": 1000.0
+                    },
+                    "I0": {
+                        "lb": 1.0,
+                        "ub": 1.0
+                    },
+                    "R0": {
+                        "lb": 0.0,
+                        "ub": 0.0
+                    },
+                    "num_steps": {
+                        "lb": 6.0,
+                        "ub": 8.0
+                    },
+                    "step_size": {
+                        "lb": 10.0,
+                        "ub": 10.0
+                    }
+                }
+            },
+            {
+                "type": "box",
+                "label": "false",
+                "bounds": {
+                    "beta": {
+                        "lb": 0.00027354054485575075,
+                        "ub": 0.0002757516727826837
+                    },
+                    "gamma": {
+                        "lb": 0.09991966663735075,
+                        "ub": 0.09992988860351106
+                    },
+                    "S0": {
+                        "lb": 1000.0,
+                        "ub": 1000.0
+                    },
+                    "I0": {
+                        "lb": 1.0,
+                        "ub": 1.0
+                    },
+                    "R0": {
+                        "lb": 0.0,
+                        "ub": 0.0
+                    },
+                    "num_steps": {
+                        "lb": 7.0,
+                        "ub": 8.0
+                    },
+                    "step_size": {
+                        "lb": 10.0,
+                        "ub": 10.0
+                    }
+                }
+            },
+            {
+                "type": "box",
+                "label": "false",
+                "bounds": {
+                    "beta": {
+                        "lb": 0.00027652106454316926,
+                        "ub": 0.0002780265532901586
+                    },
+                    "gamma": {
+                        "lb": 0.09997800286440131,
+                        "ub": 0.09998936360124483
+                    },
+                    "S0": {
+                        "lb": 1000.0,
+                        "ub": 1000.0
+                    },
+                    "I0": {
+                        "lb": 1.0,
+                        "ub": 1.0
+                    },
+                    "R0": {
+                        "lb": 0.0,
+                        "ub": 0.0
+                    },
+                    "num_steps": {
+                        "lb": 6.0,
+                        "ub": 8.0
+                    },
+                    "step_size": {
+                        "lb": 10.0,
+                        "ub": 10.0
+                    }
+                }
+            },
+            {
+                "type": "box",
+                "label": "false",
+                "bounds": {
+                    "beta": {
+                        "lb": 0.00027348540894443866,
+                        "ub": 0.00027577680830868717
+                    },
+                    "gamma": {
+                        "lb": 0.09997800286440131,
+                        "ub": 0.09998936360124483
+                    },
+                    "S0": {
+                        "lb": 1000.0,
+                        "ub": 1000.0
+                    },
+                    "I0": {
+                        "lb": 1.0,
+                        "ub": 1.0
+                    },
+                    "R0": {
+                        "lb": 0.0,
+                        "ub": 0.0
+                    },
+                    "num_steps": {
+                        "lb": 7.0,
+                        "ub": 8.0
+                    },
+                    "step_size": {
+                        "lb": 10.0,
+                        "ub": 10.0
+                    }
+                }
+            },
+            {
+                "type": "box",
+                "label": "false",
+                "bounds": {
+                    "beta": {
+                        "lb": 0.0002752752267441693,
+                        "ub": 0.0002759102174062845
+                    },
+                    "gamma": {
+                        "lb": 0.09993197909960037,
+                        "ub": 0.09994448886001625
+                    },
+                    "S0": {
+                        "lb": 1000.0,
+                        "ub": 1000.0
+                    },
+                    "I0": {
+                        "lb": 1.0,
+                        "ub": 1.0
+                    },
+                    "R0": {
+                        "lb": 0.0,
+                        "ub": 0.0
+                    },
+                    "num_steps": {
+                        "lb": 7.0,
+                        "ub": 8.0
+                    },
+                    "step_size": {
+                        "lb": 10.0,
+                        "ub": 10.0
+                    }
+                }
+            }
+        ],
+        "true_points": [
+            {
+                "type": "point",
+                "label": "true",
+                "values": {
+                    "beta": 0.0002673550323056406,
+                    "gamma": 0.0999,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "true",
+                "values": {
+                    "beta": 0.0002739342534263503,
+                    "gamma": 0.09996250382117441,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "true",
+                "values": {
+                    "beta": 0.0002653183993075117,
+                    "gamma": 0.09993268033710492,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "true",
+                "values": {
+                    "beta": 0.00026169740816303877,
+                    "gamma": 0.09994602488485987,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "true",
+                "values": {
+                    "beta": 0.0002603219005836299,
+                    "gamma": 0.09993902319830812,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "true",
+                "values": {
+                    "beta": 0.00027447551838488373,
+                    "gamma": 0.09995728239869364,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "true",
+                "values": {
+                    "beta": 0.0002614669558584751,
+                    "gamma": 0.09999974771753264,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "true",
+                "values": {
+                    "beta": 0.00026145693160889373,
+                    "gamma": 0.09992250748445594,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "true",
+                "values": {
+                    "beta": 0.00027411734042534226,
+                    "gamma": 0.09991048996383851,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "true",
+                "values": {
+                    "beta": 0.0002710187584482105,
+                    "gamma": 0.09998676124377899,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "true",
+                "values": {
+                    "beta": 0.0002710759665977044,
+                    "gamma": 0.09994448886001625,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "true",
+                "values": {
+                    "beta": 0.0002740682359194191,
+                    "gamma": 0.09992284155381927,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "true",
+                "values": {
+                    "beta": 0.0002657203312530441,
+                    "gamma": 0.09992187046903368,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "true",
+                "values": {
+                    "beta": 0.0002640733630412002,
+                    "gamma": 0.09991556374082926,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "true",
+                "values": {
+                    "beta": 0.0002710034816130085,
+                    "gamma": 0.09998603261696344,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "true",
+                "values": {
+                    "beta": 0.00027107639281762324,
+                    "gamma": 0.09996445171889992,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "true",
+                "values": {
+                    "beta": 0.0002738153890922861,
+                    "gamma": 0.09994448886001625,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "true",
+                "values": {
+                    "beta": 0.00027083492717482326,
+                    "gamma": 0.09992993426792271,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "true",
+                "values": {
+                    "beta": 0.0002708820340596799,
+                    "gamma": 0.09992498691735753,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "true",
+                "values": {
+                    "beta": 0.0002610769227505101,
+                    "gamma": 0.09990778187041463,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "true",
+                "values": {
+                    "beta": 0.0002630602464646501,
+                    "gamma": 0.09990272753398807,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "true",
+                "values": {
+                    "beta": 0.0002699903377831272,
+                    "gamma": 0.09999750306859571,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "true",
+                "values": {
+                    "beta": 0.0002704214122937425,
+                    "gamma": 0.09996445171889992,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "true",
+                "values": {
+                    "beta": 0.0002752026953308164,
+                    "gamma": 0.09994448886001625,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "true",
+                "values": {
+                    "beta": 0.00027288002404457815,
+                    "gamma": 0.09994448886001625,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "true",
+                "values": {
+                    "beta": 0.000275935880932973,
+                    "gamma": 0.09993200073813865,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "true",
+                "values": {
+                    "beta": 0.00027122687291231,
+                    "gamma": 0.09994328776172558,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "true",
+                "values": {
+                    "beta": 0.0002703501270954878,
+                    "gamma": 0.09992496528601377,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "true",
+                "values": {
+                    "beta": 0.0002694613923131282,
+                    "gamma": 0.09990778187041463,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "true",
+                "values": {
+                    "beta": 0.00026507309849218517,
+                    "gamma": 0.09990793031724207,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "true",
+                "values": {
+                    "beta": 0.00026174227565213055,
+                    "gamma": 0.09990530474591505,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "true",
+                "values": {
+                    "beta": 0.0002752370580705247,
+                    "gamma": 0.09999303365428175,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "true",
+                "values": {
+                    "beta": 0.0002713864934344101,
+                    "gamma": 0.09997560648133946,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "true",
+                "values": {
+                    "beta": 0.0002740973662191906,
+                    "gamma": 0.09996463486618518,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "true",
+                "values": {
+                    "beta": 0.00027213906959659267,
+                    "gamma": 0.09996445171889992,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "true",
+                "values": {
+                    "beta": 0.00027618897210838285,
+                    "gamma": 0.09996242978452707,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "true",
+                "values": {
+                    "beta": 0.0002756045713930657,
+                    "gamma": 0.09994448886001625,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "true",
+                "values": {
+                    "beta": 0.00027551500703955627,
+                    "gamma": 0.09993199925252139,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "true",
+                "values": {
+                    "beta": 0.00027470922768647464,
+                    "gamma": 0.09991992974413558,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "true",
+                "values": {
+                    "beta": 0.000270177753277777,
+                    "gamma": 0.09992495823949941,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "true",
+                "values": {
+                    "beta": 0.0002705133614212873,
+                    "gamma": 0.0999135369758261,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "true",
+                "values": {
+                    "beta": 0.00026946283047065035,
+                    "gamma": 0.09990778187041463,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "true",
+                "values": {
+                    "beta": 0.0002742215717340427,
+                    "gamma": 0.09998974165712868,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "true",
+                "values": {
+                    "beta": 0.00027376838426477167,
+                    "gamma": 0.09997560648133946,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "true",
+                "values": {
+                    "beta": 0.0002757375507383236,
+                    "gamma": 0.09996445171889992,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "true",
+                "values": {
+                    "beta": 0.00027479683783402596,
+                    "gamma": 0.09996445171889992,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "true",
+                "values": {
+                    "beta": 0.0002760183296436521,
+                    "gamma": 0.09995348370836286,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "true",
+                "values": {
+                    "beta": 0.0002759973508017737,
+                    "gamma": 0.0999314082843478,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "true",
+                "values": {
+                    "beta": 0.00027614372481726726,
+                    "gamma": 0.09991978223245203,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "true",
+                "values": {
+                    "beta": 0.0002742605380886887,
+                    "gamma": 0.09992368409778797,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "true",
+                "values": {
+                    "beta": 0.00027376825890876967,
+                    "gamma": 0.09997800286440131,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "true",
+                "values": {
+                    "beta": 0.0002756066543852283,
+                    "gamma": 0.09996445171889992,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "true",
+                "values": {
+                    "beta": 0.0002753831988916327,
+                    "gamma": 0.09993197909960037,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "true",
+                "values": {
+                    "beta": 0.000275870536922374,
+                    "gamma": 0.09992527463117282,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "true",
+                "values": {
+                    "beta": 0.000275940058950563,
+                    "gamma": 0.09997800286440131,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "true",
+                "values": {
+                    "beta": 0.0002748333126302318,
+                    "gamma": 0.09997800286440131,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "true",
+                "values": {
+                    "beta": 0.00027601451783448606,
+                    "gamma": 0.09993391042981804,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "true",
+                "values": {
+                    "beta": 0.0002756487216717871,
+                    "gamma": 0.09993197909960037,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "true",
+                "values": {
+                    "beta": 0.0002760732767226302,
+                    "gamma": 0.09998718526542301,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            }
+        ],
+        "false_points": [
+            {
+                "type": "point",
+                "label": "false",
+                "values": {
+                    "beta": 0.0002877500167596298,
+                    "gamma": 0.09998897772003251,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "false",
+                "values": {
+                    "beta": 0.00030954747729046905,
+                    "gamma": 0.09996072899459217,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "false",
+                "values": {
+                    "beta": 0.0003087334537339596,
+                    "gamma": 0.09991115361862257,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "false",
+                "values": {
+                    "beta": 0.0002780816354554964,
+                    "gamma": 0.09995015347026996,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "false",
+                "values": {
+                    "beta": 0.0002765903390714487,
+                    "gamma": 0.09990031007639337,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "false",
+                "values": {
+                    "beta": 0.00027683890577077946,
+                    "gamma": 0.09997162103910619,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "false",
+                "values": {
+                    "beta": 0.000278518802948684,
+                    "gamma": 0.09992601282872925,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "false",
+                "values": {
+                    "beta": 0.00028536181755988034,
+                    "gamma": 0.0999,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "false",
+                "values": {
+                    "beta": 0.0002831109369779369,
+                    "gamma": 0.09996445171889992,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "false",
+                "values": {
+                    "beta": 0.0002823537644208243,
+                    "gamma": 0.09994448886001625,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "false",
+                "values": {
+                    "beta": 0.0002867552846499137,
+                    "gamma": 0.09993693565320284,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "false",
+                "values": {
+                    "beta": 0.00027853566321197774,
+                    "gamma": 0.0999,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "false",
+                "values": {
+                    "beta": 0.0002850496249673087,
+                    "gamma": 0.0999926638069168,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "false",
+                "values": {
+                    "beta": 0.00028732245583011303,
+                    "gamma": 0.09997330941023588,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "false",
+                "values": {
+                    "beta": 0.000276328089293652,
+                    "gamma": 0.09994453713888501,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "false",
+                "values": {
+                    "beta": 0.00027971552631351527,
+                    "gamma": 0.09993144905102726,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "false",
+                "values": {
+                    "beta": 0.0002828001905637676,
+                    "gamma": 0.09992633703187519,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "false",
+                "values": {
+                    "beta": 0.0002766168244920095,
+                    "gamma": 0.09991965642895759,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "false",
+                "values": {
+                    "beta": 0.0002796094103629115,
+                    "gamma": 0.09990324594924246,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "false",
+                "values": {
+                    "beta": 0.0002769804801057501,
+                    "gamma": 0.09999458811730752,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "false",
+                "values": {
+                    "beta": 0.0002771135626879103,
+                    "gamma": 0.09996445171889992,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "false",
+                "values": {
+                    "beta": 0.00027665707643681535,
+                    "gamma": 0.09994448886001625,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "false",
+                "values": {
+                    "beta": 0.00028199821310151765,
+                    "gamma": 0.09993147333051795,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "false",
+                "values": {
+                    "beta": 0.00027673096261601374,
+                    "gamma": 0.09992574355063814,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "false",
+                "values": {
+                    "beta": 0.0002770591626119991,
+                    "gamma": 0.09991800050851346,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "false",
+                "values": {
+                    "beta": 0.00027673491333420476,
+                    "gamma": 0.09998569354820791,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "false",
+                "values": {
+                    "beta": 0.00027690018522428725,
+                    "gamma": 0.09996445171889992,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "false",
+                "values": {
+                    "beta": 0.00027642122362307904,
+                    "gamma": 0.09994453763219865,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "false",
+                "values": {
+                    "beta": 0.0002774185880875218,
+                    "gamma": 0.09993219067422211,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "false",
+                "values": {
+                    "beta": 0.0002767941178788928,
+                    "gamma": 0.09992133461234426,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "false",
+                "values": {
+                    "beta": 0.0002790961312202242,
+                    "gamma": 0.09991289118946405,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "false",
+                "values": {
+                    "beta": 0.0002771786631364173,
+                    "gamma": 0.09990795800971286,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "false",
+                "values": {
+                    "beta": 0.0002770744367106657,
+                    "gamma": 0.09999679200220364,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "false",
+                "values": {
+                    "beta": 0.0002764727007783707,
+                    "gamma": 0.09998039924746316,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "false",
+                "values": {
+                    "beta": 0.0002776485737608023,
+                    "gamma": 0.09996490695940163,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "false",
+                "values": {
+                    "beta": 0.0002763712596560235,
+                    "gamma": 0.09995681607044984,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "false",
+                "values": {
+                    "beta": 0.0002764369988193619,
+                    "gamma": 0.09993254991485295,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "false",
+                "values": {
+                    "beta": 0.0002766775965880237,
+                    "gamma": 0.09991966663735075,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "false",
+                "values": {
+                    "beta": 0.00027778535770860466,
+                    "gamma": 0.09997807046920365,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "false",
+                "values": {
+                    "beta": 0.00027662224007180154,
+                    "gamma": 0.09997074831590265,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "false",
+                "values": {
+                    "beta": 0.00027643723592093636,
+                    "gamma": 0.09993197909960037,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "false",
+                "values": {
+                    "beta": 0.0002762355956644553,
+                    "gamma": 0.09992252175986077,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "false",
+                "values": {
+                    "beta": 0.0002771020701357755,
+                    "gamma": 0.0999784599995752,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "false",
+                "values": {
+                    "beta": 0.000276393215274785,
+                    "gamma": 0.099939685455421,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            },
+            {
+                "type": "point",
+                "label": "false",
+                "values": {
+                    "beta": 0.0002762756021609946,
+                    "gamma": 0.09997800286440131,
+                    "S0": 1000.0,
+                    "I0": 1.0,
+                    "R0": 0.0,
+                    "num_steps": 6.0,
+                    "step_size": 10.0
+                }
+            }
+        ]
+    }
+}

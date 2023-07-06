@@ -97,15 +97,14 @@ class LayeredEncoding(BaseModel):
         else:
             return And([l[0] for l in self._layers])
 
-    def assume(self, assumption: FNode, layers=None):
-        if layers:
-            for i, l in enumerate(self._layers):
-                (f, s) = l
-                self._layers = [
-                    ((Iff(assumption, f), s) if i in layers else (f, s))
-                ]
-        else:
-            self._layers = [(Iff(assumption, f), s) for (f, s) in self._layers]
+    def assume(self, assumption: List[FNode], layers=None):
+        for i, l in enumerate(self._layers):
+            (f, s) = l
+            self._layers[i] = (
+                (Iff(assumption[i], f), s)
+                if not layers or i in layers
+                else (f, s)
+            )
 
 
 class EncodingOptions(object):
@@ -259,7 +258,9 @@ class Encoder(ABC, BaseModel):
         #     (model._extra_constraints if model._extra_constraints else TRUE()),
         # ).simplify()
         # symbols = self._symbols(formula)
-        return LayeredEncoding(_layers=[(c, c.get_free_variables()) for c in constraints])
+        return LayeredEncoding(
+            _layers=[(c, c.get_free_variables()) for c in constraints]
+        )
 
     def parameter_values(
         self, model: Model, pysmtModel: pysmtModel
@@ -493,38 +494,50 @@ class Encoder(ABC, BaseModel):
         )
 
     def _encode_query_and(self, query, num_steps, step_size):
-        queries = [self.encode_query(q, num_steps, step_size)
-                    for q in query.queries]
-        timepoints = range(0, (step_size*num_steps)+1, step_size)
-        q_layers = [q._layers
-                    for q in queries]
+        queries = [
+            self.encode_query(q, num_steps, step_size) for q in query.queries
+        ]
+        timepoints = range(0, (step_size * num_steps) + 1, step_size)
+        q_layers = [q._layers for q in queries]
         layers = [
-            (And([q_layer[i][0] for q_layer in q_layers]), {s for q_layer in q_layers for s in q_layer[i][1] })
+            (
+                And([q_layer[i][0] for q_layer in q_layers]),
+                {s for q_layer in q_layers for s in q_layer[i][1]},
+            )
             for i, t in enumerate(timepoints)
         ]
-        return LayeredEncoding(
-            _layers=layers
-            
-        )
+        return LayeredEncoding(_layers=layers)
 
     def _encode_query_le(self, query, num_steps, step_size):
         query_variable_name = self._query_variable_name(query)
-        timepoints = range(0, (step_size*num_steps)+1, step_size)
-        layers = [LE(self._encode_state_var(var=query.variable, time=s), Real(query.ub)) for s in timepoints]
+        timepoints = range(0, (step_size * num_steps) + 1, step_size)
+        layers = [
+            LE(
+                self._encode_state_var(var=query.variable, time=s),
+                Real(query.ub),
+            )
+            for s in timepoints
+        ]
         return LayeredEncoding(
             _layers=[(l, l.get_free_variables()) for l in layers]
         )
 
     def _encode_query_ge(self, query, num_steps, step_size):
         query_variable_name = self._query_variable_name(query)
-        timepoints = range(0, (step_size*num_steps)+1, step_size)
-        layers = [GE(self._encode_state_var(var=query.variable, time=s), Real(query.lb)) for s in timepoints]
+        timepoints = range(0, (step_size * num_steps) + 1, step_size)
+        layers = [
+            GE(
+                self._encode_state_var(var=query.variable, time=s),
+                Real(query.lb),
+            )
+            for s in timepoints
+        ]
         return LayeredEncoding(
             _layers=[(l, l.get_free_variables()) for l in layers]
         )
 
     def _encode_query_true(self, query, num_steps, step_size):
-        timepoints = range(0, (step_size*num_steps)+1, step_size)
+        timepoints = range(0, (step_size * num_steps) + 1, step_size)
         return LayeredEncoding(_layers=[(TRUE(), []) for t in timepoints])
 
     def symbol_timeseries(

@@ -25,6 +25,7 @@ from funman.representation.representation import (
     LABEL_UNKNOWN,
     Interval,
     ModelParameter,
+    Parameter,
 )
 from funman.search import Box, ParameterSpace, Point, Search, SearchEpisode
 from funman.search.search import SearchStaticsMP, SearchStatistics
@@ -142,7 +143,10 @@ class BoxSearchEpisode(SearchEpisode):
             self._iteration = self._iteration + 1
 
     def _add_unknown_box(self, box: Box) -> bool:
-        if box.width() > self.config.tolerance:
+        if (
+            box.width(parameters=self.problem.model_parameters())
+            > self.config.tolerance
+        ):
             box.label = LABEL_UNKNOWN
             self._unknown_boxes.put(box)
             if self.config.number_of_processes > 1:
@@ -215,7 +219,9 @@ class BoxSearchEpisode(SearchEpisode):
                 p.name: (
                     float(model.get_py_value(p.symbol()))
                     if isinstance(p, ModelParameter)
-                    else box.bounds[p.name].lb  # step_size has lb=ub, and want num_steps.lb b/c encoding only goes to lb
+                    else box.bounds[
+                        p.name
+                    ].lb  # step_size has lb=ub, and want num_steps.lb b/c encoding only goes to lb
                 )
                 for p in self.problem.parameters
                 # if p.is_synthesized()
@@ -247,7 +253,11 @@ class BoxSearch(Search):
 
     def _split(self, box: Box, episode: BoxSearchEpisode, points=None):
         normalize = episode.problem._original_parameter_widths
-        b1, b2 = box.split(points=points, normalize=normalize)
+        b1, b2 = box.split(
+            points=points,
+            normalize=normalize,
+            parameters=episode.problem.model_parameters(),
+        )
         episode.statistics._iteration_operation.put("s")
         return episode._add_unknown([b1, b2])
 
@@ -303,7 +313,9 @@ class BoxSearch(Search):
         else:
             return True
 
-    def _initialize_encoding(self, solver: Solver, episode: BoxSearchEpisode, timepoint: int):
+    def _initialize_encoding(
+        self, solver: Solver, episode: BoxSearchEpisode, timepoint: int
+    ):
         """
         The formula encoding the model M is of the form:
 
@@ -321,11 +333,11 @@ class BoxSearch(Search):
             data for the current search
         """
         solver_timepoint = episode._formula_stack_time
-        time_difference =  timepoint - solver_timepoint
+        time_difference = timepoint - solver_timepoint
         if time_difference > 0:
             for i in range(int(time_difference)):
                 solver.push(1)
-                timepoints=[solver_timepoint+i+1]
+                timepoints = [solver_timepoint + i + 1]
                 formula = And(
                     episode.problem._model_encoding.encoding(layers=timepoints),
                     episode.problem._query_encoding.encoding(layers=timepoints),
@@ -334,18 +346,17 @@ class BoxSearch(Search):
                 solver.add_assertion(formula)
                 episode._formula_stack_time += 1
         elif time_difference < 0:  # need to pop
-            for i in range(abs(time_difference)):
+            for i in range(abs(int(time_difference))):
                 solver.pop(1)
                 episode._formula_stack.pop()
                 episode._formula_stack_time -= 1
 
-
-    def _initialize_box(self, solver, box:Box, episode: BoxSearchEpisode):
+    def _initialize_box(self, solver, box: Box, episode: BoxSearchEpisode):
         box_timepoint = box.bounds["num_steps"].lb
         self._initialize_encoding(solver, episode, box_timepoint)
 
         solver.push(1)
-        
+
         projected_box = box.project(episode.problem.model_parameters()).project(
             episode.problem.model_parameters()
         )
@@ -353,7 +364,7 @@ class BoxSearch(Search):
         episode._formula_stack.append(formula)
         solver.add_assertion(formula)
 
-    def _setup_false_query(self, solver, episode):
+    def _setup_false_query(self, solver, episode, box):
         """
         Setup the assumptions so that satisfying the formulas requires that  either the model or the query is false
 
@@ -365,7 +376,17 @@ class BoxSearch(Search):
             data for the current search
         """
         solver.push(1)
-        formula = Not(episode.problem._assume_query)
+        timepoint = int(box.bounds["num_steps"].lb)
+        formula = And(
+            [
+                (
+                    episode.problem._assume_query[t]
+                    if t < timepoint
+                    else Not(episode.problem._assume_query[t])
+                )
+                for t in range(0, timepoint + 1)
+            ]
+        )
         episode._formula_stack.append(formula)
         solver.add_assertion(formula)
 
@@ -377,7 +398,7 @@ class BoxSearch(Search):
                 logic=QF_NRA,
             ).serialize(f, daggify=False)
 
-    def _setup_true_query(self, solver, episode):
+    def _setup_true_query(self, solver, episode, box):
         """
         Setup the assumptions so that satisfying the formulas requires that both the model and the query are true
 
@@ -389,7 +410,10 @@ class BoxSearch(Search):
             data for the current search
         """
         solver.push(1)
-        formula = And(episode.problem._assume_query)
+        timepoint = int(box.bounds["num_steps"].lb)
+        formula = And(
+            [episode.problem._assume_query[t] for t in range(0, timepoint + 1)]
+        )
         episode._formula_stack.append(formula)
         solver.add_assertion(formula)
 
@@ -400,7 +424,7 @@ class BoxSearch(Search):
         if len(false_points) == 0:
             # If no cached point, then attempt to generate one
             # print("Checking false query")
-            self._setup_false_query(solver, episode)
+            self._setup_false_query(solver, episode, box)
             if episode.config.save_smtlib:
                 self.store_smtlib(
                     episode, box, filename=f"fp_{episode._iteration}.smt2"
@@ -424,7 +448,7 @@ class BoxSearch(Search):
         if len(true_points) == 0:
             # If no cached point, then attempt to generate one
             # print("Checking true query")
-            self._setup_true_query(solver, episode)
+            self._setup_true_query(solver, episode, box)
             if episode.config.save_smtlib:
                 self.store_smtlib(
                     episode, box, filename=f"tp_{episode._iteration}.smt2"
@@ -585,7 +609,9 @@ class BoxSearch(Search):
                                 rval, episode.config, all_results
                             )
                         l.info(f"{process_name} finished work")
-                self._initialize_encoding(solver, episode, -1) # Reset solver stack to empty
+                self._initialize_encoding(
+                    solver, episode, -1
+                )  # Reset solver stack to empty
         except KeyboardInterrupt:
             l.info(f"{process_name} Keyboard Interrupt")
         except Exception:
@@ -802,7 +828,7 @@ class BoxSearch(Search):
             ]
             for step_size in step_sizes
         }
-        
+
         for step_size in step_sizes:
             num_steps = max(configurations_by_step_size[step_size])
             problem._encode_timed(
@@ -812,7 +838,7 @@ class BoxSearch(Search):
             )
             structural_configuration = {
                 "step_size": step_size,
-                "num_steps": num_steps
+                "num_steps": num_steps,
             }
             episode = BoxSearchEpisode(
                 config=config,

@@ -212,7 +212,7 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
 
     def _encode_timed(self, num_steps, step_size, config: "FUNMANConfig"):
         # self._assume_model = Symbol("assume_model")
-        self._assume_query = Symbol("assume_query")
+        self._assume_query = [Symbol(f"assume_query_{t}") for t in range(0, (num_steps*step_size)+1, step_size)]
         # This will overwrite the _model_encoding for each configuration, but the encoder will retain components of the configurations.
         self._model_encoding = self._smt_encoder.encode_model_timed(
             self.model, num_steps, step_size

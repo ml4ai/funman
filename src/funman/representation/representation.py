@@ -462,8 +462,20 @@ class Box(BaseModel):
 
     def advance(self):
         # Advancing a box means that we move the time step forward until it exhausts the possible number of steps
-        if "num_steps" in self.bounds and self.bounds["num_steps"].lb < self.bounds["num_steps"].ub:
-            advanced_box = Box(bounds = {n:(itv if n != "num_steps" else Interval(lb=itv.lb+1, ub=itv.ub)) for n, itv in self.bounds.items()})
+        if (
+            "num_steps" in self.bounds
+            and self.bounds["num_steps"].lb < self.bounds["num_steps"].ub
+        ):
+            advanced_box = Box(
+                bounds={
+                    n: (
+                        itv
+                        if n != "num_steps"
+                        else Interval(lb=itv.lb + 1, ub=itv.ub)
+                    )
+                    for n, itv in self.bounds.items()
+                }
+            )
             return advanced_box
         else:
             None
@@ -471,7 +483,16 @@ class Box(BaseModel):
     def current_step(self):
         # Restrict bounds on num_steps to the lower bound (i.e., the current step)
         if "num_steps" in self.bounds:
-            current_step_box = Box(bounds = {n:(itv if n != "num_steps" else Interval(lb=itv.lb, ub=itv.lb)) for n, itv in self.bounds.items()})
+            current_step_box = Box(
+                bounds={
+                    n: (
+                        itv
+                        if n != "num_steps"
+                        else Interval(lb=itv.lb, ub=itv.lb)
+                    )
+                    for n, itv in self.bounds.items()
+                }
+            )
             return current_step_box
         else:
             None
@@ -753,27 +774,48 @@ class Box(BaseModel):
         normalized_parameter_widths = {
             p: average([pt[p] for pt in point_distances])
             / (self.bounds[p].width())
-            for p in self.bounds
+            for p in self.bounds if self.bounds[p].width() > 0
         }
         max_width_parameter = max(
             parameter_widths, key=lambda k: parameter_widths[k]
         )
         return max_width_parameter
 
-    def _get_max_width_Parameter(self, normalize={}):
-        widths = {
-            p: (
-                bounds.width(normalize=normalize[p])
-                if p in normalize
-                else bounds.width()
-            )
-            for p, bounds in self.bounds.items()
-        }
+    def _get_max_width_Parameter(
+        self, normalize={}, parameters: List[ModelParameter] = None
+    ):
+        if parameters:
+            widths = {
+                parameter.name: (
+                    self.bounds[parameter.name].width(
+                        normalize=normalize[parameter.name]
+                    )
+                    if parameter.name in normalize
+                    else self.bounds[parameter.name].width()
+                )
+                for parameter in parameters
+            }
+        else:
+            widths = {
+                p: (
+                    self.bounds[p].width(
+                        normalize=normalize[parameter.name]
+                    )
+                    if p in normalize
+                    else self.bounds[p].width()
+                )
+                for p in self.bounds
+            }
         max_width = max(widths, key=widths.get)
 
         return max_width, widths[max_width]
 
-    def width(self, normalize={}, overwrite_cache=False) -> float:
+    def width(
+        self,
+        normalize={},
+        overwrite_cache=False,
+        parameters: List[ModelParameter] = None,
+    ) -> float:
         """
         The width of a box is the maximum width of a parameter interval.
 
@@ -783,7 +825,9 @@ class Box(BaseModel):
             Max{p: parameter}(p.ub-p.lb)
         """
         if self.cached_width is None or overwrite_cache:
-            _, width = self._get_max_width_Parameter(normalize=normalize)
+            _, width = self._get_max_width_Parameter(
+                normalize=normalize, parameters=parameters
+            )
             self.cached_width = width
 
         return self.cached_width
@@ -804,6 +848,7 @@ class Box(BaseModel):
         self,
         points: List[List[Point]] = None,
         normalize: Dict[str, float] = {},
+        parameters=[],
     ):
         """
         Split box along max width dimension. If points are provided, then pick the axis where the points are maximally distant.
@@ -819,7 +864,7 @@ class Box(BaseModel):
             Boxes resulting from the split.
         """
 
-        if False and points:
+        if points:
             p = self._get_max_width_point_Parameter(points)
             mid = self.bounds[p].midpoint(
                 points=[[pt.values[p] for pt in grp] for grp in points]
@@ -829,7 +874,9 @@ class Box(BaseModel):
                 p, _ = self._get_max_width_Parameter()
                 mid = self.bounds[p].midpoint()
         else:
-            p, _ = self._get_max_width_Parameter(normalize=normalize)
+            p, _ = self._get_max_width_Parameter(
+                normalize=normalize, parameters=parameters
+            )
             mid = self.bounds[p].midpoint()
 
         b1 = self._copy()

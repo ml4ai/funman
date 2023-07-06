@@ -105,6 +105,8 @@ class TestModels(unittest.TestCase):
         while True:
             if self._worker.is_processing_id(work_unit.id):
                 results = self._worker.get_results(work_unit.id)
+                with open(f"{out_dir}/{work_unit.id}.json", "w") as f:
+                    f.write(json.dumps(results.json()))
                 # ParameterSpacePlotter(
                 #     results.parameter_space, plot_points=True
                 # ).plot(show=False)

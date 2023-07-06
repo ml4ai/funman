@@ -10,14 +10,14 @@
   "parameters": [
     {
       "name": "beta",
-      "lb": 0.00026,
+      "lb": 0.0002,
       "ub": 0.0004,
       "label": "all"
     },
     {
       "name": "gamma",
-      "lb": 0.0999,
-      "ub": 0.1,
+      "lb": 0.08,
+      "ub": 0.2,
       "label": "all"
     },
     {
@@ -42,7 +42,7 @@
   "structure_parameters": [
     {
       "name": "num_steps",
-      "lb": 7,
+      "lb": 1,
       "ub": 10,
       "label": "all"
     },
@@ -55,7 +55,8 @@
   ],
   "config": {
     "solver": "dreal",
-    "tolerance": 1e-8,
+    "tolerance": 1e-5,
     "dreal_mcts": true
+    // "save_smtlib": true
   }
 }
