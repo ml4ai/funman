@@ -1,0 +1,58 @@
+{
+  "query": {
+    "queries": [
+      {
+        "variable": "I",
+        "ub": 200.0
+      }
+    ]
+  },
+  "parameters": [
+    {
+      "name": "beta_s"
+    },
+    {
+      "name": "N"
+    },
+    {
+      "name": "t_0"
+    },
+    {
+      "name": "kappa"
+    },
+    {
+      "name": "beta_c"
+    },
+    {
+      "name": "delta"
+    },
+    {
+      "name": "gamma"
+    },
+    {
+      "name": "alpha"
+    },
+    {
+      "name": "rho"
+    }
+  ],
+  "structure_parameters": [
+    {
+      "name": "num_steps",
+      "lb": 1,
+      "ub": 1,
+      "label": "all"
+    },
+    {
+      "name": "step_size",
+      "lb": 1,
+      "ub": 1,
+      "label": "all"
+    }
+  ],
+  "config": {
+    "solver": "dreal",
+    "dreal_mcts": true,
+    "tolerance": 1e-8
+  }
+}

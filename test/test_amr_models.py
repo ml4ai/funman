@@ -33,6 +33,9 @@ AMR_REGNET_DIR = os.path.join(AMR_EXAMPLES_DIR, "regnet", "amr-examples")
 SKEMA_PETRI_DIR = os.path.join(AMR_EXAMPLES_DIR, "petrinet", "skema")
 SKEMA_REGNET_DIR = os.path.join(AMR_EXAMPLES_DIR, "regnet", "skema")
 
+MIRA_PETRI_DIR = os.path.join(AMR_EXAMPLES_DIR, "petrinet", "mira")
+
+
 cases = [
     # ok
     # (
@@ -44,10 +47,10 @@ cases = [
     #     os.path.join(SKEMA_PETRI_DIR, "linked_petrinet.json"),
     #     os.path.join(SKEMA_PETRI_DIR, "sir_request_skema2.json"),
     # ),
-    (
-        os.path.join(AMR_PETRI_DIR, "sir.json"),
-        os.path.join(AMR_PETRI_DIR, "sir_request1b.json"),
-    ),
+    # (
+    #     os.path.join(AMR_PETRI_DIR, "sir.json"),
+    #     os.path.join(AMR_PETRI_DIR, "sir_request1b.json"),
+    # ),
     # (
     #     os.path.join(AMR_EXAMPLES_DIR, "sir.json"),
     #     os.path.join(AMR_EXAMPLES_DIR, "sir_request2.json"),
@@ -60,6 +63,10 @@ cases = [
     #     os.path.join(AMR_REGNET_DIR, "lotka_volterra.json"),
     #     os.path.join(AMR_REGNET_DIR, "lotka_volterra_request1.json"),
     # ),
+        (
+        os.path.join(MIRA_PETRI_DIR, "scenario1_a.json"),
+        os.path.join(MIRA_PETRI_DIR, "request1_a.json"),
+    ),
 ]
 
 if not os.path.exists(out_dir):
