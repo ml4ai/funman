@@ -4,7 +4,6 @@ This module defines the Parameter Synthesis scenario.
 import threading
 from typing import Callable, Dict, List, Optional, Union
 
-
 from pandas import DataFrame
 from pydantic import BaseModel
 from pysmt.formula import FNode
@@ -28,7 +27,7 @@ from funman.model.query import (
     QueryLE,
 )
 from funman.model.regnet import GeneratedRegnetModel, RegnetModel
-from funman.representation import Parameter, StructureParameter, ModelParameter
+from funman.representation import ModelParameter, Parameter, StructureParameter
 from funman.representation.representation import (
     ModelParameter,
     ParameterSpace,
@@ -212,7 +211,10 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
 
     def _encode_timed(self, num_steps, step_size, config: "FUNMANConfig"):
         # self._assume_model = Symbol("assume_model")
-        self._assume_query = [Symbol(f"assume_query_{t}") for t in range(0, (num_steps*step_size)+1, step_size)]
+        self._assume_query = [
+            Symbol(f"assume_query_{t}")
+            for t in range(0, (num_steps * step_size) + 1, step_size)
+        ]
         # This will overwrite the _model_encoding for each configuration, but the encoder will retain components of the configurations.
         self._model_encoding = self._smt_encoder.encode_model_timed(
             self.model, num_steps, step_size

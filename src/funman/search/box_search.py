@@ -12,7 +12,7 @@ from multiprocessing import Queue, Value
 from multiprocessing.synchronize import Condition, Event, Lock
 from queue import Empty
 from queue import Queue as QueueSP
-from typing import Callable, Dict, List, Optional, Set, Union
+from typing import Callable, List, Optional, Set, Union
 
 from pysmt.formula import FNode
 from pysmt.logics import QF_NRA
@@ -176,7 +176,9 @@ class BoxSearchEpisode(SearchEpisode):
 
     def _add_false_point(self, point: Point):
         if point in self._true_points:
-            l.debug(f"Point: {point} is marked false, but already marked true.")
+            l.debug(
+                f"Point: {point} is marked false, but already marked true."
+            )
         point.label = LABEL_FALSE
         self._false_points.add(point)
 
@@ -189,7 +191,9 @@ class BoxSearchEpisode(SearchEpisode):
 
     def _add_true_point(self, point: Point):
         if point in self._false_points:
-            l.debug(f"Point: {point} is marked true, but already marked false.")
+            l.debug(
+                f"Point: {point} is marked true, but already marked false."
+            )
         point.label = LABEL_TRUE
         self._true_points.add(point)
 
@@ -339,8 +343,12 @@ class BoxSearch(Search):
                 solver.push(1)
                 timepoints = [solver_timepoint + i + 1]
                 formula = And(
-                    episode.problem._model_encoding.encoding(layers=timepoints),
-                    episode.problem._query_encoding.encoding(layers=timepoints),
+                    episode.problem._model_encoding.encoding(
+                        layers=timepoints
+                    ),
+                    episode.problem._query_encoding.encoding(
+                        layers=timepoints
+                    ),
                 )
                 episode._formula_stack.append(formula)
                 solver.add_assertion(formula)
@@ -357,9 +365,9 @@ class BoxSearch(Search):
 
         solver.push(1)
 
-        projected_box = box.project(episode.problem.model_parameters()).project(
+        projected_box = box.project(
             episode.problem.model_parameters()
-        )
+        ).project(episode.problem.model_parameters())
         formula = episode.problem._smt_encoder.box_to_smt(projected_box)
         episode._formula_stack.append(formula)
         solver.add_assertion(formula)

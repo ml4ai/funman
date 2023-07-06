@@ -2,6 +2,8 @@ from typing import List
 
 from pysmt.formula import FNode
 from pysmt.shortcuts import (
+    GE,
+    LE,
     REAL,
     TRUE,
     And,
@@ -11,8 +13,6 @@ from pysmt.shortcuts import (
     Real,
     Symbol,
     Times,
-    GE,
-    LE,
 )
 
 from funman.model.model import Model

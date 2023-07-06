@@ -5,10 +5,11 @@ import copy
 import uuid
 from abc import ABC, abstractmethod
 from typing import Dict, List
-from funman.representation.representation import ModelParameter, Parameter
 
 from pydantic import BaseModel
 from pysmt.formula import FNode
+
+from funman.representation.representation import ModelParameter, Parameter
 
 
 class Model(ABC, BaseModel):

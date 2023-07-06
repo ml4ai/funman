@@ -7,12 +7,10 @@ import logging
 from functools import total_ordering
 from statistics import mean as average
 from typing import Dict, List, Literal, Optional, Union
-import hashlib
-
 
 from pydantic import BaseModel
 from pysmt.fnode import FNode
-from pysmt.shortcuts import GE, LE, LT, REAL, TRUE, And, Equals, Real, Symbol
+from pysmt.shortcuts import REAL, Symbol
 
 import funman.utils.math_utils as math_utils
 from funman.constants import BIG_NUMBER, NEG_INFINITY, POS_INFINITY
@@ -774,7 +772,8 @@ class Box(BaseModel):
         normalized_parameter_widths = {
             p: average([pt[p] for pt in point_distances])
             / (self.bounds[p].width())
-            for p in self.bounds if self.bounds[p].width() > 0
+            for p in self.bounds
+            if self.bounds[p].width() > 0
         }
         max_width_parameter = max(
             parameter_widths, key=lambda k: parameter_widths[k]
@@ -798,9 +797,7 @@ class Box(BaseModel):
         else:
             widths = {
                 p: (
-                    self.bounds[p].width(
-                        normalize=normalize[parameter.name]
-                    )
+                    self.bounds[p].width(normalize=normalize[parameter.name])
                     if p in normalize
                     else self.bounds[p].width()
                 )

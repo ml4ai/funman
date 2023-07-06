@@ -1,4 +1,4 @@
-from typing import Dict, List, Literal, Optional, Union
+from typing import List, Optional, Union
 
 from pydantic import BaseModel
 
@@ -15,10 +15,10 @@ from funman.representation.representation import (
     LABEL_ANY,
     LABEL_TRUE,
     LabeledParameter,
+    ModelParameter,
     ParameterSpace,
     Point,
     StructureParameter,
-    ModelParameter,
 )
 from funman.scenario.consistency import (
     ConsistencyScenario,

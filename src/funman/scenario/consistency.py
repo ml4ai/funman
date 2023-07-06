@@ -3,7 +3,6 @@ This submodule defines a consistency scenario.  Consistency scenarios specify an
 """
 import threading
 from typing import Callable, Dict, Optional, Union
-from funman.representation.representation import ParameterSpace, Point
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -23,6 +22,7 @@ from funman.model.query import (
     QueryTrue,
 )
 from funman.model.regnet import GeneratedRegnetModel, RegnetModel
+from funman.representation.representation import ParameterSpace, Point
 from funman.scenario import AnalysisScenario, AnalysisScenarioResult
 from funman.translate import Encoder
 from funman.translate.translate import Encoding
@@ -124,7 +124,9 @@ class ConsistencyScenario(AnalysisScenario, BaseModel):
                                 (
                                     "F"
                                     if s is None
-                                    else ("T" if (s is not None and s) else " ")
+                                    else (
+                                        "T" if (s is not None and s) else " "
+                                    )
                                 )
                                 for s in t
                             ]
@@ -230,12 +232,16 @@ class ConsistencyScenarioResult(AnalysisScenarioResult, BaseModel):
         """
         if self.consistent:
             if variables is not None:
-                ax = self.dataframe(point)[variables].plot(marker="o", **kwargs)
+                ax = self.dataframe(point)[variables].plot(
+                    marker="o", **kwargs
+                )
             else:
                 ax = self.dataframe(point).plot(marker="o", **kwargs)
             plt.show(block=False)
         else:
-            raise Exception(f"Cannot plot result for an inconsistent scenario.")
+            raise Exception(
+                f"Cannot plot result for an inconsistent scenario."
+            )
         return ax
 
     def __repr__(self) -> str:

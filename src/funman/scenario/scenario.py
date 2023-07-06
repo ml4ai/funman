@@ -1,14 +1,15 @@
 import threading
 from abc import ABC, abstractclassmethod, abstractmethod
 from typing import List, Optional
+
+from pydantic import BaseModel
+
 from funman.representation.representation import (
     ModelParameter,
     Parameter,
     ParameterSpace,
     StructureParameter,
 )
-
-from pydantic import BaseModel
 
 
 class AnalysisScenario(ABC, BaseModel):
@@ -39,7 +40,9 @@ class AnalysisScenario(ABC, BaseModel):
         return len([p for p in self.parameters])
 
     def structure_parameters(self):
-        return [p for p in self.parameters if isinstance(p, StructureParameter)]
+        return [
+            p for p in self.parameters if isinstance(p, StructureParameter)
+        ]
 
     def model_parameters(self):
         return [p for p in self.parameters if isinstance(p, ModelParameter)]

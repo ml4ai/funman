@@ -1,22 +1,21 @@
 import json
+import logging
 import sys
 import threading
 from typing import Callable, Optional
+
+from pysmt.logics import QF_NRA
+from pysmt.shortcuts import And, Solver
+
 from funman.representation.representation import (
     LABEL_TRUE,
     ParameterSpace,
     Point,
 )
-
-from pysmt.logics import QF_NRA
-from pysmt.shortcuts import And, Solver
-
 from funman.utils.smtlib_utils import smtlibscript_from_formula_list
 
 # import funman.search as search
 from .search import Search, SearchEpisode
-
-import logging
 
 l = logging.getLogger(__file__)
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)

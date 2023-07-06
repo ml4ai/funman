@@ -228,7 +228,9 @@ class GeneratedPetriNetModel(AbstractPetriNetModel):
             return [p.id for p in self.petrinet.semantics.ode.parameters]
         else:
             # Create a parameter for each transition and initial state variable
-            return [t.id for t in self.petrinet.model.transitions.__root__] + [f"{s.id}0" for s in self.petrinet.model.states.__root__]
+            return [t.id for t in self.petrinet.model.transitions.__root__] + [
+                f"{s.id}0" for s in self.petrinet.model.states.__root__
+            ]
 
     def _parameter_values(self):
         if hasattr(self.petrinet.semantics, "ode"):
