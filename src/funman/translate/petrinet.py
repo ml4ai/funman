@@ -9,6 +9,7 @@ from pysmt.shortcuts import (
     And,
     Equals,
     Minus,
+    Or,
     Plus,
     Real,
     Symbol,
@@ -16,6 +17,7 @@ from pysmt.shortcuts import (
 )
 
 from funman.model.model import Model
+from funman.utils.sympy_utils import rate_expr_to_pysmt, sympy_to_pysmt
 
 from .translate import Encoder, Encoding
 
@@ -148,11 +150,12 @@ class PetrinetEncoder(Encoder):
             for edge in input_edges
             if model._edge_target(edge) == transition_id
         ]
-        param_symbol = self._encode_state_var(
-            model._transition_parameter(transition)
-        )
+        transition_rates = [
+            rate_expr_to_pysmt(r.expression)
+            for r in model._transition_rate(transition)
+        ]
 
-        return Times([param_symbol] + ins)
+        return Or([Times([tr] + ins) for tr in transition_rates])
 
     def _get_timed_symbols(self, model: Model) -> List[str]:
         """

@@ -197,23 +197,14 @@ class GeneratedPetriNetModel(AbstractPetriNetModel):
     def _output_edges(self):
         return [(t.id, o) for t in self._transitions() for o in t.output]
 
-    def _transition_parameter(self, transition):
+    def _transition_rate(self, transition):
         if hasattr(self.petrinet.semantics, "ode"):
             transition_rates = [
                 r
                 for r in self.petrinet.semantics.ode.rates
                 if r.target == transition.id
             ]
-            parameters = [
-                p
-                for t in transition_rates
-                for p in self._parameter_names()
-                if p in t.expression
-            ]
-            assert (
-                len(parameters) == 1
-            ), f"The number of parameters for transition {transition} are not equal to 1, {parameters}"
-            return parameters[0]
+            return transition_rates
         else:
             return transition.id
 
@@ -291,8 +282,8 @@ class PetrinetModel(AbstractPetriNetModel):
     def _edge_target(self, edge):
         return edge["it"] if "it" in edge else edge["os"]
 
-    def _transition_parameter(self, transition):
-        return transition["tprop"]["parameter_name"]
+    def _transition_rate(self, transition):
+        return self._encode_state_var(transition["tprop"]["parameter_name"])
 
     def _transition_id(self, transition):
         return next(

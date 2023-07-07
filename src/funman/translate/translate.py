@@ -196,7 +196,12 @@ class Encoder(ABC, BaseModel):
         state_timepoints, transition_timepoints = self._get_timepoints(
             num_steps, step_size
         )
-        # parameters = model._parameters()
+
+        # Need to initialize pysmt symbols for parameters to help with parsing custom rate equations
+        variables = [
+            p.name for p in model._parameters()
+        ] + model._state_var_names()
+        variable_symbols = [self._encode_state_var(p) for p in variables]
 
         constraints = [self._timed_model_elements["init"]]
 
