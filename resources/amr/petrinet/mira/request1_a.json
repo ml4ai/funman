@@ -53,6 +53,7 @@
   "config": {
     "solver": "dreal",
     "dreal_mcts": true,
-    "tolerance": 1e-8
+    "tolerance": 1e-8,
+    "save_smtlib": true
   }
 }

@@ -1,13 +1,12 @@
 import io
+import logging
 import os
+from contextlib import contextmanager
 from functools import partial
 from queue import Queue
-from typing import Dict, List
 from timeit import default_timer
-from contextlib import contextmanager
+from typing import Dict, List
 
-
-import docker
 import dreal
 import pysmt.smtlib.commands as smtcmd
 from funman_dreal.converter import DRealConverter
@@ -27,6 +26,7 @@ from pysmt.solvers.smtlib import SmtLibBasicSolver, SmtLibIgnoreMixin
 from pysmt.solvers.solver import Solver, SolverOptions
 from tenacity import retry
 
+import docker
 from funman.utils.smtlib_utils import FUNMANSmtPrinter
 
 # def setup(smt2_file, benchmark_path, out_dir):
@@ -39,7 +39,6 @@ from funman.utils.smtlib_utils import FUNMANSmtPrinter
 #         os.path.join(out_dir, smt2_file),
 #     )
 
-import logging
 
 l = logging.getLogger(__name__)
 l.setLevel(logging.DEBUG)
@@ -481,9 +480,11 @@ class DRealNative(Solver, SmtLibBasicSolver, SmtLibIgnoreMixin):
         f = self.converter.convert(formula)
 
         # Convert Variable to a Formula
-        if isinstance(f, dreal.Variable) and f.get_type() == dreal.Variable.Bool:
+        if (
+            isinstance(f, dreal.Variable)
+            and f.get_type() == dreal.Variable.Bool
+        ):
             f = dreal.And(f, f)
-
 
         deps = formula.get_free_variables()
         # Declare all variables

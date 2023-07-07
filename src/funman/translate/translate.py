@@ -21,6 +21,7 @@ from pysmt.shortcuts import (
     Iff,
     Real,
     Symbol,
+    get_env,
 )
 from pysmt.solvers.solver import Model as pysmtModel
 
@@ -43,10 +44,11 @@ from funman.representation.representation import (
     Point,
 )
 from funman.representation.symbol import ModelSymbol
+from funman.translate.simplifier import FUNMANSimplifier
 
 
 class Encoding(BaseModel):
-    pass
+    _substitutions: Dict[FNode, FNode] = {}
 
 
 class FlatEncoding(BaseModel):
@@ -105,6 +107,17 @@ class LayeredEncoding(BaseModel):
                 else (f, s)
             )
 
+    def substitute(self, substitutions: Dict[FNode, FNode]):
+        self._layers = [
+            (layer[0].substitute(substitutions), layer[1])
+            for layer in self._layers
+        ]
+
+    def simplify(self):
+        self._layers = [
+            (layer[0].simplify(), layer[1]) for layer in self._layers
+        ]
+
 
 class EncodingOptions(object):
     """
@@ -132,6 +145,9 @@ class Encoder(ABC, BaseModel):
     _untimed_symbols: Set[str] = set([])
     _timed_symbols: Set[str] = set([])
     _untimed_constraints: FNode
+    _assignments: Dict[str, float]
+    env = get_env()
+    env._simplifier = FUNMANSimplifier(env)
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -168,7 +184,7 @@ class Encoder(ABC, BaseModel):
         pass
 
     def _encode_next_step(
-        self, model: Model, step: int, next_step: int
+        self, model: Model, step: int, next_step: int, substitutions={}
     ) -> FNode:
         pass
 
@@ -204,16 +220,17 @@ class Encoder(ABC, BaseModel):
         variable_symbols = [self._encode_state_var(p) for p in variables]
 
         constraints = [self._timed_model_elements["init"]]
-
+        substitutions = {}  # self._initialize_substitutions(model)
         for i, timepoint in enumerate(transition_timepoints):
             c = self._timed_model_elements["time_step_constraints"][timepoint][
                 step_size - self._min_step_size
             ]
             if c is None:
-                c = self._encode_next_step(
+                c, substitutions = self._encode_next_step(
                     model,
                     state_timepoints[i],
                     state_timepoints[i + 1],
+                    substitutions=substitutions,
                 )
                 self._timed_model_elements["time_step_constraints"][timepoint][
                     step_size - self._min_step_size
@@ -262,9 +279,57 @@ class Encoder(ABC, BaseModel):
         #     (model._extra_constraints if model._extra_constraints else TRUE()),
         # ).simplify()
         # symbols = self._symbols(formula)
+
+        if self.config.substitute_subformulas:
+            # (
+            #     substituted_formulas,
+            #     substitutions,
+            #     assignments,
+            # ) = self._substitute_subformulas(
+            #     [
+            #         self._timed_model_elements["untimed_constraints"],
+            #         self._timed_model_elements["init"],
+            #     ]
+            #     + constraints,
+            #     model,
+            # )
+            self._assignments = {
+                k.symbol_name(): float(v.constant_value())
+                for k, v in substitutions.items()
+                if v.is_constant()
+            }
+
         return LayeredEncoding(
-            _layers=[(c, c.get_free_variables()) for c in constraints]
+            _layers=[(c, c.get_free_variables()) for c in constraints],
+            substitutions=substitutions,
         )
+
+    def _initialize_substitutions(self, model: "Model"):
+        # Add parameter assignments
+        parameters = model._parameters()
+        parameter_assignments = {
+            self._encode_state_var(k.name): (
+                Real(float(k.lb))
+                if k.name not in model.parameter_bounds
+                else Real(model.parameter_bounds[k.name][0])
+            )
+            for k in parameters
+            if k.lb == k.ub
+            and (
+                (not k.name in model.parameter_bounds)
+                or model.parameter_bounds[k.name][0]
+                == model.parameter_bounds[k.name][1]
+            )
+        }
+
+        init_assignments = {
+            self._encode_state_var(k, time=0): Real(model._get_init_value(k))
+            for k in model._state_var_names()
+        }
+
+        substitutions = {**parameter_assignments, **init_assignments}
+
+        return substitutions
 
     def parameter_values(
         self, model: Model, pysmtModel: pysmtModel
@@ -457,7 +522,7 @@ class Encoder(ABC, BaseModel):
         return list(state_timepoints), list(transition_timepoints)
 
     def encode_query(
-        self, query: Query, num_steps: int, step_size: int
+        self, query: Query, num_steps: int, step_size: int, substitutions={}
     ) -> Encoding:
         """
         Encode a query into an SMTLib formula.
@@ -481,7 +546,12 @@ class Encoder(ABC, BaseModel):
         }
 
         if type(query) in query_handlers:
-            return query_handlers[type(query)](query, num_steps, step_size)
+            encoded_query = query_handlers[type(query)](
+                query, num_steps, step_size
+            )
+            encoded_query.substitute(substitutions)
+            encoded_query.simplify()
+            return encoded_query
         else:
             raise NotImplementedError(
                 f"Do not know how to encode query of type {type(query)}"

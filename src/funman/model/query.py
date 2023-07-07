@@ -1,11 +1,12 @@
 """
 This module defines all Query classes.  Queries are combined with Model objects in Scenarios to determine whether the model satisfies the query.
 """
-from typing import List, Union
+from typing import List, Optional, Union
 
 from pydantic import BaseModel
 from pysmt.formula import FNode
 
+from funman.model.model import Model
 from funman.representation.symbol import ModelSymbol
 
 
@@ -14,7 +15,7 @@ class Query(BaseModel):
     Abstract base class for queries.
     """
 
-    pass
+    model: Optional[Model] = None
 
 
 class QueryFunction(Query):

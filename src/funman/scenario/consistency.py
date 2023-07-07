@@ -158,7 +158,7 @@ class ConsistencyScenario(AnalysisScenario, BaseModel):
 
         # This will create a new formula for each query without caching them (its typically inexpensive)
         self._query_encoding = self._smt_encoder.encode_query(
-            self._model_encoding, self.query
+            self.query, num_steps, step_size
         )
         return self._model_encoding, self._query_encoding
 

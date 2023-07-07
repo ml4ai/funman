@@ -3,6 +3,8 @@ ARG IBEX_BRANCH
 
 ARG ENABLE_DEBUG=no
 
+ARG ENABLE_DEBUG=no
+
 ARG DEBIAN_FRONTEND=noninteractive
 # Install base dependencies
 RUN apt update && apt install -y --no-install-recommends \

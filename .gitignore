@@ -308,5 +308,6 @@ scratch/funman.code-workspace
 ./*.smt2
 gmon.out
 *.png
-*.smt2
 *.code-workspace
+*.json
+*.smt2

@@ -12,9 +12,7 @@ RESOURCES = os.path.join(
 
 out_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "out")
 
-jobs = [
-    "8bf34694-500e-4f94-a3e3-fc7bacdd9492"
-]
+jobs = ["8bf34694-500e-4f94-a3e3-fc7bacdd9492"]
 
 
 if not os.path.exists(out_dir):

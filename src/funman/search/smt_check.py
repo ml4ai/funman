@@ -85,8 +85,8 @@ class SMTCheck(Search):
             solver_options=opts,
         ) as s:
             formula = And(
-                problem._model_encoding._formula,
-                problem._query_encoding._formula,
+                problem._model_encoding.encoding(),
+                problem._query_encoding.encoding(),
             )
             s.add_assertion(formula)
             self.store_smtlib(formula)

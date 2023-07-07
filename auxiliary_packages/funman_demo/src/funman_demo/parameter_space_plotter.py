@@ -6,8 +6,8 @@ import numpy as np
 from IPython.display import clear_output
 from matplotlib.lines import Line2D
 
-from funman.representation.representation import Box, Interval, Point
 from funman.representation import ParameterSpace
+from funman.representation.representation import Box, Interval, Point
 
 
 class ParameterSpacePlotter:

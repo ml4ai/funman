@@ -1,12 +1,14 @@
 import json
 import os
-from typing import Tuple
 import unittest
 from time import sleep
+from typing import Tuple
 
 import matplotlib.pyplot as plt
+import pydantic
 from funman_demo.parameter_space_plotter import ParameterSpacePlotter
 
+from funman.api.api import _wrap_with_internal_model
 from funman.api.settings import Settings
 from funman.funman import FUNMANConfig
 from funman.model.generated_models.petrinet import Model as GeneratedPetrinet
@@ -14,8 +16,6 @@ from funman.model.generated_models.regnet import Model as GeneratedRegnet
 from funman.server.query import FunmanWorkRequest, FunmanWorkUnit
 from funman.server.storage import Storage
 from funman.server.worker import FunmanWorker
-from funman.api.api import _wrap_with_internal_model
-import pydantic
 
 RESOURCES = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "../resources"
@@ -63,7 +63,7 @@ cases = [
     #     os.path.join(AMR_REGNET_DIR, "lotka_volterra.json"),
     #     os.path.join(AMR_REGNET_DIR, "lotka_volterra_request1.json"),
     # ),
-        (
+    (
         os.path.join(MIRA_PETRI_DIR, "scenario1_a.json"),
         os.path.join(MIRA_PETRI_DIR, "request1_a.json"),
     ),

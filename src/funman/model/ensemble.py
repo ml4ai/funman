@@ -33,6 +33,8 @@ class EnsembleModel(Model):
         Encoder
             SMT encoder for model
         """
+        from funman.translate import EnsembleEncoder
+
         return EnsembleEncoder(
             config=config,
             model=self,
