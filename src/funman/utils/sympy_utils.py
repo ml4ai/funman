@@ -1,4 +1,5 @@
 import math
+from typing import Dict, Union
 
 import pysmt.operators as op
 import sympy
@@ -55,9 +56,30 @@ class FUNMANFormulaManager(FormulaManager):
         return self.create_node(node_type=op.POW, args=(base, exponent))
 
 
+def substitute(str_expr: str, values: Dict[str, Union[float, str]]):
+    # Set which substrings are symbols
+    symbols = {s: sympy.Symbol(s) for s in values}
+
+    # Get expression
+    expr = str_expr_to_expr(str_expr, symbols)
+
+    # Get variable values
+    values_syms = {s: values[str(s)] for s in symbols}
+    subs = [(sym, val) for sym, val in values_syms.items() if val is not None]
+
+    # substitute
+    sub_expr = expr.subs(subs)
+    return sub_expr
+
+
+def str_expr_to_expr(sexpr, symbols):
+    f = sympy.sympify(sexpr, symbols)
+    return f
+
+
 def rate_expr_to_pysmt(expr):
     symbols = {s: sympy.Symbol(s) for s in get_env().formula_manager.symbols}
-    f = sympy.sympify(expr, symbols)
+    f = str_expr_to_expr(expr, symbols)
     p: FNode = sympy_to_pysmt(f)
     return p
 

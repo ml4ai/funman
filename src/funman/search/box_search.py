@@ -109,21 +109,6 @@ class BoxSearchEpisode(SearchEpisode):
                 )
             l.debug(f"Initial box: {b}")
 
-    def _initial_box(self) -> Box:
-        return Box(
-            bounds={
-                p.name: (
-                    Interval(lb=p.lb, ub=p.ub)
-                    if (isinstance(p, ModelParameter) or p.name == "num_steps")
-                    else Interval(
-                        lb=self.structural_configuration[p.name],
-                        ub=self.structural_configuration[p.name],
-                    )
-                )
-                for p in self.problem.parameters
-            }
-        )
-
     def _on_start(self):
         if self.config.number_of_processes > 1:
             self.statistics._last_time.value = str(datetime.now())

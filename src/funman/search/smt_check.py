@@ -87,6 +87,11 @@ class SMTCheck(Search):
             formula = And(
                 problem._model_encoding.encoding(),
                 problem._query_encoding.encoding(),
+                problem._smt_encoder.box_to_smt(
+                    episode._initial_box().project(
+                        episode.problem.model_parameters()
+                    )
+                ),
             )
             s.add_assertion(formula)
             self.store_smtlib(formula)

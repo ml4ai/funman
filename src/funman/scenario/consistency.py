@@ -61,6 +61,7 @@ class ConsistencyScenario(AnalysisScenario, BaseModel):
     _smt_encoder: Optional[Encoder] = None
     _model_encoding: Optional[Encoding] = None
     _query_encoding: Optional[Encoding] = None
+    _box: Optional[Encoding] = None
 
     @classmethod
     def get_kind(cls) -> str:
@@ -85,13 +86,16 @@ class ConsistencyScenario(AnalysisScenario, BaseModel):
         result
             ConsistencyScenarioResult indicating whether the model is consistent.
         """
-
         if config._search is None:
             from funman.search.smt_check import SMTCheck
 
             search = SMTCheck()
         else:
             search = config._search()
+
+        self._extract_non_overriden_parameters()
+        self._filter_parameters()
+        num_parameters = len(self.parameters)
 
         if self._smt_encoder is None:
             self._smt_encoder = self.model.default_encoder(config, self)
@@ -102,6 +106,8 @@ class ConsistencyScenario(AnalysisScenario, BaseModel):
             haltEvent=haltEvent,
             resultsCallback=resultsCallback,
         )
+        parameter_space.num_dimensions = num_parameters
+
         scenario_result = ConsistencyScenarioResult(
             scenario=self,
             consistent=consistent,

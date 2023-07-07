@@ -134,47 +134,6 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
             parameter_space=parameter_space, scenario=self
         )
 
-    def _extract_non_overriden_parameters(self):
-        from funman.server.query import LABEL_ANY
-
-        # If a model has parameters that are not overridden by the scenario, then add them to the scenario
-        model_parameters = self.model._parameter_names()
-        model_parameters = [] if model_parameters is None else model_parameters
-        non_overriden_parameters = []
-        for p in [
-            param
-            for param in model_parameters
-            if param
-            not in [
-                overridden_param.name for overridden_param in self.parameters
-            ]
-        ]:
-            bounds = {}
-            lb = self.model._parameter_lb(p)
-            ub = self.model._parameter_ub(p)
-            if ub and lb:
-                bounds["ub"] = ub
-                bounds["lb"] = lb
-            else:
-                value = self.model._parameter_values()[p]
-                bounds["lb"] = bounds["ub"] = value
-            non_overriden_parameters.append(
-                ModelParameter(name=p, **bounds, label=LABEL_ANY)
-            )
-        self.parameters += non_overriden_parameters
-
-    def _filter_parameters(self):
-        # If the scenario has parameters that are not in the model, then remove them from the scenario
-        model_parameters = self.model._parameter_names()
-        if model_parameters is not None:
-            filtered_parameters = [
-                p
-                for p in self.parameters
-                if p.name in model_parameters
-                or isinstance(p, StructureParameter)
-            ]
-            self.parameters = filtered_parameters
-
     def _results_str(self, result: List[Dict]):
         return "\n".join(
             ["num_steps\tstep_size\t|true|\t|false|"]

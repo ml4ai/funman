@@ -7,35 +7,7 @@
       }
     ]
   },
-  "parameters": [
-    {
-      "name": "beta_s"
-    },
-    {
-      "name": "N"
-    },
-    {
-      "name": "t_0"
-    },
-    {
-      "name": "kappa"
-    },
-    {
-      "name": "beta_c"
-    },
-    {
-      "name": "delta"
-    },
-    {
-      "name": "gamma"
-    },
-    {
-      "name": "alpha"
-    },
-    {
-      "name": "rho"
-    }
-  ],
+  "parameters": [],
   "structure_parameters": [
     {
       "name": "num_steps",

@@ -160,8 +160,7 @@ class PetrinetEncoder(Encoder):
             if model._edge_target(edge) == transition_id
         ]
         transition_rates = [
-            rate_expr_to_pysmt(r.expression)
-            for r in model._transition_rate(transition)
+            rate_expr_to_pysmt(r) for r in model._transition_rate(transition)
         ]
         # Before calling substitute, need to replace the formula_manager
         get_env()._substituter.mgr = get_env().formula_manager

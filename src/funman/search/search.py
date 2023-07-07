@@ -10,6 +10,7 @@ import pysmt
 from pydantic import BaseModel
 
 from funman.funman import FUNMANConfig
+from funman.representation.representation import Box, Interval, ModelParameter
 from funman.scenario.scenario import AnalysisScenario
 
 
@@ -74,6 +75,21 @@ class SearchEpisode(BaseModel):
 
     def num_parameters(self):
         return len(self.problem.parameters)
+
+    def _initial_box(self) -> Box:
+        return Box(
+            bounds={
+                p.name: (
+                    Interval(lb=p.lb, ub=p.ub)
+                    if (isinstance(p, ModelParameter) or p.name == "num_steps")
+                    else Interval(
+                        lb=self.structural_configuration[p.name],
+                        ub=self.structural_configuration[p.name],
+                    )
+                )
+                for p in self.problem.parameters
+            }
+        )
 
 
 class Search(ABC):
