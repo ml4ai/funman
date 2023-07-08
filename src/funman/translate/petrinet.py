@@ -45,6 +45,14 @@ class PetrinetEncoder(Encoder):
     ) -> FNode:
         state_vars = model._state_vars()
         transitions = model._transitions()
+        time_var = model._time_var()
+        time_var_name = model._state_var_id(time_var)
+        time_symbol = self._encode_state_var(
+            time_var_name
+        )  # Needed so that there is a pysmt symbol for 't'
+        current_time_var = self._encode_state_var(time_var_name, time=step)
+        next_time_var = self._encode_state_var(time_var_name, time=next_step)
+
         step_size = next_step - step
         current_state = {
             model._state_var_id(s): self._encode_state_var(
@@ -52,12 +60,15 @@ class PetrinetEncoder(Encoder):
             )
             for s in state_vars
         }
+        current_state[time_var_name] = current_time_var
+
         next_state = {
             model._state_var_id(s): self._encode_state_var(
                 model._state_var_name(s), time=next_step
             )
             for s in state_vars
         }
+        next_state[time_var_name] = next_time_var
 
         # Each transition corresponds to a term that is the product of current state vars and a parameter
         transition_terms = {
@@ -105,13 +116,25 @@ class PetrinetEncoder(Encoder):
                 flows = current_state[state_var_id].substitute(substitutions)
 
             net_flows.append(Equals(next_state[state_var_id], flows))
-            substitutions[next_state[state_var_id]] = flows
+            if self.config.substitute_subformulas:
+                substitutions[next_state[state_var_id]] = flows
 
         compartmental_bounds = self._encode_compartmental_bounds(
             model, next_step
         )
 
-        return And(net_flows + [compartmental_bounds]), substitutions
+        # If any variables depend upon time, then time updates need to be encoded.
+        if time_var is not None:
+            time_update = Equals(
+                next_time_var, Plus(current_time_var, Real(step_size))
+            )
+        else:
+            time_update = True()
+
+        return (
+            And(net_flows + [compartmental_bounds, time_update]),
+            substitutions,
+        )
 
     def _define_init(self, model: Model, init_time: int = 0) -> FNode:
         state_var_names = model._state_var_names()
@@ -160,13 +183,22 @@ class PetrinetEncoder(Encoder):
             if model._edge_target(edge) == transition_id
         ]
         transition_rates = [
-            rate_expr_to_pysmt(r) for r in model._transition_rate(transition)
+            rate_expr_to_pysmt(r, current_state)
+            for r in model._transition_rate(transition)
         ]
-        # Before calling substitute, need to replace the formula_manager
-        get_env()._substituter.mgr = get_env().formula_manager
 
         return (
-            Or([Times([tr] + ins) for tr in transition_rates])
+            Or(
+                [
+                    (
+                        tr
+                        if len(ins) == 0
+                        or len(tr.args()) > 1  # if tr is complete expression
+                        else Times([tr] + ins)  # else build expression
+                    )
+                    for tr in transition_rates
+                ]
+            )
             .substitute(substitutions)
             .simplify()
         )

@@ -2,6 +2,7 @@ import math
 from typing import Dict, Union
 
 import pysmt.operators as op
+import pysmt.typing as types
 import sympy
 from pysmt.formula import FNode, FormulaManager
 from pysmt.shortcuts import (
@@ -77,18 +78,23 @@ def str_expr_to_expr(sexpr, symbols):
     return f
 
 
-def rate_expr_to_pysmt(expr):
-    symbols = {s: sympy.Symbol(s) for s in get_env().formula_manager.symbols}
+def rate_expr_to_pysmt(expr, state=None):
+    env_symbols = get_env().formula_manager.symbols
+    symbols = {s: sympy.Symbol(s) for s in env_symbols}
     f = str_expr_to_expr(expr, symbols)
     p: FNode = sympy_to_pysmt(f)
-    return p
+
+    if state:  # Map symbols in p to state indexed versions (e.g., I to I_5)
+        symbol_to_state_var = {
+            env_symbols[s]: state[str(s)] for s in symbols if str(s) in state
+        }
+        p_sub = p.substitute(symbol_to_state_var)
+        return p_sub
+    else:
+        return p
 
 
 def sympy_to_pysmt(expr):
-    env = get_env()
-    if not isinstance(env._formula_manager, FUNMANFormulaManager):
-        env._formula_manager = FUNMANFormulaManager(env._formula_manager)
-
     func = expr.func
     if func.is_Mul:
         return sympy_to_pysmt_op(Times, expr)

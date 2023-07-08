@@ -154,6 +154,16 @@ class GeneratedPetriNetModel(AbstractPetriNetModel):
             scenario=scenario,
         )
 
+    def _time_var(self):
+        if (
+            hasattr(self.petrinet, "semantics")
+            and hasattr(self.petrinet.semantics, "ode")
+            and hasattr(self.petrinet.semantics.ode, "time")
+        ):
+            return self.petrinet.semantics.ode.time
+        else:
+            return None
+
     def _get_init_value(self, var: str):
         value = Model._get_init_value(self, var)
         if value is None:

@@ -45,6 +45,7 @@ from funman.representation.representation import (
 )
 from funman.representation.symbol import ModelSymbol
 from funman.translate.simplifier import FUNMANSimplifier
+from funman.utils.sympy_utils import FUNMANFormulaManager
 
 
 class Encoding(BaseModel):
@@ -208,6 +209,12 @@ class Encoder(ABC, BaseModel):
         Encoding
             formula and symbols for the encoding
         """
+
+        env = get_env()
+        if not isinstance(env._formula_manager, FUNMANFormulaManager):
+            env._formula_manager = FUNMANFormulaManager(env._formula_manager)
+            # Before calling substitute, need to replace the formula_manager
+            env._substituter.mgr = env.formula_manager
 
         state_timepoints, transition_timepoints = self._get_timepoints(
             num_steps, step_size
