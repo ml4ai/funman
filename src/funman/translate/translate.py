@@ -146,7 +146,7 @@ class Encoder(ABC, BaseModel):
     _untimed_symbols: Set[str] = set([])
     _timed_symbols: Set[str] = set([])
     _untimed_constraints: FNode
-    _assignments: Dict[str, float]
+    # _assignments: Dict[str, float] = {}
     env = get_env()
     env._simplifier = FUNMANSimplifier(env)
 
@@ -190,7 +190,7 @@ class Encoder(ABC, BaseModel):
         pass
 
     def encode_model_timed(
-        self, model: "Model", num_steps: int, step_size: int
+        self, scenario: "AnalysisScenario", num_steps: int, step_size: int
     ) -> Encoding:
         """
         Encode a model into an SMTLib formula.
@@ -222,19 +222,29 @@ class Encoder(ABC, BaseModel):
 
         # Need to initialize pysmt symbols for parameters to help with parsing custom rate equations
         variables = [
-            p.name for p in model._parameters()
-        ] + model._state_var_names()
+            p.name for p in scenario.model._parameters()
+        ] + scenario.model._state_var_names()
         variable_symbols = [self._encode_state_var(p) for p in variables]
 
-        constraints = [self._timed_model_elements["init"]]
-        substitutions = {}  # self._initialize_substitutions(model)
+        substitutions = self._initialize_substitutions(scenario)
+        constraints = [
+            self._timed_model_elements["init"]
+            .substitute(substitutions)
+            .simplify()
+        ]
+
         for i, timepoint in enumerate(transition_timepoints):
             c = self._timed_model_elements["time_step_constraints"][timepoint][
                 step_size - self._min_step_size
             ]
+            c_substitutions = self._timed_model_elements[
+                "time_step_substitutions"
+            ][timepoint][step_size - self._min_step_size]
+            if c_substitutions is not None:
+                substitutions = {**substitutions, **c_substitutions}
             if c is None:
                 c, substitutions = self._encode_next_step(
-                    model,
+                    scenario.model,
                     state_timepoints[i],
                     state_timepoints[i + 1],
                     substitutions=substitutions,
@@ -242,6 +252,9 @@ class Encoder(ABC, BaseModel):
                 self._timed_model_elements["time_step_constraints"][timepoint][
                     step_size - self._min_step_size
                 ] = c
+                self._timed_model_elements["time_step_substitutions"][
+                    timepoint
+                ][step_size - self._min_step_size] = substitutions
             constraints.append(c)
 
         #     if time_dependent_parameters:
@@ -287,51 +300,44 @@ class Encoder(ABC, BaseModel):
         # ).simplify()
         # symbols = self._symbols(formula)
 
-        if self.config.substitute_subformulas:
-            # (
-            #     substituted_formulas,
-            #     substitutions,
-            #     assignments,
-            # ) = self._substitute_subformulas(
-            #     [
-            #         self._timed_model_elements["untimed_constraints"],
-            #         self._timed_model_elements["init"],
-            #     ]
-            #     + constraints,
-            #     model,
-            # )
-            self._assignments = {
-                k.symbol_name(): float(v.constant_value())
-                for k, v in substitutions.items()
-                if v.is_constant()
-            }
+        # if self.config.substitute_subformulas:
+        #     # (
+        #     #     substituted_formulas,
+        #     #     substitutions,
+        #     #     assignments,
+        #     # ) = self._substitute_subformulas(
+        #     #     [
+        #     #         self._timed_model_elements["untimed_constraints"],
+        #     #         self._timed_model_elements["init"],
+        #     #     ]
+        #     #     + constraints,
+        #     #     model,
+        #     # )
+        #     self._assignments = {
+        #         k.symbol_name(): float(v.constant_value())
+        #         for k, v in substitutions.items()
+        #         if v.is_constant()
+        #     }
 
         return LayeredEncoding(
             _layers=[(c, c.get_free_variables()) for c in constraints],
             substitutions=substitutions,
         )
 
-    def _initialize_substitutions(self, model: "Model"):
+    def _initialize_substitutions(self, scenario: "AnalysisScenario"):
         # Add parameter assignments
-        parameters = model._parameters()
+        parameters = scenario.model_parameters()
         parameter_assignments = {
-            self._encode_state_var(k.name): (
-                Real(float(k.lb))
-                if k.name not in model.parameter_bounds
-                else Real(model.parameter_bounds[k.name][0])
-            )
+            self._encode_state_var(k.name): (Real(float(k.lb)))
             for k in parameters
             if k.lb == k.ub
-            and (
-                (not k.name in model.parameter_bounds)
-                or model.parameter_bounds[k.name][0]
-                == model.parameter_bounds[k.name][1]
-            )
         }
 
         init_assignments = {
-            self._encode_state_var(k, time=0): Real(model._get_init_value(k))
-            for k in model._state_var_names()
+            self._encode_state_var(k, time=0): Real(
+                scenario.model._get_init_value(k)
+            )
+            for k in scenario.model._state_var_names()
         }
 
         substitutions = {**parameter_assignments, **init_assignments}
@@ -500,6 +506,10 @@ class Encoder(ABC, BaseModel):
         self._timed_model_elements = {
             "init": self._define_init(model),
             "time_step_constraints": [
+                [None for i in range(max_step_size)]
+                for j in range(max_step_index)
+            ],
+            "time_step_substitutions": [
                 [None for i in range(max_step_size)]
                 for j in range(max_step_index)
             ],

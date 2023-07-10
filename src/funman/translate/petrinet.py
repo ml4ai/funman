@@ -1,4 +1,4 @@
-from typing import List
+from typing import Dict, List
 
 from pysmt.formula import FNode
 from pysmt.shortcuts import (
@@ -18,6 +18,7 @@ from pysmt.shortcuts import (
 )
 
 from funman.model.model import Model
+from funman.translate.simplifier import FUNMANSimplifier
 from funman.utils.sympy_utils import rate_expr_to_pysmt, sympy_to_pysmt
 
 from .translate import Encoder, Encoding
@@ -109,9 +110,10 @@ class PetrinetEncoder(Encoder):
                     Times(
                         Real(step_size),
                         Plus(state_var_flows).substitute(substitutions),
-                    ).simplify(),
+                    ),  # .simplify()
                     current_state[state_var_id].substitute(substitutions),
-                ).simplify()
+                )  # .simplify()
+                flows = FUNMANSimplifier.sympy_simplify(flows)
             else:
                 flows = current_state[state_var_id].substitute(substitutions)
 
@@ -120,16 +122,21 @@ class PetrinetEncoder(Encoder):
                 substitutions[next_state[state_var_id]] = flows
 
         compartmental_bounds = self._encode_compartmental_bounds(
-            model, next_step
+            model, next_step, substitutions=substitutions
         )
 
         # If any variables depend upon time, then time updates need to be encoded.
         if time_var is not None:
-            time_update = Equals(
-                next_time_var, Plus(current_time_var, Real(step_size))
+            time_increment = (
+                Plus(current_time_var, Real(step_size))
+                .substitute(substitutions)
+                .simplify()
             )
+            time_update = Equals(next_time_var, time_increment)
+            if self.config.substitute_subformulas:
+                substitutions[next_time_var] = time_increment
         else:
-            time_update = True()
+            time_update = TRUE()
 
         return (
             And(net_flows + [compartmental_bounds, time_update]),
@@ -149,12 +156,20 @@ class PetrinetEncoder(Encoder):
             compartmental_bounds,
         )
 
-    def _encode_compartmental_bounds(self, model: "Model", step):
+    def _encode_compartmental_bounds(
+        self, model: "Model", step, substitutions: Dict[FNode, FNode] = {}
+    ):
         bounds = []
         for var in model._state_vars():
-            lb = GE(
-                self._encode_state_var(model._state_var_name(var), time=step),
-                Real(0.0),
+            lb = (
+                GE(
+                    self._encode_state_var(
+                        model._state_var_name(var), time=step
+                    ),
+                    Real(0.0),
+                )
+                .substitute(substitutions)
+                .simplify()
             )
             ub = LE(
                 self._encode_state_var(model._state_var_name(var), time=step),
@@ -165,7 +180,9 @@ class PetrinetEncoder(Encoder):
                         )
                         for var1 in model._state_vars()
                     ]
-                ),
+                )
+                .substitute(substitutions)
+                .simplify(),
             )
             bounds += [lb, ub]
 
@@ -199,8 +216,8 @@ class PetrinetEncoder(Encoder):
                     for tr in transition_rates
                 ]
             )
-            .substitute(substitutions)
-            .simplify()
+            # .substitute(substitutions)
+            # .simplify()
         )
 
     def _get_timed_symbols(self, model: Model) -> List[str]:

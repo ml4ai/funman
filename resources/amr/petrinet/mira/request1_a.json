@@ -3,22 +3,29 @@
     "queries": [
       {
         "variable": "I",
-        "ub": 200.0
+        "ub": 5e5
       }
     ]
   },
-  "parameters": [],
+  "parameters": [
+    {
+      "name": "kappa",
+      "lb": 0.4,
+      "ub": 0.8,
+      "label": "all"
+    }
+  ],
   "structure_parameters": [
     {
       "name": "num_steps",
-      "lb": 30,
-      "ub": 30,
+      "lb": 10,
+      "ub": 10,
       "label": "all"
     },
     {
       "name": "step_size",
-      "lb": 2,
-      "ub": 2,
+      "lb": 1,
+      "ub": 1,
       "label": "all"
     }
   ],
@@ -26,6 +33,7 @@
     "solver": "dreal",
     "dreal_mcts": true,
     "tolerance": 1e-8,
+    "dreal_precision": 0.001,
     "save_smtlib": true
   }
 }

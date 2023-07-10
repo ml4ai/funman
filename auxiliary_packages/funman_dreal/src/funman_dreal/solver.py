@@ -1,3 +1,4 @@
+import faulthandler
 import io
 import logging
 import os
@@ -420,6 +421,8 @@ class DRealNative(Solver, SmtLibBasicSolver, SmtLibIgnoreMixin):
     def __init__(
         self, args, environment, logic, LOGICS=None, **options
     ) -> None:
+        faulthandler.enable()
+
         Solver.__init__(self, environment, logic=logic, **options)
 
         # Setup super class attributes
@@ -443,6 +446,8 @@ class DRealNative(Solver, SmtLibBasicSolver, SmtLibIgnoreMixin):
             if "dreal_log_level" in options["solver_options"]:
                 if options["solver_options"]["dreal_log_level"] == "debug":
                     dreal.set_log_level(dreal.LogLevel.DEBUG)
+                elif options["solver_options"]["dreal_log_level"] == "trace":
+                    dreal.set_log_level(dreal.LogLevel.TRACE)
                 elif options["solver_options"]["dreal_log_level"] == "info":
                     dreal.set_log_level(dreal.LogLevel.INFO)
 
@@ -565,7 +570,9 @@ class DRealNative(Solver, SmtLibBasicSolver, SmtLibIgnoreMixin):
 
     def get_value(self, item):
         # print(f"get_value() {item}: {self.model[item]}")
-        return Real(self.model[item].lb())
+        mid = (self.model[item].ub() - self.model[item].lb()) / 2.0
+        mid = mid + self.model[item].lb()
+        return Real(mid)
 
     @clear_pending_pop
     def solve(self, assumptions=None):

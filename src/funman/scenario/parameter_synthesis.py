@@ -176,7 +176,7 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
         ]
         # This will overwrite the _model_encoding for each configuration, but the encoder will retain components of the configurations.
         self._model_encoding = self._smt_encoder.encode_model_timed(
-            self.model, num_steps, step_size
+            self, num_steps, step_size
         )
         # self._model_encoding.assume(self._assume_model)
 

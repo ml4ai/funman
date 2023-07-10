@@ -1,13 +1,25 @@
 import pysmt
 from pysmt.fnode import FNode
 from pysmt.shortcuts import get_env
-from sympy import expand, symbols, sympify
+from sympy import cancel, expand, symbols, sympify
+
+from funman.utils.sympy_utils import sympy_to_pysmt
 
 
 class FUNMANSimplifier(pysmt.simplifier.Simplifier):
     def __init__(self, env=None):
         super().__init__(env=env)
         self.manager = self.env.formula_manager
+
+    def sympy_simplify(formula):
+        vars = formula.get_free_variables()
+        var_map = {str(v): symbols(str(v)) for v in vars}
+        simplified_formula = formula.simplify()
+        expanded_formula = cancel(
+            sympify(simplified_formula.serialize(), var_map)
+        )
+        f = sympy_to_pysmt(expanded_formula)
+        return f
 
     # def walk_times(self, formula, args, **kwargs):
     #     new_args = []

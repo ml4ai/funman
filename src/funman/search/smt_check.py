@@ -94,8 +94,12 @@ class SMTCheck(Search):
                 ),
             )
             s.add_assertion(formula)
-            self.store_smtlib(formula)
+            self.store_smtlib(
+                formula,
+                filename=f"dbg_steps{episode.structural_configuration['num_steps']}_ssize{episode.structural_configuration['step_size']}.smt2",
+            )
             result = s.solve()
+            print(episode.structural_configuration)
             if result:
                 result = s.get_model()
         return result

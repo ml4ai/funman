@@ -68,7 +68,7 @@ class FUNMANConfig(BaseModel):
     """Use MCTS in dreal"""
     dreal_mcts = True
     """Substitute subformulas to simplify overall encoding"""
-    substitute_subformulas = False
+    substitute_subformulas = True
 
     @validator("solver")
     def import_dreal(cls, v):
