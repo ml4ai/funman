@@ -124,11 +124,11 @@ class TestModels(unittest.TestCase):
                 results = self._worker.get_results(work_unit.id)
                 break
 
-        # ParameterSpacePlotter(results.parameter_space, plot_points=True).plot(
-        #     show=False
-        # )
-        # plt.savefig(f"{out_dir}/{model.__module__}.png")
-        # plt.close()
+        ParameterSpacePlotter(results.parameter_space, plot_points=True).plot(
+            show=False
+        )
+        plt.savefig(f"{out_dir}/{model.__module__}.png")
+        plt.close()
 
         assert results
 

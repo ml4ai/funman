@@ -23,6 +23,11 @@ from funman.utils.sympy_utils import rate_expr_to_pysmt, sympy_to_pysmt
 
 from .translate import Encoder, Encoding
 
+import logging
+
+l = logging.getLogger(__file__)
+l.setLevel(logging.DEBUG)
+
 
 class PetrinetEncoder(Encoder):
     def encode_model(self, model: "Model") -> Encoding:
@@ -42,12 +47,17 @@ class PetrinetEncoder(Encoder):
         return Encoding(formula=TRUE(), symbols={})
 
     def _encode_next_step(
-        self, model: "Model", step: int, next_step: int, substitutions={}
+        self,
+        scenario: "AnalysisScenario",
+        step: int,
+        next_step: int,
+        substitutions={},
     ) -> FNode:
-        state_vars = model._state_vars()
-        transitions = model._transitions()
-        time_var = model._time_var()
-        time_var_name = model._state_var_id(time_var)
+        l.debug(f"Encoding step: {step} to {next_step}")
+        state_vars = scenario.model._state_vars()
+        transitions = scenario.model._transitions()
+        time_var = scenario.model._time_var()
+        time_var_name = scenario.model._state_var_id(time_var)
         time_symbol = self._encode_state_var(
             time_var_name
         )  # Needed so that there is a pysmt symbol for 't'
@@ -56,16 +66,16 @@ class PetrinetEncoder(Encoder):
 
         step_size = next_step - step
         current_state = {
-            model._state_var_id(s): self._encode_state_var(
-                model._state_var_name(s), time=step
+            scenario.model._state_var_id(s): self._encode_state_var(
+                scenario.model._state_var_name(s), time=step
             )
             for s in state_vars
         }
         current_state[time_var_name] = current_time_var
 
         next_state = {
-            model._state_var_id(s): self._encode_state_var(
-                model._state_var_name(s), time=next_step
+            scenario.model._state_var_id(s): self._encode_state_var(
+                scenario.model._state_var_name(s), time=next_step
             )
             for s in state_vars
         }
@@ -73,12 +83,15 @@ class PetrinetEncoder(Encoder):
 
         # Each transition corresponds to a term that is the product of current state vars and a parameter
         transition_terms = {
-            model._transition_id(t): self._encode_transition_term(
-                t,
-                current_state,
-                next_state,
-                model,
-                substitutions=substitutions,
+            scenario.model._transition_id(t): FUNMANSimplifier.sympy_simplify(
+                self._encode_transition_term(
+                    t,
+                    current_state,
+                    next_state,
+                    scenario.model,
+                    substitutions=substitutions,
+                ).substitute(substitutions),
+                parameters=scenario.model_parameters(),
             )
             for t in transitions
         }
@@ -88,13 +101,13 @@ class PetrinetEncoder(Encoder):
         for var in state_vars:
             state_var_flows = []
             for transition in transitions:
-                state_var_id = model._state_var_id(var)
+                state_var_id = scenario.model._state_var_id(var)
 
-                transition_id = model._transition_id(transition)
-                outflow = model._num_flow_from_state_to_transition(
+                transition_id = scenario.model._transition_id(transition)
+                outflow = scenario.model._num_flow_from_state_to_transition(
                     state_var_id, transition_id
                 )
-                inflow = model._flow_into_state_via_transition(
+                inflow = scenario.model._flow_into_state_via_transition(
                     state_var_id, transition_id
                 )
                 net_flow = inflow - outflow
@@ -113,7 +126,9 @@ class PetrinetEncoder(Encoder):
                     ),  # .simplify()
                     current_state[state_var_id].substitute(substitutions),
                 )  # .simplify()
-                flows = FUNMANSimplifier.sympy_simplify(flows)
+                flows = FUNMANSimplifier.sympy_simplify(
+                    flows, parameters=scenario.model_parameters()
+                )
             else:
                 flows = current_state[state_var_id].substitute(substitutions)
 
@@ -122,7 +137,7 @@ class PetrinetEncoder(Encoder):
                 substitutions[next_state[state_var_id]] = flows
 
         compartmental_bounds = self._encode_compartmental_bounds(
-            model, next_step, substitutions=substitutions
+            scenario.model, next_step, substitutions=substitutions
         )
 
         # If any variables depend upon time, then time updates need to be encoded.

@@ -209,7 +209,7 @@ class Encoder(ABC, BaseModel):
         Encoding
             formula and symbols for the encoding
         """
-
+        
         env = get_env()
         if not isinstance(env._formula_manager, FUNMANFormulaManager):
             env._formula_manager = FUNMANFormulaManager(env._formula_manager)
@@ -244,7 +244,7 @@ class Encoder(ABC, BaseModel):
                 substitutions = {**substitutions, **c_substitutions}
             if c is None:
                 c, substitutions = self._encode_next_step(
-                    scenario.model,
+                    scenario,
                     state_timepoints[i],
                     state_timepoints[i + 1],
                     substitutions=substitutions,

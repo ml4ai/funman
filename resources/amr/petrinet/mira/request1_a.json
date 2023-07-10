@@ -3,7 +3,7 @@
     "queries": [
       {
         "variable": "I",
-        "ub": 5e5
+        "ub": 2500
       }
     ]
   },
@@ -18,22 +18,21 @@
   "structure_parameters": [
     {
       "name": "num_steps",
-      "lb": 10,
-      "ub": 10,
+      "lb": 1,
+      "ub": 25,
       "label": "all"
     },
     {
       "name": "step_size",
-      "lb": 1,
-      "ub": 1,
+      "lb": 4,
+      "ub": 4,
       "label": "all"
     }
   ],
   "config": {
     "solver": "dreal",
     "dreal_mcts": true,
-    "tolerance": 1e-8,
-    "dreal_precision": 0.001,
-    "save_smtlib": true
+    "tolerance": 1e-5,
+    "dreal_precision": 0.001
   }
 }

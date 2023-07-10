@@ -1,3 +1,6 @@
+from typing import List
+
+from funman.representation.representation import Parameter
 import pysmt
 from pysmt.fnode import FNode
 from pysmt.shortcuts import get_env
@@ -11,14 +14,38 @@ class FUNMANSimplifier(pysmt.simplifier.Simplifier):
         super().__init__(env=env)
         self.manager = self.env.formula_manager
 
-    def sympy_simplify(formula):
+    def approximate(formula, parameters: List[Parameter], threshold=1e-5):
+        values = {p.name: p.ub for p in parameters}
+        original_size = len(formula.args)
+        to_drop = {
+            arg: 0 for arg in formula.args if abs(arg.subs(values)) < threshold
+        }
+        # if len(to_drop) > 0:
+        #     print("*" * 80)
+        #     print(f"Drop\n {to_drop}")
+        #     print(f"From\n {formula}")
+
+        # for drop in to_drop:
+        formula = formula.subs(to_drop)
+        # print(f"{original_size}->{len(formula.args)}")
+        # if len(to_drop) > 0:
+        #     print(f"Result\n {formula}")
+        #     pass
+        return formula
+
+    def sympy_simplify(formula, parameters: List[Parameter] = []):
         vars = formula.get_free_variables()
         var_map = {str(v): symbols(str(v)) for v in vars}
         simplified_formula = formula.simplify()
         expanded_formula = cancel(
             sympify(simplified_formula.serialize(), var_map)
         )
-        f = sympy_to_pysmt(expanded_formula)
+
+        approx_formula = FUNMANSimplifier.approximate(
+            expanded_formula, parameters
+        )
+
+        f = sympy_to_pysmt(approx_formula)
         return f
 
     # def walk_times(self, formula, args, **kwargs):
