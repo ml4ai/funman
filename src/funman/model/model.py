@@ -25,17 +25,17 @@ class Model(ABC, BaseModel):
     parameter_bounds: Dict[str, List[float]] = {}
     _extra_constraints: FNode = None
 
-    @abstractmethod
-    def default_encoder(self, config: "FUNMANConfig") -> "Encoder":
-        """
-        Return the default Encoder for the model
+    # @abstractmethod
+    # def default_encoder(self, config: "FUNMANConfig") -> "Encoder":
+    #     """
+    #     Return the default Encoder for the model
 
-        Returns
-        -------
-        Encoder
-            SMT encoder for model
-        """
-        pass
+    #     Returns
+    #     -------
+    #     Encoder
+    #         SMT encoder for model
+    #     """
+    #     pass
 
     def _get_init_value(self, var: str):
         if var in self.init_values:

@@ -138,6 +138,7 @@ class Semantics(BaseModel):
 class Model(BaseModel):
     class Config:
         extra = Extra.allow
+        allow_population_by_field_name = True
 
     name: str
     schema_: AnyUrl = Field(..., alias="schema")
