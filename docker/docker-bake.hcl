@@ -20,7 +20,7 @@ variable "DREAL_REPO_URL" {
   default = "https://github.com/danbryce/dreal4.git"
 }
 variable "DREAL_COMMIT_TAG" {
-  default = "39b0822d90b277331c08ade4e68a51ec3b814fb4"
+  default = "096a851a1995af954e75e4fe4693593db2012e5c"
 }
 variable "AUTOMATES_COMMIT_TAG" {
   default = "e5fb635757aa57007615a75371f55dd4a24851e0"
