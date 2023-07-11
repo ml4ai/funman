@@ -1,0 +1,35 @@
+{
+  "query": {
+    "queries": [
+      {
+        "variable": "I",
+        "ub": 1120000.0
+      }
+    ]
+  },
+  "parameters": [
+    {
+      "name": "t_0",
+      "lb": 0.0,
+      "ub": 200.0,
+      "label": "all"
+    }
+  ],
+  "structure_parameters": [
+    {
+      "name": "num_steps",
+      "lb": 1,
+      "ub": 100,
+      "label": "all"
+    },
+    {
+      "name": "step_size",
+      "lb": 4,
+      "ub": 4,
+      "label": "all"
+    }
+  ],
+  "config": {
+    "solver": "dreal"
+  }
+}
