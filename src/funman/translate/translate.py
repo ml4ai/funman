@@ -1,7 +1,7 @@
 """
 This module defines the abstract base classes for the model encoder classes in funman.translate package.
 """
-
+import logging
 from abc import ABC, abstractmethod
 from typing import Dict, List, Set, Tuple, Union
 
@@ -46,6 +46,9 @@ from funman.representation.representation import (
 from funman.representation.symbol import ModelSymbol
 from funman.translate.simplifier import FUNMANSimplifier
 from funman.utils.sympy_utils import FUNMANFormulaManager
+
+l = logging.getLogger(__name__)
+l.setLevel(logging.DEBUG)
 
 
 class Encoding(BaseModel):
@@ -209,7 +212,7 @@ class Encoder(ABC, BaseModel):
         Encoding
             formula and symbols for the encoding
         """
-        
+        l.debug("Encoding step: {current_step} to {next_step}")
         env = get_env()
         if not isinstance(env._formula_manager, FUNMANFormulaManager):
             env._formula_manager = FUNMANFormulaManager(env._formula_manager)
@@ -339,6 +342,16 @@ class Encoder(ABC, BaseModel):
             )
             for k in scenario.model._state_var_names()
         }
+
+        time_var = scenario.model._time_var()
+        if time_var is not None:
+            time_var_name = scenario.model._time_var_id(time_var)
+            time_symbol = self._encode_state_var(
+                time_var_name, time=0
+            )  # Needed so that there is a pysmt symbol for 't'
+
+            if self.config.substitute_subformulas:
+                init_assignments[time_symbol] = Real(0.0)
 
         substitutions = {**parameter_assignments, **init_assignments}
 

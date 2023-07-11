@@ -164,6 +164,9 @@ class GeneratedPetriNetModel(AbstractPetriNetModel):
         else:
             return None
 
+    def _time_var_id(self, time_var):
+        return f"timer_{time_var.id}"
+
     def _get_init_value(self, var: str):
         value = Model._get_init_value(self, var)
         if value is None:

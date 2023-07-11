@@ -38,11 +38,22 @@ MIRA_PETRI_DIR = os.path.join(AMR_EXAMPLES_DIR, "petrinet", "mira")
 
 cases = [
     # 1. b. 0 days delay
+    # (
+    #     os.path.join(MIRA_PETRI_DIR, "models", "scenario1_a.json"),
+    #     os.path.join(MIRA_PETRI_DIR, "requests", "request1_a_0_days.json"),
+    # ),
+    # (
+    #     os.path.join(MIRA_PETRI_DIR, "models", "scenario1_a.json"),
+    #     os.path.join(MIRA_PETRI_DIR, "requests", "request1_a_50_days.json"),
+    # ),
+    # (
+    #     os.path.join(MIRA_PETRI_DIR, "models", "scenario1_a.json"),
+    #     os.path.join(MIRA_PETRI_DIR, "requests", "request1_a_100_days.json"),
+    # ),
     (
-        os.path.join(MIRA_PETRI_DIR, "scenario1_a.json"),
-        os.path.join(SKEMA_PETRI_DIR, "request1_a.json"),
+        os.path.join(MIRA_PETRI_DIR, "models", "scenario1_a.json"),
+        os.path.join(MIRA_PETRI_DIR, "requests", "request1_a_all_days.json"),
     ),
- 
 ]
 
 if not os.path.exists(out_dir):

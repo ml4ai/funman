@@ -14,7 +14,7 @@ class FUNMANSimplifier(pysmt.simplifier.Simplifier):
         super().__init__(env=env)
         self.manager = self.env.formula_manager
 
-    def approximate(formula, parameters: List[Parameter], threshold=1e-5):
+    def approximate(formula, parameters: List[Parameter], threshold=1e-20):
         values = {p.name: p.ub for p in parameters}
         original_size = len(formula.args)
         to_drop = {
@@ -27,17 +27,18 @@ class FUNMANSimplifier(pysmt.simplifier.Simplifier):
 
         # for drop in to_drop:
         formula = formula.subs(to_drop)
-        # print(f"{original_size}->{len(formula.args)}")
+        print(f"{original_size}->{len(formula.args)}")
         # if len(to_drop) > 0:
         #     print(f"Result\n {formula}")
         #     pass
+
         return formula
 
     def sympy_simplify(formula, parameters: List[Parameter] = []):
         vars = formula.get_free_variables()
         var_map = {str(v): symbols(str(v)) for v in vars}
         simplified_formula = formula.simplify()
-        expanded_formula = cancel(
+        expanded_formula = expand(
             sympify(simplified_formula.serialize(), var_map)
         )
 

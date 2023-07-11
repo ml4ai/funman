@@ -57,7 +57,7 @@ class PetrinetEncoder(Encoder):
         state_vars = scenario.model._state_vars()
         transitions = scenario.model._transitions()
         time_var = scenario.model._time_var()
-        time_var_name = scenario.model._state_var_id(time_var)
+        time_var_name = scenario.model._time_var_id(time_var)
         time_symbol = self._encode_state_var(
             time_var_name
         )  # Needed so that there is a pysmt symbol for 't'
@@ -83,18 +83,24 @@ class PetrinetEncoder(Encoder):
 
         # Each transition corresponds to a term that is the product of current state vars and a parameter
         transition_terms = {
-            scenario.model._transition_id(t): FUNMANSimplifier.sympy_simplify(
-                self._encode_transition_term(
-                    t,
-                    current_state,
-                    next_state,
-                    scenario.model,
-                    substitutions=substitutions,
-                ).substitute(substitutions),
-                parameters=scenario.model_parameters(),
+            scenario.model._transition_id(t): self._encode_transition_term(
+                t,
+                current_state,
+                next_state,
+                scenario.model,
+                substitutions=substitutions,
             )
             for t in transitions
         }
+
+        if self.config.substitute_subformulas:
+            transition_terms = {
+                k: FUNMANSimplifier.sympy_simplify(
+                    v.substitute(substitutions),
+                    parameters=scenario.model_parameters(),
+                )
+                for k, v in transition_terms.items()
+            }
 
         # for each var, next state is the net flow for the var: sum(inflow) - sum(outflow)
         net_flows = []
@@ -114,23 +120,24 @@ class PetrinetEncoder(Encoder):
 
                 if net_flow != 0:
                     state_var_flows.append(
-                        Times(
-                            Real(net_flow) * transition_terms[transition_id]
-                        ).substitute(substitutions)
+                        Times(Real(net_flow) * transition_terms[transition_id])
                     )
             if len(state_var_flows) > 0:
                 flows = Plus(
                     Times(
                         Real(step_size),
-                        Plus(state_var_flows).substitute(substitutions),
+                        Plus(state_var_flows),
                     ),  # .simplify()
-                    current_state[state_var_id].substitute(substitutions),
+                    current_state[state_var_id],
                 )  # .simplify()
-                flows = FUNMANSimplifier.sympy_simplify(
-                    flows, parameters=scenario.model_parameters()
-                )
+                if self.config.substitute_subformulas:
+                    flows = FUNMANSimplifier.sympy_simplify(
+                        flows.substitute(substitutions),
+                        parameters=scenario.model_parameters(),
+                    )
             else:
-                flows = current_state[state_var_id].substitute(substitutions)
+                flows = current_state[state_var_id]
+                # .substitute(substitutions)
 
             net_flows.append(Equals(next_state[state_var_id], flows))
             if self.config.substitute_subformulas:
@@ -161,6 +168,19 @@ class PetrinetEncoder(Encoder):
     def _define_init(self, model: Model, init_time: int = 0) -> FNode:
         state_var_names = model._state_var_names()
         compartmental_bounds = self._encode_compartmental_bounds(model, 0)
+
+        time_var = model._time_var()
+
+        if time_var:
+            time_var_name = model._time_var_id(time_var)
+            time_symbol = self._encode_state_var(
+                time_var_name, time=0
+            )  # Needed so that there is a pysmt symbol for 't'
+
+            time_var_init = Equals(time_symbol, Real(0.0))
+        else:
+            time_var_init = TRUE()
+
         return And(
             And(
                 [
@@ -169,6 +189,7 @@ class PetrinetEncoder(Encoder):
                 ]
             ),
             compartmental_bounds,
+            time_var_init,
         )
 
     def _encode_compartmental_bounds(

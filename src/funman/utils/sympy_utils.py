@@ -88,6 +88,9 @@ def rate_expr_to_pysmt(expr, state=None):
         symbol_to_state_var = {
             env_symbols[s]: state[str(s)] for s in symbols if str(s) in state
         }
+        # Replace mapping timer_t: timer_t_k with t: timer_t_k
+        symbol_to_state_var[Symbol("t", REAL)] = state["timer_t"]
+        
         p_sub = p.substitute(symbol_to_state_var)
         return p_sub
     else:
