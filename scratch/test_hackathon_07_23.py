@@ -21,7 +21,7 @@ RESOURCES = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "../resources"
 )
 
-out_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "out")
+out_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "out", "hackathon")
 
 
 models = {GeneratedPetrinet, GeneratedRegnet}
@@ -38,22 +38,25 @@ MIRA_PETRI_DIR = os.path.join(AMR_EXAMPLES_DIR, "petrinet", "mira")
 
 cases = [
     # 1. b. 0 days delay
-    # (
-    #     os.path.join(MIRA_PETRI_DIR, "models", "scenario1_a.json"),
-    #     os.path.join(MIRA_PETRI_DIR, "requests", "request1_a_0_days.json"),
-    # ),
+    (
+        os.path.join(MIRA_PETRI_DIR, "models", "scenario1_a.json"),
+        os.path.join(MIRA_PETRI_DIR, "requests", "request1_a_0_days.json"),
+    ),
+    # 1. b. 50 days delay
     # (
     #     os.path.join(MIRA_PETRI_DIR, "models", "scenario1_a.json"),
     #     os.path.join(MIRA_PETRI_DIR, "requests", "request1_a_50_days.json"),
     # ),
+    # 1. b. 100 days delay
     # (
     #     os.path.join(MIRA_PETRI_DIR, "models", "scenario1_a.json"),
     #     os.path.join(MIRA_PETRI_DIR, "requests", "request1_a_100_days.json"),
     # ),
-    (
-        os.path.join(MIRA_PETRI_DIR, "models", "scenario1_a.json"),
-        os.path.join(MIRA_PETRI_DIR, "requests", "request1_a_all_days.json"),
-    ),
+    # 1. b. all days delay possible
+    # (
+    #     os.path.join(MIRA_PETRI_DIR, "models", "scenario1_a.json"),
+    #     os.path.join(MIRA_PETRI_DIR, "requests", "request1_a_all_days.json"),
+    # ),
 ]
 
 if not os.path.exists(out_dir):
@@ -111,11 +114,11 @@ class TestModels(unittest.TestCase):
                 results = self._worker.get_results(work_unit.id)
                 break
 
-        ParameterSpacePlotter(results.parameter_space, plot_points=True).plot(
-            show=False
-        )
-        plt.savefig(f"{out_dir}/{model.__module__}.png")
-        plt.close()
+        # ParameterSpacePlotter(results.parameter_space, plot_points=True).plot(
+        #     show=False
+        # )
+        # plt.savefig(f"{out_dir}/{model.__module__}.png")
+        # plt.close()
 
         assert results
 
