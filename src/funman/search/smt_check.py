@@ -58,7 +58,7 @@ class SMTCheck(Search):
                 parameter_values = {
                     k: v
                     for k, v in result_dict.items()
-                    if k in [p.name for p in problem.parameters]
+                    # if k in [p.name for p in problem.parameters]
                 }
                 for k, v in structural_configuration.items():
                     parameter_values[k] = v

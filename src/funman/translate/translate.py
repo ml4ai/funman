@@ -74,6 +74,9 @@ class FlatEncoding(BaseModel):
     def assume(self, assumption: FNode):
         _formula = Iff(assumption, _formula)
 
+    def symbols(self):
+        return self._symbols
+
     # @validator("formula")
     # def set_symbols(cls, v: FNode):
     #     cls.symbols = Symbol(v, REAL)
@@ -122,6 +125,10 @@ class LayeredEncoding(BaseModel):
             (layer[0].simplify(), layer[1]) for layer in self._layers
         ]
 
+    def symbols(self):
+        return { k:v for layer in self._layers for k,v in layer[1].items()}
+
+
 
 class EncodingOptions(object):
     """
@@ -158,11 +165,10 @@ class Encoder(ABC, BaseModel):
         scenario = kwargs["scenario"]
         self._encode_timed_model_elements(scenario)
 
-    def _symbols(self, formula: FNode) -> Dict[str, Dict[str, FNode]]:
+    def _symbols(self, vars: List[FNode]) -> Dict[str, Dict[str, FNode]]:
         symbols = {}
-        vars = list(formula.get_free_variables())
         # vars.sort(key=lambda x: x.symbol_name())
-        for var in vars:
+        for var in vars.values():
             var_name, timepoint = self._split_symbol(var)
             if timepoint:
                 if var_name not in symbols:
@@ -230,10 +236,12 @@ class Encoder(ABC, BaseModel):
         variable_symbols = [self._encode_state_var(p) for p in variables]
 
         substitutions = self._initialize_substitutions(scenario)
-        constraints = [
-            self._timed_model_elements["init"]
-            .substitute(substitutions)
-            .simplify()
+
+        initial_state = self._timed_model_elements["init"]
+        initial_symbols = initial_state.get_free_variables()
+        layers = [
+(           initial_state,
+            {str(s):s for s in initial_symbols})
         ]
 
         for i, timepoint in enumerate(transition_timepoints):
@@ -258,7 +266,7 @@ class Encoder(ABC, BaseModel):
                 self._timed_model_elements["time_step_substitutions"][
                     timepoint
                 ][step_size - self._min_step_size] = substitutions
-            constraints.append(c)
+            layers.append((c,{str(s):s for s in c.get_free_variables()}))
 
         #     if time_dependent_parameters:
         #         params = self._timed_model_elements["timed_parameters"][
@@ -323,7 +331,7 @@ class Encoder(ABC, BaseModel):
         #     }
 
         return LayeredEncoding(
-            _layers=[(c, c.get_free_variables()) for c in constraints],
+            _layers=layers,
             substitutions=substitutions,
         )
 
@@ -606,7 +614,7 @@ class Encoder(ABC, BaseModel):
         layers = [
             (
                 And([q_layer[i][0] for q_layer in q_layers]),
-                {s for q_layer in q_layers for s in q_layer[i][1]},
+                {str(s):s for q_layer in q_layers for s in q_layer[i][1]},
             )
             for i, t in enumerate(timepoints)
         ]
@@ -623,7 +631,7 @@ class Encoder(ABC, BaseModel):
             for s in timepoints
         ]
         return LayeredEncoding(
-            _layers=[(l, l.get_free_variables()) for l in layers]
+            _layers=[(l, {str(v):v for v in l.get_free_variables()}) for l in layers]
         )
 
     def _encode_query_ge(self, query, num_steps, step_size):
@@ -637,12 +645,12 @@ class Encoder(ABC, BaseModel):
             for s in timepoints
         ]
         return LayeredEncoding(
-            _layers=[(l, l.get_free_variables()) for l in layers]
+            _layers=[(l, {str(v): v for v in l.get_free_variables()}) for l in layers]
         )
 
     def _encode_query_true(self, query, num_steps, step_size):
         timepoints = range(0, (step_size * num_steps) + 1, step_size)
-        return LayeredEncoding(_layers=[(TRUE(), []) for t in timepoints])
+        return LayeredEncoding(_layers=[(TRUE(), {}) for t in timepoints])
 
     def symbol_timeseries(
         self, model_encoding, pysmtModel: pysmtModel
@@ -691,7 +699,7 @@ class Encoder(ABC, BaseModel):
             mapping from symbol and timepoint to value
         """
 
-        vars = model_encoding._symbols
+        vars = self._symbols(model_encoding.symbols())
         vals = {}
         for var in vars:
             vals[var] = {}

@@ -271,4 +271,6 @@ class PetrinetEncoder(Encoder):
             state variable names
         """
         state_vars = model._state_var_names()
+        time_var = model._time_var()
+        state_vars.append(f"timer_{time_var.id}")
         return state_vars
