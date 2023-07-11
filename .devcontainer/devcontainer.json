@@ -15,7 +15,13 @@
 				"telemetry.telemetryLevel": "off",
 				"python.defaultInterpreterPath": "/home/${localEnv:USER}/funman_venv/bin/python",
 				"python.testing.unittestEnabled": true,
-				"python.testing.cwd": "/home/${localEnv:USER}/funman/test"
+				"python.testing.unittestArgs": [
+					"-v",
+					"-s",
+					".",
+					"-p",
+					"*test*.py"
+				]
 			},
 			"extensions": [
 				"ms-toolsai.jupyter",
