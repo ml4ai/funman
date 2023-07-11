@@ -13,9 +13,18 @@ from contextlib import asynccontextmanager, contextmanager
 from typing import Optional, Union
 
 import uvicorn
-from fastapi import Depends, FastAPI, HTTPException, Security, status
+from fastapi import (
+    APIRouter,
+    Depends,
+    FastAPI,
+    HTTPException,
+    Request,
+    Security,
+    status,
+)
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
+from fastapi.responses import RedirectResponse
 from fastapi.security import APIKeyHeader
 from typing_extensions import Annotated
 
@@ -59,7 +68,57 @@ def get_worker():
     return _worker
 
 
-app = FastAPI(title="funman_api", lifespan=lifespan)
+def _key_auth(api_key: str, token: str, *, name: str = "API"):
+    # bypass key auth if no token is provided
+    if api_key is None:
+        print(f"WARNING: Running without {name} token")
+        return
+
+    # ensure the token is a non-empty string
+    if not isinstance(api_key, str) or api_key == "":
+        print(f"ERROR: {name} token is either empty or not a string")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Internal Server Error",
+        )
+
+    if token != api_key:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Forbidden"
+        )
+
+
+api_key_header = APIKeyHeader(name="token", auto_error=False)
+admin_key_header = APIKeyHeader(name="token", auto_error=False)
+
+
+def _api_key_auth(token: str = Security(api_key_header)):
+    return _key_auth(settings.funman_api_token, token)
+
+
+def _admin_key_auth(token: str = Security(admin_key_header)):
+    return _key_auth(settings.funman_admin_token, token, name="Admin API")
+
+
+if settings.funman_base_url is not None:
+    print(f"FUNMAN_BASE_URL={settings.funman_base_url}")
+
+app = FastAPI(
+    title="funman_api", lifespan=lifespan, root_path=settings.funman_base_url
+)
+print(f"root_path={app.root_path}")
+# router for public api
+api_router = APIRouter(
+    prefix="/api",
+    dependencies=[Depends(_api_key_auth)],
+)
+# router for admin api
+# TODO this is a placeholder
+admin_router = APIRouter(
+    prefix="/admin",
+    dependencies=[Depends(_admin_key_auth)],
+    include_in_schema=False,
+)
 
 
 def custom_openapi():
@@ -76,32 +135,6 @@ def custom_openapi():
 
 
 app.openapi = custom_openapi
-
-api_key_header = APIKeyHeader(name="token", auto_error=False)
-
-
-def _api_key_auth(api_key: str = Security(api_key_header)):
-    # bypass key auth if no token is provided
-    if settings.funman_api_token is None:
-        print("WARNING: Running without API token")
-        return
-
-    # ensure the token is a non-empty string
-    if (
-        not isinstance(settings.funman_api_token, str)
-        or settings.funman_api_token == ""
-    ):
-        print("ERROR: API token is either empty or not a string")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Internal Server Error",
-        )
-
-    if api_key != settings.funman_api_token:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Forbidden"
-        )
-
 
 origins = ["*"]
 
@@ -129,23 +162,14 @@ def internal_error_handler():
         )
 
 
-@app.get("/", dependencies=[Depends(_api_key_auth)])
-def read_root():
-    """
-    Root endpoint
-
-    Returns
-    -------
-    Dict
-        emtpy result
-    """
-    return {}
+@app.get("/", include_in_schema=False)
+def read_root(request: Request):
+    return RedirectResponse(url=f"{request.scope.get('root_path')}/docs")
 
 
-@app.get(
+@api_router.get(
     "/queries/{query_id}/halt",
     response_model=str,
-    dependencies=[Depends(_api_key_auth)],
 )
 async def halt(
     query_id: str, worker: Annotated[FunmanWorker, Depends(get_worker)]
@@ -155,21 +179,19 @@ async def halt(
         return "Success"
 
 
-@app.get(
+@admin_router.get(
     "/queries/current",
     response_model=Optional[str],
-    dependencies=[Depends(_api_key_auth)],
 )
 async def get_current(worker: Annotated[FunmanWorker, Depends(get_worker)]):
     with internal_error_handler():
         return worker.get_current()
 
 
-@app.get(
+@api_router.get(
     "/queries/{query_id}",
     response_model=FunmanResults,
     response_model_exclude_defaults=True,
-    dependencies=[Depends(_api_key_auth)],
 )
 async def get_queries(
     query_id: str, worker: Annotated[FunmanWorker, Depends(get_worker)]
@@ -181,11 +203,10 @@ async def get_queries(
             raise HTTPException(404)
 
 
-@app.post(
+@api_router.post(
     "/queries",
     response_model=FunmanWorkUnit,
     response_model_exclude_defaults=True,
-    dependencies=[Depends(_api_key_auth)],
 )
 async def post_queries(
     model: Union[
@@ -227,6 +248,10 @@ def _wrap_with_internal_model(
     else:
         return model
 
+
+# include routers
+app.include_router(api_router)
+app.include_router(admin_router)
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8190)
