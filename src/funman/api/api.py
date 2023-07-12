@@ -106,7 +106,6 @@ if settings.funman_base_url is not None:
 app = FastAPI(
     title="funman_api", lifespan=lifespan, root_path=settings.funman_base_url
 )
-print(f"root_path={app.root_path}")
 # router for public api
 api_router = APIRouter(
     prefix="/api",
