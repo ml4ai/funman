@@ -136,7 +136,7 @@ target "funman-git" {
     FROM_TAG = "${VERSION}-${AUTOMATES_COMMIT_TAG}"
   }
   dockerfile = "./docker/git/Dockerfile"
-  tags = tag("funman-git", "", "")
+  tags = tag("funman-git", "", "git")
 }
 
 target "funman-api" {
@@ -147,7 +147,7 @@ target "funman-api" {
   args = {
     SIFT_REGISTRY_ROOT = "${DOCKER_REGISTRY}/${DOCKER_ORG}/"
     FROM_IMAGE = "funman-git"
-    FROM_TAG = "${VERSION}"
+    FROM_TAG = "${VERSION}-git"
   }
   dockerfile = "Dockerfile"
   tags = tag("funman-api", "", "")
@@ -206,6 +206,6 @@ target "funman-git-multiplatform" {
 target "funman-api-multiplatform" {
   inherits = ["_platforms", "funman-api"]
   contexts = {
-    "${DOCKER_REGISTRY}/${DOCKER_ORG}/funman-git:${VERSION}" = "target:funman-git-multiplatform"
+    "${DOCKER_REGISTRY}/${DOCKER_ORG}/funman-git:${VERSION}-git" = "target:funman-git-multiplatform"
   }
 }
