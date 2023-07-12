@@ -18,7 +18,9 @@ TEST_OUT = FILE_DIRECTORY / "out"
 TEST_OUT.mkdir(parents=True, exist_ok=True)
 
 TEST_API_TOKEN = "funman-test-api-token"
+TEST_BASE_URL = "funman"
 settings.funman_api_token = TEST_API_TOKEN
+settings.funman_base_url = TEST_BASE_URL
 
 
 class TestAPI(unittest.TestCase):
@@ -39,7 +41,7 @@ class TestAPI(unittest.TestCase):
         while True:
             sleep(wait_time)
             response = client.get(
-                f"/queries/{id}", headers={"token": f"{TEST_API_TOKEN}"}
+                f"/api/queries/{id}", headers={"token": f"{TEST_API_TOKEN}"}
             )
             assert response.status_code == 200
             data = FunmanResults.parse_raw(response.content.decode())
@@ -76,7 +78,7 @@ class TestAPI(unittest.TestCase):
         first_id = None
         with TestClient(app) as client:
             response = client.post(
-                "/queries",
+                "/api/queries",
                 json={
                     "model": {
                         "init_values": init_values,
@@ -104,7 +106,8 @@ class TestAPI(unittest.TestCase):
 
         with TestClient(app) as client:
             response = client.get(
-                f"/queries/{first_id}", headers={"token": f"{TEST_API_TOKEN}"}
+                f"/api/queries/{first_id}",
+                headers={"token": f"{TEST_API_TOKEN}"},
             )
             assert response.status_code == 200
             got_data = FunmanResults.parse_raw(response.content.decode())
@@ -113,13 +116,13 @@ class TestAPI(unittest.TestCase):
 
     def test_api_bad_token(self):
         with TestClient(app) as client:
-            response = client.get(f"/queries/bogus")
+            response = client.get(f"/api/queries/bogus")
             assert response.status_code == 401
 
     def test_api_bad_id(self):
         with TestClient(app) as client:
             response = client.get(
-                f"/queries/bogus", headers={"token": f"{TEST_API_TOKEN}"}
+                f"/api/queries/bogus", headers={"token": f"{TEST_API_TOKEN}"}
             )
             assert response.status_code == 404
 
@@ -134,7 +137,7 @@ class TestAPI(unittest.TestCase):
 
         with TestClient(app) as client:
             response = client.post(
-                "/queries",
+                "/api/queries",
                 json={
                     "model": {
                         "init_values": init_values,
@@ -169,7 +172,7 @@ class TestAPI(unittest.TestCase):
 
         with TestClient(app) as client:
             response = client.post(
-                "/queries",
+                "/api/queries",
                 json={
                     "model": {
                         "init_values": init_values,
@@ -215,7 +218,7 @@ class TestAPI(unittest.TestCase):
         request = json.loads(REQUEST_PATH.read_bytes())
         with TestClient(app) as client:
             response = client.post(
-                "/queries",
+                "/api/queries",
                 json={"model": model, "request": request},
                 headers={"token": f"{TEST_API_TOKEN}"},
             )

@@ -4,7 +4,6 @@ from functools import partial
 from queue import Queue
 from typing import Dict, List
 
-import docker
 import dreal
 import pysmt.smtlib.commands as smtcmd
 from funman_dreal.converter import DRealConverter
@@ -24,6 +23,7 @@ from pysmt.solvers.smtlib import SmtLibBasicSolver, SmtLibIgnoreMixin
 from pysmt.solvers.solver import Solver, SolverOptions
 from tenacity import retry
 
+import docker
 from funman.utils.smtlib_utils import FUNMANSmtPrinter
 
 # def setup(smt2_file, benchmark_path, out_dir):

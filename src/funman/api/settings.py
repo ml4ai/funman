@@ -4,5 +4,7 @@ from pydantic import BaseSettings
 
 
 class Settings(BaseSettings):
-    funman_api_token: Optional[str] = None
     data_path: str = "."
+    funman_admin_token: Optional[str] = None
+    funman_api_token: Optional[str] = None
+    funman_base_url: Optional[str] = None
