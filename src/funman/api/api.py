@@ -128,6 +128,7 @@ def custom_openapi():
         version=FunmanVersion,
         description="Functional Model Analysis",
         routes=app.routes,
+        servers=app.servers,
     )
     app.openapi_schema = openapi_schema
     return app.openapi_schema
