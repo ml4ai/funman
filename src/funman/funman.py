@@ -69,6 +69,8 @@ class FUNMANConfig(BaseModel):
     dreal_mcts = True
     """Substitute subformulas to simplify overall encoding"""
     substitute_subformulas = True
+    """Enforce compartmental variable constraints"""
+    use_compartmental_constraints = True
 
     @validator("solver")
     def import_dreal(cls, v):

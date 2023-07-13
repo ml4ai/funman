@@ -1,6 +1,7 @@
 import faulthandler
 import io
 import logging
+import math
 import os
 from contextlib import contextmanager
 from functools import partial
@@ -572,7 +573,10 @@ class DRealNative(Solver, SmtLibBasicSolver, SmtLibIgnoreMixin):
         # print(f"get_value() {item}: {self.model[item]}")
         mid = (self.model[item].ub() - self.model[item].lb()) / 2.0
         mid = mid + self.model[item].lb()
-        return Real(mid)
+        if not math.isinf(mid):
+            return Real(mid)
+        else:
+            return Real(self.model[item].lb())
 
     @clear_pending_pop
     def solve(self, assumptions=None):

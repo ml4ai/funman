@@ -4,7 +4,7 @@ from funman.representation.representation import Parameter
 import pysmt
 from pysmt.fnode import FNode
 from pysmt.shortcuts import get_env
-from sympy import cancel, expand, symbols, sympify, nsimplify, Float, Add, Abs, Max
+from sympy import cancel, expand, symbols, sympify, nsimplify, Float, Add, Abs, Max, lambdify, N
 
 from funman.utils.sympy_utils import sympy_to_pysmt
 
@@ -24,15 +24,25 @@ class FUNMANSimplifier(pysmt.simplifier.Simplifier):
         original_size = len(formula.args)
 
         def calc_mag(g):
-            mag = Abs(g.evalf(subs=ub_values))
-            if mag > threshold:
-                return Float(mag)
+            free_syms = list(g.free_symbols)
+            f = lambdify(list(g.free_symbols), Abs(g), "numpy")
+            ub_vals = [ub_values[str(x)] for x in free_syms]
+            ub_mag =f(*ub_vals)
+            if ub_mag > threshold:
+                return Float(ub_mag)
             else:
-                return Float(Max(mag, Abs(g.evalf(subs=lb_values))))
+                lb_vals = [lb_values[str(x)] for x in free_syms]
+                lb_mag =f(*lb_vals)
+                return Float(Max(ub_mag, lb_mag))
 
-        term_magnitude = {
-           arg: calc_mag(arg)  for arg in formula.args
-        }
+        term_magnitude = {}
+        for arg in formula.args:
+            try:
+                mag = calc_mag(arg)
+            except Exception as e:
+                mag = N(arg, subs=lb_values) 
+            term_magnitude[arg] = mag 
+
         to_drop = {
             arg: 0 for arg, tm in term_magnitude.items() if tm < threshold 
         }

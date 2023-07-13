@@ -1,0 +1,114 @@
+{
+  "query": {},
+  "parameters": [
+    {
+      "name": "ai",
+      "lb": 0.4,
+      "ub": 0.6,
+      "label": "all"
+    },
+    {
+      "name": "beta",
+      "lb": 0.045,
+      "ub": 0.050,
+      "label": "all"
+    },
+    {
+      "name": "beta_scale",
+      "lb": 0.0,
+      "ub": 1.1,
+      "label": "all"
+    },
+    {
+      "name": "beta_v1",
+      "lb": 0.009,
+      "ub": 0.01,
+      "label": "all"
+    },
+    {
+      "name": "beta_v2",
+      "lb": 0.002,
+      "ub": 0.003,
+      "label": "all"
+    },
+    {
+      "name": "ai_R",
+      "lb": 0.84,
+      "ub": 0.86,
+      "label": "all"
+    },
+    {
+      "name": "beta_R",
+      "lb": 0.002,
+      "ub": 0.003,
+      "label": "all"
+    },
+    {
+      "name": "ai_beta_ratio",
+      "lb": 2,
+      "ub": 4,
+      "label": "all"
+    },
+    {
+      "name": "gamma",
+      "lb": 0.035,
+      "ub": 0.036,
+      "label": "all"
+    },
+    {
+      "name": "mu",
+      "lb": 1.0e-05,
+      "ub": 3.0e-05,
+      "label": "all"
+    },
+    {
+      "name": "mu_I",
+      "lb": 0.0,
+      "ub": 0.1,
+      "label": "all"
+    },
+    {
+      "name": "mu_IV",
+      "lb": 0.0,
+      "ub": 0.1,
+      "label": "all"
+    },
+    {
+      "name": "nu_v1",
+      "lb": 0.0,
+      "ub": 0.1,
+      "label": "all"
+    },
+    {
+      "name": "nu_v2",
+      "lb": 0.0006,
+      "ub": 0.0007,
+      "label": "all"
+    },
+    {
+      "name": "nu_R",
+      "lb": 0.0001,
+      "ub": 0.001,
+      "label": "all"
+    }
+  ],
+  "structure_parameters": [
+    {
+      "name": "num_steps",
+      "lb": 1,
+      "ub": 2,
+      "label": "all"
+    },
+    {
+      "name": "step_size",
+      "lb": 1,
+      "ub": 1,
+      "label": "all"
+    }
+  ],
+  "config": {
+    "solver": "dreal",
+    "save_smtlib": true,
+    "substitute_subformulas": false
+  }
+}

@@ -4,6 +4,8 @@ during the configuration and execution of a search.
 """
 import copy
 import logging
+import sys
+import math
 from functools import total_ordering
 from statistics import mean as average
 from typing import Dict, List, Literal, Optional, Union
@@ -430,7 +432,7 @@ class Point(BaseModel):
         return res
 
     def __hash__(self):
-        return int(sum([v for _, v in self.values.items()]))
+        return int(sum([v for _, v in self.values.items() if v != sys.float_info.max and not math.isinf(v)]))
 
     def __eq__(self, other):
         if isinstance(other, Point):
