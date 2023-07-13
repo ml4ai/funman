@@ -36,68 +36,21 @@ MIRA_PETRI_DIR = os.path.join(AMR_EXAMPLES_DIR, "petrinet", "mira")
 
 
 cases = [
-    # 1. b. 0 days delay
-    # (
-    #     os.path.join(MIRA_PETRI_DIR, "models", "scenario1_a.json"),
-    #     os.path.join(MIRA_PETRI_DIR, "requests", "request1_a_0_days.json"),
-    # ),
-    # 1. b. 50 days delay
-    # (
-    #     os.path.join(MIRA_PETRI_DIR, "models", "scenario1_a.json"),
-    #     os.path.join(MIRA_PETRI_DIR, "requests", "request1_a_50_days.json"),
-    # ),
-    # 1. b. 100 days delay
-    # (
-    #     os.path.join(MIRA_PETRI_DIR, "models", "scenario1_a.json"),
-    #     os.path.join(MIRA_PETRI_DIR, "requests", "request1_a_100_days.json"),
-    # ),
-    # 1. b. all days delay possible
-    # (
-    #     os.path.join(MIRA_PETRI_DIR, "models", "scenario1_a.json"),
-    #     os.path.join(MIRA_PETRI_DIR, "requests", "request1_a_all_days.json"),
-    # ),
-    #
-    # 2. b. Wild Type variant and no vaccination
-    # Determine if default parameters are consistent
+    # Buggy model cannot satisfy compartmental constraints
     (
         os.path.join(MIRA_PETRI_DIR, "models", "scenario2_a_beta_scale_static.json"),
-        os.path.join(MIRA_PETRI_DIR, "requests", "request2_b_default_w_compartmental_constrs.json"),
+        os.path.join(MIRA_PETRI_DIR, "requests", "request2_b_default_w_compartmental_constrs.json"), 0
     ),
-    # 2. b. Wild Type variant and no vaccination
-    # Determine if default parameters are consistent
-    # (
-    #     os.path.join(MIRA_PETRI_DIR, "models", "scenario2_a_beta_scale_static.json"),
-    #     os.path.join(MIRA_PETRI_DIR, "requests", "request2_b_default_wo_compartmental_constrs.json"),
-    # ),
-        # 2. b. Wild Type variant and no vaccination
-    # Determine if default parameters are consistent
+    # Buggy model works if no compartmental constraints
+    (
+        os.path.join(MIRA_PETRI_DIR, "models", "scenario2_a_beta_scale_static.json"),
+        os.path.join(MIRA_PETRI_DIR, "requests", "request2_b_default_wo_compartmental_constrs.json"), 1
+    ),
+    # Fixed model can satisfy compartmental constraints
     (
         os.path.join(MIRA_PETRI_DIR, "models", "scenario2_a_beta_scale_static_fixed.json"),
-        os.path.join(MIRA_PETRI_DIR, "requests", "request2_b_default_w_compartmental_constrs.json"),
+        os.path.join(MIRA_PETRI_DIR, "requests", "request2_b_default_w_compartmental_constrs.json"), 1
     ),
-    # 2. b. Wild Type variant and no vaccination
-    # Determine if default parameters are consistent
-    # (
-    #     os.path.join(MIRA_PETRI_DIR, "models", "scenario2_a_beta_scale_static_fixed.json"),
-    #     os.path.join(MIRA_PETRI_DIR, "requests", "request2_b_default_wo_compartmental_constrs.json"),
-    # ),
-    # 2. b. Wild Type variant and no vaccination
-    # Show that some assignment to the parameters is consistent
-    # (
-    #     os.path.join(MIRA_PETRI_DIR, "models", "scenario2_a_beta_scale_static.json"),
-    #     os.path.join(MIRA_PETRI_DIR, "requests", "request2_b_unbound_params.json"),
-    # ),
-    # 2. b. Find values for parameters near given values
-    # (
-    #     os.path.join(MIRA_PETRI_DIR, "models", "scenario2_a_beta_scale_static.json"),
-    #     os.path.join(MIRA_PETRI_DIR, "requests", "request2_b_loose_param_bounds.json"),
-    # ),
-    # 2. b. synthesize
-        # 2. b. Find values for parameters near given values
-    # (
-    #     os.path.join(MIRA_PETRI_DIR, "models", "scenario2_a_beta_scale_static.json"),
-    #     os.path.join(MIRA_PETRI_DIR, "requests", "request2_b_synthesize.json"),
-    # ),
 ]
 
 if not os.path.exists(out_dir):
@@ -130,8 +83,8 @@ class TestModels(unittest.TestCase):
                 pass
         raise Exception(f"Could not determine the Model type of {model_file}")
 
-    def run_instance(self, case: Tuple[str, str]):
-        (model_file, request_file) = case
+    def run_instance(self, case: Tuple[str, str, int]):
+        (model_file, request_file, expected_num_true_points) = case
 
         model = self.get_model(model_file)
         request = pydantic.parse_file_as(FunmanWorkRequest, request_file)
@@ -150,20 +103,13 @@ class TestModels(unittest.TestCase):
                 # ).plot(show=False)
                 # plt.savefig(f"{out_dir}/{model.__module__}.png")
                 # plt.close()
-                sleep(10)
+                sleep(2)
             else:
                 results = self._worker.get_results(work_unit.id)
                 break
 
-        # ParameterSpacePlotter(results.parameter_space, plot_points=True).plot(
-        #     show=False
-        # )
-        # plt.savefig(f"{out_dir}/{model.__module__}.png")
-        # plt.close()
+        assert len(results.parameter_space.true_points) == expected_num_true_points
 
-        assert results
-
-        assert True
 
 
 if __name__ == "__main__":

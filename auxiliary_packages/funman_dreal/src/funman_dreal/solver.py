@@ -43,7 +43,7 @@ from funman.utils.smtlib_utils import FUNMANSmtPrinter
 
 
 l = logging.getLogger(__name__)
-l.setLevel(logging.DEBUG)
+l.setLevel(logging.INFO)
 
 
 # TODO find a better way to determine if solver was successful
