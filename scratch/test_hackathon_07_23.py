@@ -58,7 +58,7 @@ cases = [
     # ),
     #
     (
-               os.path.join(MIRA_PETRI_DIR, "models", "scenario1_a.json"),
+        os.path.join(MIRA_PETRI_DIR, "models", "scenario1_a.json"),
         os.path.join(MIRA_PETRI_DIR, "requests", "request1_a_all_days.json"), 
     )
 ]
