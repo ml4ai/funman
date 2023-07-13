@@ -16,7 +16,7 @@ class EncodedModel(Model):
 
     _formula: FNode = TRUE()
 
-    def default_encoder(self, config: "FUNMANConfig") -> "Encoder":
+    def default_encoder(self, config: "FUNMANConfig", scenario: "AnalysisScenario") -> "Encoder":
         """
         EncodedModel uses EncodedEncoder as the default.
 
@@ -27,7 +27,7 @@ class EncodedModel(Model):
         """
         from funman.translate.encoded import EncodedEncoder
 
-        return EncodedEncoder(config=config, model=self)
+        return EncodedEncoder(config=config, scenario=scenario)
 
     def _parameter_names(self):
         return None

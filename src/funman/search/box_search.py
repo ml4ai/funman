@@ -806,33 +806,57 @@ class BoxSearch(Search):
 
         config._handler.open()
 
-        step_sizes = {
-            c["step_size"]
-            for c in problem._smt_encoder._timed_model_elements[
-                "configurations"
-            ]
-        }
-        configurations_by_step_size = {
-            step_size: [
-                c["num_steps"]
+        if problem._smt_encoder._timed_model_elements:
+            step_sizes = {
+                c["step_size"]
                 for c in problem._smt_encoder._timed_model_elements[
                     "configurations"
                 ]
-                if c["step_size"] == step_size
-            ]
-            for step_size in step_sizes
-        }
+            }
+            configurations_by_step_size = {
+                step_size: [
+                    c["num_steps"]
+                    for c in problem._smt_encoder._timed_model_elements[
+                        "configurations"
+                    ]
+                    if c["step_size"] == step_size
+                ]
+                for step_size in step_sizes
+            }
 
-        for step_size in step_sizes:
-            num_steps = max(configurations_by_step_size[step_size])
+            for step_size in step_sizes:
+                num_steps = max(configurations_by_step_size[step_size])
+                problem._encode_timed(
+                    num_steps,
+                    step_size,
+                    config,
+                )
+                structural_configuration = {
+                    "step_size": step_size,
+                    "num_steps": num_steps,
+                }
+                episode = BoxSearchEpisode(
+                    config=config,
+                    problem=problem,
+                    structural_configuration=structural_configuration,
+                )
+                episode._initialize_boxes(config.num_initial_boxes)
+                self._expand(
+                    rval,
+                    episode,
+                    handler=handler,
+                    all_results=all_results,
+                    haltEvent=haltEvent,
+                )
+        else:
             problem._encode_timed(
-                num_steps,
-                step_size,
+                1,
+                1,
                 config,
             )
             structural_configuration = {
-                "step_size": step_size,
-                "num_steps": num_steps,
+                "step_size": 1,
+                "num_steps": 1,
             }
             episode = BoxSearchEpisode(
                 config=config,
@@ -847,6 +871,7 @@ class BoxSearch(Search):
                 all_results=all_results,
                 haltEvent=haltEvent,
             )
+
         config._handler.close()
         return all_results["parameter_space"]
 

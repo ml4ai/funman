@@ -477,7 +477,7 @@ class BilayerModel(Model):
     measurements: BilayerMeasurement = None
     identical_parameters: List[List[str]] = []
 
-    def default_encoder(self, config: "FUNMANConfig") -> "Encoder":
+    def default_encoder(self, config: "FUNMANConfig", scenario: "AnalysisScenario") -> "Encoder":
         """
         Return the default Encoder for the model
 
@@ -488,7 +488,7 @@ class BilayerModel(Model):
         """
         from funman.translate import BilayerEncoder
 
-        return BilayerEncoder(config=config, model=self)
+        return BilayerEncoder(config=config, scenario=scenario)
 
     def _state_var_names(self):
         return self.bilayer._state_var_names()

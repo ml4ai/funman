@@ -763,8 +763,10 @@ class Box(BaseModel):
             for p in self.bounds
         }
         centers = {p: average(grp) for p, grp in group_centers.items()}
+        print(points)
+        print(centers)
         point_distances = [
-            {p: abs(pt.values[p] - centers[p]) for p in pt.values}
+            {p: abs(pt.values[p] - centers[p]) for p in pt.values if p in centers}
             for grp in points
             for pt in grp
         ]

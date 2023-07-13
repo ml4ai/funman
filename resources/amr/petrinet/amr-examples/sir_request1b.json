@@ -56,7 +56,7 @@
   "config": {
     "solver": "dreal",
     "tolerance": 1e-5,
-    "dreal_mcts": true
-    // "save_smtlib": true
+    "dreal_mcts": true,
+    "substitute_subformulas": false
   }
 }

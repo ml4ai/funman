@@ -39,10 +39,10 @@ class EncodedEncoder(Encoder):
                 f"An EncodedEncoder cannot encode models of type: {type(model)}"
             )
 
-    def _encode_timed_model_elements(self, model: Model):
+    def _encode_timed_model_elements(self, scenario: "AnalysisScenario"):
         pass
 
     def encode_model_timed(
-        self, model: "Model", num_steps: int, step_size: int
+        self, scenario: "AnalysisScenario", num_steps: int, step_size: int
     ) -> Encoding:
-        return self.encode_model(model)
+        return self.encode_model(scenario.model)

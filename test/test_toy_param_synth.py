@@ -6,14 +6,14 @@ from pysmt.typing import REAL
 from funman import Funman
 from funman.funman import FUNMANConfig
 from funman.model import EncodedModel, QueryTrue
-from funman.representation.representation import Parameter
+from funman.representation.representation import ModelParameter, Parameter
 from funman.scenario.parameter_synthesis import ParameterSynthesisScenario
 from funman.translate import EncodedEncoder
 
 
 class TestCompilation(unittest.TestCase):
     def test_toy(self):
-        parameters = [Parameter(name="x")]
+        parameters = [ModelParameter(name="x")]
         x = parameters[0].symbol()
 
         # 0.0 <= x <= 5
@@ -30,8 +30,8 @@ class TestCompilation(unittest.TestCase):
 
     def test_toy_2d(self):
         parameters = [
-            Parameter(name="x"),
-            Parameter(name="y"),
+            ModelParameter(name="x"),
+            ModelParameter(name="y"),
         ]
         x = parameters[0].symbol()
         y = parameters[1].symbol()

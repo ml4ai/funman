@@ -4,7 +4,6 @@ import unittest
 from time import sleep
 from typing import Tuple
 
-import matplotlib.pyplot as plt
 import pydantic
 from funman_demo.parameter_space_plotter import ParameterSpacePlotter
 

@@ -58,6 +58,7 @@ class AnalysisScenario(ABC, BaseModel):
 
         # If a model has parameters that are not overridden by the scenario, then add them to the scenario
         model_parameters = self.model._parameter_names()
+        model_parameter_values = self.model._parameter_values()
         model_parameters = [] if model_parameters is None else model_parameters
         non_overriden_parameters = []
         for p in [
@@ -75,7 +76,7 @@ class AnalysisScenario(ABC, BaseModel):
                 bounds["ub"] = ub
                 bounds["lb"] = lb
             else:
-                value = self.model._parameter_values()[p]
+                value = model_parameter_values[p]
                 bounds["lb"] = bounds["ub"] = value
             non_overriden_parameters.append(
                 ModelParameter(name=p, **bounds, label=LABEL_ANY)

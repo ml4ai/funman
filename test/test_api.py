@@ -208,9 +208,9 @@ class TestAPI(unittest.TestCase):
 
     def test_amr_petri_net(self):
         # Alternative example
-        EXAMPLE_DIR = RESOURCES / "common_model" / "petrinet"
+        EXAMPLE_DIR = RESOURCES / "amr" / "petrinet" / "amr-examples"
         MODEL_PATH = EXAMPLE_DIR / "sir.json"
-        REQUEST_PATH = EXAMPLE_DIR / "request.json"
+        REQUEST_PATH = EXAMPLE_DIR / "sir_request1.json"
         model = json.loads(MODEL_PATH.read_bytes())
         request = json.loads(REQUEST_PATH.read_bytes())
         with TestClient(app) as client:

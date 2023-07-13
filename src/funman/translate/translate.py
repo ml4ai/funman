@@ -345,10 +345,13 @@ class Encoder(ABC, BaseModel):
         }
 
         init_assignments = {
-            self._encode_state_var(k, time=0): Real(
-                scenario.model._get_init_value(k)
-            )
+            self._encode_state_var(k, time=0): 
+                scenario.model._get_init_value(k)  
             for k in scenario.model._state_var_names()
+        }
+        init_assignments = {
+            s: (Real(v) if isinstance(v, float) else Symbol(v, REAL))
+            for s, v in init_assignments.items()
         }
 
         time_var = scenario.model._time_var()

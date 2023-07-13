@@ -136,7 +136,7 @@ class TestUseCases(unittest.TestCase):
     def setup_use_case_petri_ensemble_consistency(self):
         model, query = self.setup_use_case_petri_ensemble_common()
 
-        scenario = ConsistencyScenario(model=model, query=query)
+        scenario = ConsistencyScenario(model=model, query=query, parameters=[])
         return scenario
 
     @unittest.skip("tmp")
