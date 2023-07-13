@@ -24,6 +24,7 @@ class ParameterSpacePlotter:
         shape_map: Dict[str, str] = {"true": "x", "false": "o"},
         alpha=0.2,
         plot_points=False,
+        parameters=None
     ):
         if isinstance(parameter_space, ParameterSpace):
             self.ps = parameter_space
@@ -38,7 +39,7 @@ class ParameterSpacePlotter:
         elif len(self.ps.false_points) > 0:
             values = self.ps.false_points[0].values
 
-        self.parameters = [k for k in values]
+        self.parameters = [k for k in values if parameters and k in parameters]
         self.dim = len(self.parameters)
         self.plot_points = plot_points
 

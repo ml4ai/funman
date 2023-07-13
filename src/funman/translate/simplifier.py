@@ -4,7 +4,7 @@ from funman.representation.representation import Parameter
 import pysmt
 from pysmt.fnode import FNode
 from pysmt.shortcuts import get_env
-from sympy import cancel, expand, symbols, sympify
+from sympy import cancel, expand, symbols, sympify, nsimplify, Float, Add, Abs, Max
 
 from funman.utils.sympy_utils import sympy_to_pysmt
 
@@ -14,39 +14,80 @@ class FUNMANSimplifier(pysmt.simplifier.Simplifier):
         super().__init__(env=env)
         self.manager = self.env.formula_manager
 
-    def approximate(formula, parameters: List[Parameter], threshold=1e-20):
-        values = {p.name: p.ub for p in parameters}
+    def approximate(formula, parameters: List[Parameter], threshold=1e-8):
+        if len(formula.free_symbols)==0:
+            return formula
+        
+
+        ub_values = {p.name: p.ub for p in parameters}
+        lb_values = {p.name: p.lb for p in parameters}
         original_size = len(formula.args)
-        to_drop = {
-            arg: 0 for arg in formula.args if abs(arg.subs(values)) < threshold
+
+        def calc_mag(g):
+            mag = Abs(g.evalf(subs=ub_values))
+            if mag > threshold:
+                return Float(mag)
+            else:
+                return Float(Max(mag, Abs(g.evalf(subs=lb_values))))
+
+        term_magnitude = {
+           arg: calc_mag(arg)  for arg in formula.args
         }
+        to_drop = {
+            arg: 0 for arg, tm in term_magnitude.items() if tm < threshold 
+        }
+        minimum_term_value = min(tm for arg, tm in term_magnitude.items()) if len(term_magnitude) > 0 else None
+        maximum_term_value = max(tm for arg, tm in term_magnitude.items()) if len(term_magnitude) > 0 else None
+
+        # print("**** args:")
+        # for arg in formula.args:
+        #     status = f"({max(abs(arg.subs(ub_values)), abs(arg.subs(lb_values)))})" if (arg in to_drop) else None
+        #     if status:
+        #         print(f"{status} {arg}")
+
         # if len(to_drop) > 0:
         #     print("*" * 80)
         #     print(f"Drop\n {to_drop}")
         #     print(f"From\n {formula}")
 
         # for drop in to_drop:
-        formula = formula.subs(to_drop)
-        print(f"{original_size}->{len(formula.args)}")
+        # subbed_formula = formula.subs(to_drop)
+        if len(to_drop)> 0:
+            subbed_formula = Add(*[t for t in formula.args if t not in to_drop])
+        else:
+            subbed_formula = formula
+        print(f"*** {original_size}->{len(subbed_formula.args)}\t [{minimum_term_value}, {maximum_term_value}] \t|{len(to_drop)}|")
         # if len(to_drop) > 0:
         #     print(f"Result\n {formula}")
         #     pass
 
-        return formula
+        return subbed_formula
 
     def sympy_simplify(formula, parameters: List[Parameter] = []):
+        if formula.is_real_constant():
+            return formula
+        
+        # print(formula.serialize())
         vars = formula.get_free_variables()
         var_map = {str(v): symbols(str(v)) for v in vars}
         simplified_formula = formula.simplify()
+
+        if simplified_formula.is_real_constant():
+            return simplified_formula
+
         expanded_formula = expand(
             sympify(simplified_formula.serialize(), var_map)
         )
-
+        # print(expanded_formula)
         approx_formula = FUNMANSimplifier.approximate(
             expanded_formula, parameters
         )
-
+        # simp_approx_formula = simplify(approx_formula)
+        # f = sympy_to_pysmt(simp_approx_formula)
+        N_approx_formula = nsimplify(approx_formula, rational=True)
         f = sympy_to_pysmt(approx_formula)
+
+        # print(f.serialize())
         return f
 
     # def walk_times(self, formula, args, **kwargs):

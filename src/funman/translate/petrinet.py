@@ -95,8 +95,11 @@ class PetrinetEncoder(Encoder):
 
         if self.config.substitute_subformulas:
             transition_terms = {
-                k: FUNMANSimplifier.sympy_simplify(
-                    v.substitute(substitutions),
+                k: v.substitute(substitutions)
+                for k, v in transition_terms.items()
+            }
+            transition_terms = {
+                k: FUNMANSimplifier.sympy_simplify(v,
                     parameters=scenario.model_parameters(),
                 )
                 for k, v in transition_terms.items()
@@ -131,10 +134,11 @@ class PetrinetEncoder(Encoder):
                     current_state[state_var_id],
                 )  # .simplify()
                 if self.config.substitute_subformulas:
-                    flows = FUNMANSimplifier.sympy_simplify(
-                        flows.substitute(substitutions),
-                        parameters=scenario.model_parameters(),
-                    )
+                    flows = flows.substitute(substitutions)
+                    # flows = FUNMANSimplifier.sympy_simplify(
+                    #     flows.substitute(substitutions),
+                    #     parameters=scenario.model_parameters(),
+                    # )
             else:
                 flows = current_state[state_var_id]
                 # .substitute(substitutions)

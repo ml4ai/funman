@@ -10,7 +10,6 @@ from funman_demo.parameter_space_plotter import ParameterSpacePlotter
 
 from funman.api.api import _wrap_with_internal_model
 from funman.api.settings import Settings
-from funman.funman import FUNMANConfig
 from funman.model.generated_models.petrinet import Model as GeneratedPetrinet
 from funman.model.generated_models.regnet import Model as GeneratedRegnet
 from funman.server.query import FunmanWorkRequest, FunmanWorkUnit
@@ -38,10 +37,10 @@ MIRA_PETRI_DIR = os.path.join(AMR_EXAMPLES_DIR, "petrinet", "mira")
 
 cases = [
     # 1. b. 0 days delay
-    (
-        os.path.join(MIRA_PETRI_DIR, "models", "scenario1_a.json"),
-        os.path.join(MIRA_PETRI_DIR, "requests", "request1_a_0_days.json"),
-    ),
+    # (
+    #     os.path.join(MIRA_PETRI_DIR, "models", "scenario1_a.json"),
+    #     os.path.join(MIRA_PETRI_DIR, "requests", "request1_a_0_days.json"),
+    # ),
     # 1. b. 50 days delay
     # (
     #     os.path.join(MIRA_PETRI_DIR, "models", "scenario1_a.json"),
@@ -57,6 +56,11 @@ cases = [
     #     os.path.join(MIRA_PETRI_DIR, "models", "scenario1_a.json"),
     #     os.path.join(MIRA_PETRI_DIR, "requests", "request1_a_all_days.json"),
     # ),
+    #
+    (
+               os.path.join(MIRA_PETRI_DIR, "models", "scenario1_a.json"),
+        os.path.join(MIRA_PETRI_DIR, "requests", "request1_a_all_days.json"), 
+    )
 ]
 
 if not os.path.exists(out_dir):

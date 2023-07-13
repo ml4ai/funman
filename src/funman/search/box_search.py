@@ -204,18 +204,19 @@ class BoxSearchEpisode(SearchEpisode):
     def _extract_point(self, model, box: Box):
         point = Point(
             values={
-                # p.name: float(model.assignment[p.symbol()].constant_value())
-                p.name: (
-                    float(model.get_py_value(p.symbol()))
-                    if isinstance(p, ModelParameter)
-                    else box.bounds[
-                        p.name
-                    ].lb  # step_size has lb=ub, and want num_steps.lb b/c encoding only goes to lb
-                )
-                for p in self.problem.parameters
-                # if p.is_synthesized()
+                str(p[0]):( float(p[1].constant_value()) if p[1].is_real_constant() else p[1].constant_value() )for p in model
+                # p.name: (
+                #     float(model.get_py_value(p.symbol()))
+                #     if isinstance(p, ModelParameter)
+                #     else box.bounds[
+                #         p.name
+                #     ].lb  
+                # for p in self.problem.parameters
+                
             }
         )
+        for k, v in self.structural_configuration.items():
+            point.values[k] = box.bounds[k].lb
         return point
 
 

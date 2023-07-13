@@ -128,7 +128,7 @@ class FunmanResults(BaseModel):
         self.parameter_space = ps
         self.done = True
 
-    def dataframe(self, point: Point, interpolate="linear"):
+    def dataframe(self, points: List[Point], interpolate="linear", max_time=None):
         """
         Extract a timeseries as a Pandas dataframe.
 
@@ -153,14 +153,25 @@ class FunmanResults(BaseModel):
         if time_var:
             to_plot += ["timer_t"]
 
-        timeseries = self.symbol_timeseries(point, to_plot)
-        df = pd.DataFrame.from_dict(timeseries)
+        all_df = pd.DataFrame()
+        for point in points:
+            timeseries = self.symbol_timeseries(point, to_plot)
+            df = pd.DataFrame.from_dict(timeseries)
+            # if max_time:
+                # if time_var:
+                #     df = df.at[max_time, :] = None
+                # df = df.reindex(range(max_time+1), fill_value=None)
 
-        if interpolate:
-            df = df.interpolate(method=interpolate)
-        if time_var:
-            df=df.rename(columns={"timer_t": "time"}).set_index("time", drop=True).drop(columns=["index"])
-        return df
+            if interpolate:
+                df = df.interpolate(method=interpolate)
+            if time_var:
+                df=df.rename(columns={"timer_t": "time"}).set_index("time", drop=True).drop(columns=["index"])
+
+            df = df.reindex(sorted(df.columns), axis=1)
+
+            all_df = pd.concat([all_df, df])
+
+        return all_df
         
     def symbol_timeseries(
         self, point: Point, variables: List[str]
@@ -237,7 +248,7 @@ class FunmanResults(BaseModel):
         s, t = symbol.rsplit("_", 1)
         return s, t
 
-    def plot(self, point: Point, variables=None, log_y=False, **kwargs):
+    def plot(self, point: Point, variables=None, log_y=False, max_time=None, **kwargs):
         """
         Plot the results in a matplotlib plot.
 
@@ -248,7 +259,7 @@ class FunmanResults(BaseModel):
         """
         
         
-        df = self.dataframe(point)
+        df = self.dataframe(point, max_time=max_time)
        
 
         if variables is not None:

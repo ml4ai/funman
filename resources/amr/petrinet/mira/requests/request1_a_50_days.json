@@ -11,14 +11,14 @@
   "structure_parameters": [
     {
       "name": "num_steps",
-      "lb": 100,
-      "ub": 100,
+      "lb": 400,
+      "ub": 400,
       "label": "all"
     },
     {
       "name": "step_size",
-      "lb": 4,
-      "ub": 4,
+      "lb": 1,
+      "ub": 1,
       "label": "all"
     }
   ],

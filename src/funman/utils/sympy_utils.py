@@ -1,5 +1,8 @@
+from fractions import Fraction
+from numbers import Rational
 import math
 from typing import Dict, Union
+import logging
 
 import pysmt.operators as op
 import pysmt.typing as types
@@ -17,6 +20,8 @@ from pysmt.shortcuts import (
     get_env,
 )
 
+l=logging.getLogger(__name__)
+l.setLevel(logging.INFO)
 
 class FUNMANFormulaManager(FormulaManager):
     """FormulaManager is responsible for the creation of all formulae."""
@@ -126,8 +131,32 @@ def sympy_to_pysmt_pow(expr):
     return Pow(sympy_to_pysmt(base), sympy_to_pysmt(exponent))
 
 
-def sympy_to_pysmt_real(expr):
-    return Real(float(expr))
+def sympy_to_pysmt_real(expr, numerator_digits=6):
+    # check if underflow or overflow
+    if (not isinstance(expr, float) and ((expr != 0.0 and float(expr) == 0.0) or (not expr.is_infinite and abs(float(expr)) == math.inf))):
+        # going from sympy to python to pysmt will lose precision
+        # need to convert to a rational first
+        r_expr = sympy.Rational(expr) 
+        return Div(Real(r_expr.numerator), Real(r_expr.denominator)).simplify() 
+    else:
+        return Real(float(expr))
+
+
+    # rnd_expr = sympy.Float(expr, 5)
+    # r_expr = sympy.Rational(rnd_expr)
+    # f_expr = Fraction(int(r_expr.numerator), int(r_expr.denominator))
+    
+    # max_denominator = math.pow(10, (len(str(r_expr.denominator)) - len(str(abs(r_expr.numerator)))) + max(numerator_digits, 1)+1)
+    # try:
+    #     trunc_f_expr = f_expr.limit_denominator(max_denominator=max_denominator)
+    # except Exception as e:
+    #     l.exception(f"max_denominator = {max_denominator} is not large enough to limit the denominator of {expr} during conversion from sympy to pysmt")
+        
+    # r_value = Div(Real(trunc_f_expr.numerator), Real(trunc_f_expr.denominator)).simplify() 
+
+    # r_value = Real(float(expr))
+
+    # return r_value
 
 
 def sympy_to_pysmt_symbol(op, expr, op_type=None):
