@@ -1,0 +1,172 @@
+1a. Post Buggy Model Analysis Request 
+
+Endpoint:  https://app.terarium.ai/funman/api/queries
+Data: post1.json (contents)
+
+Response: “Id”: "04f80b14-4f16-4d01-919d-1aa5f303c987"
+
+
+1b. Get Results
+
+Endpoint:  https://app.terarium.ai/funman/api/queries/04f80b14-4f16-4d01-919d-1aa5f303c987
+Response:
+{
+[…]
+"parameter_space": {
+"num_dimensions": 17
+}
+}
+
+The lack of “true_points” in the parameter_space indicates that the model does not satisfy FUMAN’s integrity constraints.
+
+2a. Post Buggy Model with relaxed constraints
+
+Endpoint:  https://app.terarium.ai/funman/api/queries
+Data: post2.json (contents). // sets configuration parameter "use_compartmental_constraints": false
+
+Response:  "id": "564a1119-9c96-4a0c-b0fa-e687c24e140c"
+
+
+2b.  Get Results
+
+Endpoint:  https://app.terarium.ai/funman/api/queries/564a1119-9c96-4a0c-b0fa-e687c24e140c
+Response:
+
+{
+[…]
+"parameter_space": {
+"num_dimensions": 17,
+"true_points": [
+{
+"label": "true",
+"values": {
+"timer_t_1": 1,
+"S_1": 0.9999784521322879,
+"S_0": 0.9999990000000001,
+"I_1": 9.873261902452145e-7,
+"A_1": 7.212142787850002e-8,
+"I_0": 0.0000010000000000000002,
+"A_0": 0,
+"V1_0": 0,
+"V2_0": 0,
+"IV_0": 0,
+"R_0": 0,
+"AR_0": 0,
+"IR_0": 0,
+"R2_0": 0,
+"SVR_0": 0,
+"IV_1": 0,
+"R_1": 3.571428571428572e-8,
+"AR_1": 0,
+"IR_1": 0,
+"R2_1": 0,
+"SVR_1": 0,
+"V1_1": -2.4040475959500008e-8,
+"V2_1": -2.4040475959500008e-8,
+"timer_t_0": 0,
+"timer_t_2": 2,
+"S_2": 0.9999578948933602,
+"I_2": 9.800139117031224e-7,
+"A_2": 1.563542760210581e-7,
+"V1_2": -5.291081597731371e-8,
+"V2_2": -5.29602143199367e-8,
+"IV_2": -1.7391674148053855e-16,
+"ai": 0.5,
+"R_2": 7.352650656842404e-8,
+"AR_2": 8.784543825617833e-17,
+"beta": 0.048081000000000006,
+"IR_2": 1.5502136162854992e-17,
+"R2_2": 0,
+"beta_scale": 1,
+"SVR_2": -5.786855759124268e-11,
+"beta_v1": 0.009616200000000002,
+"beta_v2": 0.002404050000000001,
+"ai_R": 0.8500000000000001,
+"beta_R": 0.002404050000000001,
+"ai_beta_ratio": 3,
+"gamma": 0.03571428571428571,
+"mu": 0.00002049980726017995,
+"mu_I": 0.001,
+"mu_IV": 0.00015000000000000001,
+"nu_v1": 0.0027397260273972603,
+"nu_v2": 0.0006849315068493151,
+"nu_R": 0.0006849315068493151,
+"num_steps": 2,
+"step_size": 1
+}
+}
+]
+}
+}
+
+This exemplar true point illustrates that the compartmental constraints are satisfied in this instance.
+
+
+3a. Post Fixed Model Analysis Request 
+
+Endpoint:  https://app.terarium.ai/funman/api/queries
+Data: post3.json (contents)
+
+Response: "id": "40436d6a-f6a6-4c3d-8c92-1eae9d64c238”
+
+
+3b. Get Results
+
+Endpoint:  https://app.terarium.ai/funman/api/queries/40436d6a-f6a6-4c3d-8c92-1eae9d64c238
+Response:
+{
+[…]
+  "parameter_space": {
+"num_dimensions": 17,
+"true_points": [
+{
+"label": "true",
+"values": {
+"timer_t_1": 1,
+"S_1": 0.9999784521322879,
+"S_0": 0.9999990000000001,
+"I_1": 9.873261902452145e-7,
+"A_1": 2.4040475959500008e-8,
+"I_0": 0.0000010000000000000002,
+"A_0": 0,
+"V1_0": 0,
+"V2_0": 0,
+"IV_0": 0,
+"R_0": 0,
+"AR_0": 0,
+"IR_0": 0,
+"R2_0": 0,
+"SVR_0": 0,
+"IV_1": 0,
+"R_1": 3.571428571428572e-8,
+"AR_1": 0,
+"IR_1": 0,
+"R2_1": 0,
+"SVR_1": 0,
+"V1_1": 0,
+"V2_1": 0,
+"timer_t_0": 0,
+"ai": 0.5,
+"beta": 0.048081000000000006,
+"beta_scale": 1,
+"beta_v1": 0.009616200000000002,
+"beta_v2": 0.002404050000000001,
+"ai_R": 0.8500000000000001,
+"beta_R": 0.002404050000000001,
+"ai_beta_ratio": 3,
+"gamma": 0.03571428571428571,
+"mu": 0.00002049980726017995,
+"mu_I": 0.001,
+"mu_IV": 0.00015000000000000001,
+"nu_v1": 0.0027397260273972603,
+"nu_v2": 0.0006849315068493151,
+"nu_R": 0.0006849315068493151,
+"num_steps": 1,
+"step_size": 1
+}
+}
+]
+}
+}
+
+The fixed version of the model now satisfies the compartmental constraints because FUNMAN was able to identify a case where they are satisfied.
