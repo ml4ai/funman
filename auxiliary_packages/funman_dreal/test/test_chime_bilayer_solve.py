@@ -30,7 +30,7 @@ from pysmt.shortcuts import (
 from pysmt.typing import BOOL, INT, REAL
 
 from funman import Funman
-from funman.model import Model, Parameter, QueryLE
+from funman.model import Model, ModelParameter, QueryLE
 from funman.representation.representation import (
     Point,
     ResultCombinedHandler,
@@ -143,7 +143,7 @@ class TestChimeBilayerSolve(unittest.TestCase):
         query.ub = 75
         # The efficacy can be up to 4x that of baseline (i.e., 0.05 - 0.20)
         parameters = [
-            Parameter(
+            ModelParameter(
                 name="beta",
                 # lb=0.000001,
                 # ub=0.00001,

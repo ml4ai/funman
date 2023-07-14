@@ -37,7 +37,7 @@ class TestAPI(unittest.TestCase):
         self.test_dir.mkdir()
         settings.data_path = str(self.test_dir)
 
-    def wait_for_done(self, client, id, wait_time=1.0, steps=10):
+    def wait_for_done(self, client, id, wait_time=1.0, steps=20):
         while True:
             sleep(wait_time)
             response = client.get(
@@ -211,9 +211,9 @@ class TestAPI(unittest.TestCase):
 
     def test_amr_petri_net(self):
         # Alternative example
-        EXAMPLE_DIR = RESOURCES / "common_model" / "petrinet"
+        EXAMPLE_DIR = RESOURCES / "amr" / "petrinet" / "amr-examples"
         MODEL_PATH = EXAMPLE_DIR / "sir.json"
-        REQUEST_PATH = EXAMPLE_DIR / "request.json"
+        REQUEST_PATH = EXAMPLE_DIR / "sir_request1.json"
         model = json.loads(MODEL_PATH.read_bytes())
         request = json.loads(REQUEST_PATH.read_bytes())
         with TestClient(app) as client:

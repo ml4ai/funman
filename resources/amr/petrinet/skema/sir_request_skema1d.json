@@ -1,0 +1,77 @@
+{
+  "query": {
+    "queries": [
+      {
+        "variable": "S",
+        "lb": 0.0
+      },
+      {
+        "variable": "S",
+        "ub": 1001.0
+      },
+      {
+        "variable": "I",
+        "lb": 0.0
+      },
+      {
+        "variable": "I",
+        "ub": 300.0
+      },
+      {
+        "variable": "R",
+        "lb": 0.0
+      },
+      {
+        "variable": "R",
+        "ub": 1001.0
+      }
+    ]
+  },
+  "parameters": [
+    {
+      "name": "\u03b2",
+      "label": "all"
+    },
+    {
+      "name": "\u03b3",
+      "label": "all"
+    },
+    {
+      "name": "S0",
+      "lb": 1000,
+      "ub": 1000,
+      "label": "any"
+    },
+    {
+      "name": "I0",
+      "lb": 1,
+      "ub": 1,
+      "label": "any"
+    },
+    {
+      "name": "R0",
+      "lb": 0,
+      "ub": 0,
+      "label": "any"
+    }
+  ],
+  "structure_parameters": [
+    {
+      "name": "num_steps",
+      "lb": 5,
+      "ub": 5,
+      "label": "all"
+    },
+    {
+      "name": "step_size",
+      "lb": 5,
+      "ub": 5,
+      "label": "all"
+    }
+  ],
+  "config": {
+    "solver": "dreal",
+    "dreal_mcts": true,
+    "tolerance": 1e-2
+  }
+}

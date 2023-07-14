@@ -32,8 +32,7 @@
         "output": [
           "I",
           "I"
-        ],
-        "grounding": null
+        ]
       },
       {
         "id": "\u03b3",
@@ -42,8 +41,7 @@
         ],
         "output": [
           "R"
-        ],
-        "grounding": null
+        ]
       }
     ]
   },

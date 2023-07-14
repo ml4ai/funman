@@ -3,7 +3,7 @@ from typing import Dict, List, Tuple
 import graphviz
 from pydantic import BaseModel
 
-from funman.representation import Parameter
+from funman.representation import ModelParameter
 from funman.translate import EnsembleEncoder
 
 from .model import Model
@@ -14,7 +14,7 @@ class EnsembleModel(Model):
     _model_name_map: Dict[str, Model] = None
     _var_name_map: Dict[str, Tuple[str, Model]] = None
     _parameter_name_map: Dict[str, Tuple[str, Model]] = None
-    _parameter_map: Dict[str, Parameter] = None
+    _parameter_map: Dict[str, ModelParameter] = None
 
     class Config:
         underscore_attrs_are_private = True
@@ -33,6 +33,8 @@ class EnsembleModel(Model):
         Encoder
             SMT encoder for model
         """
+        from funman.translate import EnsembleEncoder
+
         return EnsembleEncoder(
             config=config,
             model=self,
@@ -60,7 +62,7 @@ class EnsembleModel(Model):
             for p in model_parameters[m_name]
         }
         self._parameter_map = {
-            p_name: Parameter(
+            p_name: ModelParameter(
                 name=p_name,
                 lb=self._model_name_map[m_name].parameter_bounds[p][0],
                 ub=self._model_name_map[m_name].parameter_bounds[p][1],
@@ -78,7 +80,7 @@ class EnsembleModel(Model):
     def _parameter_values(self):
         return map(lambda m: m._parameter_values(), self.models)
 
-    def _parameters(self) -> List[Parameter]:
+    def _parameters(self) -> List[ModelParameter]:
         return list(self._parameter_map.values())
 
     def to_dot(self, values={}):

@@ -1,6 +1,8 @@
 import json
 import os
 import unittest
+from funman.model.query import QueryTrue
+from funman.scenario.consistency import ConsistencyScenario
 
 from pysmt.shortcuts import get_model
 
@@ -26,7 +28,7 @@ class TestCompilation(unittest.TestCase):
 
         #        encoding = bilayer.to_smtlib_timepoint(2) ## encoding at the single timepoint 2
         encoder = BilayerEncoder(
-            config=FUNMANConfig(), model=BilayerModel(bilayer=bilayer)
+            config=FUNMANConfig(), scenario=ConsistencyScenario(model=BilayerModel(bilayer=bilayer), query=QueryTrue(), parameters=[])
         )
         encoding = encoder._encode_bilayer(
             bilayer, [2.5, 3, 4, 6]

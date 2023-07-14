@@ -1,0 +1,24 @@
+{
+    "query": {},
+    "parameters": [],
+    "structure_parameters": [
+        {
+            "name": "num_steps",
+            "lb": 2,
+            "ub": 2,
+            "label": "all"
+        },
+        {
+            "name": "step_size",
+            "lb": 1,
+            "ub": 1,
+            "label": "all"
+        }
+    ],
+    "config": {
+        "solver": "dreal",
+        "save_smtlib": true,
+        "substitute_subformulas": false,
+        "use_compartmental_constraints": false
+    }
+}

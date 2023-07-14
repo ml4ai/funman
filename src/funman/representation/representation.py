@@ -4,13 +4,15 @@ during the configuration and execution of a search.
 """
 import copy
 import logging
+import sys
+import math
 from functools import total_ordering
 from statistics import mean as average
 from typing import Dict, List, Literal, Optional, Union
 
 from pydantic import BaseModel
 from pysmt.fnode import FNode
-from pysmt.shortcuts import GE, LE, LT, REAL, TRUE, And, Equals, Real, Symbol
+from pysmt.shortcuts import REAL, Symbol
 
 import funman.utils.math_utils as math_utils
 from funman.constants import BIG_NUMBER, NEG_INFINITY, POS_INFINITY
@@ -26,8 +28,35 @@ LABEL_UNKNOWN: Literal["unknown"] = "unknown"
 LABEL_DROPPED: Literal["dropped"] = "dropped"
 Label = Literal["true", "false", "unknown", "dropped"]
 
+LABEL_ANY = "any"
+LABEL_ALL = "all"
 
-class Parameter(BaseModel):
+
+class ModelParameter(BaseModel):
+    name: Union[str, ModelSymbol]
+    lb: Union[float, str] = NEG_INFINITY
+    ub: Union[float, str] = POS_INFINITY
+
+    def width(self) -> Union[str, float]:
+        return math_utils.minus(self.ub, self.lb)
+
+    def __hash__(self):
+        return abs(hash(self.name))
+
+
+class LabeledParameter(ModelParameter):
+    label: Literal["any", "all"] = LABEL_ANY
+
+    def is_synthesized(self) -> bool:
+        return self.label == LABEL_ALL and self.width() > 0.0
+
+
+class StructureParameter(LabeledParameter):
+    def is_synthesized(self):
+        return True
+
+
+class ModelParameter(LabeledParameter):
     """
     A parameter is a free variable for a Model.  It has the following attributes:
 
@@ -45,9 +74,6 @@ class Parameter(BaseModel):
         extra = "forbid"
         # arbitrary_types_allowed = True
 
-    name: Union[str, ModelSymbol]
-    lb: Union[str, float] = NEG_INFINITY
-    ub: Union[str, float] = POS_INFINITY
     _symbol: FNode = None
 
     def symbol(self):
@@ -82,14 +108,11 @@ class Parameter(BaseModel):
         return timed_parameter
 
     def __eq__(self, other):
-        if not isinstance(other, Parameter):
+        if not isinstance(other, ModelParameter):
             # don't attempt to compare against unrelated types
             return NotImplemented
 
-        return self.name == other.name and (
-            not (self.symbol() and other.symbol())
-            or (self.symbol().symbol_name() == other.symbol().symbol_name())
-        )
+        return self.name == other.name
 
     def __hash__(self):
         # necessary for instances to behave sanely in dicts and sets.
@@ -409,7 +432,7 @@ class Point(BaseModel):
         return res
 
     def __hash__(self):
-        return int(sum([v for _, v in self.values.items()]))
+        return int(sum([v for _, v in self.values.items() if v != sys.float_info.max and not math.isinf(v)]))
 
     def __eq__(self, other):
         if isinstance(other, Point):
@@ -437,13 +460,50 @@ class Box(BaseModel):
     def __hash__(self):
         return int(sum([i.__hash__() for _, i in self.bounds.items()]))
 
-    def project(self, vars: List[str]) -> "Box":
+    def advance(self):
+        # Advancing a box means that we move the time step forward until it exhausts the possible number of steps
+        if (
+            "num_steps" in self.bounds
+            and self.bounds["num_steps"].lb < self.bounds["num_steps"].ub
+        ):
+            advanced_box = Box(
+                bounds={
+                    n: (
+                        itv
+                        if n != "num_steps"
+                        else Interval(lb=itv.lb + 1, ub=itv.ub)
+                    )
+                    for n, itv in self.bounds.items()
+                }
+            )
+            return advanced_box
+        else:
+            None
+
+    def current_step(self):
+        # Restrict bounds on num_steps to the lower bound (i.e., the current step)
+        if "num_steps" in self.bounds:
+            current_step_box = Box(
+                bounds={
+                    n: (
+                        itv
+                        if n != "num_steps"
+                        else Interval(lb=itv.lb, ub=itv.lb)
+                    )
+                    for n, itv in self.bounds.items()
+                }
+            )
+            return current_step_box
+        else:
+            None
+
+    def project(self, vars: Union[List[ModelParameter], List[str]]) -> "Box":
         """
         Takes a subset of selected variables (vars_list) of a given box (b) and returns another box that is given by b's values for only the selected variables.
 
         Parameters
         ----------
-        vars : List[str]
+        vars : Union[List[Parameter], List[str]]
             variables to project onto
 
         Returns
@@ -452,8 +512,21 @@ class Box(BaseModel):
             projected box
 
         """
-        bp = copy.copy(self)
-        bp.bounds = {k: v for k, v in bp.bounds.items() if k in vars}
+        bp = copy.deepcopy(self)
+        if len(vars) > 0:
+            if isinstance(vars[0], str):
+                bp.bounds = {k: v for k, v in bp.bounds.items() if k in vars}
+            elif isinstance(vars[0], ModelParameter):
+                vars_str = [v.name for v in vars]
+                bp.bounds = {
+                    k: v for k, v in bp.bounds.items() if k in vars_str
+                }
+            else:
+                raise Exception(
+                    f"Unknown type {type(vars[0])} used as intput to Box.project()"
+                )
+        else:
+            bp.bounds = {}
         return bp
 
     def _merge(self, other: "Box") -> "Box":
@@ -482,7 +555,7 @@ class Box(BaseModel):
                 i.ub = self.bounds[p].ub
         return merged
 
-    def _get_merge_candidates(self, boxes: Dict[Parameter, List["Box"]]):
+    def _get_merge_candidates(self, boxes: Dict[ModelParameter, List["Box"]]):
         equals_set = set([])
         meets_set = set([])
         disqualified_set = set([])
@@ -690,8 +763,10 @@ class Box(BaseModel):
             for p in self.bounds
         }
         centers = {p: average(grp) for p, grp in group_centers.items()}
+        # print(points)
+        # print(centers)
         point_distances = [
-            {p: abs(pt.values[p] - centers[p]) for p in pt.values}
+            {p: abs(pt.values[p] - centers[p]) for p in pt.values if p in centers}
             for grp in points
             for pt in grp
         ]
@@ -702,26 +777,46 @@ class Box(BaseModel):
             p: average([pt[p] for pt in point_distances])
             / (self.bounds[p].width())
             for p in self.bounds
+            if self.bounds[p].width() > 0
         }
         max_width_parameter = max(
             parameter_widths, key=lambda k: parameter_widths[k]
         )
         return max_width_parameter
 
-    def _get_max_width_Parameter(self, normalize={}):
-        widths = {
-            p: (
-                bounds.width(normalize=normalize[p])
-                if p in normalize
-                else bounds.width()
-            )
-            for p, bounds in self.bounds.items()
-        }
+    def _get_max_width_Parameter(
+        self, normalize={}, parameters: List[ModelParameter] = None
+    ):
+        if parameters:
+            widths = {
+                parameter.name: (
+                    self.bounds[parameter.name].width(
+                        normalize=normalize[parameter.name]
+                    )
+                    if parameter.name in normalize
+                    else self.bounds[parameter.name].width()
+                )
+                for parameter in parameters
+            }
+        else:
+            widths = {
+                p: (
+                    self.bounds[p].width(normalize=normalize[parameter.name])
+                    if p in normalize
+                    else self.bounds[p].width()
+                )
+                for p in self.bounds
+            }
         max_width = max(widths, key=widths.get)
 
         return max_width, widths[max_width]
 
-    def width(self, normalize={}, overwrite_cache=False) -> float:
+    def width(
+        self,
+        normalize={},
+        overwrite_cache=False,
+        parameters: List[ModelParameter] = None,
+    ) -> float:
         """
         The width of a box is the maximum width of a parameter interval.
 
@@ -731,7 +826,9 @@ class Box(BaseModel):
             Max{p: parameter}(p.ub-p.lb)
         """
         if self.cached_width is None or overwrite_cache:
-            _, width = self._get_max_width_Parameter(normalize=normalize)
+            _, width = self._get_max_width_Parameter(
+                normalize=normalize, parameters=parameters
+            )
             self.cached_width = width
 
         return self.cached_width
@@ -752,6 +849,7 @@ class Box(BaseModel):
         self,
         points: List[List[Point]] = None,
         normalize: Dict[str, float] = {},
+        parameters=[],
     ):
         """
         Split box along max width dimension. If points are provided, then pick the axis where the points are maximally distant.
@@ -767,7 +865,7 @@ class Box(BaseModel):
             Boxes resulting from the split.
         """
 
-        if False and points:
+        if points:
             p = self._get_max_width_point_Parameter(points)
             mid = self.bounds[p].midpoint(
                 points=[[pt.values[p] for pt in grp] for grp in points]
@@ -777,7 +875,9 @@ class Box(BaseModel):
                 p, _ = self._get_max_width_Parameter()
                 mid = self.bounds[p].midpoint()
         else:
-            p, _ = self._get_max_width_Parameter(normalize=normalize)
+            p, _ = self._get_max_width_Parameter(
+                normalize=normalize, parameters=parameters
+            )
             mid = self.bounds[p].midpoint()
 
         b1 = self._copy()
@@ -829,7 +929,7 @@ class Box(BaseModel):
             ):  ## empty list: no intersection in 1 variable means no intersection overall.
                 return None
             else:
-                new_param = Parameter(
+                new_param = ModelParameter(
                     name=f"{p1}",
                     lb=intersection_ans[0],
                     ub=intersection_ans[1],
@@ -940,10 +1040,10 @@ class Box(BaseModel):
 
         return Box(
             bounds={
-                Parameter(
+                ModelParameter(
                     name=a_params[0], lb=beta_0[0], ub=beta_0[1]
                 ): Interval(lb=beta_0[0], ub=beta_0[1]),
-                Parameter(
+                ModelParameter(
                     name=a_params[1], lb=beta_1[0], ub=beta_1[1]
                 ): Interval(lb=beta_1[0], ub=beta_1[1]),
             }
@@ -975,10 +1075,10 @@ class Box(BaseModel):
             b1_bounds = p_bounds[1]
             b = Box(
                 bounds={
-                    Parameter(
+                    ModelParameter(
                         name=a_params[0], lb=b0_bounds.lb, ub=b0_bounds.ub
                     ): Interval(lb=b0_bounds.lb, ub=b0_bounds.ub),
-                    Parameter(
+                    ModelParameter(
                         name=a_params[1], lb=b1_bounds.lb, ub=b1_bounds.ub
                     ): Interval(lb=b1_bounds.lb, ub=b1_bounds.ub),
                 }
@@ -1009,6 +1109,7 @@ class ParameterSpace(BaseModel):
     known to be false.
     """
 
+    num_dimensions: int = None
     true_boxes: List[Box] = []
     false_boxes: List[Box] = []
     true_points: List[Point] = []

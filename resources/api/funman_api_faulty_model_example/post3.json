@@ -1,0 +1,1861 @@
+{
+    "model": {
+        "name": "Scenario 2a",
+        "schema_": "https://raw.githubusercontent.com/DARPA-ASKEM/Model-Representations/petrinet_v0.5/petrinet/petrinet_schema.json",
+        "schema_name": "petrinet",
+        "description": "Scenario 2a",
+        "model_version": "0.1",
+        "properties": {},
+        "model": {
+            "states": [
+                {
+                    "id": "S",
+                    "name": "S",
+                    "description": null,
+                    "grounding": {
+                        "identifiers": {
+                            "ido": "0000514"
+                        },
+                        "modifiers": {
+                            "vaccination_status": "vo:0001377"
+                        }
+                    },
+                    "units": {
+                        "expression": "1",
+                        "expression_mathml": "<cn>1</cn>"
+                    }
+                },
+                {
+                    "id": "I",
+                    "name": "I",
+                    "description": null,
+                    "grounding": {
+                        "identifiers": {
+                            "ido": "0000511"
+                        },
+                        "modifiers": {}
+                    },
+                    "units": {
+                        "expression": "1",
+                        "expression_mathml": "<cn>1</cn>"
+                    }
+                },
+                {
+                    "id": "A",
+                    "name": "A",
+                    "description": null,
+                    "grounding": {
+                        "identifiers": {
+                            "ido": "0000511"
+                        },
+                        "modifiers": {
+                            "disease_severity": "ncit:C3833"
+                        }
+                    },
+                    "units": {
+                        "expression": "1",
+                        "expression_mathml": "<cn>1</cn>"
+                    }
+                },
+                {
+                    "id": "V1",
+                    "name": "V1",
+                    "description": null,
+                    "grounding": {
+                        "identifiers": {
+                            "ido": "0000514"
+                        },
+                        "modifiers": {
+                            "vaccination_status": "askemo:0000018"
+                        }
+                    },
+                    "units": {
+                        "expression": "1",
+                        "expression_mathml": "<cn>1</cn>"
+                    }
+                },
+                {
+                    "id": "V2",
+                    "name": "V2",
+                    "description": null,
+                    "grounding": {
+                        "identifiers": {
+                            "ido": "0000514"
+                        },
+                        "modifiers": {
+                            "vaccination_status": "askemo:0000019"
+                        }
+                    },
+                    "units": {
+                        "expression": "1",
+                        "expression_mathml": "<cn>1</cn>"
+                    }
+                },
+                {
+                    "id": "IV",
+                    "name": "IV",
+                    "description": null,
+                    "grounding": {
+                        "identifiers": {
+                            "ido": "0000511"
+                        },
+                        "modifiers": {
+                            "vaccination_status": "vo:0001376"
+                        }
+                    },
+                    "units": {
+                        "expression": "1",
+                        "expression_mathml": "<cn>1</cn>"
+                    }
+                },
+                {
+                    "id": "R",
+                    "name": "R",
+                    "description": null,
+                    "grounding": {
+                        "identifiers": {
+                            "ido": "0000514"
+                        },
+                        "modifiers": {
+                            "disease_severity": "ido:0000592"
+                        }
+                    },
+                    "units": {
+                        "expression": "1",
+                        "expression_mathml": "<cn>1</cn>"
+                    }
+                },
+                {
+                    "id": "AR",
+                    "name": "AR",
+                    "description": null,
+                    "grounding": {
+                        "identifiers": {
+                            "ido": "0000511"
+                        },
+                        "modifiers": {
+                            "disease_severity": "ncit:C3833"
+                        }
+                    },
+                    "units": {
+                        "expression": "1",
+                        "expression_mathml": "<cn>1</cn>"
+                    }
+                },
+                {
+                    "id": "IR",
+                    "name": "IR",
+                    "description": null,
+                    "grounding": {
+                        "identifiers": {
+                            "ido": "0000511"
+                        },
+                        "modifiers": {
+                            "disease_history": "ido:0000592"
+                        }
+                    },
+                    "units": {
+                        "expression": "1",
+                        "expression_mathml": "<cn>1</cn>"
+                    }
+                },
+                {
+                    "id": "R2",
+                    "name": "R2",
+                    "description": null,
+                    "grounding": {
+                        "identifiers": {
+                            "ido": "0000592"
+                        },
+                        "modifiers": {}
+                    },
+                    "units": {
+                        "expression": "1",
+                        "expression_mathml": "<cn>1</cn>"
+                    }
+                },
+                {
+                    "id": "SVR",
+                    "name": "SVR",
+                    "description": null,
+                    "grounding": {
+                        "identifiers": {
+                            "ido": "0000514"
+                        },
+                        "modifiers": {
+                            "disease_history": "ido:0000592"
+                        }
+                    },
+                    "units": {
+                        "expression": "1",
+                        "expression_mathml": "<cn>1</cn>"
+                    }
+                }
+            ],
+            "transitions": [
+                {
+                    "id": "t1",
+                    "input": [
+                        "I",
+                        "S"
+                    ],
+                    "output": [
+                        "I",
+                        "A"
+                    ],
+                    "grounding": null,
+                    "properties": {
+                        "name": "t1",
+                        "description": null,
+                        "grounding": null
+                    }
+                },
+                {
+                    "id": "t2",
+                    "input": [
+                        "I",
+                        "V1"
+                    ],
+                    "output": [
+                        "I",
+                        "A"
+                    ],
+                    "grounding": null,
+                    "properties": {
+                        "name": "t2",
+                        "description": null,
+                        "grounding": null
+                    }
+                },
+                {
+                    "id": "t3",
+                    "input": [
+                        "I",
+                        "V2"
+                    ],
+                    "output": [
+                        "I",
+                        "A"
+                    ],
+                    "grounding": null,
+                    "properties": {
+                        "name": "t3",
+                        "description": null,
+                        "grounding": null
+                    }
+                },
+                {
+                    "id": "t4",
+                    "input": [
+                        "I",
+                        "S"
+                    ],
+                    "output": [
+                        "I",
+                        "I"
+                    ],
+                    "grounding": null,
+                    "properties": {
+                        "name": "t4",
+                        "description": null,
+                        "grounding": null
+                    }
+                },
+                {
+                    "id": "t5",
+                    "input": [
+                        "I",
+                        "V1"
+                    ],
+                    "output": [
+                        "I",
+                        "IV"
+                    ],
+                    "grounding": null,
+                    "properties": {
+                        "name": "t5",
+                        "description": null,
+                        "grounding": null
+                    }
+                },
+                {
+                    "id": "t6",
+                    "input": [
+                        "I",
+                        "V2"
+                    ],
+                    "output": [
+                        "I",
+                        "IV"
+                    ],
+                    "grounding": null,
+                    "properties": {
+                        "name": "t6",
+                        "description": null,
+                        "grounding": null
+                    }
+                },
+                {
+                    "id": "t7",
+                    "input": [
+                        "I",
+                        "R"
+                    ],
+                    "output": [
+                        "I",
+                        "AR"
+                    ],
+                    "grounding": null,
+                    "properties": {
+                        "name": "t7",
+                        "description": null,
+                        "grounding": null
+                    }
+                },
+                {
+                    "id": "t8",
+                    "input": [
+                        "I",
+                        "R"
+                    ],
+                    "output": [
+                        "I",
+                        "IR"
+                    ],
+                    "grounding": null,
+                    "properties": {
+                        "name": "t8",
+                        "description": null,
+                        "grounding": null
+                    }
+                },
+                {
+                    "id": "t9",
+                    "input": [
+                        "IV",
+                        "S"
+                    ],
+                    "output": [
+                        "IV",
+                        "A"
+                    ],
+                    "grounding": null,
+                    "properties": {
+                        "name": "t9",
+                        "description": null,
+                        "grounding": null
+                    }
+                },
+                {
+                    "id": "t10",
+                    "input": [
+                        "IV",
+                        "V1"
+                    ],
+                    "output": [
+                        "IV",
+                        "A"
+                    ],
+                    "grounding": null,
+                    "properties": {
+                        "name": "t10",
+                        "description": null,
+                        "grounding": null
+                    }
+                },
+                {
+                    "id": "t11",
+                    "input": [
+                        "IV",
+                        "V2"
+                    ],
+                    "output": [
+                        "IV",
+                        "A"
+                    ],
+                    "grounding": null,
+                    "properties": {
+                        "name": "t11",
+                        "description": null,
+                        "grounding": null
+                    }
+                },
+                {
+                    "id": "t12",
+                    "input": [
+                        "IV",
+                        "S"
+                    ],
+                    "output": [
+                        "IV",
+                        "I"
+                    ],
+                    "grounding": null,
+                    "properties": {
+                        "name": "t12",
+                        "description": null,
+                        "grounding": null
+                    }
+                },
+                {
+                    "id": "t13",
+                    "input": [
+                        "IV",
+                        "V1"
+                    ],
+                    "output": [
+                        "IV",
+                        "IV"
+                    ],
+                    "grounding": null,
+                    "properties": {
+                        "name": "t13",
+                        "description": null,
+                        "grounding": null
+                    }
+                },
+                {
+                    "id": "t14",
+                    "input": [
+                        "IV",
+                        "V2"
+                    ],
+                    "output": [
+                        "IV",
+                        "IV"
+                    ],
+                    "grounding": null,
+                    "properties": {
+                        "name": "t14",
+                        "description": null,
+                        "grounding": null
+                    }
+                },
+                {
+                    "id": "t15",
+                    "input": [
+                        "IV",
+                        "R"
+                    ],
+                    "output": [
+                        "IV",
+                        "AR"
+                    ],
+                    "grounding": null,
+                    "properties": {
+                        "name": "t15",
+                        "description": null,
+                        "grounding": null
+                    }
+                },
+                {
+                    "id": "t16",
+                    "input": [
+                        "IV",
+                        "R"
+                    ],
+                    "output": [
+                        "IV",
+                        "IR"
+                    ],
+                    "grounding": null,
+                    "properties": {
+                        "name": "t16",
+                        "description": null,
+                        "grounding": null
+                    }
+                },
+                {
+                    "id": "t17",
+                    "input": [
+                        "IR",
+                        "S"
+                    ],
+                    "output": [
+                        "IR",
+                        "A"
+                    ],
+                    "grounding": null,
+                    "properties": {
+                        "name": "t17",
+                        "description": null,
+                        "grounding": null
+                    }
+                },
+                {
+                    "id": "t18",
+                    "input": [
+                        "IR",
+                        "V1"
+                    ],
+                    "output": [
+                        "IR",
+                        "A"
+                    ],
+                    "grounding": null,
+                    "properties": {
+                        "name": "t18",
+                        "description": null,
+                        "grounding": null
+                    }
+                },
+                {
+                    "id": "t19",
+                    "input": [
+                        "IR",
+                        "V2"
+                    ],
+                    "output": [
+                        "IR",
+                        "A"
+                    ],
+                    "grounding": null,
+                    "properties": {
+                        "name": "t19",
+                        "description": null,
+                        "grounding": null
+                    }
+                },
+                {
+                    "id": "t20",
+                    "input": [
+                        "IR",
+                        "S"
+                    ],
+                    "output": [
+                        "IR",
+                        "I"
+                    ],
+                    "grounding": null,
+                    "properties": {
+                        "name": "t20",
+                        "description": null,
+                        "grounding": null
+                    }
+                },
+                {
+                    "id": "t21",
+                    "input": [
+                        "IR",
+                        "V1"
+                    ],
+                    "output": [
+                        "IR",
+                        "IV"
+                    ],
+                    "grounding": null,
+                    "properties": {
+                        "name": "t21",
+                        "description": null,
+                        "grounding": null
+                    }
+                },
+                {
+                    "id": "t22",
+                    "input": [
+                        "IR",
+                        "V2"
+                    ],
+                    "output": [
+                        "IR",
+                        "IV"
+                    ],
+                    "grounding": null,
+                    "properties": {
+                        "name": "t22",
+                        "description": null,
+                        "grounding": null
+                    }
+                },
+                {
+                    "id": "t23",
+                    "input": [
+                        "IR",
+                        "R"
+                    ],
+                    "output": [
+                        "IR",
+                        "AR"
+                    ],
+                    "grounding": null,
+                    "properties": {
+                        "name": "t23",
+                        "description": null,
+                        "grounding": null
+                    }
+                },
+                {
+                    "id": "t24",
+                    "input": [
+                        "IR",
+                        "R"
+                    ],
+                    "output": [
+                        "IR",
+                        "IR"
+                    ],
+                    "grounding": null,
+                    "properties": {
+                        "name": "t24",
+                        "description": null,
+                        "grounding": null
+                    }
+                },
+                {
+                    "id": "t25",
+                    "input": [
+                        "A",
+                        "S"
+                    ],
+                    "output": [
+                        "A",
+                        "A"
+                    ],
+                    "grounding": null,
+                    "properties": {
+                        "name": "t25",
+                        "description": null,
+                        "grounding": null
+                    }
+                },
+                {
+                    "id": "t26",
+                    "input": [
+                        "A",
+                        "V1"
+                    ],
+                    "output": [
+                        "A",
+                        "A"
+                    ],
+                    "grounding": null,
+                    "properties": {
+                        "name": "t26",
+                        "description": null,
+                        "grounding": null
+                    }
+                },
+                {
+                    "id": "t27",
+                    "input": [
+                        "A",
+                        "V2"
+                    ],
+                    "output": [
+                        "A",
+                        "A"
+                    ],
+                    "grounding": null,
+                    "properties": {
+                        "name": "t27",
+                        "description": null,
+                        "grounding": null
+                    }
+                },
+                {
+                    "id": "t28",
+                    "input": [
+                        "A",
+                        "S"
+                    ],
+                    "output": [
+                        "A",
+                        "I"
+                    ],
+                    "grounding": null,
+                    "properties": {
+                        "name": "t28",
+                        "description": null,
+                        "grounding": null
+                    }
+                },
+                {
+                    "id": "t29",
+                    "input": [
+                        "A",
+                        "V1"
+                    ],
+                    "output": [
+                        "A",
+                        "IV"
+                    ],
+                    "grounding": null,
+                    "properties": {
+                        "name": "t29",
+                        "description": null,
+                        "grounding": null
+                    }
+                },
+                {
+                    "id": "t30",
+                    "input": [
+                        "A",
+                        "V2"
+                    ],
+                    "output": [
+                        "A",
+                        "IV"
+                    ],
+                    "grounding": null,
+                    "properties": {
+                        "name": "t30",
+                        "description": null,
+                        "grounding": null
+                    }
+                },
+                {
+                    "id": "t31",
+                    "input": [
+                        "A",
+                        "R"
+                    ],
+                    "output": [
+                        "A",
+                        "AR"
+                    ],
+                    "grounding": null,
+                    "properties": {
+                        "name": "t31",
+                        "description": null,
+                        "grounding": null
+                    }
+                },
+                {
+                    "id": "t32",
+                    "input": [
+                        "A",
+                        "R"
+                    ],
+                    "output": [
+                        "A",
+                        "IR"
+                    ],
+                    "grounding": null,
+                    "properties": {
+                        "name": "t32",
+                        "description": null,
+                        "grounding": null
+                    }
+                },
+                {
+                    "id": "t33",
+                    "input": [
+                        "AR",
+                        "S"
+                    ],
+                    "output": [
+                        "AR",
+                        "A"
+                    ],
+                    "grounding": null,
+                    "properties": {
+                        "name": "t33",
+                        "description": null,
+                        "grounding": null
+                    }
+                },
+                {
+                    "id": "t34",
+                    "input": [
+                        "AR",
+                        "V1"
+                    ],
+                    "output": [
+                        "AR",
+                        "A"
+                    ],
+                    "grounding": null,
+                    "properties": {
+                        "name": "t34",
+                        "description": null,
+                        "grounding": null
+                    }
+                },
+                {
+                    "id": "t35",
+                    "input": [
+                        "AR",
+                        "V2"
+                    ],
+                    "output": [
+                        "AR",
+                        "A"
+                    ],
+                    "grounding": null,
+                    "properties": {
+                        "name": "t35",
+                        "description": null,
+                        "grounding": null
+                    }
+                },
+                {
+                    "id": "t36",
+                    "input": [
+                        "AR",
+                        "S"
+                    ],
+                    "output": [
+                        "AR",
+                        "I"
+                    ],
+                    "grounding": null,
+                    "properties": {
+                        "name": "t36",
+                        "description": null,
+                        "grounding": null
+                    }
+                },
+                {
+                    "id": "t37",
+                    "input": [
+                        "AR",
+                        "V1"
+                    ],
+                    "output": [
+                        "AR",
+                        "IV"
+                    ],
+                    "grounding": null,
+                    "properties": {
+                        "name": "t37",
+                        "description": null,
+                        "grounding": null
+                    }
+                },
+                {
+                    "id": "t38",
+                    "input": [
+                        "AR",
+                        "V2"
+                    ],
+                    "output": [
+                        "AR",
+                        "IV"
+                    ],
+                    "grounding": null,
+                    "properties": {
+                        "name": "t38",
+                        "description": null,
+                        "grounding": null
+                    }
+                },
+                {
+                    "id": "t39",
+                    "input": [
+                        "AR",
+                        "R"
+                    ],
+                    "output": [
+                        "AR",
+                        "AR"
+                    ],
+                    "grounding": null,
+                    "properties": {
+                        "name": "t39",
+                        "description": null,
+                        "grounding": null
+                    }
+                },
+                {
+                    "id": "t40",
+                    "input": [
+                        "AR",
+                        "R"
+                    ],
+                    "output": [
+                        "AR",
+                        "IR"
+                    ],
+                    "grounding": null,
+                    "properties": {
+                        "name": "t40",
+                        "description": null,
+                        "grounding": null
+                    }
+                },
+                {
+                    "id": "t41",
+                    "input": [
+                        "S"
+                    ],
+                    "output": [
+                        "V1"
+                    ],
+                    "grounding": null,
+                    "properties": {
+                        "name": "t41",
+                        "description": null,
+                        "grounding": null
+                    }
+                },
+                {
+                    "id": "t42",
+                    "input": [
+                        "A"
+                    ],
+                    "output": [
+                        "V1"
+                    ],
+                    "grounding": null,
+                    "properties": {
+                        "name": "t42",
+                        "description": null,
+                        "grounding": null
+                    }
+                },
+                {
+                    "id": "t43",
+                    "input": [
+                        "V1"
+                    ],
+                    "output": [
+                        "V2"
+                    ],
+                    "grounding": null,
+                    "properties": {
+                        "name": "t43",
+                        "description": null,
+                        "grounding": null
+                    }
+                },
+                {
+                    "id": "t44",
+                    "input": [
+                        "I"
+                    ],
+                    "output": [
+                        "R"
+                    ],
+                    "grounding": null,
+                    "properties": {
+                        "name": "t44",
+                        "description": null,
+                        "grounding": null
+                    }
+                },
+                {
+                    "id": "t45",
+                    "input": [
+                        "IV"
+                    ],
+                    "output": [
+                        "R"
+                    ],
+                    "grounding": null,
+                    "properties": {
+                        "name": "t45",
+                        "description": null,
+                        "grounding": null
+                    }
+                },
+                {
+                    "id": "t46",
+                    "input": [
+                        "IR"
+                    ],
+                    "output": [
+                        "R"
+                    ],
+                    "grounding": null,
+                    "properties": {
+                        "name": "t46",
+                        "description": null,
+                        "grounding": null
+                    }
+                },
+                {
+                    "id": "t47",
+                    "input": [
+                        "A"
+                    ],
+                    "output": [
+                        "R"
+                    ],
+                    "grounding": null,
+                    "properties": {
+                        "name": "t47",
+                        "description": null,
+                        "grounding": null
+                    }
+                },
+                {
+                    "id": "t48",
+                    "input": [
+                        "AR"
+                    ],
+                    "output": [
+                        "R"
+                    ],
+                    "grounding": null,
+                    "properties": {
+                        "name": "t48",
+                        "description": null,
+                        "grounding": null
+                    }
+                },
+                {
+                    "id": "t49",
+                    "input": [
+                        "IR"
+                    ],
+                    "output": [
+                        "R2"
+                    ],
+                    "grounding": null,
+                    "properties": {
+                        "name": "t49",
+                        "description": null,
+                        "grounding": null
+                    }
+                },
+                {
+                    "id": "t50",
+                    "input": [
+                        "AR"
+                    ],
+                    "output": [
+                        "R2"
+                    ],
+                    "grounding": null,
+                    "properties": {
+                        "name": "t50",
+                        "description": null,
+                        "grounding": null
+                    }
+                },
+                {
+                    "id": "t51",
+                    "input": [
+                        "S"
+                    ],
+                    "output": [],
+                    "grounding": null,
+                    "properties": {
+                        "name": "t51",
+                        "description": null,
+                        "grounding": null
+                    }
+                },
+                {
+                    "id": "t52",
+                    "input": [
+                        "SVR"
+                    ],
+                    "output": [],
+                    "grounding": null,
+                    "properties": {
+                        "name": "t52",
+                        "description": null,
+                        "grounding": null
+                    }
+                },
+                {
+                    "id": "t53",
+                    "input": [
+                        "V1"
+                    ],
+                    "output": [],
+                    "grounding": null,
+                    "properties": {
+                        "name": "t53",
+                        "description": null,
+                        "grounding": null
+                    }
+                },
+                {
+                    "id": "t54",
+                    "input": [
+                        "V2"
+                    ],
+                    "output": [],
+                    "grounding": null,
+                    "properties": {
+                        "name": "t54",
+                        "description": null,
+                        "grounding": null
+                    }
+                },
+                {
+                    "id": "t55",
+                    "input": [
+                        "I"
+                    ],
+                    "output": [],
+                    "grounding": null,
+                    "properties": {
+                        "name": "t55",
+                        "description": null,
+                        "grounding": null
+                    }
+                },
+                {
+                    "id": "t56",
+                    "input": [
+                        "IV"
+                    ],
+                    "output": [],
+                    "grounding": null,
+                    "properties": {
+                        "name": "t56",
+                        "description": null,
+                        "grounding": null
+                    }
+                },
+                {
+                    "id": "t57",
+                    "input": [
+                        "IR"
+                    ],
+                    "output": [],
+                    "grounding": null,
+                    "properties": {
+                        "name": "t57",
+                        "description": null,
+                        "grounding": null
+                    }
+                },
+                {
+                    "id": "t58",
+                    "input": [
+                        "A"
+                    ],
+                    "output": [],
+                    "grounding": null,
+                    "properties": {
+                        "name": "t58",
+                        "description": null,
+                        "grounding": null
+                    }
+                },
+                {
+                    "id": "t59",
+                    "input": [
+                        "AR"
+                    ],
+                    "output": [],
+                    "grounding": null,
+                    "properties": {
+                        "name": "t59",
+                        "description": null,
+                        "grounding": null
+                    }
+                },
+                {
+                    "id": "t60",
+                    "input": [
+                        "R"
+                    ],
+                    "output": [],
+                    "grounding": null,
+                    "properties": {
+                        "name": "t60",
+                        "description": null,
+                        "grounding": null
+                    }
+                },
+                {
+                    "id": "t61",
+                    "input": [
+                        "R2"
+                    ],
+                    "output": [],
+                    "grounding": null,
+                    "properties": {
+                        "name": "t61",
+                        "description": null,
+                        "grounding": null
+                    }
+                },
+                {
+                    "id": "t62",
+                    "input": [
+                        "V1"
+                    ],
+                    "output": [
+                        "SVR"
+                    ],
+                    "grounding": null,
+                    "properties": {
+                        "name": "t62",
+                        "description": null,
+                        "grounding": null
+                    }
+                },
+                {
+                    "id": "t63",
+                    "input": [
+                        "V2"
+                    ],
+                    "output": [
+                        "SVR"
+                    ],
+                    "grounding": null,
+                    "properties": {
+                        "name": "t63",
+                        "description": null,
+                        "grounding": null
+                    }
+                },
+                {
+                    "id": "t64",
+                    "input": [
+                        "R"
+                    ],
+                    "output": [
+                        "SVR"
+                    ],
+                    "grounding": null,
+                    "properties": {
+                        "name": "t64",
+                        "description": null,
+                        "grounding": null
+                    }
+                },
+                {
+                    "id": "t65",
+                    "input": [
+                        "R2"
+                    ],
+                    "output": [
+                        "SVR"
+                    ],
+                    "grounding": null,
+                    "properties": {
+                        "name": "t65",
+                        "description": null,
+                        "grounding": null
+                    }
+                }
+            ]
+        },
+        "semantics": {
+            "ode": {
+                "rates": [
+                    {
+                        "target": "t1",
+                        "expression": "I*S*ai*beta*beta_scale",
+                        "expression_mathml": "<apply><times/><ci>I</ci><ci>S</ci><ci>ai</ci><ci>beta_scale</ci><ci>beta</ci></apply>"
+                    },
+                    {
+                        "target": "t2",
+                        "expression": "I*V1*ai*beta*beta_scale",
+                        "expression_mathml": "<apply><times/><ci>I</ci><ci>V1</ci><ci>ai</ci><ci>beta_scale</ci><ci>beta</ci></apply>"
+                    },
+                    {
+                        "target": "t3",
+                        "expression": "I*V2*ai*beta*beta_scale",
+                        "expression_mathml": "<apply><times/><ci>I</ci><ci>V2</ci><ci>ai</ci><ci>beta_scale</ci><ci>beta</ci></apply>"
+                    },
+                    {
+                        "target": "t4",
+                        "expression": "I*S*beta*beta_scale*(1 - ai)",
+                        "expression_mathml": "<apply><times/><ci>I</ci><ci>S</ci><ci>beta_scale</ci><ci>beta</ci><apply><minus/><cn>1</cn><ci>ai</ci></apply></apply>"
+                    },
+                    {
+                        "target": "t5",
+                        "expression": "I*V1*ai*beta_scale*beta_v1",
+                        "expression_mathml": "<apply><times/><ci>I</ci><ci>V1</ci><ci>ai</ci><ci>beta_scale</ci><ci>beta_v1</ci></apply>"
+                    },
+                    {
+                        "target": "t6",
+                        "expression": "I*V2*ai*beta_scale*beta_v2",
+                        "expression_mathml": "<apply><times/><ci>I</ci><ci>V2</ci><ci>ai</ci><ci>beta_scale</ci><ci>beta_v2</ci></apply>"
+                    },
+                    {
+                        "target": "t7",
+                        "expression": "I*R*ai_R*beta_R*beta_scale",
+                        "expression_mathml": "<apply><times/><ci>I</ci><ci>R</ci><ci>ai_R</ci><ci>beta_R</ci><ci>beta_scale</ci></apply>"
+                    },
+                    {
+                        "target": "t8",
+                        "expression": "I*R*beta_R*beta_scale*(1 - ai_R)",
+                        "expression_mathml": "<apply><times/><ci>I</ci><ci>R</ci><ci>beta_R</ci><ci>beta_scale</ci><apply><minus/><cn>1</cn><ci>ai_R</ci></apply></apply>"
+                    },
+                    {
+                        "target": "t9",
+                        "expression": "IV*S*ai*beta*beta_scale",
+                        "expression_mathml": "<apply><times/><ci>IV</ci><ci>S</ci><ci>ai</ci><ci>beta_scale</ci><ci>beta</ci></apply>"
+                    },
+                    {
+                        "target": "t10",
+                        "expression": "IV*V1*ai*beta*beta_scale",
+                        "expression_mathml": "<apply><times/><ci>IV</ci><ci>V1</ci><ci>ai</ci><ci>beta_scale</ci><ci>beta</ci></apply>"
+                    },
+                    {
+                        "target": "t11",
+                        "expression": "IV*V2*ai*beta*beta_scale",
+                        "expression_mathml": "<apply><times/><ci>IV</ci><ci>V2</ci><ci>ai</ci><ci>beta_scale</ci><ci>beta</ci></apply>"
+                    },
+                    {
+                        "target": "t12",
+                        "expression": "IV*S*beta*beta_scale*(1 - ai)",
+                        "expression_mathml": "<apply><times/><ci>IV</ci><ci>S</ci><ci>beta_scale</ci><ci>beta</ci><apply><minus/><cn>1</cn><ci>ai</ci></apply></apply>"
+                    },
+                    {
+                        "target": "t13",
+                        "expression": "IV*V1*ai*beta_scale*beta_v1",
+                        "expression_mathml": "<apply><times/><ci>IV</ci><ci>V1</ci><ci>ai</ci><ci>beta_scale</ci><ci>beta_v1</ci></apply>"
+                    },
+                    {
+                        "target": "t14",
+                        "expression": "IV*V2*ai*beta_scale*beta_v2",
+                        "expression_mathml": "<apply><times/><ci>IV</ci><ci>V2</ci><ci>ai</ci><ci>beta_scale</ci><ci>beta_v2</ci></apply>"
+                    },
+                    {
+                        "target": "t15",
+                        "expression": "IV*R*ai_R*beta_R*beta_scale",
+                        "expression_mathml": "<apply><times/><ci>IV</ci><ci>R</ci><ci>ai_R</ci><ci>beta_R</ci><ci>beta_scale</ci></apply>"
+                    },
+                    {
+                        "target": "t16",
+                        "expression": "IV*R*beta_R*beta_scale*(1 - ai_R)",
+                        "expression_mathml": "<apply><times/><ci>IV</ci><ci>R</ci><ci>beta_R</ci><ci>beta_scale</ci><apply><minus/><cn>1</cn><ci>ai_R</ci></apply></apply>"
+                    },
+                    {
+                        "target": "t17",
+                        "expression": "IR*S*ai*beta*beta_scale",
+                        "expression_mathml": "<apply><times/><ci>IR</ci><ci>S</ci><ci>ai</ci><ci>beta_scale</ci><ci>beta</ci></apply>"
+                    },
+                    {
+                        "target": "t18",
+                        "expression": "IR*V1*ai*beta*beta_scale",
+                        "expression_mathml": "<apply><times/><ci>IR</ci><ci>V1</ci><ci>ai</ci><ci>beta_scale</ci><ci>beta</ci></apply>"
+                    },
+                    {
+                        "target": "t19",
+                        "expression": "IR*V2*ai*beta*beta_scale",
+                        "expression_mathml": "<apply><times/><ci>IR</ci><ci>V2</ci><ci>ai</ci><ci>beta_scale</ci><ci>beta</ci></apply>"
+                    },
+                    {
+                        "target": "t20",
+                        "expression": "IR*S*beta*beta_scale*(1 - ai)",
+                        "expression_mathml": "<apply><times/><ci>IR</ci><ci>S</ci><ci>beta_scale</ci><ci>beta</ci><apply><minus/><cn>1</cn><ci>ai</ci></apply></apply>"
+                    },
+                    {
+                        "target": "t21",
+                        "expression": "IR*V1*ai*beta_scale*beta_v1",
+                        "expression_mathml": "<apply><times/><ci>IR</ci><ci>V1</ci><ci>ai</ci><ci>beta_scale</ci><ci>beta_v1</ci></apply>"
+                    },
+                    {
+                        "target": "t22",
+                        "expression": "IR*V2*ai*beta_scale*beta_v2",
+                        "expression_mathml": "<apply><times/><ci>IR</ci><ci>V2</ci><ci>ai</ci><ci>beta_scale</ci><ci>beta_v2</ci></apply>"
+                    },
+                    {
+                        "target": "t23",
+                        "expression": "IR*R*ai_R*beta_R*beta_scale",
+                        "expression_mathml": "<apply><times/><ci>IR</ci><ci>R</ci><ci>ai_R</ci><ci>beta_R</ci><ci>beta_scale</ci></apply>"
+                    },
+                    {
+                        "target": "t24",
+                        "expression": "IR*R*beta_R*beta_scale*(1 - ai_R)",
+                        "expression_mathml": "<apply><times/><ci>IR</ci><ci>R</ci><ci>beta_R</ci><ci>beta_scale</ci><apply><minus/><cn>1</cn><ci>ai_R</ci></apply></apply>"
+                    },
+                    {
+                        "target": "t25",
+                        "expression": "A*S*ai*ai_beta_ratio*beta*beta_scale",
+                        "expression_mathml": "<apply><times/><ci>A</ci><ci>S</ci><ci>ai_beta_ratio</ci><ci>ai</ci><ci>beta_scale</ci><ci>beta</ci></apply>"
+                    },
+                    {
+                        "target": "t26",
+                        "expression": "A*V1*ai*ai_beta_ratio*beta*beta_scale",
+                        "expression_mathml": "<apply><times/><ci>A</ci><ci>V1</ci><ci>ai_beta_ratio</ci><ci>ai</ci><ci>beta_scale</ci><ci>beta</ci></apply>"
+                    },
+                    {
+                        "target": "t27",
+                        "expression": "A*V2*ai*ai_beta_ratio*beta*beta_scale",
+                        "expression_mathml": "<apply><times/><ci>A</ci><ci>V2</ci><ci>ai_beta_ratio</ci><ci>ai</ci><ci>beta_scale</ci><ci>beta</ci></apply>"
+                    },
+                    {
+                        "target": "t28",
+                        "expression": "A*S*ai_beta_ratio*beta*beta_scale*(1 - ai)",
+                        "expression_mathml": "<apply><times/><ci>A</ci><ci>S</ci><ci>ai_beta_ratio</ci><ci>beta_scale</ci><ci>beta</ci><apply><minus/><cn>1</cn><ci>ai</ci></apply></apply>"
+                    },
+                    {
+                        "target": "t29",
+                        "expression": "A*V1*ai*ai_beta_ratio*beta_scale*beta_v1",
+                        "expression_mathml": "<apply><times/><ci>A</ci><ci>V1</ci><ci>ai_beta_ratio</ci><ci>ai</ci><ci>beta_scale</ci><ci>beta_v1</ci></apply>"
+                    },
+                    {
+                        "target": "t30",
+                        "expression": "A*V2*ai*ai_beta_ratio*beta_scale*beta_v2",
+                        "expression_mathml": "<apply><times/><ci>A</ci><ci>V2</ci><ci>ai_beta_ratio</ci><ci>ai</ci><ci>beta_scale</ci><ci>beta_v2</ci></apply>"
+                    },
+                    {
+                        "target": "t31",
+                        "expression": "A*R*ai_R*ai_beta_ratio*beta_R*beta_scale",
+                        "expression_mathml": "<apply><times/><ci>A</ci><ci>R</ci><ci>ai_R</ci><ci>ai_beta_ratio</ci><ci>beta_R</ci><ci>beta_scale</ci></apply>"
+                    },
+                    {
+                        "target": "t32",
+                        "expression": "A*R*ai_beta_ratio*beta_R*beta_scale*(1 - ai_R)",
+                        "expression_mathml": "<apply><times/><ci>A</ci><ci>R</ci><ci>ai_beta_ratio</ci><ci>beta_R</ci><ci>beta_scale</ci><apply><minus/><cn>1</cn><ci>ai_R</ci></apply></apply>"
+                    },
+                    {
+                        "target": "t33",
+                        "expression": "AR*S*ai*ai_beta_ratio*beta*beta_scale",
+                        "expression_mathml": "<apply><times/><ci>AR</ci><ci>S</ci><ci>ai_beta_ratio</ci><ci>ai</ci><ci>beta_scale</ci><ci>beta</ci></apply>"
+                    },
+                    {
+                        "target": "t34",
+                        "expression": "AR*V1*ai*ai_beta_ratio*beta*beta_scale",
+                        "expression_mathml": "<apply><times/><ci>AR</ci><ci>V1</ci><ci>ai_beta_ratio</ci><ci>ai</ci><ci>beta_scale</ci><ci>beta</ci></apply>"
+                    },
+                    {
+                        "target": "t35",
+                        "expression": "AR*V2*ai*ai_beta_ratio*beta*beta_scale",
+                        "expression_mathml": "<apply><times/><ci>AR</ci><ci>V2</ci><ci>ai_beta_ratio</ci><ci>ai</ci><ci>beta_scale</ci><ci>beta</ci></apply>"
+                    },
+                    {
+                        "target": "t36",
+                        "expression": "AR*S*ai_beta_ratio*beta*beta_scale*(1 - ai)",
+                        "expression_mathml": "<apply><times/><ci>AR</ci><ci>S</ci><ci>ai_beta_ratio</ci><ci>beta_scale</ci><ci>beta</ci><apply><minus/><cn>1</cn><ci>ai</ci></apply></apply>"
+                    },
+                    {
+                        "target": "t37",
+                        "expression": "AR*V1*ai*ai_beta_ratio*beta_scale*beta_v1",
+                        "expression_mathml": "<apply><times/><ci>AR</ci><ci>V1</ci><ci>ai_beta_ratio</ci><ci>ai</ci><ci>beta_scale</ci><ci>beta_v1</ci></apply>"
+                    },
+                    {
+                        "target": "t38",
+                        "expression": "AR*V2*ai*ai_beta_ratio*beta_scale*beta_v2",
+                        "expression_mathml": "<apply><times/><ci>AR</ci><ci>V2</ci><ci>ai_beta_ratio</ci><ci>ai</ci><ci>beta_scale</ci><ci>beta_v2</ci></apply>"
+                    },
+                    {
+                        "target": "t39",
+                        "expression": "AR*R*ai_R*ai_beta_ratio*beta_R*beta_scale",
+                        "expression_mathml": "<apply><times/><ci>AR</ci><ci>R</ci><ci>ai_R</ci><ci>ai_beta_ratio</ci><ci>beta_R</ci><ci>beta_scale</ci></apply>"
+                    },
+                    {
+                        "target": "t40",
+                        "expression": "AR*R*ai_beta_ratio*beta_R*beta_scale*(1 - ai_R)",
+                        "expression_mathml": "<apply><times/><ci>AR</ci><ci>R</ci><ci>ai_beta_ratio</ci><ci>beta_R</ci><ci>beta_scale</ci><apply><minus/><cn>1</cn><ci>ai_R</ci></apply></apply>"
+                    },
+                    {
+                        "target": "t41",
+                        "expression": "0",
+                        "expression_mathml": "<cn>0</cn>"
+                    },
+                    {
+                        "target": "t42",
+                        "expression": "0",
+                        "expression_mathml": "<cn>0</cn>"
+                    },
+                    {
+                        "target": "t43",
+                        "expression": "0",
+                        "expression_mathml": "<cn>0</cn>"
+                    },
+                    {
+                        "target": "t44",
+                        "expression": "I*gamma",
+                        "expression_mathml": "<apply><times/><ci>I</ci><ci>gamma</ci></apply>"
+                    },
+                    {
+                        "target": "t45",
+                        "expression": "IV*gamma",
+                        "expression_mathml": "<apply><times/><ci>IV</ci><ci>gamma</ci></apply>"
+                    },
+                    {
+                        "target": "t46",
+                        "expression": "IR*gamma",
+                        "expression_mathml": "<apply><times/><ci>IR</ci><ci>gamma</ci></apply>"
+                    },
+                    {
+                        "target": "t47",
+                        "expression": "A*gamma",
+                        "expression_mathml": "<apply><times/><ci>A</ci><ci>gamma</ci></apply>"
+                    },
+                    {
+                        "target": "t48",
+                        "expression": "AR*gamma",
+                        "expression_mathml": "<apply><times/><ci>AR</ci><ci>gamma</ci></apply>"
+                    },
+                    {
+                        "target": "t49",
+                        "expression": "IR*gamma",
+                        "expression_mathml": "<apply><times/><ci>IR</ci><ci>gamma</ci></apply>"
+                    },
+                    {
+                        "target": "t50",
+                        "expression": "AR*gamma",
+                        "expression_mathml": "<apply><times/><ci>AR</ci><ci>gamma</ci></apply>"
+                    },
+                    {
+                        "target": "t51",
+                        "expression": "S*mu",
+                        "expression_mathml": "<apply><times/><ci>S</ci><ci>mu</ci></apply>"
+                    },
+                    {
+                        "target": "t52",
+                        "expression": "SVR*mu",
+                        "expression_mathml": "<apply><times/><ci>SVR</ci><ci>mu</ci></apply>"
+                    },
+                    {
+                        "target": "t53",
+                        "expression": "V1*mu",
+                        "expression_mathml": "<apply><times/><ci>V1</ci><ci>mu</ci></apply>"
+                    },
+                    {
+                        "target": "t54",
+                        "expression": "V2*mu",
+                        "expression_mathml": "<apply><times/><ci>V2</ci><ci>mu</ci></apply>"
+                    },
+                    {
+                        "target": "t55",
+                        "expression": "I*mu_I",
+                        "expression_mathml": "<apply><times/><ci>I</ci><ci>mu_I</ci></apply>"
+                    },
+                    {
+                        "target": "t56",
+                        "expression": "IV*mu_IV",
+                        "expression_mathml": "<apply><times/><ci>IV</ci><ci>mu_IV</ci></apply>"
+                    },
+                    {
+                        "target": "t57",
+                        "expression": "IR*mu",
+                        "expression_mathml": "<apply><times/><ci>IR</ci><ci>mu</ci></apply>"
+                    },
+                    {
+                        "target": "t58",
+                        "expression": "A*mu",
+                        "expression_mathml": "<apply><times/><ci>A</ci><ci>mu</ci></apply>"
+                    },
+                    {
+                        "target": "t59",
+                        "expression": "AR*mu",
+                        "expression_mathml": "<apply><times/><ci>AR</ci><ci>mu</ci></apply>"
+                    },
+                    {
+                        "target": "t60",
+                        "expression": "R*mu",
+                        "expression_mathml": "<apply><times/><ci>R</ci><ci>mu</ci></apply>"
+                    },
+                    {
+                        "target": "t61",
+                        "expression": "R2*mu",
+                        "expression_mathml": "<apply><times/><ci>R2</ci><ci>mu</ci></apply>"
+                    },
+                    {
+                        "target": "t62",
+                        "expression": "V1*nu_v1",
+                        "expression_mathml": "<apply><times/><ci>V1</ci><ci>nu_v1</ci></apply>"
+                    },
+                    {
+                        "target": "t63",
+                        "expression": "V2*nu_v2",
+                        "expression_mathml": "<apply><times/><ci>V2</ci><ci>nu_v2</ci></apply>"
+                    },
+                    {
+                        "target": "t64",
+                        "expression": "R*nu_R",
+                        "expression_mathml": "<apply><times/><ci>R</ci><ci>nu_R</ci></apply>"
+                    },
+                    {
+                        "target": "t65",
+                        "expression": "R2*nu_R",
+                        "expression_mathml": "<apply><times/><ci>R2</ci><ci>nu_R</ci></apply>"
+                    }
+                ],
+                "initials": [
+                    {
+                        "target": "S",
+                        "expression": "0.999999000000000",
+                        "expression_mathml": "<cn>0.99999899999999997</cn>"
+                    },
+                    {
+                        "target": "I",
+                        "expression": "1.00000000000000e-6",
+                        "expression_mathml": "<cn>9.9999999999999995e-7</cn>"
+                    },
+                    {
+                        "target": "A",
+                        "expression": "0.0",
+                        "expression_mathml": "<cn>0.0</cn>"
+                    },
+                    {
+                        "target": "V1",
+                        "expression": "0.0",
+                        "expression_mathml": "<cn>0.0</cn>"
+                    },
+                    {
+                        "target": "V2",
+                        "expression": "0.0",
+                        "expression_mathml": "<cn>0.0</cn>"
+                    },
+                    {
+                        "target": "IV",
+                        "expression": "0.0",
+                        "expression_mathml": "<cn>0.0</cn>"
+                    },
+                    {
+                        "target": "R",
+                        "expression": "0.0",
+                        "expression_mathml": "<cn>0.0</cn>"
+                    },
+                    {
+                        "target": "AR",
+                        "expression": "0.0",
+                        "expression_mathml": "<cn>0.0</cn>"
+                    },
+                    {
+                        "target": "IR",
+                        "expression": "0.0",
+                        "expression_mathml": "<cn>0.0</cn>"
+                    },
+                    {
+                        "target": "R2",
+                        "expression": "0.0",
+                        "expression_mathml": "<cn>0.0</cn>"
+                    },
+                    {
+                        "target": "SVR",
+                        "expression": "0.0",
+                        "expression_mathml": "<cn>0.0</cn>"
+                    }
+                ],
+                "parameters": [
+                    {
+                        "id": "ai",
+                        "name": null,
+                        "description": null,
+                        "value": 0.5,
+                        "grounding": null,
+                        "distribution": null,
+                        "units": {
+                            "expression": "1",
+                            "expression_mathml": "<cn>1</cn>"
+                        }
+                    },
+                    {
+                        "id": "beta",
+                        "name": null,
+                        "description": null,
+                        "value": 0.048081000000000006,
+                        "grounding": null,
+                        "distribution": null,
+                        "units": {
+                            "expression": "1/day",
+                            "expression_mathml": "<apply><power/><ci>day</ci><cn>-1</cn></apply>"
+                        }
+                    },
+                    {
+                        "id": "beta_scale",
+                        "name": null,
+                        "description": null,
+                        "value": 1.0,
+                        "grounding": null,
+                        "distribution": null,
+                        "units": {
+                            "expression": "1",
+                            "expression_mathml": "<cn>1</cn>"
+                        }
+                    },
+                    {
+                        "id": "beta_v1",
+                        "name": null,
+                        "description": null,
+                        "value": 0.009616200000000002,
+                        "grounding": null,
+                        "distribution": null,
+                        "units": {
+                            "expression": "1/day",
+                            "expression_mathml": "<apply><power/><ci>day</ci><cn>-1</cn></apply>"
+                        }
+                    },
+                    {
+                        "id": "beta_v2",
+                        "name": null,
+                        "description": null,
+                        "value": 0.0024040500000000005,
+                        "grounding": null,
+                        "distribution": null,
+                        "units": {
+                            "expression": "1/day",
+                            "expression_mathml": "<apply><power/><ci>day</ci><cn>-1</cn></apply>"
+                        }
+                    },
+                    {
+                        "id": "ai_R",
+                        "name": null,
+                        "description": null,
+                        "value": 0.85,
+                        "grounding": null,
+                        "distribution": null,
+                        "units": {
+                            "expression": "1",
+                            "expression_mathml": "<cn>1</cn>"
+                        }
+                    },
+                    {
+                        "id": "beta_R",
+                        "name": null,
+                        "description": null,
+                        "value": 0.0024040500000000005,
+                        "grounding": null,
+                        "distribution": null,
+                        "units": {
+                            "expression": "1/day",
+                            "expression_mathml": "<apply><power/><ci>day</ci><cn>-1</cn></apply>"
+                        }
+                    },
+                    {
+                        "id": "ai_beta_ratio",
+                        "name": null,
+                        "description": null,
+                        "value": 3.0,
+                        "grounding": null,
+                        "distribution": null,
+                        "units": {
+                            "expression": "1",
+                            "expression_mathml": "<cn>1</cn>"
+                        }
+                    },
+                    {
+                        "id": "gamma",
+                        "name": null,
+                        "description": null,
+                        "value": 0.03571428571428571,
+                        "grounding": null,
+                        "distribution": null,
+                        "units": {
+                            "expression": "1/day",
+                            "expression_mathml": "<apply><power/><ci>day</ci><cn>-1</cn></apply>"
+                        }
+                    },
+                    {
+                        "id": "mu",
+                        "name": null,
+                        "description": null,
+                        "value": 2.049980726017995e-05,
+                        "grounding": null,
+                        "distribution": null,
+                        "units": {
+                            "expression": "1/day",
+                            "expression_mathml": "<apply><power/><ci>day</ci><cn>-1</cn></apply>"
+                        }
+                    },
+                    {
+                        "id": "mu_I",
+                        "name": null,
+                        "description": null,
+                        "value": 0.001,
+                        "grounding": null,
+                        "distribution": null,
+                        "units": {
+                            "expression": "1/day",
+                            "expression_mathml": "<apply><power/><ci>day</ci><cn>-1</cn></apply>"
+                        }
+                    },
+                    {
+                        "id": "mu_IV",
+                        "name": null,
+                        "description": null,
+                        "value": 0.00015,
+                        "grounding": null,
+                        "distribution": null,
+                        "units": {
+                            "expression": "1/day",
+                            "expression_mathml": "<apply><power/><ci>day</ci><cn>-1</cn></apply>"
+                        }
+                    },
+                    {
+                        "id": "nu_v1",
+                        "name": null,
+                        "description": null,
+                        "value": 0.0027397260273972603,
+                        "grounding": null,
+                        "distribution": null,
+                        "units": {
+                            "expression": "1/day",
+                            "expression_mathml": "<apply><power/><ci>day</ci><cn>-1</cn></apply>"
+                        }
+                    },
+                    {
+                        "id": "nu_v2",
+                        "name": null,
+                        "description": null,
+                        "value": 0.0006849315068493151,
+                        "grounding": null,
+                        "distribution": null,
+                        "units": {
+                            "expression": "1/day",
+                            "expression_mathml": "<apply><power/><ci>day</ci><cn>-1</cn></apply>"
+                        }
+                    },
+                    {
+                        "id": "nu_R",
+                        "name": null,
+                        "description": null,
+                        "value": 0.0006849315068493151,
+                        "grounding": null,
+                        "distribution": null,
+                        "units": {
+                            "expression": "1/day",
+                            "expression_mathml": "<apply><power/><ci>day</ci><cn>-1</cn></apply>"
+                        }
+                    }
+                ],
+                "time": {
+                    "id": "t",
+                    "units": null
+                }
+            },
+            "typing": null
+        },
+        "metadata": {
+            "annotations": {
+                "license": null,
+                "authors": [],
+                "references": [],
+                "time_scale": null,
+                "time_start": null,
+                "time_end": null,
+                "locations": [],
+                "pathogens": [],
+                "diseases": [],
+                "hosts": [],
+                "model_types": []
+            }
+        }
+    },
+    "request": {
+        "query": {
+            "model": null
+        },
+        "parameters": [],
+        "config": {
+            "tolerance": 1e-08,
+            "queue_timeout": 1,
+            "number_of_processes": 1,
+            "wait_timeout": null,
+            "wait_action_timeout": 0.05,
+            "solver": "dreal",
+            "num_steps": 2,
+            "step_size": 1,
+            "num_initial_boxes": 1,
+            "save_smtlib": true,
+            "dreal_precision": 0.001,
+            "dreal_log_level": "off",
+            "constraint_noise": 0.0,
+            "initial_state_tolerance": 0.0,
+            "dreal_mcts": true,
+            "substitute_subformulas": false,
+            "use_compartmental_constraints": true
+        },
+        "structure_parameters": [
+            {
+                "name": "num_steps",
+                "lb": 1.0,
+                "ub": 1.0,
+                "label": "all"
+            },
+            {
+                "name": "step_size",
+                "lb": 1.0,
+                "ub": 1.0,
+                "label": "all"
+            }
+        ]
+    }
+}

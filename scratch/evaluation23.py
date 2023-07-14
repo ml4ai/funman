@@ -30,7 +30,7 @@ from funman.funman import FUNMANConfig
 from funman.model import QueryLE
 from funman.model.bilayer import BilayerDynamics, BilayerGraph, BilayerModel
 from funman.model.query import QueryEncoded, QueryTrue
-from funman.representation.representation import Parameter
+from funman.representation.representation import ModelParameter
 from funman.scenario import ConsistencyScenario, ConsistencyScenarioResult
 from funman.scenario.parameter_synthesis import ParameterSynthesisScenario
 from funman.scenario.scenario import AnalysisScenario
@@ -241,7 +241,7 @@ class TestUseCases(unittest.TestCase):
         )
         model._extra_constraints = extra_constraints
         parameters = [
-            Parameter(name=k, lb=v[0], ub=v[1])
+            ModelParameter(name=k, lb=v[0], ub=v[1])
             for k, v in parameter_bounds.items()
             if k in params_to_synth
         ]

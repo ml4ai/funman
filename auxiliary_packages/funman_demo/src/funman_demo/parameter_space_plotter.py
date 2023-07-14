@@ -6,8 +6,8 @@ import numpy as np
 from IPython.display import clear_output
 from matplotlib.lines import Line2D
 
+from funman.representation import ParameterSpace
 from funman.representation.representation import Box, Interval, Point
-from funman.scenario import ParameterSpace
 
 
 class ParameterSpacePlotter:
@@ -24,6 +24,7 @@ class ParameterSpacePlotter:
         shape_map: Dict[str, str] = {"true": "x", "false": "o"},
         alpha=0.2,
         plot_points=False,
+        parameters=None
     ):
         if isinstance(parameter_space, ParameterSpace):
             self.ps = parameter_space
@@ -38,7 +39,7 @@ class ParameterSpacePlotter:
         elif len(self.ps.false_points) > 0:
             values = self.ps.false_points[0].values
 
-        self.parameters = [k for k in values]
+        self.parameters = [k for k in values if parameters and k in parameters]
         self.dim = len(self.parameters)
         self.plot_points = plot_points
 
@@ -57,6 +58,9 @@ class ParameterSpacePlotter:
         return box
 
     def initialize_figure(self):
+        if self.dim == 0:
+            return
+
         fig, axs = plt.subplots(
             self.dim,
             self.dim,
@@ -109,7 +113,7 @@ class ParameterSpacePlotter:
         if show:
             plt.show(block=False)
 
-    def plot_add_point(self, point: Point, color="r", shape="x", alpha=0.2):
+    def plot_add_point(self, point: Point, color="r", shape="x", alpha=0.9):
         for i in range(self.dim):
             for j in range(self.dim):
                 if i < j:
@@ -123,10 +127,10 @@ class ParameterSpacePlotter:
                     color=color,
                     marker=shape,
                     alpha=alpha,
-                    s=3,
+                    s=4,
                 )
-                self.fig.canvas.draw()
-                self.fig.canvas.flush_events()
+                # self.fig.canvas.draw()
+                # self.fig.canvas.flush_events()
 
     def plotNDBox(self, box, color="g", alpha=0.2):
         for i in range(self.dim):

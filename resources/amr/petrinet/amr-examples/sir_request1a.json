@@ -1,0 +1,61 @@
+{
+  "query": {
+    "queries": [
+      {
+        "variable": "I",
+        "ub": 300.0
+      }
+    ]
+  },
+  "parameters": [
+    {
+      "name": "beta",
+      "lb": 0.0002603,
+      "ub": 0.0002803,
+      "label": "all"
+    },
+    {
+      "name": "gamma",
+      "lb": 0.1,
+      "ub": 0.18,
+      "label": "all"
+    },
+    {
+      "name": "S0",
+      "lb": 1000,
+      "ub": 1000,
+      "label": "any"
+    },
+    {
+      "name": "I0",
+      "lb": 1,
+      "ub": 1,
+      "label": "any"
+    },
+    {
+      "name": "R0",
+      "lb": 0,
+      "ub": 0,
+      "label": "any"
+    }
+  ],
+  "structure_parameters": [
+    {
+      "name": "num_steps",
+      "lb": 1,
+      "ub": 10,
+      "label": "all"
+    },
+    {
+      "name": "step_size",
+    "lb": 10,
+      "ub": 10,
+      "label": "all"
+    }
+  ],
+  "config": {
+    "solver": "dreal",
+    "tolerance": 1e-6,
+    "substitute_subformulas": false
+  }
+}

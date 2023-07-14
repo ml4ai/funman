@@ -9,7 +9,7 @@ import numpy as np
 from IPython.display import clear_output
 from matplotlib.lines import Line2D
 
-from funman.representation import Parameter
+from funman.representation import ModelParameter
 from funman.representation.representation import Box, Interval, Point
 from funman.search import SearchEpisode
 
@@ -20,7 +20,7 @@ l.setLevel(logging.INFO)
 class BoxPlotter(object):
     def __init__(
         self,
-        parameters: List[Parameter],
+        parameters: List[ModelParameter],
         plot_bounds: Box = None,
         title: str = "Feasible Regions",
         color_map: Dict[str, str] = {
@@ -265,7 +265,7 @@ class BoxPlotter(object):
         plt.legend(custom_lines, ["true", "false"])
         plt.show(block=False)
 
-    def plot1DBox(self, i: Box, p1: Parameter, color="g"):
+    def plot1DBox(self, i: Box, p1: ModelParameter, color="g"):
         x_values = [i.bounds[p1].lb, i.bounds[p1].ub]
         plt.plot(x_values, np.zeros(len(x_values)), color, linestyle="-")
 
@@ -305,7 +305,7 @@ class BoxPlotter(object):
                         )
         plt.show(block=False)
 
-    def plot2DBox(self, i, p1: Parameter, p2: Parameter, color="g", alpha=0.2):
+    def plot2DBox(self, i, p1: ModelParameter, p2: ModelParameter, color="g", alpha=0.2):
         x_limits = i.bounds[p1.name]
         y_limits = i.bounds[p2.name]
         if abs(float(x_limits.lb)) < 100 and abs(float(x_limits.ub)) < 100:

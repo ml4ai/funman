@@ -1,7 +1,12 @@
+import faulthandler
 import io
+import logging
+import math
 import os
+from contextlib import contextmanager
 from functools import partial
 from queue import Queue
+from timeit import default_timer
 from typing import Dict, List
 
 import dreal
@@ -35,6 +40,10 @@ from funman.utils.smtlib_utils import FUNMANSmtPrinter
 #         os.path.join(benchmark_path, smt2_file),
 #         os.path.join(out_dir, smt2_file),
 #     )
+
+
+l = logging.getLogger(__name__)
+l.setLevel(logging.INFO)
 
 
 # TODO find a better way to determine if solver was successful
@@ -413,6 +422,8 @@ class DRealNative(Solver, SmtLibBasicSolver, SmtLibIgnoreMixin):
     def __init__(
         self, args, environment, logic, LOGICS=None, **options
     ) -> None:
+        faulthandler.enable()
+
         Solver.__init__(self, environment, logic=logic, **options)
 
         # Setup super class attributes
@@ -429,13 +440,15 @@ class DRealNative(Solver, SmtLibBasicSolver, SmtLibIgnoreMixin):
         # self.context.config.use_worklist_fixpoint = True
         self.model = None
         if "solver_options" in options:
-            if "dreal_precision" in options:
+            if "dreal_precision" in options["solver_options"]:
                 self.config.precision = options["solver_options"][
                     "dreal_precision"
                 ]
             if "dreal_log_level" in options["solver_options"]:
                 if options["solver_options"]["dreal_log_level"] == "debug":
                     dreal.set_log_level(dreal.LogLevel.DEBUG)
+                elif options["solver_options"]["dreal_log_level"] == "trace":
+                    dreal.set_log_level(dreal.LogLevel.TRACE)
                 elif options["solver_options"]["dreal_log_level"] == "info":
                     dreal.set_log_level(dreal.LogLevel.INFO)
 
@@ -451,15 +464,33 @@ class DRealNative(Solver, SmtLibBasicSolver, SmtLibIgnoreMixin):
         # self.to = self.environment.typeso
         self.LOGICS = DReal.LOGICS
         self.symbols = {}
+        l.debug("Created new Solver ...")
+
+    @contextmanager
+    def elapsed_timer(self):
+        start = default_timer()
+        elapser = lambda: default_timer() - start
+        try:
+            yield elapser
+        finally:
+            elapser = None
 
     def __del__(self):
-        self.context.Exit()
+        self.context.Exit()  # Exit() only logs within dreal
+        self.context = None
 
     @clear_pending_pop
     def add_assertion(self, formula, named=None):
         # print(f"Assert({formula})")
 
         f = self.converter.convert(formula)
+
+        # Convert Variable to a Formula
+        if (
+            isinstance(f, dreal.Variable)
+            and f.get_type() == dreal.Variable.Bool
+        ):
+            f = dreal.And(f, f)
 
         deps = formula.get_free_variables()
         # Declare all variables
@@ -507,7 +538,12 @@ class DRealNative(Solver, SmtLibBasicSolver, SmtLibIgnoreMixin):
 
     def check_sat(self):
         # print("CheckSat()")
-        result = self.context.CheckSat()
+        with self.elapsed_timer() as t:
+            result = self.context.CheckSat()
+            elapsed_base_dreal = t()
+        l.debug(
+            f"{('delta-sat' if result else 'unsat' )} took {elapsed_base_dreal}s"
+        )
         # result = dreal.CheckSatisfiability(self.assertion, 0.001)
         self.model = result
         return result
@@ -535,7 +571,12 @@ class DRealNative(Solver, SmtLibBasicSolver, SmtLibIgnoreMixin):
 
     def get_value(self, item):
         # print(f"get_value() {item}: {self.model[item]}")
-        return Real(self.model[item].lb())
+        mid = (self.model[item].ub() - self.model[item].lb()) / 2.0
+        mid = mid + self.model[item].lb()
+        if not math.isinf(mid):
+            return Real(mid)
+        else:
+            return Real(self.model[item].lb())
 
     @clear_pending_pop
     def solve(self, assumptions=None):

@@ -3,8 +3,9 @@ from typing import Dict, List, Union
 import graphviz
 from pydantic import BaseModel
 
-from funman.representation.representation import Parameter
+from funman.representation.representation import ModelParameter
 from funman.translate.petrinet import PetrinetEncoder
+from funman.utils.sympy_utils import substitute
 
 from .generated_models.petrinet import Model as GeneratedPetrinet
 from .generated_models.petrinet import State, Transition
@@ -69,33 +70,6 @@ class AbstractPetriNetModel(Model):
         else:
             return 0
 
-    def _parameters(self) -> List[Parameter]:
-        param_names = self._parameter_names()
-        param_values = self._parameter_values()
-        params = [
-            Parameter(
-                name=p,
-                lb=self.parameter_bounds[p][0],
-                ub=self.parameter_bounds[p][1],
-            )
-            for p in param_names
-            if self.parameter_bounds
-            and p not in param_values
-            and p in self.parameter_bounds
-            and self.parameter_bounds[p]
-        ]
-        params += [
-            Parameter(
-                name=p,
-                lb=param_values[p],
-                ub=param_values[p],
-            )
-            for p in param_names
-            if p in param_values
-        ]
-
-        return params
-
     def to_dot(self, values={}):
         """
         Create a dot object for visualizing the graph.
@@ -111,18 +85,30 @@ class AbstractPetriNetModel(Model):
         )
 
         state_vars = self._state_vars()
+        state_var_names = self._state_var_names()
         transitions = self._transitions()
+        variable_values = self._variable_values()
+
+        # Don't substitute initial state values for state variables, only parameters
+        variable_values = {
+            k: (None if k in state_var_names else v)
+            for k, v in variable_values.items()
+        }
 
         for _, var in enumerate(state_vars):
             state_var_id = self._state_var_id(var)
             state_var_name = self._state_var_name(var)
             for transition in transitions:
                 transition_id = self._transition_id(transition)
-                transition_parameter = self._transition_parameter(transition)
-                transition_parameter_value = self._parameter_values()[
-                    transition_parameter
+                transition_parameters = self._transition_rate(transition)
+                # transition_parameter_value = [
+                #     self._parameter_values()[t] for t in transition_parameters
+                # ]
+                transition_parameter_value = [
+                    substitute(t, variable_values)
+                    for t in transition_parameters
                 ]
-                transition_name = f"{transition_id}({transition_parameter}) = {transition_parameter_value}"
+                transition_name = f"{transition_id}({transition_parameters}) = {transition_parameter_value}"
                 dot.node(transition_name, _attributes={"shape": "box"})
                 # state var to transition
                 for edge in self._input_edges():
@@ -152,7 +138,9 @@ class AbstractPetriNetModel(Model):
 class GeneratedPetriNetModel(AbstractPetriNetModel):
     petrinet: GeneratedPetrinet
 
-    def default_encoder(self, config: "FUNMANConfig") -> "Encoder":
+    def default_encoder(
+        self, config: "FUNMANConfig", scenario: "AnalysisScenario"
+    ) -> "Encoder":
         """
         Return the default Encoder for the model
 
@@ -163,14 +151,35 @@ class GeneratedPetriNetModel(AbstractPetriNetModel):
         """
         return PetrinetEncoder(
             config=config,
-            model=self,
+            scenario=scenario,
         )
+
+    def _time_var(self):
+        if (
+            hasattr(self.petrinet, "semantics")
+            and hasattr(self.petrinet.semantics, "ode")
+            and hasattr(self.petrinet.semantics.ode, "time")
+        ):
+            return self.petrinet.semantics.ode.time
+        else:
+            return None
+
+    def _time_var_id(self, time_var):
+        return f"timer_{time_var.id}"
 
     def _get_init_value(self, var: str):
         value = Model._get_init_value(self, var)
         if value is None:
-            initials = self.petrinet.semantics.ode.initials
-            value = next(i.expression for i in initials if i.target == var)
+            if hasattr(self.petrinet.semantics, "ode"):
+                initials = self.petrinet.semantics.ode.initials
+                value = next(i.expression for i in initials if i.target == var)
+                try:
+                    # Attempt to convert to a constant, if fail then its a string
+                    value = float(value)
+                except:
+                    pass
+            else:
+                value = f"{var}0"
         return value
 
     def _parameter_lb(self, param_name: str):
@@ -219,22 +228,16 @@ class GeneratedPetriNetModel(AbstractPetriNetModel):
     def _output_edges(self):
         return [(t.id, o) for t in self._transitions() for o in t.output]
 
-    def _transition_parameter(self, transition):
-        transition_rates = [
-            r
-            for r in self.petrinet.semantics.ode.rates
-            if r.target == transition.id
-        ]
-        parameters = [
-            p
-            for t in transition_rates
-            for p in self._parameter_names()
-            if p in t.expression
-        ]
-        assert (
-            len(parameters) == 1
-        ), f"The number of parameters for transition {transition} are not equal to 1, {parameters}"
-        return parameters[0]
+    def _transition_rate(self, transition):
+        if hasattr(self.petrinet.semantics, "ode"):
+            transition_rates = [
+                r.expression
+                for r in self.petrinet.semantics.ode.rates
+                if r.target == transition.id
+            ]
+            return transition_rates
+        else:
+            return transition.id
 
     def _transition_id(self, transition):
         return transition.id
@@ -243,10 +246,35 @@ class GeneratedPetriNetModel(AbstractPetriNetModel):
         return self._state_var_name(state_var)
 
     def _parameter_names(self):
-        return [p.id for p in self.petrinet.semantics.ode.parameters]
+        if hasattr(self.petrinet.semantics, "ode"):
+            return [p.id for p in self.petrinet.semantics.ode.parameters]
+        else:
+            # Create a parameter for each transition and initial state variable
+            return [t.id for t in self.petrinet.model.transitions.__root__] + [
+                f"{s.id}0" for s in self.petrinet.model.states.__root__
+            ]
 
     def _parameter_values(self):
-        return {p.id: p.value for p in self.petrinet.semantics.ode.parameters}
+        if hasattr(self.petrinet.semantics, "ode"):
+            return {
+                p.id: p.value for p in self.petrinet.semantics.ode.parameters
+            }
+        else:
+            return {}
+
+    def _variable_values(self):
+        values = {}
+        if hasattr(self.petrinet.semantics, "ode"):
+            for p in self.petrinet.semantics.ode.parameters:
+                values[p.id] = p.value
+            for p in self.petrinet.semantics.ode.initials:
+                values[p.target] = p.expression
+                try:
+                    values[p.target] = float(values[p.target])
+                except:
+                    pass
+
+        return values
 
 
 class PetrinetDynamics(BaseModel):
@@ -299,8 +327,8 @@ class PetrinetModel(AbstractPetriNetModel):
     def _edge_target(self, edge):
         return edge["it"] if "it" in edge else edge["os"]
 
-    def _transition_parameter(self, transition):
-        return transition["tprop"]["parameter_name"]
+    def _transition_rate(self, transition):
+        return self._encode_state_var(transition["tprop"]["parameter_name"])
 
     def _transition_id(self, transition):
         return next(

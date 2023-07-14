@@ -4,12 +4,13 @@ from abc import ABC, abstractmethod
 from multiprocessing import Array, Queue, Value
 from multiprocessing.managers import SyncManager
 from queue import Queue as SQueue
-from typing import Callable, List, Optional
+from typing import Callable, Dict, List, Optional
 
 import pysmt
 from pydantic import BaseModel
 
 from funman.funman import FUNMANConfig
+from funman.representation.representation import Box, Interval, ModelParameter
 from funman.scenario.scenario import AnalysisScenario
 
 
@@ -66,6 +67,7 @@ class SearchEpisode(BaseModel):
         arbitrary_types_allowed = True
         underscore_attrs_are_private = True
 
+    structural_configuration: Dict[str, int] = {}
     problem: AnalysisScenario
     config: FUNMANConfig
     statistics: SearchStatistics = None
@@ -73,6 +75,23 @@ class SearchEpisode(BaseModel):
 
     def num_parameters(self):
         return len(self.problem.parameters)
+
+    def _initial_box(self) -> Box:
+        box = Box(
+            bounds={
+                p.name: (
+                    Interval(lb=p.lb, ub=p.ub)
+                    if (isinstance(p, ModelParameter) or p.name == "num_steps")
+                    else Interval(
+                        lb=self.structural_configuration[p.name],
+                        ub=self.structural_configuration[p.name],
+                    )
+                )
+                for p in self.problem.parameters
+            }
+        )
+        return box
+
 
 
 class Search(ABC):

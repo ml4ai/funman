@@ -5,13 +5,13 @@
       "name": "beta",
       "lb": 2.6e-7,
       "ub": 2.8e-7,
-      "label": "any"
+      "label": "all"
     },
     {
-      "name": "gamma", 
+      "name": "gamma",
       "lb": 0.1,
       "ub": 0.18,
-      "label": "any"
+      "label": "all"
     },
     {
       "name": "S0",
@@ -32,9 +32,24 @@
       "label": "any"
     }
   ],
+  "structure_parameters": [
+    {
+      "name": "num_steps",
+      "lb": 1,
+      "ub": 3,
+      "label": "all"
+    },
+    {
+      "name": "step_size",
+      "lb": 1,
+      "ub": 1,
+      "label": "all"
+    }
+  ],
   "config": {
     "tolerance": 1.0e-8,
     "number_of_processes": 1,
-    "save_smtlib": true
+    "solver": "dreal",
+    "dreal_mcts": "true"
   }
 }

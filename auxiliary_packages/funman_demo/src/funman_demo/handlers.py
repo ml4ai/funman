@@ -6,7 +6,7 @@ from typing import Dict, List
 import matplotlib.pyplot as plt
 from IPython.display import Image, display
 
-from funman.representation import Parameter
+from funman.representation import ModelParameter
 from funman.search import Box, ParameterSpace, Point
 from funman.utils.handlers import ResultHandler, WaitAction
 
@@ -55,7 +55,7 @@ class ResultCacheWriter(ResultHandler):
 class RealtimeResultPlotter(ResultHandler):
     def __init__(
         self,
-        parameters: List[Parameter],
+        parameters: List[ModelParameter],
         plot_bounds: Box = None,
         title: str = "Feasible Regions",
         color_map: Dict[str, str] = {

@@ -85,7 +85,7 @@ class DRealConverter(Converter, DagWalker):
         return res
 
     def walk_pow(self, formula, args, **kwargs):
-        res = pow(args[0], args[1])
+        res = dreal.pow(args[0], args[1])
         return res
 
     def walk_equals(self, formula, args, **kwargs):
