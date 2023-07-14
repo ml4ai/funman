@@ -36,7 +36,7 @@ from funman.model.query import (
     QueryLE,
     QueryTrue,
 )
-from funman.representation import Parameter
+from funman.representation import ModelParameter
 from funman.representation.representation import (
     Box,
     Interval,

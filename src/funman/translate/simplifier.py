@@ -1,6 +1,6 @@
 from typing import List
 
-from funman.representation.representation import Parameter
+from funman.representation.representation import ModelParameter
 import pysmt
 from pysmt.fnode import FNode
 from pysmt.shortcuts import get_env
@@ -14,7 +14,7 @@ class FUNMANSimplifier(pysmt.simplifier.Simplifier):
         super().__init__(env=env)
         self.manager = self.env.formula_manager
 
-    def approximate(formula, parameters: List[Parameter], threshold=1e-8):
+    def approximate(formula, parameters: List[ModelParameter], threshold=1e-8):
         if len(formula.free_symbols)==0:
             return formula
         
@@ -73,7 +73,7 @@ class FUNMANSimplifier(pysmt.simplifier.Simplifier):
 
         return subbed_formula
 
-    def sympy_simplify(formula, parameters: List[Parameter] = []):
+    def sympy_simplify(formula, parameters: List[ModelParameter] = []):
         if formula.is_real_constant():
             return formula
         

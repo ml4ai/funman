@@ -25,7 +25,7 @@ from funman.representation.representation import (
     LABEL_UNKNOWN,
     Interval,
     ModelParameter,
-    Parameter,
+    ModelParameter,
 )
 from funman.search import Box, ParameterSpace, Point, Search, SearchEpisode
 from funman.search.search import SearchStaticsMP, SearchStatistics

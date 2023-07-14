@@ -3,7 +3,7 @@ from typing import Dict, List, Union
 import graphviz
 from pydantic import BaseModel
 
-from funman.representation.representation import Parameter
+from funman.representation.representation import ModelParameter
 from funman.translate.petrinet import PetrinetEncoder
 from funman.utils.sympy_utils import substitute
 

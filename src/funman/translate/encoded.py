@@ -5,6 +5,7 @@ pass-through that helps make the encoder abstraction uniform.)
 from funman.model import Model
 from funman.model.encoded import EncodedModel
 from funman.translate import Encoder, Encoding, EncodingOptions
+from funman.translate.translate import LayeredEncoding
 
 
 class EncodedEncoder(Encoder):
@@ -29,9 +30,8 @@ class EncodedEncoder(Encoder):
             SMTLib formula encoding the model
         """
         if isinstance(model, EncodedModel):
-            encoding = Encoding(
-                _formula=model._formula,
-                _symbols=list(model._formula.get_free_variables()),
+            encoding = LayeredEncoding(
+                _layers=[(model._formula,list(model._formula.get_free_variables()))],
             )
             return encoding
         else:

@@ -1,12 +1,12 @@
 import threading
 from abc import ABC, abstractclassmethod, abstractmethod
-from typing import List, Optional
+from typing import List, Optional, Union
 
 from pydantic import BaseModel
 
 from funman.representation.representation import (
     ModelParameter,
-    Parameter,
+    ModelParameter,
     ParameterSpace,
     StructureParameter,
 )
@@ -17,7 +17,7 @@ class AnalysisScenario(ABC, BaseModel):
     Abstract class for Analysis Scenarios.
     """
 
-    parameters: List[Parameter]
+    parameters: List[Union[ModelParameter, StructureParameter]]
 
     @abstractclassmethod
     def get_kind(cls) -> str:
@@ -87,6 +87,7 @@ class AnalysisScenario(ABC, BaseModel):
     def _filter_parameters(self):
         # If the scenario has parameters that are not in the model, then remove them from the scenario
         model_parameters = self.model._parameter_names()
+
         if model_parameters is not None:
             filtered_parameters = [
                 p

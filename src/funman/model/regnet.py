@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Union
 import graphviz
 from pydantic import BaseModel
 
-from funman.representation.representation import Parameter
+from funman.representation.representation import ModelParameter
 from funman.translate.regnet import RegnetEncoder
 
 from .generated_models.regnet import Edge as GeneratedRegnetEdge

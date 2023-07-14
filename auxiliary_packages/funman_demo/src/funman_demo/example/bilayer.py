@@ -8,7 +8,7 @@ from funman_demo.handlers import (
 )
 
 from funman import Funman
-from funman.model import Parameter, QueryLE, QueryTrue
+from funman.model import ModelParameter, QueryLE, QueryTrue
 from funman.model.bilayer import (
     BilayerDynamics,
     BilayerMeasurement,

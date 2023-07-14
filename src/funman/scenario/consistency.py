@@ -22,7 +22,7 @@ from funman.model.query import (
     QueryTrue,
 )
 from funman.model.regnet import GeneratedRegnetModel, RegnetModel
-from funman.representation.representation import ParameterSpace, Point
+from funman.representation.representation import ParameterSpace, Point, StructureParameter
 from funman.scenario import AnalysisScenario, AnalysisScenarioResult
 from funman.translate import Encoder
 from funman.translate.translate import Encoding
@@ -92,6 +92,17 @@ class ConsistencyScenario(AnalysisScenario, BaseModel):
             search = SMTCheck()
         else:
             search = config._search()
+
+        if len(self.structure_parameters()) == 0:
+            # either undeclared or wrong type
+            # if wrong type, recover structure parameters
+            self.parameters = [(StructureParameter(name=p.name, lb=p.lb, ub=p.ub) if (p.name == "num_steps" or p.name == "step_size") else p)  for p in self.parameters] 
+            if len(self.structure_parameters()) == 0:
+                # Add the structure parameters if still missing
+                self.parameters += [
+                    StructureParameter(name="num_steps", lb=0, ub=0),
+                    StructureParameter(name="step_size", lb=0, ub=0),
+                ]
 
         self._extract_non_overriden_parameters()
         self._filter_parameters()

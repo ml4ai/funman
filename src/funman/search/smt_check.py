@@ -66,7 +66,8 @@ class SMTCheck(Search):
                 models[point] = result
                 consistent[point] = result_dict
                 parameter_space.true_points.append(point)
-            resultsCallback(parameter_space)
+            if resultsCallback:
+                resultsCallback(parameter_space)
 
         return parameter_space, models, consistent
 

@@ -12,7 +12,7 @@ from IPython.display import Markdown as md
 from matplotlib.ticker import FormatStrFormatter
 
 from funman import Funman
-from funman.model import Parameter, QueryLE, QueryTrue
+from funman.model import ModelParameter, QueryLE, QueryTrue
 from funman.model.bilayer import (
     BilayerDynamics,
     BilayerMeasurement,
@@ -607,7 +607,7 @@ SIR Bilayer (left), Hospitalized Measurement (right)
                     1.0 - transmission_reduction[0]
                 )
                 model.parameter_bounds["beta"] = [lb, ub]
-                parameters = [Parameter(name="beta", lb=lb, ub=ub)]
+                parameters = [ModelParameter(name="beta", lb=lb, ub=ub)]
             elif model_name == "SVIIR" or model_name == "Bucky":
                 for beta in ["beta_1", "beta_2"]:
                     model.parameter_bounds[beta] = [
@@ -616,7 +616,7 @@ SIR Bilayer (left), Hospitalized Measurement (right)
                         model.parameter_bounds[beta][1]
                         * (1.0 - 1.0 - transmission_reduction[0]),
                     ]
-                    parameters = [Parameter(name="beta_1", lb=lb, ub=ub)]
+                    parameters = [ModelParameter(name="beta_1", lb=lb, ub=ub)]
 
             tmp_dir_path = tempfile.mkdtemp(prefix="funman-")
             result = Funman().solve(
@@ -871,7 +871,7 @@ SIR Bilayer (left), Infected Measurement (right)
             )
             model.parameter_bounds["v_r"] = [lb, ub]
 
-            parameters = [Parameter(name="v_r", lb=lb, ub=ub)]
+            parameters = [ModelParameter(name="v_r", lb=lb, ub=ub)]
             # tmp_dir_path = tempfile.mkdtemp(prefix="funman-")
             result = Funman().solve(
                 ParameterSynthesisScenario(

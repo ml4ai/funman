@@ -2,7 +2,7 @@ import unittest
 
 from matplotlib.lines import Line2D
 
-from funman.representation import Parameter
+from funman.representation import ModelParameter
 from funman.search import Box, Interval
 
 

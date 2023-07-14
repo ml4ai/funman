@@ -6,7 +6,7 @@ from funman_demo.example.chime import CHIME
 from funman_demo.handlers import ResultCacheWriter
 
 from funman import Funman
-from funman.model import Parameter
+from funman.model import ModelParameter
 from funman.model.encoded import EncodedModel
 from funman.representation.representation import (
     ResultCombinedHandler,
@@ -45,7 +45,7 @@ class TestCachedParameterSpace(unittest.TestCase):
             n,
             delta,
         ) = vars
-        parameters = [Parameter(name="beta", _symbol=betas[0])]
+        parameters = [ModelParameter(name="beta", _symbol=betas[0])]
 
         model = EncodedModel(phi)
 

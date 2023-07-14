@@ -9,7 +9,7 @@ from typing import Dict, List
 from pydantic import BaseModel
 from pysmt.formula import FNode
 
-from funman.representation.representation import ModelParameter, Parameter
+from funman.representation.representation import ModelParameter, ModelParameter
 
 
 class Model(ABC, BaseModel):
@@ -60,7 +60,7 @@ class Model(ABC, BaseModel):
 
         return vars
 
-    def _parameters(self) -> List[Parameter]:
+    def _parameters(self) -> List[ModelParameter]:
         param_names = self._parameter_names()
         param_values = self._parameter_values()
 
@@ -107,4 +107,7 @@ class Model(ABC, BaseModel):
         return None
 
     def _parameter_ub(self, param_name: str):
+        return None
+
+    def _time_var(self):
         return None

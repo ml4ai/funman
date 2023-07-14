@@ -4,7 +4,7 @@ This module encodes bilayer models into a SMTLib formula.
 """
 import logging
 from functools import reduce
-from typing import List
+from typing import Dict, List, Tuple
 
 import pysmt
 from pysmt.formula import FNode
@@ -34,7 +34,7 @@ from funman.model.bilayer import (
     BilayerStateNode,
 )
 from funman.model.model import Model
-from funman.representation import Parameter
+from funman.representation import ModelParameter
 from funman.representation.representation import Box, Interval
 from funman.translate import Encoder, Encoding, EncodingOptions
 
@@ -73,20 +73,21 @@ class BilayerEncoder(Encoder):
         step: int,
         next_step: int,
         time_dependent_parameters=None,
-    ) -> FNode:
+        substitutions=None
+    ) -> Tuple[FNode, Dict[FNode, FNode]]:
         transition = self._encode_bilayer(
             scenario.model.bilayer,
             [step, next_step],
             time_dependent_parameters=time_dependent_parameters,
         )
-        if model.measurements:
+        if scenario.model.measurements:
             measurements = self._encode_measurements(
                 scenario.model.measurements, [step + next_step]
             )
         else:
             measurements = TRUE()
 
-        return And(transition, measurements).simplify()
+        return And(transition, measurements).simplify(), {}
 
     def _encode_untimed_constraints(self, scenario: "AnalysisScenario") -> FNode:
         super_untimed_constraints = Encoder._encode_untimed_constraints(
@@ -174,7 +175,7 @@ class BilayerEncoder(Encoder):
 
             if model.parameter_bounds:
                 parameters = [
-                    Parameter(
+                    ModelParameter(
                         name=node.parameter,
                         lb=model.parameter_bounds[node.parameter][0],
                         ub=model.parameter_bounds[node.parameter][1],
@@ -185,7 +186,7 @@ class BilayerEncoder(Encoder):
                 ]
                 if model.measurements:
                     parameters += [
-                        Parameter(
+                        ModelParameter(
                             name=node.parameter,
                             lb=model.parameter_bounds[node.parameter][0],
                             ub=model.parameter_bounds[node.parameter][1],

@@ -77,7 +77,7 @@ class SearchEpisode(BaseModel):
         return len(self.problem.parameters)
 
     def _initial_box(self) -> Box:
-        return Box(
+        box = Box(
             bounds={
                 p.name: (
                     Interval(lb=p.lb, ub=p.ub)
@@ -90,6 +90,8 @@ class SearchEpisode(BaseModel):
                 for p in self.problem.parameters
             }
         )
+        return box
+
 
 
 class Search(ABC):

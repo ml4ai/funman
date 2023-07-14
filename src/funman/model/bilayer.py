@@ -29,7 +29,7 @@ from pysmt.shortcuts import (
 from pysmt.typing import BOOL, INT, REAL
 
 from funman.model import Model
-from funman.representation.representation import Parameter
+from funman.representation.representation import ModelParameter
 
 
 class BilayerMetadata(BaseModel):
@@ -503,9 +503,9 @@ class BilayerModel(Model):
             ]
         return param_names
 
-    def _parameters(self) -> List[Parameter]:
+    def _parameters(self) -> List[ModelParameter]:
         params = [
-            Parameter(
+            ModelParameter(
                 name=node.parameter,
                 lb=self.parameter_bounds[node.parameter][0],
                 ub=self.parameter_bounds[node.parameter][1],
@@ -517,7 +517,7 @@ class BilayerModel(Model):
         ]
         if self.measurements:
             params += [
-                Parameter(
+                ModelParameter(
                     name=node.parameter,
                     lb=self.parameter_bounds[node.parameter][0],
                     ub=self.parameter_bounds[node.parameter][1],
@@ -527,3 +527,9 @@ class BilayerModel(Model):
                 and self.parameter_bounds[node.parameter]
             ]
         return params
+
+    def _parameter_lb(self, p):
+        return self.parameter_bounds[p][0]
+    
+    def _parameter_ub(self, p):
+        return self.parameter_bounds[p][1]

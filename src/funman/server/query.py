@@ -13,7 +13,7 @@ from funman.model.ensemble import EnsembleModel
 from funman.model.petrinet import GeneratedPetriNetModel, PetrinetModel
 from funman.model.query import QueryAnd, QueryFunction, QueryLE, QueryTrue
 from funman.model.regnet import GeneratedRegnetModel, RegnetModel
-from funman.representation import Parameter
+from funman.representation import ModelParameter
 from funman.representation.representation import (
     LABEL_ANY,
     LABEL_TRUE,

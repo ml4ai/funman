@@ -32,7 +32,7 @@ LABEL_ANY = "any"
 LABEL_ALL = "all"
 
 
-class Parameter(BaseModel):
+class ModelParameter(BaseModel):
     name: Union[str, ModelSymbol]
     lb: Union[float, str] = NEG_INFINITY
     ub: Union[float, str] = POS_INFINITY
@@ -44,7 +44,7 @@ class Parameter(BaseModel):
         return abs(hash(self.name))
 
 
-class LabeledParameter(Parameter):
+class LabeledParameter(ModelParameter):
     label: Literal["any", "all"] = LABEL_ANY
 
     def is_synthesized(self) -> bool:
@@ -108,7 +108,7 @@ class ModelParameter(LabeledParameter):
         return timed_parameter
 
     def __eq__(self, other):
-        if not isinstance(other, Parameter):
+        if not isinstance(other, ModelParameter):
             # don't attempt to compare against unrelated types
             return NotImplemented
 
@@ -497,7 +497,7 @@ class Box(BaseModel):
         else:
             None
 
-    def project(self, vars: Union[List[Parameter], List[str]]) -> "Box":
+    def project(self, vars: Union[List[ModelParameter], List[str]]) -> "Box":
         """
         Takes a subset of selected variables (vars_list) of a given box (b) and returns another box that is given by b's values for only the selected variables.
 
@@ -516,7 +516,7 @@ class Box(BaseModel):
         if len(vars) > 0:
             if isinstance(vars[0], str):
                 bp.bounds = {k: v for k, v in bp.bounds.items() if k in vars}
-            elif isinstance(vars[0], Parameter):
+            elif isinstance(vars[0], ModelParameter):
                 vars_str = [v.name for v in vars]
                 bp.bounds = {
                     k: v for k, v in bp.bounds.items() if k in vars_str
@@ -555,7 +555,7 @@ class Box(BaseModel):
                 i.ub = self.bounds[p].ub
         return merged
 
-    def _get_merge_candidates(self, boxes: Dict[Parameter, List["Box"]]):
+    def _get_merge_candidates(self, boxes: Dict[ModelParameter, List["Box"]]):
         equals_set = set([])
         meets_set = set([])
         disqualified_set = set([])
@@ -929,7 +929,7 @@ class Box(BaseModel):
             ):  ## empty list: no intersection in 1 variable means no intersection overall.
                 return None
             else:
-                new_param = Parameter(
+                new_param = ModelParameter(
                     name=f"{p1}",
                     lb=intersection_ans[0],
                     ub=intersection_ans[1],
@@ -1040,10 +1040,10 @@ class Box(BaseModel):
 
         return Box(
             bounds={
-                Parameter(
+                ModelParameter(
                     name=a_params[0], lb=beta_0[0], ub=beta_0[1]
                 ): Interval(lb=beta_0[0], ub=beta_0[1]),
-                Parameter(
+                ModelParameter(
                     name=a_params[1], lb=beta_1[0], ub=beta_1[1]
                 ): Interval(lb=beta_1[0], ub=beta_1[1]),
             }
@@ -1075,10 +1075,10 @@ class Box(BaseModel):
             b1_bounds = p_bounds[1]
             b = Box(
                 bounds={
-                    Parameter(
+                    ModelParameter(
                         name=a_params[0], lb=b0_bounds.lb, ub=b0_bounds.ub
                     ): Interval(lb=b0_bounds.lb, ub=b0_bounds.ub),
-                    Parameter(
+                    ModelParameter(
                         name=a_params[1], lb=b1_bounds.lb, ub=b1_bounds.ub
                     ): Interval(lb=b1_bounds.lb, ub=b1_bounds.ub),
                 }
