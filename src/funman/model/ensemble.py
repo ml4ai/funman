@@ -24,7 +24,7 @@ class EnsembleModel(Model):
         self.models = kwargs["models"]
         self._initialize_mappings()
 
-    def default_encoder(self, config: "FUNMANConfig") -> "Encoder":
+    def default_encoder(self, config: "FUNMANConfig", scenario: "AnalysisScenario") -> "Encoder":
         """
         Return the default Encoder for the model
 
@@ -37,7 +37,7 @@ class EnsembleModel(Model):
 
         return EnsembleEncoder(
             config=config,
-            model=self,
+            scenario=scenario
         )
 
     def _get_init_value(self, var: str):
@@ -78,7 +78,7 @@ class EnsembleModel(Model):
         return list(self._parameter_name_map.keys())
 
     def _parameter_values(self):
-        return map(lambda m: m._parameter_values(), self.models)
+        return {p_name: self._model_name_map[m_name[0]]._parameter_values()[m_name[1]]  for p_name, m_name in self._parameter_name_map.items()}
 
     def _parameters(self) -> List[ModelParameter]:
         return list(self._parameter_map.values())

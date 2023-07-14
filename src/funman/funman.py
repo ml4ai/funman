@@ -28,6 +28,7 @@ class FUNMANConfig(BaseModel):
     class Config:
         underscore_attrs_are_private = True
         arbitrary_types_allowed = True
+        validate_all = True
 
     tolerance: float = 1e-8
     """Algorithm-specific tolerance for approximation, used by BoxSearch"""
