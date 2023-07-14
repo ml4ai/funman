@@ -107,7 +107,7 @@ class BoxSearchEpisode(SearchEpisode):
                 l.exception(
                     f"Did not add an initial box (of width {b.width()}), try reducing config.tolerance, currently {self.config.tolerance}"
                 )
-            l.debug(f"Initial box: {b}")
+            # l.debug(f"Initial box: {b}")
 
     def _on_start(self):
         if self.config.number_of_processes > 1:

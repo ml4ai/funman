@@ -49,7 +49,7 @@ cases = [
     # ),
     (
         os.path.join(AMR_PETRI_DIR, "sir.json"),
-        os.path.join(AMR_PETRI_DIR, "sir_request1b.json"),
+        os.path.join(AMR_PETRI_DIR, "sir_request1a.json"),
     ),
     # (
     #     os.path.join(AMR_EXAMPLES_DIR, "sir.json"),
