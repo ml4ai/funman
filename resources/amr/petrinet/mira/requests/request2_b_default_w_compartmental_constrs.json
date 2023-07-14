@@ -4,8 +4,8 @@
     "structure_parameters": [
         {
             "name": "num_steps",
-            "lb": 1,
-            "ub": 1,
+            "lb": 2,
+            "ub": 2,
             "label": "all"
         },
         {

@@ -63,20 +63,22 @@ class FunmanWorkUnit(BaseModel):
         self,
     ) -> Union[ConsistencyScenario, ParameterSynthesisScenario]:
         parameters = []
-        for data in self.request.parameters:
-            parameters.append(
-                ModelParameter(
-                    name=data.name, ub=data.ub, lb=data.lb, label=data.label
+        if hasattr(self.request, "parameters") and self.request.parameters is not None:
+            for data in self.request.parameters:
+                parameters.append(
+                    ModelParameter(
+                        name=data.name, ub=data.ub, lb=data.lb, label=data.label
+                    )
                 )
-            )
-        for data in self.request.structure_parameters:
-            parameters.append(
-                StructureParameter(
-                    name=data.name, ub=data.ub, lb=data.lb, label=data.label
+        if hasattr(self.request, "structure_parameters") and self.request.structure_parameters is not None:
+            for data in self.request.structure_parameters:
+                parameters.append(
+                    StructureParameter(
+                        name=data.name, ub=data.ub, lb=data.lb, label=data.label
+                    )
                 )
-            )
 
-        if self.request.parameters is None or all(
+        if not hasattr(self.request, "parameters") or self.request.parameters is None or all(
             p.label == LABEL_ANY for p in self.request.parameters
         ):
             return ConsistencyScenario(
