@@ -52,29 +52,29 @@ cases = [
     #     os.path.join(MIRA_PETRI_DIR, "requests", "request1_a_100_days.json"),
     # ),
     # 1. b. all days delay possible
-    # (
-    #     os.path.join(MIRA_PETRI_DIR, "models", "scenario1_a.json"),
-    #     os.path.join(MIRA_PETRI_DIR, "requests", "request1_a_all_days.json"),
-    # ),
+    (
+        os.path.join(MIRA_PETRI_DIR, "models", "scenario1_a.json"),
+        os.path.join(MIRA_PETRI_DIR, "requests", "request1_a_all_days.json"),
+    ),
     #
     # 2. b. Wild Type variant and no vaccination
     # Determine if default parameters are consistent
-    (
-        os.path.join(MIRA_PETRI_DIR, "models", "scenario2_a_beta_scale_static.json"),
-        os.path.join(MIRA_PETRI_DIR, "requests", "request2_b_default_w_compartmental_constrs.json"),
-    ),
+    # (
+    #     os.path.join(MIRA_PETRI_DIR, "models", "scenario2_a_beta_scale_static.json"),
+    #     os.path.join(MIRA_PETRI_DIR, "requests", "request2_b_default_w_compartmental_constrs.json"),
+    # ),
     # 2. b. Wild Type variant and no vaccination
     # Determine if default parameters are consistent
-    (
-        os.path.join(MIRA_PETRI_DIR, "models", "scenario2_a_beta_scale_static.json"),
-        os.path.join(MIRA_PETRI_DIR, "requests", "request2_b_default_wo_compartmental_constrs.json"),
-    ),
+    # (
+    #     os.path.join(MIRA_PETRI_DIR, "models", "scenario2_a_beta_scale_static.json"),
+    #     os.path.join(MIRA_PETRI_DIR, "requests", "request2_b_default_wo_compartmental_constrs.json"),
+    # ),
         # 2. b. Wild Type variant and no vaccination
     # Determine if default parameters are consistent
-    (
-        os.path.join(MIRA_PETRI_DIR, "models", "scenario2_a_beta_scale_static_fixed.json"),
-        os.path.join(MIRA_PETRI_DIR, "requests", "request2_b_default_w_compartmental_constrs.json"),
-    ),
+    # (
+    #     os.path.join(MIRA_PETRI_DIR, "models", "scenario2_a_beta_scale_static_fixed.json"),
+    #     os.path.join(MIRA_PETRI_DIR, "requests", "request2_b_default_w_compartmental_constrs.json"),
+    # ),
 
     # 2. b. Wild Type variant and no vaccination
     # Show that some assignment to the parameters is consistent

@@ -1,10 +1,10 @@
 from typing import Dict, List, Tuple
 
 import graphviz
-from pydantic import BaseModel
+
 
 from funman.representation import ModelParameter
-from funman.translate import EnsembleEncoder
+
 
 from .model import Model
 

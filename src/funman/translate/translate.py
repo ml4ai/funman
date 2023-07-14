@@ -5,8 +5,6 @@ import logging
 from abc import ABC, abstractmethod
 from typing import Dict, List, Set, Tuple, Union
 
-import pysmt
-from numpy import isin
 from pydantic import BaseModel, Extra
 from pysmt.constants import Numeral
 from pysmt.formula import FNode
@@ -81,6 +79,8 @@ class FlatEncoding(BaseModel):
     # def set_symbols(cls, v: FNode):
     #     cls.symbols = Symbol(v, REAL)
 
+class Encoder:
+    pass
 
 class LayeredEncoding(BaseModel):
     """
@@ -91,19 +91,31 @@ class LayeredEncoding(BaseModel):
     class Config:
         arbitrary_types_allowed = True
         extra = Extra.allow
-
+    step_size: int
     _layers: List[
         Tuple[FNode, Union[List[FNode], Dict[str, Dict[str, FNode]]]]
     ] = []
+    _encoder: Encoder
+    
     # @validator("formula")
     # def set_symbols(cls, v: FNode):
     #     cls.symbols = Symbol(v, REAL)
 
-    def encoding(self, layers=None):
+    def encoding(self, encoding_fn, layers=None, box: Box = None, assumptions:List[FNode]=None):
         if layers:
-            return And([self._layers[i][0] for i in layers])
+            # return And([self._layers[i][0] for i in layers])
+            return And([self._get_or_create_layer(encoding_fn, i, box=box, assumptions=assumptions)[0] for i in layers])
         else:
-            return And([l[0] for l in self._layers])
+            return And([self._get_or_create_layer(encoding_fn, i, box=box, assumptions=assumptions)[0] for i, l in enumerate(self._layers)])
+
+
+    def _get_or_create_layer(self, encoding_fn, layer_idx: int, box: Box = None, assumptions:List[FNode]=None):
+        if self._layers[layer_idx] is None:
+            layer = encoding_fn(layer_idx, step_size=self.step_size)
+            if assumptions:
+                layer = (Iff(And(assumptions[layer_idx]), layer[0]), layer[1])
+            self._layers[layer_idx] = layer
+        return self._layers[layer_idx]
 
     def assume(self, assumption: List[FNode], layers=None):
         for i, l in enumerate(self._layers):
@@ -156,14 +168,31 @@ class Encoder(ABC, BaseModel):
     _untimed_symbols: Set[str] = set([])
     _timed_symbols: Set[str] = set([])
     _untimed_constraints: FNode
+    _scenario: "AnalysisScenario"
     # _assignments: Dict[str, float] = {}
     env = get_env()
     env._simplifier = FUNMANSimplifier(env)
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        scenario = kwargs["scenario"]
-        self._encode_timed_model_elements(scenario)
+        self._scenario = kwargs["scenario"]
+        
+        env = get_env()
+        if not isinstance(env._formula_manager, FUNMANFormulaManager):
+            env._formula_manager = FUNMANFormulaManager(env._formula_manager)
+            # Before calling substitute, need to replace the formula_manager
+            env._substituter.mgr = env.formula_manager
+
+        # Need to initialize pysmt symbols for parameters to help with parsing custom rate equations
+        variables = [
+            p.name for p in self._scenario.model._parameters()
+        ] + self._scenario.model._state_var_names()
+        variable_symbols = [self._encode_state_var(p) for p in variables]
+
+        
+        self._encode_timed_model_elements(self._scenario)
+
+
 
     def _symbols(self, vars: List[FNode]) -> Dict[str, Dict[str, FNode]]:
         symbols = {}
@@ -175,6 +204,18 @@ class Encoder(ABC, BaseModel):
                     symbols[var_name] = {}
                 symbols[var_name][timepoint] = var
         return symbols
+
+    def initialize_encodings(self, scenario, num_steps, step_size_idx):
+
+        # state_timepoints, transition_timepoints = self._get_timepoints(
+        #     num_steps, step_size
+        # )
+        # self.state_timepoints = state_timepoints
+        # self.transition_timepoints = transition_timepoints
+        
+        step_size=self._timed_model_elements["step_sizes"][step_size_idx]
+        self._timed_model_elements["time_step_substitutions"][step_size_idx] = self._initialize_substitutions(scenario)
+        return LayeredEncoding(step_size=step_size, _layers=[None]*(num_steps+1), _encoder=self), LayeredEncoding(step_size=step_size, _layers=[None]*(num_steps+1), _encoder=self)
 
     @abstractmethod
     def encode_model(self, model: "Model") -> Encoding:
@@ -198,6 +239,47 @@ class Encoder(ABC, BaseModel):
     ) -> FNode:
         pass
 
+        
+
+    def encode_model_layer(self, layer_idx: int, step_size:int=None):
+        if layer_idx == 0:
+            return self.encode_init_layer()
+        else:
+            return self.encode_transition_layer(layer_idx, step_size=step_size)
+        
+    def encode_init_layer(self):
+        initial_state = self._timed_model_elements["init"]
+        initial_symbols = initial_state.get_free_variables()
+
+        return (initial_state,
+            {str(s):s for s in initial_symbols})
+
+    
+    def encode_transition_layer(self, layer_idx: int, step_size:int=None):
+        c = self._timed_model_elements["time_step_constraints"][layer_idx][
+            step_size - self._min_step_size
+        ]
+        substitutions = self._timed_model_elements[
+            "time_step_substitutions"
+        ][step_size - self._min_step_size]
+        
+        if c is None:
+            step_size_idx  =self._timed_model_elements["step_sizes"].index(step_size)
+            timepoint = self._timed_model_elements["state_timepoints"][step_size_idx][layer_idx-1]
+            next_timepoint = self._timed_model_elements["state_timepoints"][step_size_idx][layer_idx]
+            c, substitutions = self._encode_next_step(
+                self._scenario,
+                timepoint,
+                next_timepoint,
+                substitutions=substitutions,
+            )
+            self._timed_model_elements["time_step_constraints"][layer_idx-1][
+                step_size - self._min_step_size
+            ] = c
+            self._timed_model_elements["time_step_substitutions"][step_size - self._min_step_size] = substitutions
+        return (c,{str(s):s for s in c.get_free_variables()})
+         
+
     def encode_model_timed(
         self, scenario: "AnalysisScenario", num_steps: int, step_size: int
     ) -> Encoding:
@@ -218,121 +300,18 @@ class Encoder(ABC, BaseModel):
         Encoding
             formula and symbols for the encoding
         """
-        l.debug("Encoding step: {current_step} to {next_step}")
-        env = get_env()
-        if not isinstance(env._formula_manager, FUNMANFormulaManager):
-            env._formula_manager = FUNMANFormulaManager(env._formula_manager)
-            # Before calling substitute, need to replace the formula_manager
-            env._substituter.mgr = env.formula_manager
-
-        state_timepoints, transition_timepoints = self._get_timepoints(
-            num_steps, step_size
-        )
-
-        # Need to initialize pysmt symbols for parameters to help with parsing custom rate equations
-        variables = [
-            p.name for p in scenario.model._parameters()
-        ] + scenario.model._state_var_names()
-        variable_symbols = [self._encode_state_var(p) for p in variables]
-
-        substitutions = self._initialize_substitutions(scenario)
-
-        initial_state = self._timed_model_elements["init"]
-        initial_symbols = initial_state.get_free_variables()
+        init_layer = self.encode_layer(0)
         layers = [
-(           initial_state,
-            {str(s):s for s in initial_symbols})
+          init_layer
         ]
 
-        for i, timepoint in enumerate(transition_timepoints):
-            c = self._timed_model_elements["time_step_constraints"][timepoint][
-                step_size - self._min_step_size
-            ]
-            c_substitutions = self._timed_model_elements[
-                "time_step_substitutions"
-            ][timepoint][step_size - self._min_step_size]
-            if c_substitutions is not None:
-                substitutions = {**substitutions, **c_substitutions}
-            if c is None:
-                c, substitutions = self._encode_next_step(
-                    scenario,
-                    state_timepoints[i],
-                    state_timepoints[i + 1],
-                    substitutions=substitutions,
-                )
-                self._timed_model_elements["time_step_constraints"][timepoint][
-                    step_size - self._min_step_size
-                ] = c
-                self._timed_model_elements["time_step_substitutions"][
-                    timepoint
-                ][step_size - self._min_step_size] = substitutions
-            layers.append((c,{str(s):s for s in c.get_free_variables()}))
-
-        #     if time_dependent_parameters:
-        #         params = self._timed_model_elements["timed_parameters"][
-        #             timepoint
-        #         ][step_size - self._min_step_size]
-        #         if params == []:
-        #             params = [p.timed_copy(timepoint) for p in parameters]
-        #             self._timed_model_elements["timed_parameters"][timepoint][
-        #                 step_size - self._min_step_size
-        #             ] = params
-        #         constraints.append(
-        #             self.box_to_smt(
-        #                 Box(
-        #                     bounds={
-        #                         p.name: Interval(lb=p.lb, ub=p.ub)
-        #                         for p in timed_parameters
-        #                     }
-        #                 ),
-        #                 closed_upper_bound=True,
-        #             )
-        #         )
-
-        # if time_dependent_parameters:
-        #     # FIXME cache this computation
-        #     ## Assume that all parameters are constant
-        #     constraints.append(
-        #         self._set_parameters_constant(
-        #             parameters,
-        #             constraints,
-        #         ),
-        #     )
-
-        # formula = And(
-        #     And(
-        #         [
-        #             ,
-        #             # self._timed_model_elements["untimed_constraints"],
-        #         ]
-        #         + constraints
-        #     ).simplify(),
-        #     (model._extra_constraints if model._extra_constraints else TRUE()),
-        # ).simplify()
-        # symbols = self._symbols(formula)
-
-        # if self.config.substitute_subformulas:
-        #     # (
-        #     #     substituted_formulas,
-        #     #     substitutions,
-        #     #     assignments,
-        #     # ) = self._substitute_subformulas(
-        #     #     [
-        #     #         self._timed_model_elements["untimed_constraints"],
-        #     #         self._timed_model_elements["init"],
-        #     #     ]
-        #     #     + constraints,
-        #     #     model,
-        #     # )
-        #     self._assignments = {
-        #         k.symbol_name(): float(v.constant_value())
-        #         for k, v in substitutions.items()
-        #         if v.is_constant()
-        #     }
+        for i in range(num_steps+1):
+            layer = self.encode_layer(self, i, step_size=step_size)
+            layers.append(layer)
 
         return LayeredEncoding(
             _layers=layers,
-            substitutions=substitutions,
+            substitutions=self.substitutions,
         )
 
     def _initialize_substitutions(self, scenario: "AnalysisScenario"):
@@ -521,6 +500,16 @@ class Encoder(ABC, BaseModel):
         model = scenario.model
         self._timed_symbols = self._get_timed_symbols(model)
         self._untimed_symbols = self._get_untimed_symbols(model)
+        step_sizes = scenario.structure_parameter("step_size")
+        num_steps = scenario.structure_parameter("num_steps")
+
+        state_timepoints = []
+        transition_timepoints = []
+        for i, step_size in enumerate(range(int(step_sizes.lb), int(step_sizes.ub)+1)):
+            s_timepoints, t_timepoints = self._get_timepoints(num_steps.ub, step_size)
+            state_timepoints.append( s_timepoints)
+            transition_timepoints.append(transition_timepoints)
+
 
         (
             configurations,
@@ -528,15 +517,15 @@ class Encoder(ABC, BaseModel):
             max_step_size,
         ) = self._get_structural_configurations(scenario)
         self._timed_model_elements = {
+            "step_sizes": list(range(int(step_sizes.lb), int(step_sizes.ub+1))),
+            "state_timepoints": state_timepoints,
+            "transition_timepoints": transition_timepoints,
             "init": self._define_init(model),
             "time_step_constraints": [
                 [None for i in range(max_step_size)]
                 for j in range(max_step_index)
             ],
-            "time_step_substitutions": [
-                [None for i in range(max_step_size)]
-                for j in range(max_step_index)
-            ],
+            "time_step_substitutions":  [None for i in range(max_step_size)],
             "configurations": configurations,
             "untimed_constraints": self._encode_untimed_constraints(scenario),
             "timed_parameters": [
@@ -550,8 +539,8 @@ class Encoder(ABC, BaseModel):
     ) -> Tuple[List[int], List[int]]:
         state_timepoints = range(
             0,
-            (step_size * num_steps) + 1,
-            step_size,
+            int(step_size) * int(num_steps) + 1,
+            int(step_size),
         )
 
         if len(list(state_timepoints)) == 0:
@@ -559,12 +548,12 @@ class Encoder(ABC, BaseModel):
                 f"Could not identify timepoints from step_size = {step_size} and num_steps = {num_steps}"
             )
 
-        transition_timepoints = range(0, step_size * num_steps, step_size)
+        transition_timepoints = range(0, int(step_size) * int(num_steps), int(step_size))
         return list(state_timepoints), list(transition_timepoints)
 
-    def encode_query(
-        self, query: Query, num_steps: int, step_size: int, substitutions={}
-    ) -> Encoding:
+    def encode_query_layer(
+        self, query: Query, layer_idx: int, step_size: int = None
+    ):
         """
         Encode a query into an SMTLib formula.
 
@@ -575,7 +564,7 @@ class Encoder(ABC, BaseModel):
 
         Returns
         -------
-        Encoding
+        
             formula and symbols for the encoding
         """
         query_handlers = {
@@ -587,19 +576,20 @@ class Encoder(ABC, BaseModel):
         }
 
         if type(query) in query_handlers:
-            encoded_query = query_handlers[type(query)](
-                query, num_steps, step_size
+            layer = query_handlers[type(query)](
+                query, layer_idx, step_size
             )
-            encoded_query.substitute(substitutions)
-            encoded_query.simplify()
-            return encoded_query
+            return layer
+            # encoded_query.substitute(substitutions)
+            # encoded_query.simplify()
+            # return encoded_query
         else:
             raise NotImplementedError(
                 f"Do not know how to encode query of type {type(query)}"
             )
 
     def _return_encoded_query(self, model_encoding, query):
-        return Encoding(_formula=query._formula)
+        return (query._formula, {str(v):v for v in query._formula.get_free_variables()})
 
     def _query_variable_name(self, query):
         return (
@@ -608,52 +598,40 @@ class Encoder(ABC, BaseModel):
             else str(query.variable)
         )
 
-    def _encode_query_and(self, query, num_steps, step_size):
+    def _encode_query_and(self, query, layer_idx, step_size):
         queries = [
-            self.encode_query(q, num_steps, step_size) for q in query.queries
+            self.encode_query_layer(q, layer_idx, step_size) for q in query.queries
         ]
-        timepoints = range(0, (step_size * num_steps) + 1, step_size)
-        q_layers = [q._layers for q in queries]
-        layers = [
-            (
-                And([q_layer[i][0] for q_layer in q_layers]),
-                {str(s):s for q_layer in q_layers for s in q_layer[i][1]},
+        
+        
+        layer = (
+                And([q[0] for q in queries]),
+                {str(s):s for q in queries for s in q[1]},
             )
-            for i, t in enumerate(timepoints)
-        ]
-        return LayeredEncoding(_layers=layers)
+            
+        return layer
 
-    def _encode_query_le(self, query, num_steps, step_size):
-        query_variable_name = self._query_variable_name(query)
-        timepoints = range(0, (step_size * num_steps) + 1, step_size)
-        layers = [
-            LE(
-                self._encode_state_var(var=query.variable, time=s),
+    def _encode_query_le(self, query, layer_idx, step_size):
+        step_size_idx = self._timed_model_elements["step_sizes"].index(step_size)
+        time = self._timed_model_elements["state_timepoints"][step_size_idx][step_size_idx]
+        q =  LE(
+                self._encode_state_var(var=query.variable, time=time),
                 Real(query.ub),
             )
-            for s in timepoints
-        ]
-        return LayeredEncoding(
-            _layers=[(l, {str(v):v for v in l.get_free_variables()}) for l in layers]
-        )
+            
+        return (q, {str(v):v for v in q.get_free_variables()})
 
-    def _encode_query_ge(self, query, num_steps, step_size):
-        query_variable_name = self._query_variable_name(query)
-        timepoints = range(0, (step_size * num_steps) + 1, step_size)
-        layers = [
-            GE(
-                self._encode_state_var(var=query.variable, time=s),
+    def _encode_query_ge(self, query, layer_idx, step_size):
+        step_size_idx = self._timed_model_elements["step_sizes"].index(step_size)
+        time = self._timed_model_elements["state_timepoints"][step_size_idx][step_size_idx]
+        q =  GE(
+                self._encode_state_var(var=query.variable, time=time),
                 Real(query.lb),
             )
-            for s in timepoints
-        ]
-        return LayeredEncoding(
-            _layers=[(l, {str(v): v for v in l.get_free_variables()}) for l in layers]
-        )
+        return (q, {str(v): v for v in q.get_free_variables()})
 
-    def _encode_query_true(self, query, num_steps, step_size):
-        timepoints = range(0, (step_size * num_steps) + 1, step_size)
-        return LayeredEncoding(_layers=[(TRUE(), {}) for t in timepoints])
+    def _encode_query_true(self, query, layer_idx, step_size):
+        return (TRUE(), {})
 
     def symbol_timeseries(
         self, model_encoding, pysmtModel: pysmtModel

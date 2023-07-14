@@ -7,6 +7,7 @@ import multiprocessing as mp
 import os
 import threading
 import traceback
+from functools import partial
 from datetime import datetime
 from multiprocessing import Queue, Value
 from multiprocessing.synchronize import Condition, Event, Lock
@@ -304,7 +305,7 @@ class BoxSearch(Search):
             return True
 
     def _initialize_encoding(
-        self, solver: Solver, episode: BoxSearchEpisode, timepoint: int
+        self, solver: Solver, episode: BoxSearchEpisode, timepoint: int, box: Box
     ):
         """
         The formula encoding the model M is of the form:
@@ -330,10 +331,12 @@ class BoxSearch(Search):
                 timepoints = [solver_timepoint + i + 1]
                 formula = And(
                     episode.problem._model_encoding.encoding(
-                        layers=timepoints
+                        episode.problem._model_encoding._encoder.encode_model_layer,
+                        layers=timepoints, box=box
                     ),
                     episode.problem._query_encoding.encoding(
-                        layers=timepoints
+                        partial(episode.problem._query_encoding._encoder.encode_query_layer, episode.problem.query),
+                        layers=timepoints, box=box, assumptions=episode.problem._assume_query
                     ),
                 )
                 episode._formula_stack.append(formula)
@@ -347,7 +350,7 @@ class BoxSearch(Search):
 
     def _initialize_box(self, solver, box: Box, episode: BoxSearchEpisode):
         box_timepoint = box.bounds["num_steps"].lb
-        self._initialize_encoding(solver, episode, box_timepoint)
+        self._initialize_encoding(solver, episode, box_timepoint, box)
 
         solver.push(1)
 
@@ -807,12 +810,10 @@ class BoxSearch(Search):
         config._handler.open()
 
         if problem._smt_encoder._timed_model_elements:
-            step_sizes = {
-                c["step_size"]
-                for c in problem._smt_encoder._timed_model_elements[
-                    "configurations"
+            step_sizes = problem._smt_encoder._timed_model_elements[
+                    "step_sizes"
                 ]
-            }
+            
             configurations_by_step_size = {
                 step_size: [
                     c["num_steps"]
@@ -824,11 +825,13 @@ class BoxSearch(Search):
                 for step_size in step_sizes
             }
 
-            for step_size in step_sizes:
+            for step_size_idx, step_size in enumerate(step_sizes):
                 num_steps = max(configurations_by_step_size[step_size])
+                
+                # initialize empty encoding
                 problem._encode_timed(
                     num_steps,
-                    step_size,
+                    step_size_idx,
                     config,
                 )
                 structural_configuration = {

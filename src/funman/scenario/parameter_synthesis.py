@@ -180,23 +180,28 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
         )
         return self._model_encoding, self._query_encoding
 
-    def _encode_timed(self, num_steps, step_size, config: "FUNMANConfig"):
+    def _encode_timed(self, num_steps, step_size_idx, config: "FUNMANConfig"):
         # self._assume_model = Symbol("assume_model")
+        step_size = self._smt_encoder._timed_model_elements["step_sizes"][step_size_idx]
         self._assume_query = [
             Symbol(f"assume_query_{t}")
             for t in range(0, (num_steps * step_size) + 1, step_size)
         ]
         # This will overwrite the _model_encoding for each configuration, but the encoder will retain components of the configurations.
-        self._model_encoding = self._smt_encoder.encode_model_timed(
-            self, num_steps, step_size
-        )
-        # self._model_encoding.assume(self._assume_model)
+        model_encoding, query_encoding = self._smt_encoder.initialize_encodings(self, num_steps, step_size_idx)
+        # self._smt_encoder.encode_model_timed(
+        #     self, num_steps, step_size
+        # )
+        
+        self._model_encoding = model_encoding
+        self._query_encoding = query_encoding
 
         # This will create a new formula for each query without caching them (its typically inexpensive)
-        self._query_encoding = self._smt_encoder.encode_query(
-            self.query, num_steps, step_size
-        )
-        self._query_encoding.assume(self._assume_query)
+        # self._query_encoding = self._smt_encoder.initialize_encoding(self, num_steps, step_size)
+        # self._smt_encoder.encode_query(
+        #     self.query, num_steps, step_size
+        # )
+        # self._query_encoding.assume(self._assume_query)
         return self._model_encoding, self._query_encoding
 
 
