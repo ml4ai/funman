@@ -121,7 +121,7 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
                 # Add the structure parameters if still missing
                 self.parameters += [
                     StructureParameter(name="num_steps", lb=0, ub=0),
-                    StructureParameter(name="step_size", lb=0, ub=0),
+                    StructureParameter(name="step_size", lb=1, ub=1),
                 ]
 
         self._extract_non_overriden_parameters()

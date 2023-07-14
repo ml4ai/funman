@@ -215,7 +215,7 @@ async def post_queries(
         RegnetModel,
         PetrinetModel,
         # DecapodeModel,
-        # BilayerModel,
+        BilayerModel,
     ],
     request: FunmanWorkRequest,
     worker: Annotated[FunmanWorker, Depends(get_worker)],

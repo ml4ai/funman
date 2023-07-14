@@ -134,6 +134,9 @@ class TestAPI(unittest.TestCase):
             bilayer_json = json.load(bl)
         infected_threshold = 130
         init_values = {"S": 9998, "I": 1, "R": 1}
+        scale_factor = 0.5
+        lb = 0.000067 * (1 - scale_factor)
+        ub = 0.000067 * (1 + scale_factor)
 
         with TestClient(app) as client:
             response = client.post(
@@ -142,6 +145,10 @@ class TestAPI(unittest.TestCase):
                     "model": {
                         "init_values": init_values,
                         "bilayer": {"json_graph": bilayer_json},
+                                    "parameter_bounds" :{
+                "beta": [lb, ub],
+                "gamma": [1.0 / 14.0, 1.0 / 14.0],
+            },
                     },
                     "request": {
                         "query": {
@@ -149,6 +156,11 @@ class TestAPI(unittest.TestCase):
                             "ub": infected_threshold,
                             "at_end": False,
                         },
+                        
+                        "structure_parameters": [
+                            {'name': 'num_steps', 'lb': 3.0, 'ub': 3.0, 'label': 'any'}, 
+                            {'name': 'step_size', 'lb': 1.0, 'ub': 1.0, 'label': 'any'}
+                        ]
                     },
                 },
                 headers={"token": f"{TEST_API_TOKEN}"},
@@ -195,6 +207,10 @@ class TestAPI(unittest.TestCase):
                                 "ub": ub,
                                 "label": "all",
                             }
+                        ],
+                        "structure_parameters": [
+                            {'name': 'num_steps', 'lb': 3.0, 'ub': 3.0, 'label': 'any'}, 
+                            {'name': 'step_size', 'lb': 1.0, 'ub': 1.0, 'label': 'any'}
                         ],
                         "config": {
                             "tolerance": 1.0e-8,
