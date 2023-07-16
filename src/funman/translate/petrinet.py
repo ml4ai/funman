@@ -94,16 +94,18 @@ class PetrinetEncoder(Encoder):
         }
 
         if self.config.substitute_subformulas:
-            transition_terms = {
-                k: v.substitute(substitutions)
-                for k, v in transition_terms.items()
-            }
+
             transition_terms = {
                 k: FUNMANSimplifier.sympy_simplify(v,
                     parameters=scenario.model_parameters(),
+                    substitutions=substitutions
                 )
                 for k, v in transition_terms.items()
             }
+            # transition_terms = {
+            #     k: v.substitute(substitutions)
+            #     for k, v in transition_terms.items()
+            # }
 
         # for each var, next state is the net flow for the var: sum(inflow) - sum(outflow)
         net_flows = []

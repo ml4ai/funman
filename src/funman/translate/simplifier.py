@@ -1,10 +1,10 @@
-from typing import List
-
+from typing import Dict, List
+from functools import reduce 
 from funman.representation.representation import ModelParameter
 import pysmt
 from pysmt.fnode import FNode
 from pysmt.shortcuts import get_env
-from sympy import cancel, expand, symbols, sympify, nsimplify, Float, Add, Abs, Max, lambdify, N
+from sympy import cancel, expand, symbols, sympify, nsimplify, Float, Add, Abs, Max, lambdify, N, series
 
 from funman.utils.sympy_utils import sympy_to_pysmt
 
@@ -73,20 +73,28 @@ class FUNMANSimplifier(pysmt.simplifier.Simplifier):
 
         return subbed_formula
 
-    def sympy_simplify(formula, parameters: List[ModelParameter] = []):
+    def sympy_simplify(formula, parameters: List[ModelParameter] = [], substitutions: Dict[FNode, FNode] = {}):
         if formula.is_real_constant():
             return formula
-        
-        # print(formula.serialize())
-        vars = formula.get_free_variables()
-        var_map = {str(v): symbols(str(v)) for v in vars}
+
         simplified_formula = formula.simplify()
 
         if simplified_formula.is_real_constant():
             return simplified_formula
-
+        
+        # print(formula.serialize())
+        vars = formula.get_free_variables()
+        var_map = {str(v): symbols(str(v)) for v in vars}
+        sympy_symbols = list(var_map.values())
+        sympy_subs = {var_map[str(s)]: sympify(v.serialize()) for s, v in substitutions.items() if str(s) in var_map}
+        series_vars = [symbols(str(v)) for v in vars if symbols(str(v)) not in sympy_subs]
+        
         sympy_formula = sympify(simplified_formula.serialize(), var_map)
-        expanded_formula = expand(sympy_formula)
+        series_formula = reduce(lambda f, v: series_vars, series(f, v))
+        expanded_formula = series_formula.subs(sympy_subs)
+
+        # expanded_formula = expand(sympy_formula)
+        
         # print(expanded_formula)
         approx_formula = FUNMANSimplifier.approximate(
             expanded_formula, parameters
