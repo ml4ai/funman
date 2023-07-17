@@ -116,22 +116,26 @@ class PetrinetEncoder(Encoder):
                 # convert to pysmt formula
                 # TODO store substitutions as both FNode and pysmt.Expr to avoid extra conversion
                 transition_terms = {
-                    k: Or(
-                        [
-                            FUNMANSimplifier.sympy_simplify(
-                                t,
-                                parameters=scenario.model_parameters(),
-                                substitutions=substitutions,
-                            )
-                            for t in v
-                        ]
-                    ).simplify()
+                    k: [
+                        FUNMANSimplifier.sympy_simplify(
+                            t,
+                            parameters=scenario.model_parameters(),
+                            substitutions=substitutions,
+                        )
+                        for t in v
+                    ]
                     for k, v in transition_terms.items()
                 }
             else:
                 transition_terms = {
                     k: v.substitute(substitutions) for k, v in transition_terms.items()
                 }
+        else:
+            # Need to convert transition terms to pysmt without substituting
+            transition_terms = {
+                k: [rate_expr_to_pysmt(t, current_state) for t in v]
+                for k, v in transition_terms.items()
+            }
 
         # for each var, next state is the net flow for the var: sum(inflow) - sum(outflow)
         net_flows = []
@@ -151,13 +155,17 @@ class PetrinetEncoder(Encoder):
 
                 if net_flow != 0:
                     state_var_flows.append(
-                        Times(Real(net_flow) * transition_terms[transition_id])
+                        [
+                            Times(Real(net_flow) * t)
+                            for t in transition_terms[transition_id]
+                        ]
                     )
             if len(state_var_flows) > 0:
+                # FIXME: the below should involve computing update as the cross product of all transition_rate equations
                 flows = Plus(
                     Times(
                         Real(step_size),
-                        Plus(state_var_flows),
+                        Plus([s[0] for s in state_var_flows]),  # FIXME see above
                     ),  # .simplify()
                     current_state[state_var_id],
                 )  # .simplify()

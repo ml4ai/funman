@@ -1,3 +1,4 @@
+from functools import partial
 import json
 import logging
 import sys
@@ -30,18 +31,18 @@ class SMTCheck(Search):
         haltEvent: Optional[threading.Event] = None,
         resultsCallback: Optional[Callable[["ParameterSpace"], None]] = None,
     ) -> "SearchEpisode":
-        parameter_space = ParameterSpace(
-            num_dimensions=problem.num_dimensions()
-        )
+        parameter_space = ParameterSpace(num_dimensions=problem.num_dimensions())
         models = {}
         consistent = {}
-        for (
-            structural_configuration
-        ) in problem._smt_encoder._timed_model_elements["configurations"]:
+        for structural_configuration in problem._smt_encoder._timed_model_elements[
+            "configurations"
+        ]:
             l.info(f"Solving configuration: {structural_configuration}")
             problem._encode_timed(
                 structural_configuration["num_steps"],
-                structural_configuration["step_size"],
+                problem._smt_encoder._timed_model_elements["step_sizes"].index(
+                    structural_configuration["step_size"]
+                ),
                 config,
             )
             episode = SearchEpisode(
@@ -49,8 +50,13 @@ class SMTCheck(Search):
                 problem=problem,
                 structural_configuration=structural_configuration,
             )
-
-            result = self.expand(problem, episode, parameter_space)
+            # self._initialize_encoding(solver, episode, box_timepoint, box)
+            result = self.expand(
+                problem,
+                episode,
+                parameter_space,
+                list(range(structural_configuration["num_steps"] + 1)),
+            )
 
             result_dict = result.to_dict() if result else None
             l.info(f"Result: {json.dumps(result_dict, indent=4)}")
@@ -71,7 +77,7 @@ class SMTCheck(Search):
 
         return parameter_space, models, consistent
 
-    def expand(self, problem, episode, parameter_space):
+    def expand(self, problem, episode, parameter_space, timepoints):
         if episode.config.solver == "dreal":
             opts = {
                 "dreal_precision": episode.config.dreal_precision,
@@ -86,13 +92,20 @@ class SMTCheck(Search):
             solver_options=opts,
         ) as s:
             formula = And(
-                problem._model_encoding.encoding(),
-                problem._query_encoding.encoding(),
-                problem._smt_encoder.box_to_smt(
-                    episode._initial_box().project(
-                        episode.problem.model_parameters()
-                    )
+                problem._model_encoding.encoding(
+                    episode.problem._model_encoding._encoder.encode_model_layer,
+                    layers=timepoints,
                 ),
+                problem._query_encoding.encoding(
+                    partial(
+                        episode.problem._query_encoding._encoder.encode_query_layer,
+                        episode.problem.query,
+                    ),
+                    layers=timepoints,
+                ),
+                # problem._smt_encoder.box_to_smt(
+                #     episode._initial_box().project(episode.problem.model_parameters())
+                # ),
             )
             s.add_assertion(formula)
             self.store_smtlib(

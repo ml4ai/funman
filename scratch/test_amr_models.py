@@ -47,9 +47,14 @@ cases = [
     #     os.path.join(SKEMA_PETRI_DIR, "linked_petrinet.json"),
     #     os.path.join(SKEMA_PETRI_DIR, "sir_request_skema2.json"),
     # ),
+    # (
+    #     os.path.join(AMR_PETRI_DIR, "sir.json"),
+    #     os.path.join(AMR_PETRI_DIR, "sir_request1a.json"),
+    # ),
+    # Missing timevar bug
     (
         os.path.join(AMR_PETRI_DIR, "sir.json"),
-        os.path.join(AMR_PETRI_DIR, "sir_request1a.json"),
+        os.path.join(AMR_PETRI_DIR, "sir_consistency.json"),
     ),
     # (
     #     os.path.join(AMR_EXAMPLES_DIR, "sir.json"),

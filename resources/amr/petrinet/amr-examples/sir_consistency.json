@@ -1,0 +1,39 @@
+{
+    "query": {
+        "model": null
+    },
+    "parameters": [],
+    "config": {
+        "tolerance": 1e-08,
+        "queue_timeout": 1,
+        "number_of_processes": 1,
+        "wait_timeout": null,
+        "wait_action_timeout": 0.05,
+        "solver": "dreal",
+        "num_steps": 2,
+        "step_size": 1,
+        "num_initial_boxes": 1,
+        "save_smtlib": true,
+        "dreal_precision": 0.001,
+        "dreal_log_level": "off",
+        "constraint_noise": 0.0,
+        "initial_state_tolerance": 0.0,
+        "dreal_mcts": true,
+        "substitute_subformulas": false,
+        "use_compartmental_constraints": true
+    },
+    "structure_parameters": [
+        {
+            "name": "num_steps",
+            "lb": 1.0,
+            "ub": 1.0,
+            "label": "all"
+        },
+        {
+            "name": "step_size",
+            "lb": 1.0,
+            "ub": 1.0,
+            "label": "all"
+        }
+    ]
+}
