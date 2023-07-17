@@ -18,7 +18,7 @@ from funman.server.worker import FunmanWorker
 
 RESOURCES = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../resources")
 
-out_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "out", "hackathon")
+out_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "out", "evaluation")
 
 
 models = {GeneratedPetrinet, GeneratedRegnet}
@@ -83,7 +83,7 @@ class TestModels(unittest.TestCase):
             if self._worker.is_processing_id(work_unit.id):
                 results = self._worker.get_results(work_unit.id)
                 with open(f"{out_dir}/{work_unit.id}.json", "w") as f:
-                    f.write(json.dumps(results.json()))
+                    f.write(json.dump(results.json()))
                 # ParameterSpacePlotter(
                 #     results.parameter_space, plot_points=True
                 # ).plot(show=False)
