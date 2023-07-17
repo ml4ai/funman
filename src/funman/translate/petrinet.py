@@ -1,4 +1,4 @@
-from typing import Dict, List
+from typing import Dict, List, Union
 
 from pysmt.formula import FNode
 from pysmt.shortcuts import (
@@ -19,7 +19,14 @@ from pysmt.shortcuts import (
 
 from funman.model.model import Model
 from funman.translate.simplifier import FUNMANSimplifier
-from funman.utils.sympy_utils import rate_expr_to_pysmt, sympy_to_pysmt
+from funman.utils.sympy_utils import (
+    rate_expr_to_pysmt,
+    series_approx,
+    sympy_subs,
+    to_sympy,
+)
+import sympy
+
 
 from .translate import Encoder, Encoding
 
@@ -30,6 +37,8 @@ l.setLevel(logging.DEBUG)
 
 
 class PetrinetEncoder(Encoder):
+    _transition_rate_cache: Dict[str, List[sympy.Expr]] = {}
+
     def encode_model(self, model: "Model") -> Encoding:
         """
         Encode a model into an SMTLib formula.
@@ -87,25 +96,42 @@ class PetrinetEncoder(Encoder):
                 t,
                 current_state,
                 next_state,
-                scenario.model,
+                scenario,
                 substitutions=substitutions,
             )
             for t in transitions
         }
 
         if self.config.substitute_subformulas:
-
-            transition_terms = {
-                k: FUNMANSimplifier.sympy_simplify(v,
-                    parameters=scenario.model_parameters(),
-                    substitutions=substitutions
-                )
+            if all(
+                isinstance(t, sympy.Expr)
                 for k, v in transition_terms.items()
-            }
-            # transition_terms = {
-            #     k: v.substitute(substitutions)
-            #     for k, v in transition_terms.items()
-            # }
+                for t in v
+            ):
+                # substitutions are FNodes
+                # transition terms are sympy.Expr
+                # convert relevant substitutions to sympy.Expr
+                # sympy subs transition term with converted subs
+                # simplify/approximate substituted formula
+                # convert to pysmt formula
+                # TODO store substitutions as both FNode and pysmt.Expr to avoid extra conversion
+                transition_terms = {
+                    k: Or(
+                        [
+                            FUNMANSimplifier.sympy_simplify(
+                                t,
+                                parameters=scenario.model_parameters(),
+                                substitutions=substitutions,
+                            )
+                            for t in v
+                        ]
+                    ).simplify()
+                    for k, v in transition_terms.items()
+                }
+            else:
+                transition_terms = {
+                    k: v.substitute(substitutions) for k, v in transition_terms.items()
+                }
 
         # for each var, next state is the net flow for the var: sum(inflow) - sum(outflow)
         net_flows = []
@@ -136,11 +162,15 @@ class PetrinetEncoder(Encoder):
                     current_state[state_var_id],
                 )  # .simplify()
                 if self.config.substitute_subformulas:
-                    flows = flows.substitute(substitutions)
-                    # flows = FUNMANSimplifier.sympy_simplify(
-                    #     flows.substitute(substitutions),
-                    #     parameters=scenario.model_parameters(),
-                    # )
+                    # flows = flows.substitute(substitutions)
+                    flows = FUNMANSimplifier.sympy_simplify(
+                        # flows.substitute(substitutions),
+                        to_sympy(
+                            flows.substitute(substitutions).simplify().serialize(),
+                            symbols=scenario.model._symbols(),
+                        ),
+                        parameters=scenario.model_parameters(),
+                    )
             else:
                 flows = current_state[state_var_id]
                 # .substitute(substitutions)
@@ -212,9 +242,7 @@ class PetrinetEncoder(Encoder):
         for var in model._state_vars():
             lb = (
                 GE(
-                    self._encode_state_var(
-                        model._state_var_name(var), time=step
-                    ),
+                    self._encode_state_var(model._state_var_name(var), time=step),
                     Real(0.0),
                 )
                 .substitute(substitutions)
@@ -224,9 +252,7 @@ class PetrinetEncoder(Encoder):
                 self._encode_state_var(model._state_var_name(var), time=step),
                 Plus(
                     [
-                        self._encode_state_var(
-                            model._state_var_name(var1), time=step
-                        )
+                        self._encode_state_var(model._state_var_name(var1), time=step)
                         for var1 in model._state_vars()
                     ]
                 )
@@ -238,36 +264,69 @@ class PetrinetEncoder(Encoder):
         return And(bounds)
 
     def _encode_transition_term(
-        self, transition, current_state, next_state, model, substitutions={}
-    ):
-        transition_id = model._transition_id(transition)
-        input_edges = model._input_edges()
-        output_edges = model._output_edges()
-        ins = [
-            current_state[model._edge_source(edge)]
-            for edge in input_edges
-            if model._edge_target(edge) == transition_id
-        ]
-        transition_rates = [
-            rate_expr_to_pysmt(r, current_state)
-            for r in model._transition_rate(transition)
-        ]
+        self, transition, current_state, next_state, scenario, substitutions={}
+    ) -> Union[sympy.Expr, FNode]:
+        transition_id = scenario.model._transition_id(transition)
+        input_edges = scenario.model._input_edges()
+        output_edges = scenario.model._output_edges()
+        state_subs = {s: str(f) for s, f in current_state.items()}
 
-        return (
-            Or(
-                [
-                    (
-                        tr
-                        if len(ins) == 0
-                        or len(tr.args()) > 1  # if tr is complete expression
-                        else Times([tr] + ins)  # else build expression
+        ins = [
+            current_state[scenario.model._edge_source(edge)]
+            for edge in input_edges
+            if scenario.model._edge_target(edge) == transition_id
+        ]
+        # The model expresses each rate with untimed variable symbols.
+        # If not yet approximated, approximate and cache term.
+        # Substitute current time variable symbols
+        if scenario.model._transition_id(transition) not in self._transition_rate_cache:
+            model_transition_rates = scenario.model._transition_rate(transition)
+            if all(
+                isinstance(r, str) or isinstance(r, float)
+                for r in model_transition_rates
+            ):
+                self._transition_rate_cache[
+                    scenario.model._transition_id(transition)
+                ] = model_transition_rates
+            elif all(isinstance(r, sympy.Expr) for r in model_transition_rates):
+                self._transition_rate_cache[
+                    scenario.model._transition_id(transition)
+                ] = [
+                    series_approx(
+                        to_sympy(r, scenario.model._symbols()),
+                        vars=[
+                            mp.name
+                            for mp in scenario.model_parameters()
+                            if mp in scenario.synthesized_parameters()
+                        ],
                     )
-                    for tr in transition_rates
+                    for r in scenario.model._transition_rate(transition)
                 ]
+            else:
+                raise Exception(
+                    f"Cannot encode model transition rate: {model_transition_rates}"
+                )
+
+        transition_rates = []
+        for r in self._transition_rate_cache[scenario.model._transition_id(transition)]:
+            if isinstance(r, sympy.Expr):
+                # is a custom rate expression
+                transition_rates.append(sympy_subs(r, state_subs))
+            elif isinstance(r, str):
+                # Is a single parameter
+                transition_rates.append(substitutions[Symbol(r, REAL)])
+            elif isinstance(r, float):
+                # Is a constant
+                transition_rates.append(Real(r))
+
+        if all(isinstance(t, sympy.Expr) for t in transition_rates):
+            return transition_rates  # Need to build Or(transition_rates) later after converting to FNodes
+        else:
+            return (
+                Or([(Times([tr] + ins)) for tr in transition_rates])
+                # .substitute(substitutions)
+                # .simplify()
             )
-            # .substitute(substitutions)
-            # .simplify()
-        )
 
     def _get_timed_symbols(self, model: Model) -> List[str]:
         """

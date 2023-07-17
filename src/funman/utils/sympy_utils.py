@@ -1,7 +1,8 @@
 from fractions import Fraction
+from functools import reduce
 from numbers import Rational
 import math
-from typing import Dict, Union
+from typing import Dict, List, Union
 import logging
 
 import pysmt.operators as op
@@ -20,8 +21,9 @@ from pysmt.shortcuts import (
     get_env,
 )
 
-l=logging.getLogger(__name__)
+l = logging.getLogger(__name__)
 l.setLevel(logging.INFO)
+
 
 class FUNMANFormulaManager(FormulaManager):
     """FormulaManager is responsible for the creation of all formulae."""
@@ -62,12 +64,34 @@ class FUNMANFormulaManager(FormulaManager):
         return self.create_node(node_type=op.POW, args=(base, exponent))
 
 
+def series_approx(expr: sympy.Expr, vars: List[sympy.Symbol] = []) -> sympy.Expr:
+    sympy_symbols = [sympy.symbols(str(v)) for v in vars]
+    series_expr = reduce(
+        lambda v1, v2: sympy.series(v1, v2).removeO(), sympy_symbols, expr
+    )
+    return series_expr
+
+
+def sympy_subs(
+    expr: sympy.Expr, substitution: Dict[str, Union[float, str]]
+) -> sympy.Expr:
+    return expr.subs(substitution)
+
+
+def to_sympy(
+    str_expr: str,
+    symbols: List[str],
+) -> sympy.Expr:
+    expr = sympy.sympify(str_expr, {s: sympy.symbols(s) for s in symbols})
+    return expr
+
+
 def substitute(str_expr: str, values: Dict[str, Union[float, str]]):
     # Set which substrings are symbols
     symbols = {s: sympy.Symbol(s) for s in values}
 
     # Get expression
-    expr = str_expr_to_expr(str_expr, symbols)
+    expr = to_sympy(str_expr, list(values.values()))
 
     # Get variable values
     values_syms = {s: values[str(s)] for s in symbols}
@@ -78,24 +102,16 @@ def substitute(str_expr: str, values: Dict[str, Union[float, str]]):
     return sub_expr
 
 
-def str_expr_to_expr(sexpr, symbols):
-    f = sympy.sympify(sexpr, symbols)
-    return f
-
-
-def rate_expr_to_pysmt(expr, state=None):
+def rate_expr_to_pysmt(expr: Union[str, sympy.Expr], state=None):
     env_symbols = get_env().formula_manager.symbols
-    symbols = {s: sympy.Symbol(s) for s in env_symbols}
-    f = str_expr_to_expr(expr, symbols)
+    f = to_sympy(expr, [str(s) for s in env_symbols])
     p: FNode = sympy_to_pysmt(f)
 
     if state:  # Map symbols in p to state indexed versions (e.g., I to I_5)
-        symbol_to_state_var = {
-            env_symbols[s]: state[str(s)] for s in symbols if str(s) in state
-        }
+        symbol_to_state_var = {env_symbols[s]: state[str(s)] for s in state}
         # Replace mapping timer_t: timer_t_k with t: timer_t_k
         symbol_to_state_var[Symbol("t", REAL)] = state["timer_t"]
-        
+
         p_sub = p.substitute(symbol_to_state_var)
         return p_sub
     else:
@@ -133,26 +149,28 @@ def sympy_to_pysmt_pow(expr):
 
 def sympy_to_pysmt_real(expr, numerator_digits=6):
     # check if underflow or overflow
-    if (not isinstance(expr, float) and ((expr != 0.0 and float(expr) == 0.0) or (not expr.is_infinite and abs(float(expr)) == math.inf))):
+    if not isinstance(expr, float) and (
+        (expr != 0.0 and float(expr) == 0.0)
+        or (not expr.is_infinite and abs(float(expr)) == math.inf)
+    ):
         # going from sympy to python to pysmt will lose precision
         # need to convert to a rational first
-        r_expr = sympy.Rational(expr) 
-        return Div(Real(r_expr.numerator), Real(r_expr.denominator)).simplify() 
+        r_expr = sympy.Rational(expr)
+        return Div(Real(r_expr.numerator), Real(r_expr.denominator)).simplify()
     else:
         return Real(float(expr))
-
 
     # rnd_expr = sympy.Float(expr, 5)
     # r_expr = sympy.Rational(rnd_expr)
     # f_expr = Fraction(int(r_expr.numerator), int(r_expr.denominator))
-    
+
     # max_denominator = math.pow(10, (len(str(r_expr.denominator)) - len(str(abs(r_expr.numerator)))) + max(numerator_digits, 1)+1)
     # try:
     #     trunc_f_expr = f_expr.limit_denominator(max_denominator=max_denominator)
     # except Exception as e:
     #     l.exception(f"max_denominator = {max_denominator} is not large enough to limit the denominator of {expr} during conversion from sympy to pysmt")
-        
-    # r_value = Div(Real(trunc_f_expr.numerator), Real(trunc_f_expr.denominator)).simplify() 
+
+    # r_value = Div(Real(trunc_f_expr.numerator), Real(trunc_f_expr.denominator)).simplify()
 
     # r_value = Real(float(expr))
 
