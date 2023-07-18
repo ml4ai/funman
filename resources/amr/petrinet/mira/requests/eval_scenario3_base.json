@@ -1,32 +1,30 @@
 {
-  "query": {
-    "variable": "I",
-    "ub": 1e6
-  },
+  "query": {},
   "parameters": [
     {
-      "name": "N",
-      "lb": 1,
-      "ub": 1
-    },
-    {
-      "name": "c_m",
-      "lb": 0.4,
-      "ub": 0.8,
+      "name": "lambda",
+      "lb": 0,
+      "ub": 1,
       "label": "all"
     },
     {
-      "name": "eps_m",
-      "lb": 0.4,
-      "ub": 0.8,
+      "name": "beta",
+      "lb": 4.48e7,
+      "ub": 4.5e7,
+      "label": "all"
+    },
+    {
+      "name": "gamma",
+      "lb": 0,
+      "ub": 1,
       "label": "all"
     }
   ],
   "structure_parameters": [
     {
       "name": "num_steps",
-      "lb": 0,
-      "ub": 200,
+      "lb": 10,
+      "ub": 10,
       "label": "all"
     },
     {

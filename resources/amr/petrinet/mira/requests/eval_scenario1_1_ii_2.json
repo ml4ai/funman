@@ -1,31 +1,23 @@
 {
-  "query": {
-    "variable": "I",
-    "ub": 1e6
-  },
+  "query": {},
   "parameters": [
+    {
+      "name": "t_0",
+      "lb": 100,
+      "ub": 100,
+      "label": "any"
+    },
     {
       "name": "N",
       "lb": 1,
-      "ub": 1
-    },
-    {
-      "name": "c_m",
-      "lb": 0.4,
-      "ub": 0.8,
-      "label": "all"
-    },
-    {
-      "name": "eps_m",
-      "lb": 0.4,
-      "ub": 0.8,
-      "label": "all"
+      "ub": 1,
+      "label": "any"
     }
   ],
   "structure_parameters": [
     {
       "name": "num_steps",
-      "lb": 0,
+      "lb": 200,
       "ub": 200,
       "label": "all"
     },
