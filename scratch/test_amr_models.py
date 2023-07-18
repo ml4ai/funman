@@ -17,9 +17,7 @@ from funman.server.query import FunmanWorkRequest, FunmanWorkUnit
 from funman.server.storage import Storage
 from funman.server.worker import FunmanWorker
 
-RESOURCES = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)), "../resources"
-)
+RESOURCES = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../resources")
 
 out_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "out")
 
@@ -96,9 +94,7 @@ class TestModels(unittest.TestCase):
     def get_model(self, model_file: str):
         for model in models:
             try:
-                m = _wrap_with_internal_model(
-                    pydantic.parse_file_as(model, model_file)
-                )
+                m = _wrap_with_internal_model(pydantic.parse_file_as(model, model_file))
                 return m
             except Exception as e:
                 pass
@@ -118,7 +114,7 @@ class TestModels(unittest.TestCase):
             if self._worker.is_processing_id(work_unit.id):
                 results = self._worker.get_results(work_unit.id)
                 with open(f"{out_dir}/{work_unit.id}.json", "w") as f:
-                    f.write(json.dumps(results.json()))
+                    f.write(results.json())
                 # ParameterSpacePlotter(
                 #     results.parameter_space, plot_points=True
                 # ).plot(show=False)
