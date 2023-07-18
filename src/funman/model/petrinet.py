@@ -129,8 +129,13 @@ class AbstractPetriNetModel(Model):
 
 
 class GeneratedPetriNetModel(AbstractPetriNetModel):
+    class Config:
+        underscore_attrs_are_private = True
+        arbitrary_types_allowed = True
+
     petrinet: GeneratedPetrinet
     _transition_rates_cache: Dict[str, Union[sympy.Expr, str]] = {}
+    _norm: str = None
 
     def default_encoder(
         self, config: "FUNMANConfig", scenario: "AnalysisScenario"
@@ -167,7 +172,13 @@ class GeneratedPetriNetModel(AbstractPetriNetModel):
         )
         return symbols
 
-    def _get_init_value(self, var: str):
+    def _set_normalization(self):
+        norm_str = "+".join(
+            [self._get_init_value(v, normalize=False) for v in self._state_var_names()]
+        )
+        self._norm = norm_str
+
+    def _get_init_value(self, var: str, normalize=True):
         value = Model._get_init_value(self, var)
         if value is None:
             if hasattr(self.petrinet.semantics, "ode"):
@@ -180,6 +191,12 @@ class GeneratedPetriNetModel(AbstractPetriNetModel):
                     pass
             else:
                 value = f"{var}0"
+
+        if normalize:
+            if self._norm is None:
+                self._set_normalization()
+            value = str(f"{value}/({self._norm})")
+
         return value
 
     def _parameter_lb(self, param_name: str):

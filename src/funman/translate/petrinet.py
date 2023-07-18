@@ -214,6 +214,7 @@ class PetrinetEncoder(Encoder):
 
     def _define_init(self, model: Model, init_time: int = 0) -> FNode:
         state_var_names = model._state_var_names()
+        initial_substitution = {}
 
         if self.config.use_compartmental_constraints:
             compartmental_bounds = self._encode_compartmental_bounds(model, 0)
@@ -232,16 +233,18 @@ class PetrinetEncoder(Encoder):
         else:
             time_var_init = TRUE()
 
-        return And(
-            And(
-                [
-                    self._define_init_term(model, var, init_time)
-                    for var in state_var_names
-                ]
-            ),
+        initial_state_vars_and_subs = [
+            self._define_init_term(model, var, init_time) for var in state_var_names
+        ]
+        substitutions = {
+            sv[1][0]: sv[1][1] for sv in initial_state_vars_and_subs if sv[1]
+        }
+        initial_state = And(
+            And([sv[0] for sv in initial_state_vars_and_subs]),
             compartmental_bounds,
             time_var_init,
         )
+        return initial_state, substitutions
 
     def _encode_compartmental_bounds(
         self, model: "Model", step, substitutions: Dict[FNode, FNode] = {}

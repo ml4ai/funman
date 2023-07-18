@@ -37,7 +37,7 @@ class Model(ABC, BaseModel):
     #     """
     #     pass
 
-    def _get_init_value(self, var: str):
+    def _get_init_value(self, var: str, normalize: bool = True):
         if var in self.init_values:
             return self.init_values[var]
         elif var in self.parameter_bounds:

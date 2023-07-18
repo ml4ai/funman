@@ -162,9 +162,7 @@ class BoxSearchEpisode(SearchEpisode):
 
     def _add_false_point(self, point: Point):
         if point in self._true_points:
-            l.debug(
-                f"Point: {point} is marked false, but already marked true."
-            )
+            l.debug(f"Point: {point} is marked false, but already marked true.")
         point.label = LABEL_FALSE
         self._false_points.add(point)
 
@@ -177,18 +175,14 @@ class BoxSearchEpisode(SearchEpisode):
 
     def _add_true_point(self, point: Point):
         if point in self._false_points:
-            l.debug(
-                f"Point: {point} is marked true, but already marked false."
-            )
+            l.debug(f"Point: {point} is marked true, but already marked false.")
         point.label = LABEL_TRUE
         self._true_points.add(point)
 
     def _get_unknown(self):
         box = self._unknown_boxes.get(timeout=self.config.queue_timeout)
         if self.config.number_of_processes > 1:
-            self.statistics._num_unknown.value = (
-                self.statistics._num_unknown.value - 1
-            )
+            self.statistics._num_unknown.value = self.statistics._num_unknown.value - 1
             self.statistics._current_residual.value = box.width()
         else:
             self.statistics._num_unknown += 1
@@ -205,15 +199,19 @@ class BoxSearchEpisode(SearchEpisode):
     def _extract_point(self, model, box: Box):
         point = Point(
             values={
-                str(p[0]):( float(p[1].constant_value()) if p[1].is_real_constant() else p[1].constant_value() )for p in model
+                str(p[0]): (
+                    float(p[1].constant_value())
+                    if p[1].is_real_constant()
+                    else p[1].constant_value()
+                )
+                for p in model
                 # p.name: (
                 #     float(model.get_py_value(p.symbol()))
                 #     if isinstance(p, ModelParameter)
                 #     else box.bounds[
                 #         p.name
-                #     ].lb  
+                #     ].lb
                 # for p in self.problem.parameters
-                
             }
         )
         for k, v in self.structural_configuration.items():
@@ -279,9 +277,7 @@ class BoxSearch(Search):
                 # one last check to see if there is work to be done
                 # which would be an error at this point in the code
                 if episode._unknown_boxes.qsize() != 0:
-                    l.error(
-                        f"{process_name} found more work while preparing to exit"
-                    )
+                    l.error(f"{process_name} found more work while preparing to exit")
                     return False
                 l.info(f"{process_name} is exiting")
                 # tell other worker processing to check again with the expectation
@@ -332,11 +328,17 @@ class BoxSearch(Search):
                 formula = And(
                     episode.problem._model_encoding.encoding(
                         episode.problem._model_encoding._encoder.encode_model_layer,
-                        layers=timepoints, box=box
+                        layers=timepoints,
+                        box=box,
                     ),
                     episode.problem._query_encoding.encoding(
-                        partial(episode.problem._query_encoding._encoder.encode_query_layer, episode.problem.query),
-                        layers=timepoints, box=box, assumptions=episode.problem._assume_query
+                        partial(
+                            episode.problem._query_encoding._encoder.encode_query_layer,
+                            episode.problem.query,
+                        ),
+                        layers=timepoints,
+                        box=box,
+                        assumptions=episode.problem._assume_query,
                     ),
                 )
                 episode._formula_stack.append(formula)
@@ -354,9 +356,9 @@ class BoxSearch(Search):
 
         solver.push(1)
 
-        projected_box = box.project(
+        projected_box = box.project(episode.problem.model_parameters()).project(
             episode.problem.model_parameters()
-        ).project(episode.problem.model_parameters())
+        )
         formula = episode.problem._smt_encoder.box_to_smt(projected_box)
         episode._formula_stack.append(formula)
         solver.add_assertion(formula)
@@ -415,9 +417,7 @@ class BoxSearch(Search):
         solver.add_assertion(formula)
 
     def _get_false_points(self, solver, episode, box, rval):
-        false_points = [
-            fp for fp in episode._false_points if box.contains_point(fp)
-        ]
+        false_points = [fp for fp in episode._false_points if box.contains_point(fp)]
         if len(false_points) == 0:
             # If no cached point, then attempt to generate one
             # print("Checking false query")
@@ -439,9 +439,7 @@ class BoxSearch(Search):
         return false_points
 
     def _get_true_points(self, solver, episode, box, rval):
-        true_points = [
-            tp for tp in episode._true_points if box.contains_point(tp)
-        ]
+        true_points = [tp for tp in episode._true_points if box.contains_point(tp)]
         if len(true_points) == 0:
             # If no cached point, then attempt to generate one
             # print("Checking true query")
@@ -546,9 +544,7 @@ class BoxSearch(Search):
 
                         # Check whether box intersects t (true region)
                         # First see if a cached false point exists in the box
-                        true_points = self._get_true_points(
-                            solver, episode, box, rval
-                        )
+                        true_points = self._get_true_points(solver, episode, box, rval)
 
                         if len(true_points) > 0:
                             # box intersects f (true region)
@@ -602,12 +598,10 @@ class BoxSearch(Search):
                         episode._formula_stack.pop()
                         episode._on_iteration()
                         if handler:
-                            all_results = handler(
-                                rval, episode.config, all_results
-                            )
+                            all_results = handler(rval, episode.config, all_results)
                         l.info(f"{process_name} finished work")
                 self._initialize_encoding(
-                    solver, episode, -1
+                    solver, episode, -1, box
                 )  # Reset solver stack to empty
         except KeyboardInterrupt:
             l.info(f"{process_name} Keyboard Interrupt")
@@ -794,9 +788,7 @@ class BoxSearch(Search):
         resultsCallback: Optional[Callable[[ParameterSpace], None]] = None,
     ) -> ParameterSpace:
         all_results = {
-            "parameter_space": ParameterSpace(
-                num_dimensions=problem.num_dimensions()
-            ),
+            "parameter_space": ParameterSpace(num_dimensions=problem.num_dimensions()),
             "dropped_boxes": [],
         }
         rval = QueueSP()
@@ -810,10 +802,8 @@ class BoxSearch(Search):
         config._handler.open()
 
         if problem._smt_encoder._timed_model_elements:
-            step_sizes = problem._smt_encoder._timed_model_elements[
-                    "step_sizes"
-                ]
-            
+            step_sizes = problem._smt_encoder._timed_model_elements["step_sizes"]
+
             configurations_by_step_size = {
                 step_size: [
                     c["num_steps"]
@@ -827,7 +817,7 @@ class BoxSearch(Search):
 
             for step_size_idx, step_size in enumerate(step_sizes):
                 num_steps = max(configurations_by_step_size[step_size])
-                
+
                 # initialize empty encoding
                 problem._encode_timed(
                     num_steps,
