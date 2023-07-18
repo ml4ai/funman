@@ -51,7 +51,7 @@ cases = [
     # ),
     # Missing timevar bug
     (
-        os.path.join(AMR_PETRI_DIR, "sir.json"),
+        os.path.join(AMR_PETRI_DIR, "sir_api_example.json"),
         os.path.join(AMR_PETRI_DIR, "sir_consistency.json"),
     ),
     # (

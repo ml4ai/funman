@@ -35,9 +35,14 @@ MIRA_PETRI_DIR = os.path.join(AMR_EXAMPLES_DIR, "petrinet", "mira")
 
 cases = [
     # 1. b. 0 days delay
+    # (
+    #     os.path.join(MIRA_PETRI_DIR, "models", "eval_scenario1_base.json"),
+    #     os.path.join(MIRA_PETRI_DIR, "requests", "eval_scenario1_base.json"),
+    # ),
+    # S1 1.ii.1
     (
-        os.path.join(MIRA_PETRI_DIR, "models", "eval_scenario1_base.json"),
-        os.path.join(MIRA_PETRI_DIR, "requests", "eval_scenario1_base.json"),
+        os.path.join(MIRA_PETRI_DIR, "models", "eval_scenario1_1_ii_1_init1.json"),
+        os.path.join(MIRA_PETRI_DIR, "requests", "eval_scenario1_1_ii_1.json"),
     ),
 ]
 
@@ -83,7 +88,7 @@ class TestModels(unittest.TestCase):
             if self._worker.is_processing_id(work_unit.id):
                 results = self._worker.get_results(work_unit.id)
                 with open(f"{out_dir}/{work_unit.id}.json", "w") as f:
-                    f.write(json.dump(results.json()))
+                    f.write(results.json())
                 # ParameterSpacePlotter(
                 #     results.parameter_space, plot_points=True
                 # ).plot(show=False)

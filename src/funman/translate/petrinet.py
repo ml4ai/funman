@@ -65,13 +65,6 @@ class PetrinetEncoder(Encoder):
         l.debug(f"Encoding step: {step} to {next_step}")
         state_vars = scenario.model._state_vars()
         transitions = scenario.model._transitions()
-        time_var = scenario.model._time_var()
-        time_var_name = scenario.model._time_var_id(time_var)
-        time_symbol = self._encode_state_var(
-            time_var_name
-        )  # Needed so that there is a pysmt symbol for 't'
-        current_time_var = self._encode_state_var(time_var_name, time=step)
-        next_time_var = self._encode_state_var(time_var_name, time=next_step)
 
         step_size = next_step - step
         current_state = {
@@ -80,15 +73,23 @@ class PetrinetEncoder(Encoder):
             )
             for s in state_vars
         }
-        current_state[time_var_name] = current_time_var
-
         next_state = {
             scenario.model._state_var_id(s): self._encode_state_var(
                 scenario.model._state_var_name(s), time=next_step
             )
             for s in state_vars
         }
-        next_state[time_var_name] = next_time_var
+
+        time_var = scenario.model._time_var()
+        if time_var:
+            time_var_name = scenario.model._time_var_id(time_var)
+            time_symbol = self._encode_state_var(
+                time_var_name
+            )  # Needed so that there is a pysmt symbol for 't'
+            current_time_var = self._encode_state_var(time_var_name, time=step)
+            next_time_var = self._encode_state_var(time_var_name, time=next_step)
+            current_state[time_var_name] = current_time_var
+            next_state[time_var_name] = next_time_var
 
         # Each transition corresponds to a term that is the product of current state vars and a parameter
         transition_terms = {
@@ -212,38 +213,21 @@ class PetrinetEncoder(Encoder):
             substitutions,
         )
 
-    def _define_init(self, model: Model, init_time: int = 0) -> FNode:
-        state_var_names = model._state_var_names()
-        initial_substitution = {}
+    def _define_init(self, scenario: "AnalysisScenario", init_time: int = 0) -> FNode:
+        initial_state, substitutions = super()._define_init(
+            scenario, init_time=init_time
+        )
+        # state_var_names = scenario.model._state_var_names()
+        # initial_substitution = {}
 
         if self.config.use_compartmental_constraints:
-            compartmental_bounds = self._encode_compartmental_bounds(model, 0)
+            compartmental_bounds = self._encode_compartmental_bounds(scenario.model, 0)
+            if self.config.substitute_subformulas and substitutions:
+                compartmental_bounds = compartmental_bounds.substitute(substitutions)
         else:
             compartmental_bounds = TRUE()
+        initial_state = And(initial_state, compartmental_bounds).simplify()
 
-        time_var = model._time_var()
-
-        if time_var:
-            time_var_name = model._time_var_id(time_var)
-            time_symbol = self._encode_state_var(
-                time_var_name, time=0
-            )  # Needed so that there is a pysmt symbol for 't'
-
-            time_var_init = Equals(time_symbol, Real(0.0))
-        else:
-            time_var_init = TRUE()
-
-        initial_state_vars_and_subs = [
-            self._define_init_term(model, var, init_time) for var in state_var_names
-        ]
-        substitutions = {
-            sv[1][0]: sv[1][1] for sv in initial_state_vars_and_subs if sv[1]
-        }
-        initial_state = And(
-            And([sv[0] for sv in initial_state_vars_and_subs]),
-            compartmental_bounds,
-            time_var_init,
-        )
         return initial_state, substitutions
 
     def _encode_compartmental_bounds(
@@ -355,5 +339,6 @@ class PetrinetEncoder(Encoder):
         """
         state_vars = model._state_var_names()
         time_var = model._time_var()
-        state_vars.append(f"timer_{time_var.id}")
+        if time_var:
+            state_vars.append(f"timer_{time_var.id}")
         return state_vars

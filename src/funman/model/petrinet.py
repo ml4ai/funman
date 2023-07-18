@@ -164,19 +164,27 @@ class GeneratedPetriNetModel(AbstractPetriNetModel):
             return None
 
     def _time_var_id(self, time_var):
-        return f"timer_{time_var.id}"
+        if time_var:
+            return f"timer_{time_var.id}"
+        else:
+            return None
 
     def _symbols(self):
-        symbols = (
-            self._state_var_names() + self._parameter_names() + [self._time_var().id]
-        )
+        symbols = self._state_var_names() + self._parameter_names()
+        if self._time_var():
+            symbols += [self._time_var().id]
         return symbols
 
-    def _set_normalization(self):
-        norm_str = "+".join(
-            [self._get_init_value(v, normalize=False) for v in self._state_var_names()]
-        )
-        self._norm = norm_str
+    def normalization(self):
+        if self._norm is None:
+            norm_str = "+".join(
+                [
+                    self._get_init_value(v, normalize=False)
+                    for v in self._state_var_names()
+                ]
+            )
+            self._norm = norm_str
+        return self._norm
 
     def _get_init_value(self, var: str, normalize=True):
         value = Model._get_init_value(self, var)
@@ -193,9 +201,8 @@ class GeneratedPetriNetModel(AbstractPetriNetModel):
                 value = f"{var}0"
 
         if normalize:
-            if self._norm is None:
-                self._set_normalization()
-            value = str(f"{value}/({self._norm})")
+            norm = self.normalization()
+            value = str(f"{value}/({norm})")
 
         return value
 
@@ -249,10 +256,12 @@ class GeneratedPetriNetModel(AbstractPetriNetModel):
                     for r in self.petrinet.semantics.ode.rates
                     if r.target == transition.id
                 ]
-                t_rates = [
-                    t.subs({self._time_var().id: f"timer_{self._time_var().id}"})
-                    for t in t_rates
-                ]
+                time_var = self._time_var()
+                if time_var:
+                    t_rates = [
+                        t.subs({self._time_var().id: f"timer_{self._time_var().id}"})
+                        for t in t_rates
+                    ]
                 self._transition_rates_cache[transition.id] = t_rates
             return self._transition_rates_cache[transition.id]
         else:

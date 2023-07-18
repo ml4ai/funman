@@ -59,8 +59,10 @@ class FUNMANSimplifier(pysmt.simplifier.Simplifier):
         to_drop = {
             arg: 0
             for arg in formula.args
-            if N(arg, 5, subs=lb_values) < threshold
-            or N(arg, 5, subs=ub_values) < threshold
+            if (
+                Abs(N(arg, subs=lb_values)) < threshold
+                and Abs(N(arg, subs=ub_values)) < threshold
+            )
         }
         # minimum_term_value = min(tm for arg, tm in term_magnitude.items()) if len(term_magnitude) > 0 else None
         # maximum_term_value = max(tm for arg, tm in term_magnitude.items()) if len(term_magnitude) > 0 else None
