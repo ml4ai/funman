@@ -1,0 +1,68 @@
+{
+  "query": {
+    "variable": "I",
+    "ub": 0.052
+  },
+  "parameters": [
+    {
+      "name": "D",
+      "lb": 1452.703686,
+      "ub": 1452.703686
+    },
+    {
+      "name": "E",
+      "lb": 139180.5867,
+      "ub": 139180.5867
+    },
+    {
+      "name": "H",
+      "lb": 13814.39296,
+      "ub": 13814.39296
+    },
+    {
+      "name": "I",
+      "lb": 147456.0169,
+      "ub": 147456.0169
+    },
+    {
+      "name": "R",
+      "lb": 83229.87998,
+      "ub": 83229.87998
+    },
+    {
+      "name": "S",
+      "lb": 18954866.42,
+      "ub": 18954866.42
+    },
+    {
+      "name": "c_m",
+      "lb": 0.4,
+      "ub": 0.8,
+      "label": "all"
+    },
+    {
+      "name": "eps_m",
+      "lb": 0.4,
+      "ub": 0.8,
+      "label": "all"
+    }
+  ],
+  "structure_parameters": [
+    {
+      "name": "num_steps",
+      "lb": 0,
+      "ub": 100,
+      "label": "all"
+    },
+    {
+      "name": "step_size",
+      "lb": 1,
+      "ub": 1,
+      "label": "all"
+    }
+  ],
+  "config": {
+    "save_smtlib": true,
+    "tolerance": 1e-4
+  }
+}
