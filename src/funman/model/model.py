@@ -18,12 +18,14 @@ class Model(ABC, BaseModel):
     """
 
     class Config:
+        underscore_attrs_are_private = True
         allow_inf_nan = True
 
     name: str = f"model_{uuid.uuid4()}"
     init_values: Dict[str, float] = {}
     parameter_bounds: Dict[str, List[float]] = {}
     _extra_constraints: FNode = None
+    _norm: str = None
 
     # @abstractmethod
     # def default_encoder(self, config: "FUNMANConfig") -> "Encoder":
@@ -37,14 +39,22 @@ class Model(ABC, BaseModel):
     #     """
     #     pass
 
+    def _symbols(self):
+        return self._state_var_names() + self._parameter_names()
+
     def _get_init_value(self, var: str, normalize: bool = True):
         if var in self.init_values:
-            return self.init_values[var]
+            value = self.init_values[var]
         elif var in self.parameter_bounds:
             # get parameter for value
-            return self.parameter_bounds[var]
+            value = self.parameter_bounds[var]
         else:
-            return None
+            value = None
+
+        if value and normalize:
+            norm = self.normalization()
+            value = str(f"{value}/({norm})")
+        return value
 
     def variables(self, include_next_state=False):
         """
@@ -59,6 +69,17 @@ class Model(ABC, BaseModel):
         vars.update(self.parameter_bounds)
 
         return vars
+
+    def normalization(self):
+        if self._norm is None:
+            compartments = [
+                str(self._get_init_value(v, normalize=False))
+                for v in self._state_var_names()
+            ]
+
+            norm_str = "+".join(compartments)
+            self._norm = norm_str
+        return self._norm
 
     def _parameters(self) -> List[ModelParameter]:
         param_names = self._parameter_names()
@@ -79,11 +100,16 @@ class Model(ABC, BaseModel):
         ]
 
         # Get values from wrapped model if not overridden by outer model
+
         params += [
-            ModelParameter(
-                name=p,
-                lb=param_values[p],
-                ub=param_values[p],
+            (
+                ModelParameter(
+                    name=p,
+                    lb=param_values[p],
+                    ub=param_values[p],
+                )
+                if param_values[p]
+                else ModelParameter(name=p)
             )
             for p in param_names
             if p in param_values and p not in self.parameter_bounds

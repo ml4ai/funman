@@ -135,7 +135,6 @@ class GeneratedPetriNetModel(AbstractPetriNetModel):
 
     petrinet: GeneratedPetrinet
     _transition_rates_cache: Dict[str, Union[sympy.Expr, str]] = {}
-    _norm: str = None
 
     def default_encoder(
         self, config: "FUNMANConfig", scenario: "AnalysisScenario"
@@ -174,17 +173,6 @@ class GeneratedPetriNetModel(AbstractPetriNetModel):
         if self._time_var():
             symbols += [self._time_var().id]
         return symbols
-
-    def normalization(self):
-        if self._norm is None:
-            norm_str = "+".join(
-                [
-                    self._get_init_value(v, normalize=False)
-                    for v in self._state_var_names()
-                ]
-            )
-            self._norm = norm_str
-        return self._norm
 
     def _get_init_value(self, var: str, normalize=True):
         value = Model._get_init_value(self, var)

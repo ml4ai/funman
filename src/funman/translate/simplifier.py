@@ -20,7 +20,12 @@ from sympy import (
     Expr,
 )
 
-from funman.utils.sympy_utils import series_approx, sympy_to_pysmt
+from funman.utils.sympy_utils import (
+    series_approx,
+    sympy_to_pysmt,
+    replace_reserved,
+    to_sympy,
+)
 
 
 class FUNMANSimplifier(pysmt.simplifier.Simplifier):
@@ -32,8 +37,8 @@ class FUNMANSimplifier(pysmt.simplifier.Simplifier):
         if len(formula.free_symbols) == 0:
             return formula
 
-        ub_values = {p.name: p.ub for p in parameters}
-        lb_values = {p.name: p.lb for p in parameters}
+        ub_values = {replace_reserved(p.name): p.ub for p in parameters}
+        lb_values = {replace_reserved(p.name): p.lb for p in parameters}
         original_size = len(formula.args)
 
         # def calc_mag(g):
@@ -117,8 +122,10 @@ class FUNMANSimplifier(pysmt.simplifier.Simplifier):
         # forumla_symbols = formula.free_symbols
         # var_map = {str(v): symbols(str(v)) for v in formula.free_symbols}
         # sympy_symbols = list(var_map.values())
+        # var_map = {}
+        psymbols = [replace_reserved(p.name) for p in parameters]
         sympy_subs = {
-            symbols(str(s)): sympify(v.serialize())
+            symbols(str(s)): to_sympy(v.serialize(), psymbols)
             for s, v in substitutions.items()
             if symbols(str(s)) in formula.free_symbols
         }

@@ -67,13 +67,9 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
         BilayerModel,
         EncodedModel,
     ]
-    query: Union[
-        QueryAnd, QueryGE, QueryLE, QueryEncoded, QueryFunction, QueryTrue
-    ]
+    query: Union[QueryAnd, QueryGE, QueryLE, QueryEncoded, QueryFunction, QueryTrue]
     _search: str = "BoxSearch"
-    _smt_encoder: Optional[
-        Encoder
-    ] = None  # TODO set to model.default_encoder()
+    _smt_encoder: Optional[Encoder] = None  # TODO set to model.default_encoder()
     _model_encoding: Optional[Encoding] = None
     _query_encoding: Optional[Encoding] = None
     _assume_model: Optional[FNode] = None
@@ -116,7 +112,14 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
         if len(self.structure_parameters()) == 0:
             # either undeclared or wrong type
             # if wrong type, recover structure parameters
-            self.parameters = [(StructureParameter(name=p.name, lb=p.lb, ub=p.ub) if (p.name == "num_steps" or p.name == "step_size") else p)  for p in self.parameters] 
+            self.parameters = [
+                (
+                    StructureParameter(name=p.name, lb=p.lb, ub=p.ub)
+                    if (p.name == "num_steps" or p.name == "step_size")
+                    else p
+                )
+                for p in self.parameters
+            ]
             if len(self.structure_parameters()) == 0:
                 # Add the structure parameters if still missing
                 self.parameters += [
@@ -182,17 +185,22 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
 
     def _encode_timed(self, num_steps, step_size_idx, config: "FUNMANConfig"):
         # self._assume_model = Symbol("assume_model")
-        step_size = self._smt_encoder._timed_model_elements["step_sizes"][step_size_idx]
-        self._assume_query = [
-            Symbol(f"assume_query_{t}")
-            for t in range(0, (num_steps * step_size) + 1, step_size)
-        ]
+        if self._smt_encoder._timed_model_elements:
+            step_size = self._smt_encoder._timed_model_elements["step_sizes"][
+                step_size_idx
+            ]
+            self._assume_query = [
+                Symbol(f"assume_query_{t}")
+                for t in range(0, (num_steps * step_size) + 1, step_size)
+            ]
         # This will overwrite the _model_encoding for each configuration, but the encoder will retain components of the configurations.
-        model_encoding, query_encoding = self._smt_encoder.initialize_encodings(self, num_steps, step_size_idx)
+        model_encoding, query_encoding = self._smt_encoder.initialize_encodings(
+            self, num_steps, step_size_idx
+        )
         # self._smt_encoder.encode_model_timed(
         #     self, num_steps, step_size
         # )
-        
+
         self._model_encoding = model_encoding
         self._query_encoding = query_encoding
 

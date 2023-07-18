@@ -225,7 +225,10 @@ class Encoder(ABC, BaseModel):
         # self.state_timepoints = state_timepoints
         # self.transition_timepoints = transition_timepoints
 
-        step_size = self._timed_model_elements["step_sizes"][step_size_idx]
+        if self._timed_model_elements:
+            step_size = self._timed_model_elements["step_sizes"][step_size_idx]
+        else:
+            step_size = 1
 
         return LayeredEncoding(
             step_size=step_size, _layers=[None] * (num_steps + 1), _encoder=self
@@ -700,12 +703,24 @@ class Encoder(ABC, BaseModel):
 
         return layer
 
+    def _normalize(self, value):
+        return sympy_to_pysmt(
+            to_sympy(
+                f"{value}/({self._scenario.model.normalization()})",
+                self._scenario.model._symbols(),
+            )
+        )
+
     def _encode_query_le(self, query, layer_idx, step_size, normalize=True):
         step_size_idx = self._timed_model_elements["step_sizes"].index(step_size)
         time = self._timed_model_elements["state_timepoints"][step_size_idx][layer_idx]
+        if normalize:
+            ub = self._normalize(query.ub)
+        else:
+            ub = Real(query.ub)
         q = LE(
             self._encode_state_var(var=query.variable, time=time),
-            Real(query.ub),
+            ub,
         )
 
         return (q, {str(v): v for v in q.get_free_variables()})
@@ -713,9 +728,13 @@ class Encoder(ABC, BaseModel):
     def _encode_query_ge(self, query, layer_idx, step_size, normalize=True):
         step_size_idx = self._timed_model_elements["step_sizes"].index(step_size)
         time = self._timed_model_elements["state_timepoints"][step_size_idx][layer_idx]
+        if normalize:
+            lb = self._normalize(query.lb)
+        else:
+            lb = Real(query.lb)
         q = GE(
             self._encode_state_var(var=query.variable, time=time),
-            Real(query.lb),
+            Real(lb),
         )
         return (q, {str(v): v for v in q.get_free_variables()})
 

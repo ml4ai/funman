@@ -67,7 +67,7 @@ class FUNMANFormulaManager(FormulaManager):
 def series_approx(expr: sympy.Expr, vars: List[sympy.Symbol] = []) -> sympy.Expr:
     sympy_symbols = [sympy.symbols(str(v)) for v in vars]
     series_expr = reduce(
-        lambda v1, v2: sympy.series(v1, v2).removeO(), sympy_symbols, expr
+        lambda v1, v2: sympy.series(v1, v2, n=4).removeO(), sympy_symbols, expr
     )
     return series_expr
 
@@ -78,11 +78,28 @@ def sympy_subs(
     return expr.subs(substitution)
 
 
+reserved_words = ["lambda"]
+
+
+def has_reserved(str_expr, rw):
+    return rw in str_expr and f"funman_{rw}" not in str_expr
+
+
+def replace_reserved(str_expr):
+    for rw in reserved_words:
+        if isinstance(str_expr, str) and has_reserved(str_expr, rw):
+            str_expr = str_expr.replace(rw, f"funman_{rw}")
+    return str_expr
+
+
 def to_sympy(
     str_expr: str,
     symbols: List[str],
 ) -> sympy.Expr:
-    expr = sympy.sympify(str_expr, {s: sympy.symbols(s) for s in symbols})
+    unreserved_symbols = [replace_reserved(s) for s in symbols]
+    expr = sympy.sympify(
+        replace_reserved(str_expr), {s: sympy.symbols(s) for s in unreserved_symbols}
+    )
     return expr
 
 

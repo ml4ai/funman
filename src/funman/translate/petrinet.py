@@ -191,7 +191,7 @@ class PetrinetEncoder(Encoder):
         if self.config.use_compartmental_constraints:
             compartmental_bounds = self._encode_compartmental_bounds(
                 scenario.model, next_step, substitutions=substitutions
-            )
+            ).simplify()
         else:
             compartmental_bounds = TRUE()
 
@@ -223,7 +223,9 @@ class PetrinetEncoder(Encoder):
         if self.config.use_compartmental_constraints:
             compartmental_bounds = self._encode_compartmental_bounds(scenario.model, 0)
             if self.config.substitute_subformulas and substitutions:
-                compartmental_bounds = compartmental_bounds.substitute(substitutions)
+                compartmental_bounds = compartmental_bounds.substitute(
+                    substitutions
+                ).simplify()
         else:
             compartmental_bounds = TRUE()
         initial_state = And(initial_state, compartmental_bounds).simplify()
@@ -240,8 +242,8 @@ class PetrinetEncoder(Encoder):
                     self._encode_state_var(model._state_var_name(var), time=step),
                     Real(0.0),
                 )
-                .substitute(substitutions)
-                .simplify()
+                # .substitute(substitutions)
+                # .simplify()
             )
             ub = LE(
                 self._encode_state_var(model._state_var_name(var), time=step),
@@ -288,7 +290,11 @@ class PetrinetEncoder(Encoder):
                     scenario.model._transition_id(transition)
                 ] = [
                     series_approx(
-                        to_sympy(r, scenario.model._symbols()),
+                        (
+                            r
+                            if isinstance(r, sympy.Expr)
+                            else to_sympy(r, scenario.model._symbols())
+                        ),
                         vars=[
                             mp.name
                             for mp in scenario.model_parameters()

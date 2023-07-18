@@ -13,6 +13,7 @@ from multiprocessing import Queue, Value
 from multiprocessing.synchronize import Condition, Event, Lock
 from queue import Empty
 from queue import Queue as QueueSP
+from queue import PriorityQueue as PQueueSP
 from typing import Callable, List, Optional, Set, Union
 
 from pysmt.formula import FNode
@@ -62,7 +63,7 @@ class BoxSearchEpisode(SearchEpisode):
     _false_boxes: List[Box] = []
     _true_points: Set[Point] = set({})
     _false_points: Set[Point] = set({})
-    _unknown_boxes: QueueSP
+    _unknown_boxes: PQueueSP
     _iteration: int = 0
     _formula_stack: List[FNode] = []
     _formula_stack_time: int = -1
