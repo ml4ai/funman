@@ -19,7 +19,7 @@
         "constraint_noise": 0.0,
         "initial_state_tolerance": 0.0,
         "dreal_mcts": true,
-        "substitute_subformulas": false,
+        "substitute_subformulas": true,
         "use_compartmental_constraints": true
     },
     "structure_parameters": [
