@@ -24,16 +24,17 @@ class WorkerState(Enum):
     UNINITIALIZED = 0
     STARTING = 1
     RUNNING = 2
-    EXITED = 3
-    STOPPING = 4
-    STOPPED = 5
+    STOPPING = 3
+    STOPPED = 4
+    ERRORED = 5
+
 
 class FunmanWorker:
     _state: WorkerState = WorkerState.UNINITIALIZED
 
     def __init__(self, storage):
         self._halt_event = threading.Event()
-        self._stop_event = threading.Event()
+        self._stop_event = None
         self._thread = None
         self._id_lock = threading.Lock()
         self._set_lock = threading.Lock()
@@ -49,6 +50,10 @@ class FunmanWorker:
         self._state_lock = threading.Lock()
         self._state = WorkerState.STOPPED
 
+    def get_state(self) -> WorkerState:
+        with self._state_lock:
+            return WorkerState(self._state)
+
     def in_state(self, state: WorkerState) -> bool:
         """
         Return true if in the provided state else false
@@ -56,18 +61,11 @@ class FunmanWorker:
         with self._state_lock:
             return self._state == state
 
-    def set_state(self, state: WorkerState):
-        """
-        Change state
-        """
-        with self._state_lock:
-            self._state = state
-
     def enqueue_work(
         self, model: Model, request: FunmanWorkRequest
     ) -> FunmanWorkUnit:
-        if not self.in_state(WorkerState.RUNNING):
-            raise FunmanWorkerException("FunmanWorker must be running to enqueue work")
+        if not (self.in_state(WorkerState.STARTING) or self.in_state(WorkerState.RUNNING)):
+            raise FunmanWorkerException(f"FunmanWorker must be starting or running to enqueue work: {self.get_state}")
         id = self.storage.claim_id()
         work = FunmanWorkUnit(id=id, model=model, request=request)
         self.queue.put(work)
@@ -77,40 +75,53 @@ class FunmanWorker:
 
     def start(self):
         if not self.in_state(WorkerState.STOPPED):
-            raise FunmanWorkerException("FunmanWorker must be stopped to start")
-        self.set_state(WorkerState.STARTING)
-        self._thread = threading.Thread(target=self._run, daemon=True)
-        self._stop_event.clear()
-        self._thread.start()
+            raise FunmanWorkerException(f"FunmanWorker must be stopped to start: {self.get_state}")
+        with self._state_lock:
+            self._state = WorkerState.STARTING
+            self._stop_event = threading.Event()
+            self._thread = threading.Thread(target=self._run, args=[self._stop_event], daemon=True)
+            self._thread.start()
+            self._state = WorkerState.RUNNING
 
     def stop(self, timeout=None):
-        if not (self.in_state(WorkerState.RUNNING) or self.in_state(WorkerState.EXITED)):
-            raise FunmanWorkerException("FunmanWorker be running to stop")
-        self.set_state(WorkerState.STOPPING)
-        self._stop_event.set()
-        self._thread.join(timeout=timeout)
-        if self._thread.is_alive():
-            # TODO kill thread?
-            print("Thread did not close")
-        self._thread = None
-        self.set_state(WorkerState.STOPPED)
+        if not (self.in_state(WorkerState.RUNNING) or self.in_state(WorkerState.ERRORED)):
+            raise FunmanWorkerException(f"FunmanWorker be running to stop: {self.get_state}")
+        # Grab the state lock for the entire process of stopping.
+        with self._state_lock:
+            # The worker is stopping
+            self._state = WorkerState.STOPPING
+            # Tell the work thread to stop
+            self._stop_event.set()
+            # Wait for the work thread to stop
+            self._thread.join(timeout=timeout)
+            if self._thread.is_alive():
+                # TODO If the thread is still alive then it is likely the solver
+                # is still processing and the thread will exit if/when the solver
+                # returns. Ideally we could kill it here and abandon any state it
+                # holds.
+                print("Thread did not close")
+            # Reset state
+            self._thread = None
+            self._stop_event = None
+            # The worker is stopped
+            self._state = WorkerState.STOPPED
 
     def is_processing_id(self, id: str):
         if not self.in_state(WorkerState.RUNNING):
-            raise FunmanWorkerException("FunmanWorker must be running to check processing id")
+            raise FunmanWorkerException(f"FunmanWorker must be running to check processing id: {self.get_state}")
         with self._id_lock:
             return self.current_id == id
 
     def get_results(self, id: str):
         if not self.in_state(WorkerState.RUNNING):
-            raise FunmanWorkerException("FunmanWorker must be running to get results")
+            raise FunmanWorkerException(f"FunmanWorker must be running to get results: {self.get_state}")
         if self.is_processing_id(id):
             return self.current_results
         return self.storage.get_result(id)
 
     def halt(self, id: str):
         if not self.in_state(WorkerState.RUNNING):
-            raise FunmanWorkerException("FunmanWorker must be running to halt request")
+            raise FunmanWorkerException(f"FunmanWorker must be running to halt request: {self.get_state}")
         with self._id_lock:
             if id == self.current_id:
                 print(f"Halting {id}")
@@ -123,7 +134,7 @@ class FunmanWorker:
 
     def get_current(self) -> Optional[str]:
         if not self.in_state(WorkerState.RUNNING):
-            raise FunmanWorkerException("FunmanWorker must be running to check currently processing request")
+            raise FunmanWorkerException(f"FunmanWorker must be running to check currently processing request: {self.get_state}")
         with self._id_lock:
             return self.current_id
 
@@ -136,12 +147,11 @@ class FunmanWorker:
         # TODO handle copy?
         self.current_results.parameter_space = results
 
-    def _run(self):
-        print("FunmanWorker starting...")
+    def _run(self, stop_event: threading.Event):
+        print("FunmanWorker running...")
         try:
-            self.set_state(WorkerState.RUNNING)
             while True:
-                if self._stop_event.is_set():
+                if stop_event.is_set():
                     break
                 try:
                     work: FunmanWorkUnit = self.queue.get(timeout=0.5)
@@ -198,6 +208,9 @@ class FunmanWorker:
         except Exception:
             print("Fatal error in worker!", file=sys.stderr)
             traceback.print_exc()
-        finally:
-            self.set_state(WorkerState.EXITED)
+            # Only mark the state as errored if the thread
+            # has not yet been told to stop
+            if not stop_event.is_set():
+                with self._state_lock:
+                    self._state = WorkerState.ERRORED
         print("FunmanWorker exiting...")
