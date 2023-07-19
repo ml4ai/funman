@@ -67,7 +67,7 @@ class FUNMANFormulaManager(FormulaManager):
 def series_approx(expr: sympy.Expr, vars: List[sympy.Symbol] = []) -> sympy.Expr:
     sympy_symbols = [sympy.symbols(str(v)) for v in vars]
     series_expr = reduce(
-        lambda v1, v2: sympy.series(v1, v2).removeO(), sympy_symbols, expr
+        lambda v1, v2: sympy.series(v1, v2, n=4).removeO(), sympy_symbols, expr
     )
     return series_expr
 

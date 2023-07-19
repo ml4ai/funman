@@ -76,6 +76,8 @@ class FUNMANConfig(BaseModel):
     normalize = True
     """ Simplify query by propagating substutions """
     simplify_query = False
+    """ Series approximation threshold for dropping series terms """
+    series_approximation_threshold = 1e-4
 
     @validator("solver")
     def import_dreal(cls, v):

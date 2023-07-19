@@ -34,7 +34,7 @@ class FUNMANSimplifier(pysmt.simplifier.Simplifier):
         super().__init__(env=env)
         self.manager = self.env.formula_manager
 
-    def approximate(formula, parameters: List[ModelParameter], threshold=1e-5):
+    def approximate(formula, parameters: List[ModelParameter], threshold=1e-4):
         if len(formula.free_symbols) == 0:
             return formula
 
@@ -101,6 +101,7 @@ class FUNMANSimplifier(pysmt.simplifier.Simplifier):
         formula: Expr,
         parameters: List[ModelParameter] = [],
         substitutions: Dict[FNode, FNode] = {},
+        threshold: float = 1e-4,
     ):
         # substitutions are FNodes
         # transition terms are sympy.Expr
@@ -148,7 +149,7 @@ class FUNMANSimplifier(pysmt.simplifier.Simplifier):
 
         # print(expanded_formula)
         approx_formula = FUNMANSimplifier.approximate(
-            series_expanded_formula, parameters
+            series_expanded_formula, parameters, threshold=threshold
         )
 
         # factored_formula = nsimplify(approx_formula, tolerance=1e-10)

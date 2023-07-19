@@ -122,6 +122,7 @@ class PetrinetEncoder(Encoder):
                             t,
                             parameters=scenario.model_parameters(),
                             substitutions=substitutions,
+                            threshold=self.config.series_approximation_threshold,
                         )
                         for t in v
                     ]
@@ -179,6 +180,7 @@ class PetrinetEncoder(Encoder):
                             symbols=scenario.model._symbols(),
                         ),
                         parameters=scenario.model_parameters(),
+                        threshold=self.config.series_approximation_threshold,
                     )
             else:
                 flows = current_state[state_var_id]

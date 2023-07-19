@@ -3,11 +3,11 @@
         "queries": [
             {
                 "variable": "I_compliant",
-                "ub": 3e6
+                "ub": 2e5
             },
             {
                 "variable": "I_noncompliant",
-                "ub": 5e6
+                "ub": 4e5
             }
         ]
     },
@@ -41,18 +41,19 @@
         {
             "name": "num_steps",
             "lb": 0,
-            "ub": 100,
+            "ub": 50,
             "label": "all"
         },
         {
             "name": "step_size",
-            "lb": 1,
-            "ub": 1,
+            "lb": 2,
+            "ub": 2,
             "label": "all"
         }
     ],
     "config": {
         "save_smtlib": true,
-        "tolerance": 1e-4
+        "tolerance": 1e-4,
+        "simplify_query": true
     }
 }

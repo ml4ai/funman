@@ -4,7 +4,7 @@ This module defines the abstract base classes for the model encoder classes in f
 import logging
 from abc import ABC, abstractmethod
 from typing import Dict, List, Set, Tuple, Union
-
+from functools import partial
 from pydantic import BaseModel, Extra
 from pysmt.constants import Numeral
 from pysmt.formula import FNode
@@ -252,6 +252,14 @@ class Encoder(ABC, BaseModel):
             formula and symbols for the encoding
         """
         pass
+
+    def encode_simplified(self, model, query):
+        formula = And(model, query)
+        # Fixme, use real stepsize
+        sub_formula = formula.substitute(
+            self._timed_model_elements["time_step_substitutions"][0]
+        ).simplify()
+        return sub_formula
 
     def _encode_next_step(
         self, model: Model, step: int, next_step: int, substitutions={}
