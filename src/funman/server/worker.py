@@ -51,6 +51,9 @@ class FunmanWorker:
         self._state = WorkerState.STOPPED
 
     def get_state(self) -> WorkerState:
+        """
+        Return the current state of the worker
+        """
         with self._state_lock:
             return WorkerState(self._state)
 
@@ -64,8 +67,8 @@ class FunmanWorker:
     def enqueue_work(
         self, model: Model, request: FunmanWorkRequest
     ) -> FunmanWorkUnit:
-        if not (self.in_state(WorkerState.STARTING) or self.in_state(WorkerState.RUNNING)):
-            raise FunmanWorkerException(f"FunmanWorker must be starting or running to enqueue work: {self.get_state}")
+        if not self.in_state(WorkerState.RUNNING):
+            raise FunmanWorkerException(f"FunmanWorker must be starting or running to enqueue work: {self.get_state()}")
         id = self.storage.claim_id()
         work = FunmanWorkUnit(id=id, model=model, request=request)
         self.queue.put(work)
@@ -75,7 +78,7 @@ class FunmanWorker:
 
     def start(self):
         if not self.in_state(WorkerState.STOPPED):
-            raise FunmanWorkerException(f"FunmanWorker must be stopped to start: {self.get_state}")
+            raise FunmanWorkerException(f"FunmanWorker must be stopped to start: {self.get_state()}")
         with self._state_lock:
             self._state = WorkerState.STARTING
             self._stop_event = threading.Event()
@@ -85,7 +88,7 @@ class FunmanWorker:
 
     def stop(self, timeout=None):
         if not (self.in_state(WorkerState.RUNNING) or self.in_state(WorkerState.ERRORED)):
-            raise FunmanWorkerException(f"FunmanWorker be running to stop: {self.get_state}")
+            raise FunmanWorkerException(f"FunmanWorker be running to stop: {self.get_state()}")
         # Grab the state lock for the entire process of stopping.
         with self._state_lock:
             # The worker is stopping
@@ -108,20 +111,20 @@ class FunmanWorker:
 
     def is_processing_id(self, id: str):
         if not self.in_state(WorkerState.RUNNING):
-            raise FunmanWorkerException(f"FunmanWorker must be running to check processing id: {self.get_state}")
+            raise FunmanWorkerException(f"FunmanWorker must be running to check processing id: {self.get_state()}")
         with self._id_lock:
             return self.current_id == id
 
     def get_results(self, id: str):
         if not self.in_state(WorkerState.RUNNING):
-            raise FunmanWorkerException(f"FunmanWorker must be running to get results: {self.get_state}")
+            raise FunmanWorkerException(f"FunmanWorker must be running to get results: {self.get_state()}")
         if self.is_processing_id(id):
             return self.current_results
         return self.storage.get_result(id)
 
     def halt(self, id: str):
         if not self.in_state(WorkerState.RUNNING):
-            raise FunmanWorkerException(f"FunmanWorker must be running to halt request: {self.get_state}")
+            raise FunmanWorkerException(f"FunmanWorker must be running to halt request: {self.get_state()}")
         with self._id_lock:
             if id == self.current_id:
                 print(f"Halting {id}")
@@ -134,7 +137,7 @@ class FunmanWorker:
 
     def get_current(self) -> Optional[str]:
         if not self.in_state(WorkerState.RUNNING):
-            raise FunmanWorkerException(f"FunmanWorker must be running to check currently processing request: {self.get_state}")
+            raise FunmanWorkerException(f"FunmanWorker must be running to check currently processing request: {self.get_state()}")
         with self._id_lock:
             return self.current_id
 
