@@ -19,14 +19,15 @@
         "constraint_noise": 0.0,
         "initial_state_tolerance": 0.0,
         "dreal_mcts": true,
-        "substitute_subformulas": true,
-        "use_compartmental_constraints": true
+        "substitute_subformulas": false,
+        "use_compartmental_constraints": true,
+        "normalize": false
     },
     "structure_parameters": [
         {
             "name": "num_steps",
             "lb": 1.0,
-            "ub": 1.0,
+            "ub": 2.0,
             "label": "all"
         },
         {

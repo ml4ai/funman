@@ -18,6 +18,7 @@ from sympy import (
     N,
     series,
     Expr,
+    factor,
 )
 
 from funman.utils.sympy_utils import (
@@ -33,7 +34,7 @@ class FUNMANSimplifier(pysmt.simplifier.Simplifier):
         super().__init__(env=env)
         self.manager = self.env.formula_manager
 
-    def approximate(formula, parameters: List[ModelParameter], threshold=1e-8):
+    def approximate(formula, parameters: List[ModelParameter], threshold=1e-5):
         if len(formula.free_symbols) == 0:
             return formula
 
@@ -138,6 +139,7 @@ class FUNMANSimplifier(pysmt.simplifier.Simplifier):
         #     lambda v1, v2: series(v1, v2).removeO(), series_vars, sympy_formula
         # )
         expanded_formula = formula.subs(sympy_subs)
+
         series_expanded_formula = series_approx(
             expanded_formula, list(expanded_formula.free_symbols)
         )
@@ -148,6 +150,8 @@ class FUNMANSimplifier(pysmt.simplifier.Simplifier):
         approx_formula = FUNMANSimplifier.approximate(
             series_expanded_formula, parameters
         )
+
+        # factored_formula = nsimplify(approx_formula, tolerance=1e-10)
         # simp_approx_formula = simplify(approx_formula)
         # f = sympy_to_pysmt(simp_approx_formula)
         # N_approx_formula = nsimplify(approx_formula, rational=True)

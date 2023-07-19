@@ -320,36 +320,39 @@ class BoxSearch(Search):
         episode : episode
             data for the current search
         """
-        solver_timepoint = episode._formula_stack_time
-        time_difference = timepoint - solver_timepoint
-        if time_difference > 0:
-            for i in range(int(time_difference)):
-                solver.push(1)
-                timepoints = [solver_timepoint + i + 1]
-                formula = And(
-                    episode.problem._model_encoding.encoding(
-                        episode.problem._model_encoding._encoder.encode_model_layer,
-                        layers=timepoints,
-                        box=box,
-                    ),
-                    episode.problem._query_encoding.encoding(
-                        partial(
-                            episode.problem._query_encoding._encoder.encode_query_layer,
-                            episode.problem.query,
+        if episode.config.simplify_query:
+            episode.problem._model_encoding.encoding()
+        else:
+            solver_timepoint = episode._formula_stack_time
+            time_difference = timepoint - solver_timepoint
+            if time_difference > 0:
+                for i in range(int(time_difference)):
+                    solver.push(1)
+                    timepoints = [solver_timepoint + i + 1]
+                    formula = And(
+                        episode.problem._model_encoding.encoding(
+                            episode.problem._model_encoding._encoder.encode_model_layer,
+                            layers=timepoints,
+                            box=box,
                         ),
-                        layers=timepoints,
-                        box=box,
-                        assumptions=episode.problem._assume_query,
-                    ),
-                )
-                episode._formula_stack.append(formula)
-                solver.add_assertion(formula)
-                episode._formula_stack_time += 1
-        elif time_difference < 0:  # need to pop
-            for i in range(abs(int(time_difference))):
-                solver.pop(1)
-                episode._formula_stack.pop()
-                episode._formula_stack_time -= 1
+                        episode.problem._query_encoding.encoding(
+                            partial(
+                                episode.problem._query_encoding._encoder.encode_query_layer,
+                                episode.problem.query,
+                            ),
+                            layers=timepoints,
+                            box=box,
+                            assumptions=episode.problem._assume_query,
+                        ),
+                    )
+                    episode._formula_stack.append(formula)
+                    solver.add_assertion(formula)
+                    episode._formula_stack_time += 1
+            elif time_difference < 0:  # need to pop
+                for i in range(abs(int(time_difference))):
+                    solver.pop(1)
+                    episode._formula_stack.pop()
+                    episode._formula_stack_time -= 1
 
     def _initialize_box(self, solver, box: Box, episode: BoxSearchEpisode):
         box_timepoint = box.bounds["num_steps"].lb

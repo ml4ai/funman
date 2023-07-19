@@ -5,11 +5,6 @@
   },
   "parameters": [
     {
-      "name": "N",
-      "lb": 1,
-      "ub": 1
-    },
-    {
       "name": "c_m",
       "lb": 0.4,
       "ub": 0.8,
@@ -38,6 +33,6 @@
   ],
   "config": {
     "save_smtlib": true,
-    "tolerance": 1e-4
+    "tolerance": 1e-2
   }
 }

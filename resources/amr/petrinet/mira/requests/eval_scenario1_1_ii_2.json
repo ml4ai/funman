@@ -3,22 +3,16 @@
   "parameters": [
     {
       "name": "t_0",
-      "lb": 100,
+      "lb": 0,
       "ub": 100,
-      "label": "any"
-    },
-    {
-      "name": "N",
-      "lb": 1,
-      "ub": 1,
-      "label": "any"
+      "label": "all"
     }
   ],
   "structure_parameters": [
     {
       "name": "num_steps",
-      "lb": 200,
-      "ub": 200,
+      "lb": 50,
+      "ub": 50,
       "label": "all"
     },
     {

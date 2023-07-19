@@ -472,47 +472,47 @@
             "initials": [
                 {
                     "target": "S_compliant",
-                    "expression": "9669997.50000000",
+                    "expression": "9649521.544374881",
                     "expression_mathml": "<cn>9669997.5</cn>"
                 },
                 {
                     "target": "I_compliant",
-                    "expression": "2.00000000000000",
+                    "expression": "7829.418564240735",
                     "expression_mathml": "<cn>2.0</cn>"
                 },
                 {
                     "target": "E_compliant",
-                    "expression": "0.500000000000000",
+                    "expression": "7456.293929618805",
                     "expression_mathml": "<cn>0.5</cn>"
                 },
                 {
                     "target": "I_noncompliant",
-                    "expression": "2.00000000000000",
+                    "expression": "7829.418564240742",
                     "expression_mathml": "<cn>2.0</cn>"
                 },
                 {
                     "target": "S_noncompliant",
-                    "expression": "9669997.50000000",
+                    "expression": "9649521.544374881",
                     "expression_mathml": "<cn>9669997.5</cn>"
                 },
                 {
                     "target": "E_noncompliant",
-                    "expression": "0.500000000000000",
+                    "expression": "7456.293929618799",
                     "expression_mathml": "<cn>0.5</cn>"
                 },
                 {
                     "target": "R",
-                    "expression": "0.0",
+                    "expression": "8772.935662104213",
                     "expression_mathml": "<cn>0.0</cn>"
                 },
                 {
                     "target": "H",
-                    "expression": "0.0",
+                    "expression": "1459.7589503584659",
                     "expression_mathml": "<cn>0.0</cn>"
                 },
                 {
                     "target": "D",
-                    "expression": "0.0",
+                    "expression": "305.5833000717723",
                     "expression_mathml": "<cn>0.0</cn>"
                 }
             ],

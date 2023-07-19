@@ -40,10 +40,30 @@ cases = [
     #     os.path.join(MIRA_PETRI_DIR, "requests", "eval_scenario1_base.json"),
     # ),
     # S1 1.ii.1
+    # (
+    #     os.path.join(MIRA_PETRI_DIR, "models", "eval_scenario1_1_ii_1_init1.json"),
+    #     os.path.join(MIRA_PETRI_DIR, "requests", "eval_scenario1_1_ii_1.json"),
+    # ),
+    # S1 2 # has issue with integer overflow due to sympy taylor series
+    # (
+    #     os.path.join(MIRA_PETRI_DIR, "models", "eval_scenario1_1_ii_2.json"),
+    #     os.path.join(MIRA_PETRI_DIR, "requests", "eval_scenario1_1_ii_2.json"),
+    # ),
+    # S1 3
+    # (
+    #     os.path.join(MIRA_PETRI_DIR, "models", "eval_scenario1_1_ii_3.json"),
+    #     os.path.join(MIRA_PETRI_DIR, "requests", "eval_scenario1_1_ii_3.json"),
+    # ),
+    # S1 3, advanced to t=75, parmsynth to separate (non)compliant
     (
-        os.path.join(MIRA_PETRI_DIR, "models", "eval_scenario1_1_ii_1_init1.json"),
-        os.path.join(MIRA_PETRI_DIR, "requests", "eval_scenario1_1_ii_1.json"),
+        os.path.join(MIRA_PETRI_DIR, "models", "eval_scenario1_1_ii_3_t75.json"),
+        os.path.join(MIRA_PETRI_DIR, "requests", "eval_scenario1_1_ii_3_t75_ps.json"),
     ),
+    # S3 base for CEIMS
+    # (
+    #     os.path.join(MIRA_PETRI_DIR, "models", "eval_scenario3_base.json"),
+    #     os.path.join(MIRA_PETRI_DIR, "requests", "eval_scenario3_base.json"),
+    # ),
 ]
 
 if not os.path.exists(out_dir):

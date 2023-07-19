@@ -474,7 +474,7 @@ class Encoder(ABC, BaseModel):
         if isinstance(value, float) or isinstance(value, int) or isinstance(value, str):
             value_expr = sympy_to_pysmt(to_sympy(value, model._symbols()))
             if self.config.substitute_subformulas and substitutions:
-                value_expr = value_expr.substitute(substitutions)
+                value_expr = value_expr.substitute(substitutions).simplify()
             # value_symbol = (
             #     Symbol(value, REAL) if isinstance(value, str) else Real(value)
             # )
@@ -734,7 +734,7 @@ class Encoder(ABC, BaseModel):
             lb = Real(query.lb)
         q = GE(
             self._encode_state_var(var=query.variable, time=time),
-            Real(lb),
+            lb,
         )
         return (q, {str(v): v for v in q.get_free_variables()})
 

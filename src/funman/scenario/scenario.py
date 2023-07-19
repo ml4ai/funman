@@ -66,7 +66,7 @@ class AnalysisScenario(ABC, BaseModel):
             bounds = {}
             lb = self.model._parameter_lb(p)
             ub = self.model._parameter_ub(p)
-            if ub and lb:
+            if ub is not None and lb is not None:
                 bounds["ub"] = ub
                 bounds["lb"] = lb
             elif model_parameter_values[p]:

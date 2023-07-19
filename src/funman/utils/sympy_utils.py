@@ -67,7 +67,7 @@ class FUNMANFormulaManager(FormulaManager):
 def series_approx(expr: sympy.Expr, vars: List[sympy.Symbol] = []) -> sympy.Expr:
     sympy_symbols = [sympy.symbols(str(v)) for v in vars]
     series_expr = reduce(
-        lambda v1, v2: sympy.series(v1, v2, n=4).removeO(), sympy_symbols, expr
+        lambda v1, v2: sympy.series(v1, v2).removeO(), sympy_symbols, expr
     )
     return series_expr
 
@@ -126,8 +126,10 @@ def rate_expr_to_pysmt(expr: Union[str, sympy.Expr], state=None):
 
     if state:  # Map symbols in p to state indexed versions (e.g., I to I_5)
         symbol_to_state_var = {env_symbols[s]: state[str(s)] for s in state}
-        # Replace mapping timer_t: timer_t_k with t: timer_t_k
-        symbol_to_state_var[Symbol("t", REAL)] = state["timer_t"]
+
+        if "timer_t" in state:
+            # Replace mapping timer_t: timer_t_k with t: timer_t_k
+            symbol_to_state_var[Symbol("t", REAL)] = state["timer_t"]
 
         p_sub = p.substitute(symbol_to_state_var)
         return p_sub

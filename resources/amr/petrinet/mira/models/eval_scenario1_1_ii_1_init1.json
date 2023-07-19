@@ -176,7 +176,7 @@
             "rates": [
                 {
                     "target": "t1",
-                    "expression": "I*S*beta*(-c_m*eps_m + 1)/N",
+                    "expression": "I*S*beta*(-c_m*eps_m + 1)*N",
                     "expression_mathml": "<apply><divide/><apply><times/><ci>I</ci><ci>S</ci><ci>beta</ci><apply><plus/><apply><minus/><apply><times/><ci>c_m</ci><ci>eps_m</ci></apply></apply><cn>1</cn></apply></apply><ci>N</ci></apply>"
                 },
                 {

@@ -176,7 +176,7 @@
             "rates": [
                 {
                     "target": "t1",
-                    "expression": "I*S*(kappa*(beta_c + (-beta_c + beta_s)/(1 + exp(-k*(-t + t_0))))/19340000.0)",
+                    "expression": "I*S*(kappa*(beta_c + (-beta_c + beta_s)/(1 + exp(-k*(-t + t_0))))*N)",
                     "expression_mathml": "<apply><divide/><apply><times/><ci>I</ci><ci>S</ci><ci>kappa</ci><apply><plus/><ci>beta_c</ci><apply><divide/><apply><plus/><apply><minus/><ci>beta_c</ci></apply><ci>beta_s</ci></apply><apply><plus/><cn>1</cn><apply><exp/><apply><minus/><apply><times/><ci>k</ci><apply><minus/><ci>t_0</ci><ci>t</ci></apply></apply></apply></apply></apply></apply></apply></apply><ci>N</ci></apply>"
                 },
                 {

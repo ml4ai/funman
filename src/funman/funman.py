@@ -74,6 +74,8 @@ class FUNMANConfig(BaseModel):
     use_compartmental_constraints = True
     """Normalize"""
     normalize = True
+    """ Simplify query by propagating substutions """
+    simplify_query = False
 
     @validator("solver")
     def import_dreal(cls, v):
