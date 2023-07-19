@@ -458,6 +458,7 @@ class BoxSearch(Search):
                 res1 = solver.get_model()
                 true_points = [episode._extract_point(res1, box)]
                 for point in true_points:
+                    dp = point.denormalize(episode.problem.model)
                     episode._add_true_point(point)
                     rval.put(point.dict())
             solver.pop(1)  # Remove true query
@@ -602,7 +603,7 @@ class BoxSearch(Search):
                             all_results = handler(rval, episode.config, all_results)
                         l.info(f"{process_name} finished work")
                 self._initialize_encoding(
-                    solver, episode, -1, box
+                    solver, episode, -1, None
                 )  # Reset solver stack to empty
         except KeyboardInterrupt:
             l.info(f"{process_name} Keyboard Interrupt")

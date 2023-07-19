@@ -103,9 +103,9 @@ class SMTCheck(Search):
                     ),
                     layers=timepoints,
                 ),
-                # problem._smt_encoder.box_to_smt(
-                #     episode._initial_box().project(episode.problem.model_parameters())
-                # ),
+                problem._smt_encoder.box_to_smt(
+                    episode._initial_box().project(episode.problem.model_parameters())
+                ),
             )
             s.add_assertion(formula)
             self.store_smtlib(

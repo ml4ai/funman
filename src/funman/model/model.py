@@ -24,6 +24,7 @@ class Model(ABC, BaseModel):
     name: str = f"model_{uuid.uuid4()}"
     init_values: Dict[str, float] = {}
     parameter_bounds: Dict[str, List[float]] = {}
+    _normalize: bool = False
     _extra_constraints: FNode = None
     _norm: str = None
 
@@ -71,7 +72,7 @@ class Model(ABC, BaseModel):
         return vars
 
     def normalization(self):
-        if self._norm is None:
+        if self._norm is None and self._normalize:
             compartments = [
                 str(self._get_init_value(v, normalize=False))
                 for v in self._state_var_names()
@@ -79,7 +80,16 @@ class Model(ABC, BaseModel):
 
             norm_str = "+".join(compartments)
             self._norm = norm_str
+        elif self._norm is None and not self._normalize:
+            self._norm = "1"
         return self._norm
+
+    def _is_normalized(self, var: str):
+        try:
+            name, time = var.rsplit("_", 1)
+            return name in self._state_var_names()
+        except:
+            return False
 
     def _parameters(self) -> List[ModelParameter]:
         param_names = self._parameter_names()

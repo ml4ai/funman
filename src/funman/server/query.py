@@ -2,6 +2,8 @@ from typing import Dict, List, Optional, Tuple, Union
 from funman.scenario.scenario import AnalysisScenario
 from matplotlib import pyplot as plt
 import pandas as pd
+import random
+
 
 from pydantic import BaseModel
 
@@ -257,6 +259,26 @@ class FunmanResults(BaseModel):
     def _split_symbol(self, symbol: str) -> Tuple[str, str]:
         s, t = symbol.rsplit("_", 1)
         return s, t
+
+    def plot_trajectories(self, variable: str, num: int = 200):
+        fig, ax = plt.subplots()
+        len_tps = len(self.parameter_space.true_points)
+        len_fps = len(self.parameter_space.false_points)
+        num_tp_samples = min(len_tps, num)
+        num_fp_samples = min(len_fps, num)
+
+        tps = random.sample(self.parameter_space.true_points, num_tp_samples)
+        fps = random.sample(self.parameter_space.false_points, num_fp_samples)
+        if len(tps) > 0:
+            tps_df = self.dataframe(tps)
+            # tps_df = tps_df[tps_df[variable] != 0.0]
+            tps_df.groupby("id")[variable].plot(c="green", alpha=0.2, ax=ax)
+        if len(fps) > 0:
+            fps_df = self.dataframe(fps)
+            # fps_df = fps_df[fps_df[variable] != 0.0]
+            fps_df.groupby("id")[variable].plot(c="red", alpha=0.2, ax=ax)
+
+        return ax
 
     def plot(self, point: Point, variables=None, log_y=False, max_time=None, **kwargs):
         """

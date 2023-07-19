@@ -9,6 +9,7 @@ import math
 from functools import total_ordering
 from statistics import mean as average
 from typing import Dict, List, Literal, Optional, Union
+from funman.utils.sympy_utils import to_sympy
 
 from pydantic import BaseModel
 from pysmt.fnode import FNode
@@ -414,6 +415,17 @@ class Point(BaseModel):
     def from_dict(data):
         res = Point(values={k: v for k, v in data["values"].items()})
         return res
+
+    def denormalize(self, model):
+        norm = to_sympy(model.normalization(), model._symbols())
+        denormalized_values = {
+            k: (v * norm if model._is_normalized(k) else v)
+            for k, v in self.values.items()
+        }
+        denormalized_point = Point(
+            label=self.label, values=denormalized_values, type=self.type
+        )
+        return denormalized_point
 
     def __hash__(self):
         return int(
