@@ -1,4 +1,3 @@
-import json
 import os
 import unittest
 from time import sleep
@@ -113,6 +112,7 @@ class TestModels(unittest.TestCase):
         while True:
             if self._worker.is_processing_id(work_unit.id):
                 results = self._worker.get_results(work_unit.id)
+                assert not results.error, "Request resulted in internal server error"
                 with open(f"{out_dir}/{work_unit.id}.json", "w") as f:
                     f.write(results.json())
                 # ParameterSpacePlotter(
@@ -124,6 +124,7 @@ class TestModels(unittest.TestCase):
             else:
                 results = self._worker.get_results(work_unit.id)
                 break
+        assert not results.error, "Request resulted in internal server error"
 
         ParameterSpacePlotter(results.parameter_space, plot_points=True).plot(
             show=False

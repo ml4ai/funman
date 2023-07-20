@@ -45,10 +45,10 @@ cases = [
     #     os.path.join(MIRA_PETRI_DIR, "requests", "eval_scenario1_1_ii_1.json"),
     # ),
     # S1 2 # has issue with integer overflow due to sympy taylor series
-    # (
-    #     os.path.join(MIRA_PETRI_DIR, "models", "eval_scenario1_1_ii_2.json"),
-    #     os.path.join(MIRA_PETRI_DIR, "requests", "eval_scenario1_1_ii_2.json"),
-    # ),
+    (
+        os.path.join(MIRA_PETRI_DIR, "models", "eval_scenario1_1_ii_2.json"),
+        os.path.join(MIRA_PETRI_DIR, "requests", "eval_scenario1_1_ii_2.json"),
+    ),
     # S1 3
     # (
     #     os.path.join(MIRA_PETRI_DIR, "models", "eval_scenario1_1_ii_3.json"),

@@ -1,6 +1,7 @@
 """
 This module defines the Parameter Synthesis scenario.
 """
+from functools import partial
 from struct import Struct
 import threading
 from typing import Callable, Dict, List, Optional, Union
@@ -30,6 +31,7 @@ from funman.model.query import (
 from funman.model.regnet import GeneratedRegnetModel, RegnetModel
 from funman.representation import ModelParameter, ModelParameter, StructureParameter
 from funman.representation.representation import (
+    Box,
     ModelParameter,
     ParameterSpace,
     Point,
@@ -211,6 +213,24 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
         # )
         # self._query_encoding.assume(self._assume_query)
         return self._model_encoding, self._query_encoding
+
+    def encode_simplified(self, box: Box, timepoint: int):
+        model_encoding = self._model_encoding.encoding(
+            self._model_encoding._encoder.encode_model_layer,
+            layers=[timepoint],
+            box=box,
+        )
+        query_encoding = self._query_encoding.encoding(
+            partial(
+                self._query_encoding._encoder.encode_query_layer,
+                self.query,
+            ),
+            layers=[timepoint],
+            box=box,
+            assumptions=self._assume_query,
+        )
+
+        return self._smt_encoder.encode_simplified(model_encoding, query_encoding)
 
 
 class ParameterSynthesisScenarioResult(AnalysisScenarioResult, BaseModel):

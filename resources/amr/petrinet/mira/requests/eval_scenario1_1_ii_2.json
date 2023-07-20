@@ -11,7 +11,7 @@
   "structure_parameters": [
     {
       "name": "num_steps",
-      "lb": 50,
+      "lb": 0,
       "ub": 50,
       "label": "all"
     },

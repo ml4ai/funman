@@ -4,3 +4,6 @@ class FunmanException(Exception):
 
 class NotFoundFunmanException(FunmanException):
     pass
+
+class FunmanWorkerException(FunmanException):
+    pass

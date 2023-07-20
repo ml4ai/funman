@@ -321,7 +321,16 @@ class BoxSearch(Search):
             data for the current search
         """
         if episode.config.simplify_query:
-            episode.problem._model_encoding.encoding()
+            while episode._formula_stack_time > 0:
+                solver.pop(1)
+                episode._formula_stack.pop()
+                episode._formula_stack_time -= 1
+
+            formula = episode.problem.encode_simplified(box, timepoint)
+            solver.push(1)
+            episode._formula_stack.append(formula)
+            solver.add_assertion(formula)
+            episode._formula_stack_time += 1
         else:
             solver_timepoint = episode._formula_stack_time
             time_difference = timepoint - solver_timepoint
@@ -355,7 +364,7 @@ class BoxSearch(Search):
                     episode._formula_stack_time -= 1
 
     def _initialize_box(self, solver, box: Box, episode: BoxSearchEpisode):
-        box_timepoint = box.bounds["num_steps"].lb
+        box_timepoint = int(box.bounds["num_steps"].lb)
         self._initialize_encoding(solver, episode, box_timepoint, box)
 
         solver.push(1)

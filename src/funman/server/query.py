@@ -114,8 +114,9 @@ class FunmanResults(BaseModel):
         EncodedModel,
     ]
     request: FunmanWorkRequest
-    done: bool
-    parameter_space: ParameterSpace
+    done: bool = False
+    error: bool = False
+    parameter_space: Optional[ParameterSpace] = None
 
     def finalize_result(
         self,
@@ -131,6 +132,13 @@ class FunmanResults(BaseModel):
             raise Exception("No ParameterSpace for result")
 
         self.parameter_space = ps
+        self.done = True
+
+    def finalize_result_as_error(
+        self,
+    ):
+        self.parameter_space = None
+        self.error = True
         self.done = True
 
     def dataframe(self, points: List[Point], interpolate="linear", max_time=None):
