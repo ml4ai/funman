@@ -24,9 +24,7 @@ class AnalysisScenario(ABC, BaseModel):
         pass
 
     @abstractmethod
-    def solve(
-        self, config: "FUNMANConfig", haltEvent: Optional[threading.Event]
-    ):
+    def solve(self, config: "FUNMANConfig", haltEvent: Optional[threading.Event]):
         pass
 
     @abstractmethod
@@ -40,9 +38,7 @@ class AnalysisScenario(ABC, BaseModel):
         return len([p for p in self.parameters])
 
     def structure_parameters(self):
-        return [
-            p for p in self.parameters if isinstance(p, StructureParameter)
-        ]
+        return [p for p in self.parameters if isinstance(p, StructureParameter)]
 
     def model_parameters(self):
         return [p for p in self.parameters if isinstance(p, ModelParameter)]
@@ -65,19 +61,19 @@ class AnalysisScenario(ABC, BaseModel):
             param
             for param in model_parameters
             if param
-            not in [
-                overridden_param.name for overridden_param in self.parameters
-            ]
+            not in [overridden_param.name for overridden_param in self.parameters]
         ]:
             bounds = {}
             lb = self.model._parameter_lb(p)
             ub = self.model._parameter_ub(p)
-            if ub and lb:
+            if ub is not None and lb is not None:
                 bounds["ub"] = ub
                 bounds["lb"] = lb
-            else:
+            elif model_parameter_values[p]:
                 value = model_parameter_values[p]
                 bounds["lb"] = bounds["ub"] = value
+            else:
+                bounds = {}
             non_overriden_parameters.append(
                 ModelParameter(name=p, **bounds, label=LABEL_ANY)
             )
@@ -92,8 +88,7 @@ class AnalysisScenario(ABC, BaseModel):
             filtered_parameters = [
                 p
                 for p in self.parameters
-                if p.name in model_parameters
-                or isinstance(p, StructureParameter)
+                if p.name in model_parameters or isinstance(p, StructureParameter)
             ]
             self.parameters = filtered_parameters
 

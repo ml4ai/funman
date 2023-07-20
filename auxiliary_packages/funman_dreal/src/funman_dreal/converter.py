@@ -111,7 +111,8 @@ class DRealConverter(Converter, DagWalker):
     def walk_real_constant(self, formula, **kwargs):
         frac = formula.constant_value()
         n, d = frac.numerator, frac.denominator
-        res = float(n / d)
+        # print(f"n = {n}, d = {d}")
+        res = float(n) / float(d)
         # self._check_term_result(res)
         return res
 

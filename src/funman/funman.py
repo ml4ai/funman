@@ -72,6 +72,10 @@ class FUNMANConfig(BaseModel):
     substitute_subformulas = True
     """Enforce compartmental variable constraints"""
     use_compartmental_constraints = True
+    """Normalize"""
+    normalize = True
+    """ Simplify query by propagating substutions """
+    simplify_query = False
 
     @validator("solver")
     def import_dreal(cls, v):
@@ -121,6 +125,7 @@ class Funman(object):
             The resulting data, statistics, and other relevant information
             produced by the analysis.
         """
+        problem.model._normalize = config.normalize
         return problem.solve(
             config, haltEvent=haltEvent, resultsCallback=resultsCallback
         )

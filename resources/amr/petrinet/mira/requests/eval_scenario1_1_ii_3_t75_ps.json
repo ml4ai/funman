@@ -1,0 +1,58 @@
+{
+    "query": {
+        "queries": [
+            {
+                "variable": "I_compliant",
+                "ub": 3e6
+            },
+            {
+                "variable": "I_noncompliant",
+                "ub": 5e6
+            }
+        ]
+    },
+    "parameters": [
+        {
+            "name": "eps_m_0",
+            "lb": 0.4,
+            "ub": 0.6,
+            "label": "all"
+        },
+        {
+            "name": "eps_m_1",
+            "lb": 0.4,
+            "ub": 0.6,
+            "label": "all"
+        },
+        {
+            "name": "eps_m_2",
+            "lb": 0.4,
+            "ub": 0.6,
+            "label": "all"
+        },
+        {
+            "name": "eps_m_3",
+            "lb": 0.4,
+            "ub": 0.6,
+            "label": "all"
+        }
+    ],
+    "structure_parameters": [
+        {
+            "name": "num_steps",
+            "lb": 0,
+            "ub": 100,
+            "label": "all"
+        },
+        {
+            "name": "step_size",
+            "lb": 1,
+            "ub": 1,
+            "label": "all"
+        }
+    ],
+    "config": {
+        "save_smtlib": true,
+        "tolerance": 1e-4
+    }
+}

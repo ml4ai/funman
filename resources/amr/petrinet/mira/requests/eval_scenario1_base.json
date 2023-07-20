@@ -1,0 +1,21 @@
+{
+  "query": {},
+  "parameters": [],
+  "structure_parameters": [
+    {
+      "name": "num_steps",
+      "lb": 200,
+      "ub": 200,
+      "label": "all"
+    },
+    {
+      "name": "step_size",
+      "lb": 1,
+      "ub": 1,
+      "label": "all"
+    }
+  ],
+  "config": {
+    "save_smtlib": true
+  }
+}

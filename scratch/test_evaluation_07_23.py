@@ -18,7 +18,7 @@ from funman.server.worker import FunmanWorker
 
 RESOURCES = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../resources")
 
-out_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "out", "hackathon")
+out_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "out", "evaluation")
 
 
 models = {GeneratedPetrinet, GeneratedRegnet}
@@ -36,59 +36,33 @@ MIRA_PETRI_DIR = os.path.join(AMR_EXAMPLES_DIR, "petrinet", "mira")
 cases = [
     # 1. b. 0 days delay
     # (
-    #     os.path.join(MIRA_PETRI_DIR, "models", "scenario1_a.json"),
-    #     os.path.join(MIRA_PETRI_DIR, "requests", "request1_a_0_days.json"),
+    #     os.path.join(MIRA_PETRI_DIR, "models", "eval_scenario1_base.json"),
+    #     os.path.join(MIRA_PETRI_DIR, "requests", "eval_scenario1_base.json"),
     # ),
-    # 1. b. 50 days delay
+    # S1 1.ii.1
     # (
-    #     os.path.join(MIRA_PETRI_DIR, "models", "scenario1_a.json"),
-    #     os.path.join(MIRA_PETRI_DIR, "requests", "request1_a_50_days.json"),
+    #     os.path.join(MIRA_PETRI_DIR, "models", "eval_scenario1_1_ii_1_init1.json"),
+    #     os.path.join(MIRA_PETRI_DIR, "requests", "eval_scenario1_1_ii_1.json"),
     # ),
-    # 1. b. 100 days delay
+    # S1 2 # has issue with integer overflow due to sympy taylor series
     # (
-    #     os.path.join(MIRA_PETRI_DIR, "models", "scenario1_a.json"),
-    #     os.path.join(MIRA_PETRI_DIR, "requests", "request1_a_100_days.json"),
+    #     os.path.join(MIRA_PETRI_DIR, "models", "eval_scenario1_1_ii_2.json"),
+    #     os.path.join(MIRA_PETRI_DIR, "requests", "eval_scenario1_1_ii_2.json"),
     # ),
-    # 1. b. all days delay possible
+    # S1 3
     # (
-    #     os.path.join(MIRA_PETRI_DIR, "models", "scenario1_a.json"),
-    #     os.path.join(MIRA_PETRI_DIR, "requests", "request1_a_all_days.json"),
+    #     os.path.join(MIRA_PETRI_DIR, "models", "eval_scenario1_1_ii_3.json"),
+    #     os.path.join(MIRA_PETRI_DIR, "requests", "eval_scenario1_1_ii_3.json"),
     # ),
-    #
-    # 2. b. Wild Type variant and no vaccination
-    # Determine if default parameters are consistent
+    # S1 3, advanced to t=75, parmsynth to separate (non)compliant
+    (
+        os.path.join(MIRA_PETRI_DIR, "models", "eval_scenario1_1_ii_3_t75.json"),
+        os.path.join(MIRA_PETRI_DIR, "requests", "eval_scenario1_1_ii_3_t75_ps.json"),
+    ),
+    # S3 base for CEIMS
     # (
-    #     os.path.join(MIRA_PETRI_DIR, "models", "scenario2_a_beta_scale_static.json"),
-    #     os.path.join(MIRA_PETRI_DIR, "requests", "request2_b_default_w_compartmental_constrs.json"),
-    # ),
-    # 2. b. Wild Type variant and no vaccination
-    # Determine if default parameters are consistent
-    # (
-    #     os.path.join(MIRA_PETRI_DIR, "models", "scenario2_a_beta_scale_static.json"),
-    #     os.path.join(MIRA_PETRI_DIR, "requests", "request2_b_default_wo_compartmental_constrs.json"),
-    # ),
-    # 2. b. Wild Type variant and no vaccination
-    # Determine if default parameters are consistent
-    # (
-    #     os.path.join(MIRA_PETRI_DIR, "models", "scenario2_a_beta_scale_static_fixed.json"),
-    #     os.path.join(MIRA_PETRI_DIR, "requests", "request2_b_default_w_compartmental_constrs.json"),
-    # ),
-    # 2. b. Wild Type variant and no vaccination
-    # Show that some assignment to the parameters is consistent
-    # (
-    #     os.path.join(MIRA_PETRI_DIR, "models", "scenario2_a_beta_scale_static.json"),
-    #     os.path.join(MIRA_PETRI_DIR, "requests", "request2_b_unbound_params.json"),
-    # ),
-    # 2. b. Find values for parameters near given values
-    # (
-    #     os.path.join(MIRA_PETRI_DIR, "models", "scenario2_a_beta_scale_static.json"),
-    #     os.path.join(MIRA_PETRI_DIR, "requests", "request2_b_loose_param_bounds.json"),
-    # ),
-    # 2. b. synthesize
-    # 2. b. Find values for parameters near given values
-    # (
-    #     os.path.join(MIRA_PETRI_DIR, "models", "scenario2_a_beta_scale_static.json"),
-    #     os.path.join(MIRA_PETRI_DIR, "requests", "request2_b_synthesize.json"),
+    #     os.path.join(MIRA_PETRI_DIR, "models", "eval_scenario3_base.json"),
+    #     os.path.join(MIRA_PETRI_DIR, "requests", "eval_scenario3_base.json"),
     # ),
 ]
 
@@ -134,7 +108,7 @@ class TestModels(unittest.TestCase):
             if self._worker.is_processing_id(work_unit.id):
                 results = self._worker.get_results(work_unit.id)
                 with open(f"{out_dir}/{work_unit.id}.json", "w") as f:
-                    f.write(json.dumps(results.json()))
+                    f.write(results.json())
                 # ParameterSpacePlotter(
                 #     results.parameter_space, plot_points=True
                 # ).plot(show=False)

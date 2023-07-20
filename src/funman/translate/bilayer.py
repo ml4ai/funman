@@ -165,7 +165,7 @@ class BilayerEncoder(Encoder):
             for _, node in model.bilayer._flux.items():
                 self._untimed_symbols.add(node.parameter)
 
-            init = self._define_init(model)
+            init = self._define_init(scenario)
 
             encoding = self._encode_bilayer(
                 model.bilayer,

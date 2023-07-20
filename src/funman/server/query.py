@@ -2,6 +2,8 @@ from typing import Dict, List, Optional, Tuple, Union
 from funman.scenario.scenario import AnalysisScenario
 from matplotlib import pyplot as plt
 import pandas as pd
+import random
+
 
 from pydantic import BaseModel
 
@@ -70,7 +72,10 @@ class FunmanWorkUnit(BaseModel):
                         name=data.name, ub=data.ub, lb=data.lb, label=data.label
                     )
                 )
-        if hasattr(self.request, "structure_parameters") and self.request.structure_parameters is not None:
+        if (
+            hasattr(self.request, "structure_parameters")
+            and self.request.structure_parameters is not None
+        ):
             for data in self.request.structure_parameters:
                 parameters.append(
                     StructureParameter(
@@ -78,8 +83,10 @@ class FunmanWorkUnit(BaseModel):
                     )
                 )
 
-        if not hasattr(self.request, "parameters") or self.request.parameters is None or all(
-            p.label == LABEL_ANY for p in self.request.parameters
+        if (
+            not hasattr(self.request, "parameters")
+            or self.request.parameters is None
+            or all(p.label == LABEL_ANY for p in self.request.parameters)
         ):
             return ConsistencyScenario(
                 model=self.model,
@@ -88,9 +95,7 @@ class FunmanWorkUnit(BaseModel):
             )
 
         if isinstance(self.model, EnsembleModel):
-            raise Exception(
-                "TODO handle EnsembleModel for ParameterSynthesisScenario"
-            )
+            raise Exception("TODO handle EnsembleModel for ParameterSynthesisScenario")
 
         return ParameterSynthesisScenario(
             model=self.model, query=self.request.query, parameters=parameters
@@ -114,9 +119,7 @@ class FunmanResults(BaseModel):
 
     def finalize_result(
         self,
-        result: Union[
-            ConsistencyScenarioResult, ParameterSynthesisScenarioResult
-        ],
+        result: Union[ConsistencyScenarioResult, ParameterSynthesisScenarioResult],
     ):
         ps = None
         if isinstance(result, ConsistencyScenarioResult):
@@ -149,32 +152,39 @@ class FunmanResults(BaseModel):
         Exception
             fails if scenario is not consistent
         """
-        scenario = FunmanWorkUnit(id=self.id, model=self.model, request=self.request).to_scenario()
+        scenario = FunmanWorkUnit(
+            id=self.id, model=self.model, request=self.request
+        ).to_scenario()
         to_plot = scenario.model._state_var_names()
         time_var = scenario.model._time_var()
         if time_var:
             to_plot += ["timer_t"]
 
         all_df = pd.DataFrame()
-        for point in points:
+        for i, point in enumerate(points):
             timeseries = self.symbol_timeseries(point, to_plot)
             df = pd.DataFrame.from_dict(timeseries)
+            df["id"] = i
             # if max_time:
-                # if time_var:
-                #     df = df.at[max_time, :] = None
-                # df = df.reindex(range(max_time+1), fill_value=None)
+            # if time_var:
+            #     df = df.at[max_time, :] = None
+            # df = df.reindex(range(max_time+1), fill_value=None)
 
             if interpolate:
                 df = df.interpolate(method=interpolate)
             if time_var:
-                df=df.rename(columns={"timer_t": "time"}).set_index("time", drop=True).drop(columns=["index"])
+                df = (
+                    df.rename(columns={"timer_t": "time"})
+                    .set_index("time", drop=True)
+                    .drop(columns=["index"])
+                )
 
             df = df.reindex(sorted(df.columns), axis=1)
 
             all_df = pd.concat([all_df, df])
 
         return all_df
-        
+
     def symbol_timeseries(
         self, point: Point, variables: List[str]
     ) -> Dict[str, List[Union[float, None]]]:
@@ -202,7 +212,7 @@ class FunmanResults(BaseModel):
                     vals[int(t)] = v
             a_series[var] = vals
         return a_series
-    
+
     def symbol_values(
         self, point: Point, variables: List[str]
     ) -> Dict[str, Dict[str, float]]:
@@ -245,10 +255,30 @@ class FunmanResults(BaseModel):
                         symbols[var_name] = {}
                     symbols[var_name][timepoint] = var
         return symbols
-    
+
     def _split_symbol(self, symbol: str) -> Tuple[str, str]:
         s, t = symbol.rsplit("_", 1)
         return s, t
+
+    def plot_trajectories(self, variable: str, num: int = 200):
+        fig, ax = plt.subplots()
+        len_tps = len(self.parameter_space.true_points)
+        len_fps = len(self.parameter_space.false_points)
+        num_tp_samples = min(len_tps, num)
+        num_fp_samples = min(len_fps, num)
+
+        tps = random.sample(self.parameter_space.true_points, num_tp_samples)
+        fps = random.sample(self.parameter_space.false_points, num_fp_samples)
+        if len(tps) > 0:
+            tps_df = self.dataframe(tps)
+            # tps_df = tps_df[tps_df[variable] != 0.0]
+            tps_df.groupby("id")[variable].plot(c="green", alpha=0.2, ax=ax)
+        if len(fps) > 0:
+            fps_df = self.dataframe(fps)
+            # fps_df = fps_df[fps_df[variable] != 0.0]
+            fps_df.groupby("id")[variable].plot(c="red", alpha=0.2, ax=ax)
+
+        return ax
 
     def plot(self, point: Point, variables=None, log_y=False, max_time=None, **kwargs):
         """
@@ -259,20 +289,16 @@ class FunmanResults(BaseModel):
         Exception
             failure if scenario is not consistent.
         """
-        
-        
+
         df = self.dataframe(point, max_time=max_time)
-       
 
         if variables is not None:
-            ax = df[variables].plot(
-                marker="o", **kwargs
-            )
+            ax = df[variables].plot(marker="o", **kwargs)
         else:
             ax = df.plot(marker="o", **kwargs)
 
         if log_y:
-            ax.set_yscale('symlog')
+            ax.set_yscale("symlog")
             plt.ylim(bottom=0)
         # plt.show(block=False)
         return ax

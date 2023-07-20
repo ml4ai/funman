@@ -22,7 +22,11 @@ from funman.model.query import (
     QueryTrue,
 )
 from funman.model.regnet import GeneratedRegnetModel, RegnetModel
-from funman.representation.representation import ParameterSpace, Point, StructureParameter
+from funman.representation.representation import (
+    ParameterSpace,
+    Point,
+    StructureParameter,
+)
 from funman.scenario import AnalysisScenario, AnalysisScenarioResult
 from funman.translate import Encoder
 from funman.translate.translate import Encoding
@@ -96,7 +100,14 @@ class ConsistencyScenario(AnalysisScenario, BaseModel):
         if len(self.structure_parameters()) == 0:
             # either undeclared or wrong type
             # if wrong type, recover structure parameters
-            self.parameters = [(StructureParameter(name=p.name, lb=p.lb, ub=p.ub) if (p.name == "num_steps" or p.name == "step_size") else p)  for p in self.parameters] 
+            self.parameters = [
+                (
+                    StructureParameter(name=p.name, lb=p.lb, ub=p.ub)
+                    if (p.name == "num_steps" or p.name == "step_size")
+                    else p
+                )
+                for p in self.parameters
+            ]
             if len(self.structure_parameters()) == 0:
                 # Add the structure parameters if still missing
                 self.parameters += [
@@ -141,9 +152,7 @@ class ConsistencyScenario(AnalysisScenario, BaseModel):
                                 (
                                     "F"
                                     if s is None
-                                    else (
-                                        "T" if (s is not None and s) else " "
-                                    )
+                                    else ("T" if (s is not None and s) else " ")
                                 )
                                 for s in t
                             ]
@@ -167,16 +176,23 @@ class ConsistencyScenario(AnalysisScenario, BaseModel):
         )
         return self._model_encoding, self._query_encoding
 
-    def _encode_timed(self, num_steps, step_size, config: "FUNMANConfig"):
-        # This will overwrite the _model_encoding for each configuration, but the encoder will retain components of the configurations.
-        self._model_encoding = self._smt_encoder.encode_model_timed(
-            self, num_steps, step_size
+    def _encode_timed(self, num_steps, step_size_idx, config: "FUNMANConfig"):
+        # # This will overwrite the _model_encoding for each configuration, but the encoder will retain components of the configurations.
+        # self._model_encoding = self._smt_encoder.encode_model_timed(
+        #     self, num_steps, step_size
+        # )
+
+        # # This will create a new formula for each query without caching them (its typically inexpensive)
+        # self._query_encoding = self._smt_encoder.encode_query(
+        #     self.query, num_steps, step_size
+        # )
+
+        model_encoding, query_encoding = self._smt_encoder.initialize_encodings(
+            self, num_steps, step_size_idx
         )
 
-        # This will create a new formula for each query without caching them (its typically inexpensive)
-        self._query_encoding = self._smt_encoder.encode_query(
-            self.query, num_steps, step_size
-        )
+        self._model_encoding = model_encoding
+        self._query_encoding = query_encoding
         return self._model_encoding, self._query_encoding
 
 
@@ -234,9 +250,7 @@ class ConsistencyScenarioResult(AnalysisScenarioResult, BaseModel):
                 df = df.interpolate(method=interpolate)
             return df
         else:
-            raise Exception(
-                f"Cannot create dataframe for an inconsistent scenario."
-            )
+            raise Exception(f"Cannot create dataframe for an inconsistent scenario.")
 
     def plot(self, point: Point, variables=None, **kwargs):
         """
@@ -249,16 +263,12 @@ class ConsistencyScenarioResult(AnalysisScenarioResult, BaseModel):
         """
         if self.consistent:
             if variables is not None:
-                ax = self.dataframe(point)[variables].plot(
-                    marker="o", **kwargs
-                )
+                ax = self.dataframe(point)[variables].plot(marker="o", **kwargs)
             else:
                 ax = self.dataframe(point).plot(marker="o", **kwargs)
             plt.show(block=False)
         else:
-            raise Exception(
-                f"Cannot plot result for an inconsistent scenario."
-            )
+            raise Exception(f"Cannot plot result for an inconsistent scenario.")
         return ax
 
     def __repr__(self) -> str:

@@ -1,0 +1,38 @@
+{
+  "query": {
+    "variable": "I",
+    "ub": 1e6
+  },
+  "parameters": [
+    {
+      "name": "c_m",
+      "lb": 0.4,
+      "ub": 0.8,
+      "label": "all"
+    },
+    {
+      "name": "eps_m",
+      "lb": 0.4,
+      "ub": 0.8,
+      "label": "all"
+    }
+  ],
+  "structure_parameters": [
+    {
+      "name": "num_steps",
+      "lb": 0,
+      "ub": 200,
+      "label": "all"
+    },
+    {
+      "name": "step_size",
+      "lb": 1,
+      "ub": 1,
+      "label": "all"
+    }
+  ],
+  "config": {
+    "save_smtlib": true,
+    "tolerance": 1e-2
+  }
+}
