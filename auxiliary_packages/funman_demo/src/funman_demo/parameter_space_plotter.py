@@ -24,7 +24,7 @@ class ParameterSpacePlotter:
         shape_map: Dict[str, str] = {"true": "x", "false": "o"},
         alpha=0.2,
         plot_points=False,
-        parameters=None
+        parameters=None,
     ):
         if isinstance(parameter_space, ParameterSpace):
             self.ps = parameter_space
@@ -118,9 +118,7 @@ class ParameterSpacePlotter:
             for j in range(self.dim):
                 if i < j:
                     continue
-                yval = (
-                    point.values[self.parameters[j]] if self.dim > 1 else 0.0
-                )
+                yval = point.values[self.parameters[j]] if self.dim > 1 else 0.0
                 self.axs[i, j].scatter(
                     point.values[self.parameters[i]],
                     yval,
@@ -152,12 +150,10 @@ class ParameterSpacePlotter:
                 else:
                     # Plot a box
                     if (
-                        abs(float(x_limits.lb)) < 100
-                        and abs(float(x_limits.ub)) < 100
+                        abs(float(x_limits.lb)) < 1000
+                        and abs(float(x_limits.ub)) < 1000
                     ):
-                        x = np.linspace(
-                            float(x_limits.lb), float(x_limits.ub), 1000
-                        )
+                        x = np.linspace(float(x_limits.lb), float(x_limits.ub), 1000)
                         self.axs[i, j].fill_between(
                             x,
                             y_limits.lb,

@@ -23,7 +23,7 @@
   "structure_parameters": [
     {
       "name": "num_steps",
-      "lb": 10,
+      "lb": 0,
       "ub": 10,
       "label": "all"
     },

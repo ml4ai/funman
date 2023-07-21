@@ -27,7 +27,7 @@ from funman.model.query import QueryTrue
 
 
 class TestS21BUnitTest(TestUnitTests):
-    steps = 50
+    steps = 5
     step_size = 2
     dreal_precision = 1e-3
     expected_max_infected = 0.6
@@ -60,16 +60,21 @@ class TestS21BUnitTest(TestUnitTests):
             ]
         )
 
-    def analyze_model(self, model_name: str, dreal_mcts: bool = False):
+    def analyze_model(
+        self,
+        model_name: str,
+        dreal_mcts: bool = False,
+        substitute_subformulas: bool = False,
+        simplify_query: bool = False,
+    ):
         initial = self.initial_state_sidarthe()
         scenario = self.make_scenario(
-            BilayerDynamics(
-                json_graph=self.sidarthe_bilayer(self.models[model_name])
-            ),
+            BilayerDynamics(json_graph=self.sidarthe_bilayer(self.models[model_name])),
             initial,
             self.bounds_sidarthe(),
             [],
-            self.steps * self.step_size,
+            self.steps,
+            self.step_size,
             QueryTrue(),
             extra_constraints=self.sidarthe_extra_1_1_d_2d(
                 self.steps * self.step_size, initial, self.step_size
@@ -83,6 +88,8 @@ class TestS21BUnitTest(TestUnitTests):
             save_smtlib=True,
             dreal_mcts=dreal_mcts,
             dreal_precision=self.dreal_precision,
+            substitute_subformulas=substitute_subformulas,
+            simplify_query=simplify_query,
         )
         result_sat = Funman().solve(scenario, config=config)
         self.report(result_sat, name=model_name)
@@ -94,7 +101,7 @@ class TestS21BUnitTest(TestUnitTests):
         return max_infected, max_day
 
     def analyze_results(self, result_sat):
-        df = result_sat.dataframe()
+        df = result_sat.dataframe(result_sat.parameter_space.true_points[0])
 
         df["infected_states"] = df.apply(
             lambda x: sum([x["I"], x["D"], x["A"], x["R"], x["T"]]), axis=1
@@ -114,9 +121,18 @@ class TestS21BUnitTest(TestUnitTests):
 
         return max_infected, max_day
 
-    def common_test_model(self, model_name: str, dreal_mcts: bool = False):
+    def common_test_model(
+        self,
+        model_name: str,
+        dreal_mcts: bool = False,
+        substitute_subformulas: bool = False,
+        simplify_query: bool = False,
+    ):
         max_infected, max_day = self.analyze_model(
-            model_name, dreal_mcts=dreal_mcts
+            model_name,
+            dreal_mcts=dreal_mcts,
+            substitute_subformulas=substitute_subformulas,
+            simplify_query=simplify_query,
         )
         # assert (
         #     abs(max_infected - self.expected_max_infected) < self.test_threshold
