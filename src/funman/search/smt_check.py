@@ -34,14 +34,12 @@ class SMTCheck(Search):
         haltEvent: Optional[threading.Event] = None,
         resultsCallback: Optional[Callable[["ParameterSpace"], None]] = None,
     ) -> "SearchEpisode":
-        parameter_space = ParameterSpace(
-            num_dimensions=problem.num_dimensions()
-        )
+        parameter_space = ParameterSpace(num_dimensions=problem.num_dimensions())
         models = {}
         consistent = {}
-        for (
-            structural_configuration
-        ) in problem._smt_encoder._timed_model_elements["configurations"]:
+        for structural_configuration in problem._smt_encoder._timed_model_elements[
+            "configurations"
+        ]:
             l.info(f"Solving configuration: {structural_configuration}")
             problem._encode_timed(
                 structural_configuration["num_steps"],
@@ -109,9 +107,7 @@ class SMTCheck(Search):
                     layers=timepoints,
                 ),
                 problem._smt_encoder.box_to_smt(
-                    episode._initial_box().project(
-                        episode.problem.model_parameters()
-                    )
+                    episode._initial_box().project(episode.problem.model_parameters())
                 ),
             )
             if episode.config.simplify_query:
