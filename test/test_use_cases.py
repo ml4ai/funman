@@ -17,7 +17,10 @@ from funman.model import (
     SimulatorModel,
 )
 from funman.model.bilayer import BilayerDynamics, BilayerModel
-from funman.representation.representation import ModelParameter, StructureParameter
+from funman.representation.representation import (
+    ModelParameter,
+    StructureParameter,
+)
 from funman.scenario import (
     ConsistencyScenario,
     ConsistencyScenarioResult,
@@ -30,11 +33,15 @@ from funman.scenario.simulation import (
 )
 from funman.utils.handlers import ResultCombinedHandler
 
-RESOURCES = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../resources")
+RESOURCES = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "../resources"
+)
 
 
 class TestUseCases(unittest.TestCase):
-    def compare_against_CHIME_Sim(self, bilayer_path, init_values, infected_threshold):
+    def compare_against_CHIME_Sim(
+        self, bilayer_path, init_values, infected_threshold
+    ):
         # query the simulator
         def does_not_cross_threshold(sim_results):
             i = sim_results[2]
@@ -75,7 +82,9 @@ class TestUseCases(unittest.TestCase):
         )
 
         # assert the both queries returned the same result
-        return sim_result.query_satisfied == (consistency_result.consistent is not None)
+        return sim_result.query_satisfied == (
+            consistency_result.consistent is not None
+        )
 
     def test_use_case_bilayer_consistency(self):
         """
@@ -217,7 +226,9 @@ class TestUseCases(unittest.TestCase):
         df = result_sat.dataframe(result_sat.parameter_space.true_points[0])
 
         assert abs(df["I"][2] - 2.0) < 1.0
-        beta = result_sat._parameters(result_sat.parameter_space.true_points[0])["beta"]
+        beta = result_sat._parameters(
+            result_sat.parameter_space.true_points[0]
+        )["beta"]
         assert abs(beta - 0.00005) < 0.001
 
         # Show that region in parameter space is unsat/false

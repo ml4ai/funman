@@ -1,9 +1,8 @@
 """
 This module defines the Parameter Synthesis scenario.
 """
-from functools import partial
-from struct import Struct
 import threading
+from functools import partial
 from typing import Callable, Dict, List, Optional, Union
 
 from pandas import DataFrame
@@ -29,7 +28,7 @@ from funman.model.query import (
     QueryLE,
 )
 from funman.model.regnet import GeneratedRegnetModel, RegnetModel
-from funman.representation import ModelParameter, ModelParameter, StructureParameter
+from funman.representation import ModelParameter, StructureParameter
 from funman.representation.representation import (
     Box,
     ModelParameter,
@@ -69,9 +68,13 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
         BilayerModel,
         EncodedModel,
     ]
-    query: Union[QueryAnd, QueryGE, QueryLE, QueryEncoded, QueryFunction, QueryTrue]
+    query: Union[
+        QueryAnd, QueryGE, QueryLE, QueryEncoded, QueryFunction, QueryTrue
+    ]
     _search: str = "BoxSearch"
-    _smt_encoder: Optional[Encoder] = None  # TODO set to model.default_encoder()
+    _smt_encoder: Optional[
+        Encoder
+    ] = None  # TODO set to model.default_encoder()
     _model_encoding: Optional[Encoding] = None
     _query_encoding: Optional[Encoding] = None
     _assume_model: Optional[FNode] = None
@@ -196,7 +199,10 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
                 for t in range(0, (num_steps * step_size) + 1, step_size)
             ]
         # This will overwrite the _model_encoding for each configuration, but the encoder will retain components of the configurations.
-        model_encoding, query_encoding = self._smt_encoder.initialize_encodings(
+        (
+            model_encoding,
+            query_encoding,
+        ) = self._smt_encoder.initialize_encodings(
             self, num_steps, step_size_idx
         )
         # self._smt_encoder.encode_model_timed(
@@ -230,7 +236,9 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
             assumptions=self._assume_query,
         )
 
-        return self._smt_encoder.encode_simplified(model_encoding, query_encoding)
+        return self._smt_encoder.encode_simplified(
+            model_encoding, query_encoding
+        )
 
 
 class ParameterSynthesisScenarioResult(AnalysisScenarioResult, BaseModel):

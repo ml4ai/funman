@@ -16,9 +16,13 @@ from funman.server.query import FunmanWorkRequest, FunmanWorkUnit
 from funman.server.storage import Storage
 from funman.server.worker import FunmanWorker
 
-RESOURCES = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../resources")
+RESOURCES = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "../resources"
+)
 
-out_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "out", "hackathon")
+out_dir = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "out", "hackathon"
+)
 
 
 models = {GeneratedPetrinet, GeneratedRegnet}
@@ -114,7 +118,9 @@ class TestModels(unittest.TestCase):
     def get_model(self, model_file: str):
         for model in models:
             try:
-                m = _wrap_with_internal_model(pydantic.parse_file_as(model, model_file))
+                m = _wrap_with_internal_model(
+                    pydantic.parse_file_as(model, model_file)
+                )
                 return m
             except Exception as e:
                 pass

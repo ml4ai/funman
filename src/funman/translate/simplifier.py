@@ -1,30 +1,30 @@
 from typing import Dict, List
-from functools import reduce
-from funman.representation.representation import ModelParameter
+
 import pysmt
 from pysmt.fnode import FNode
 from pysmt.shortcuts import get_env
 from sympy import (
+    Abs,
+    Add,
+    Expr,
+    Float,
+    Max,
+    N,
     cancel,
     expand,
+    factor,
+    lambdify,
+    nsimplify,
+    series,
     symbols,
     sympify,
-    nsimplify,
-    Float,
-    Add,
-    Abs,
-    Max,
-    lambdify,
-    N,
-    series,
-    Expr,
-    factor,
 )
 
+from funman.representation.representation import ModelParameter
 from funman.utils.sympy_utils import (
+    replace_reserved,
     series_approx,
     sympy_to_pysmt,
-    replace_reserved,
     to_sympy,
 )
 
@@ -87,10 +87,14 @@ class FUNMANSimplifier(pysmt.simplifier.Simplifier):
         # for drop in to_drop:
         # subbed_formula = formula.subs(to_drop)
         if len(to_drop) > 0:
-            subbed_formula = Add(*[t for t in formula.args if t not in to_drop])
+            subbed_formula = Add(
+                *[t for t in formula.args if t not in to_drop]
+            )
         else:
             subbed_formula = formula
-        print(f"*** {original_size}->{len(subbed_formula.args)}\t|{len(to_drop)}|")
+        print(
+            f"*** {original_size}->{len(subbed_formula.args)}\t|{len(to_drop)}|"
+        )
         # if len(to_drop) > 0:
         #     print(f"Result\n {formula}")
         #     pass

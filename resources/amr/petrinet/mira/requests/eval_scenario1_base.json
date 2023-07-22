@@ -1,11 +1,15 @@
 {
   "query": {},
-  "parameters": [],
+  "parameters": [
+    {
+      "name": "beta"
+    }
+  ],
   "structure_parameters": [
     {
       "name": "num_steps",
-      "lb": 200,
-      "ub": 200,
+      "lb": 2,
+      "ub": 2,
       "label": "all"
     },
     {

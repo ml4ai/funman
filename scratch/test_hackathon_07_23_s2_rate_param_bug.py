@@ -19,7 +19,9 @@ RESOURCES = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "../resources"
 )
 
-out_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "out", "hackathon")
+out_dir = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "out", "hackathon"
+)
 
 
 models = {GeneratedPetrinet, GeneratedRegnet}
@@ -37,18 +39,41 @@ MIRA_PETRI_DIR = os.path.join(AMR_EXAMPLES_DIR, "petrinet", "mira")
 cases = [
     # Buggy model cannot satisfy compartmental constraints
     (
-        os.path.join(MIRA_PETRI_DIR, "models", "scenario2_a_beta_scale_static.json"),
-        os.path.join(MIRA_PETRI_DIR, "requests", "request2_b_default_w_compartmental_constrs.json"), 0
+        os.path.join(
+            MIRA_PETRI_DIR, "models", "scenario2_a_beta_scale_static.json"
+        ),
+        os.path.join(
+            MIRA_PETRI_DIR,
+            "requests",
+            "request2_b_default_w_compartmental_constrs.json",
+        ),
+        0,
     ),
     # Buggy model works if no compartmental constraints
     (
-        os.path.join(MIRA_PETRI_DIR, "models", "scenario2_a_beta_scale_static.json"),
-        os.path.join(MIRA_PETRI_DIR, "requests", "request2_b_default_wo_compartmental_constrs.json"), 1
+        os.path.join(
+            MIRA_PETRI_DIR, "models", "scenario2_a_beta_scale_static.json"
+        ),
+        os.path.join(
+            MIRA_PETRI_DIR,
+            "requests",
+            "request2_b_default_wo_compartmental_constrs.json",
+        ),
+        1,
     ),
     # Fixed model can satisfy compartmental constraints
     (
-        os.path.join(MIRA_PETRI_DIR, "models", "scenario2_a_beta_scale_static_fixed.json"),
-        os.path.join(MIRA_PETRI_DIR, "requests", "request2_b_default_w_compartmental_constrs.json"), 1
+        os.path.join(
+            MIRA_PETRI_DIR,
+            "models",
+            "scenario2_a_beta_scale_static_fixed.json",
+        ),
+        os.path.join(
+            MIRA_PETRI_DIR,
+            "requests",
+            "request2_b_default_w_compartmental_constrs.json",
+        ),
+        1,
     ),
 ]
 
@@ -107,8 +132,10 @@ class TestModels(unittest.TestCase):
                 results = self._worker.get_results(work_unit.id)
                 break
 
-        assert len(results.parameter_space.true_points) == expected_num_true_points
-
+        assert (
+            len(results.parameter_space.true_points)
+            == expected_num_true_points
+        )
 
 
 if __name__ == "__main__":

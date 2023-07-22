@@ -1,5 +1,7 @@
+import logging
 from typing import Dict, List, Union
 
+import sympy
 from pysmt.formula import FNode
 from pysmt.shortcuts import (
     GE,
@@ -25,12 +27,8 @@ from funman.utils.sympy_utils import (
     sympy_subs,
     to_sympy,
 )
-import sympy
-
 
 from .translate import Encoder, Encoding
-
-import logging
 
 l = logging.getLogger(__file__)
 l.setLevel(logging.DEBUG)
@@ -87,7 +85,9 @@ class PetrinetEncoder(Encoder):
                 time_var_name
             )  # Needed so that there is a pysmt symbol for 't'
             current_time_var = self._encode_state_var(time_var_name, time=step)
-            next_time_var = self._encode_state_var(time_var_name, time=next_step)
+            next_time_var = self._encode_state_var(
+                time_var_name, time=next_step
+            )
             current_state[time_var_name] = current_time_var
             next_state[time_var_name] = next_time_var
 
@@ -130,7 +130,8 @@ class PetrinetEncoder(Encoder):
                 }
             else:
                 transition_terms = {
-                    k: v.substitute(substitutions) for k, v in transition_terms.items()
+                    k: v.substitute(substitutions)
+                    for k, v in transition_terms.items()
                 }
         else:
             # Need to convert transition terms to pysmt without substituting
@@ -167,7 +168,9 @@ class PetrinetEncoder(Encoder):
                 flows = Plus(
                     Times(
                         Real(step_size),
-                        Plus([s[0] for s in state_var_flows]),  # FIXME see above
+                        Plus(
+                            [s[0] for s in state_var_flows]
+                        ),  # FIXME see above
                     ),  # .simplify()
                     current_state[state_var_id],
                 )  # .simplify()
@@ -176,8 +179,10 @@ class PetrinetEncoder(Encoder):
                     flows = FUNMANSimplifier.sympy_simplify(
                         # flows.substitute(substitutions),
                         to_sympy(
-                            flows.substitute(substitutions).simplify().serialize(),
-                            symbols=scenario.model._symbols(),
+                            flows.substitute(substitutions)
+                            .simplify()
+                            .serialize(),
+                            scenario.model._symbols(),
                         ),
                         parameters=scenario.model_parameters(),
                         threshold=self.config.series_approximation_threshold,
@@ -215,7 +220,9 @@ class PetrinetEncoder(Encoder):
             substitutions,
         )
 
-    def _define_init(self, scenario: "AnalysisScenario", init_time: int = 0) -> FNode:
+    def _define_init(
+        self, scenario: "AnalysisScenario", init_time: int = 0
+    ) -> FNode:
         initial_state, substitutions = super()._define_init(
             scenario, init_time=init_time
         )
@@ -223,7 +230,9 @@ class PetrinetEncoder(Encoder):
         # initial_substitution = {}
 
         if self.config.use_compartmental_constraints:
-            compartmental_bounds = self._encode_compartmental_bounds(scenario.model, 0)
+            compartmental_bounds = self._encode_compartmental_bounds(
+                scenario.model, 0
+            )
             if self.config.substitute_subformulas and substitutions:
                 compartmental_bounds = compartmental_bounds.substitute(
                     substitutions
@@ -241,7 +250,9 @@ class PetrinetEncoder(Encoder):
         for var in model._state_vars():
             lb = (
                 GE(
-                    self._encode_state_var(model._state_var_name(var), time=step),
+                    self._encode_state_var(
+                        model._state_var_name(var), time=step
+                    ),
                     Real(0.0),
                 )
                 # .substitute(substitutions)
@@ -251,7 +262,9 @@ class PetrinetEncoder(Encoder):
                 self._encode_state_var(model._state_var_name(var), time=step),
                 Plus(
                     [
-                        self._encode_state_var(model._state_var_name(var1), time=step)
+                        self._encode_state_var(
+                            model._state_var_name(var1), time=step
+                        )
                         for var1 in model._state_vars()
                     ]
                 )
@@ -278,8 +291,13 @@ class PetrinetEncoder(Encoder):
         # The model expresses each rate with untimed variable symbols.
         # If not yet approximated, approximate and cache term.
         # Substitute current time variable symbols
-        if scenario.model._transition_id(transition) not in self._transition_rate_cache:
-            model_transition_rates = scenario.model._transition_rate(transition)
+        if (
+            scenario.model._transition_id(transition)
+            not in self._transition_rate_cache
+        ):
+            model_transition_rates = scenario.model._transition_rate(
+                transition
+            )
             if all(
                 isinstance(r, str) or isinstance(r, float)
                 for r in model_transition_rates
@@ -287,7 +305,9 @@ class PetrinetEncoder(Encoder):
                 self._transition_rate_cache[
                     scenario.model._transition_id(transition)
                 ] = model_transition_rates
-            elif all(isinstance(r, sympy.Expr) for r in model_transition_rates):
+            elif all(
+                isinstance(r, sympy.Expr) for r in model_transition_rates
+            ):
                 self._transition_rate_cache[
                     scenario.model._transition_id(transition)
                 ] = [
@@ -311,7 +331,9 @@ class PetrinetEncoder(Encoder):
                 )
 
         transition_rates = []
-        for r in self._transition_rate_cache[scenario.model._transition_id(transition)]:
+        for r in self._transition_rate_cache[
+            scenario.model._transition_id(transition)
+        ]:
             if isinstance(r, sympy.Expr):
                 # is a custom rate expression
                 transition_rates.append(sympy_subs(r, state_subs))

@@ -2,9 +2,7 @@ from typing import Dict, List, Tuple
 
 import graphviz
 
-
 from funman.representation import ModelParameter
-
 
 from .model import Model
 
@@ -82,7 +80,9 @@ class EnsembleModel(Model):
 
     def _parameter_values(self):
         return {
-            p_name: self._model_name_map[m_name[0]]._parameter_values()[m_name[1]]
+            p_name: self._model_name_map[m_name[0]]._parameter_values()[
+                m_name[1]
+            ]
             for p_name, m_name in self._parameter_name_map.items()
         }
 

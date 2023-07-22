@@ -152,7 +152,9 @@ class ConsistencyScenario(AnalysisScenario, BaseModel):
                                 (
                                     "F"
                                     if s is None
-                                    else ("T" if (s is not None and s) else " ")
+                                    else (
+                                        "T" if (s is not None and s) else " "
+                                    )
                                 )
                                 for s in t
                             ]
@@ -187,7 +189,10 @@ class ConsistencyScenario(AnalysisScenario, BaseModel):
         #     self.query, num_steps, step_size
         # )
 
-        model_encoding, query_encoding = self._smt_encoder.initialize_encodings(
+        (
+            model_encoding,
+            query_encoding,
+        ) = self._smt_encoder.initialize_encodings(
             self, num_steps, step_size_idx
         )
 
@@ -250,7 +255,9 @@ class ConsistencyScenarioResult(AnalysisScenarioResult, BaseModel):
                 df = df.interpolate(method=interpolate)
             return df
         else:
-            raise Exception(f"Cannot create dataframe for an inconsistent scenario.")
+            raise Exception(
+                f"Cannot create dataframe for an inconsistent scenario."
+            )
 
     def plot(self, point: Point, variables=None, **kwargs):
         """
@@ -263,12 +270,16 @@ class ConsistencyScenarioResult(AnalysisScenarioResult, BaseModel):
         """
         if self.consistent:
             if variables is not None:
-                ax = self.dataframe(point)[variables].plot(marker="o", **kwargs)
+                ax = self.dataframe(point)[variables].plot(
+                    marker="o", **kwargs
+                )
             else:
                 ax = self.dataframe(point).plot(marker="o", **kwargs)
             plt.show(block=False)
         else:
-            raise Exception(f"Cannot plot result for an inconsistent scenario.")
+            raise Exception(
+                f"Cannot plot result for an inconsistent scenario."
+            )
         return ax
 
     def __repr__(self) -> str:

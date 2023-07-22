@@ -1,10 +1,8 @@
-from typing import Dict, List, Optional, Tuple, Union
-from funman.scenario.scenario import AnalysisScenario
-from matplotlib import pyplot as plt
-import pandas as pd
 import random
+from typing import Dict, List, Optional, Tuple, Union
 
-
+import pandas as pd
+from matplotlib import pyplot as plt
 from pydantic import BaseModel
 
 from funman.funman import FUNMANConfig
@@ -33,6 +31,7 @@ from funman.scenario.parameter_synthesis import (
     ParameterSynthesisScenario,
     ParameterSynthesisScenarioResult,
 )
+from funman.scenario.scenario import AnalysisScenario
 
 
 class FunmanWorkRequest(BaseModel):
@@ -65,11 +64,17 @@ class FunmanWorkUnit(BaseModel):
         self,
     ) -> Union[ConsistencyScenario, ParameterSynthesisScenario]:
         parameters = []
-        if hasattr(self.request, "parameters") and self.request.parameters is not None:
+        if (
+            hasattr(self.request, "parameters")
+            and self.request.parameters is not None
+        ):
             for data in self.request.parameters:
                 parameters.append(
                     ModelParameter(
-                        name=data.name, ub=data.ub, lb=data.lb, label=data.label
+                        name=data.name,
+                        ub=data.ub,
+                        lb=data.lb,
+                        label=data.label,
                     )
                 )
         if (
@@ -79,7 +84,10 @@ class FunmanWorkUnit(BaseModel):
             for data in self.request.structure_parameters:
                 parameters.append(
                     StructureParameter(
-                        name=data.name, ub=data.ub, lb=data.lb, label=data.label
+                        name=data.name,
+                        ub=data.ub,
+                        lb=data.lb,
+                        label=data.label,
                     )
                 )
 
@@ -95,7 +103,9 @@ class FunmanWorkUnit(BaseModel):
             )
 
         if isinstance(self.model, EnsembleModel):
-            raise Exception("TODO handle EnsembleModel for ParameterSynthesisScenario")
+            raise Exception(
+                "TODO handle EnsembleModel for ParameterSynthesisScenario"
+            )
 
         return ParameterSynthesisScenario(
             model=self.model, query=self.request.query, parameters=parameters
@@ -120,7 +130,9 @@ class FunmanResults(BaseModel):
 
     def finalize_result(
         self,
-        result: Union[ConsistencyScenarioResult, ParameterSynthesisScenarioResult],
+        result: Union[
+            ConsistencyScenarioResult, ParameterSynthesisScenarioResult
+        ],
     ):
         ps = None
         if isinstance(result, ConsistencyScenarioResult):
@@ -141,7 +153,9 @@ class FunmanResults(BaseModel):
         self.error = True
         self.done = True
 
-    def dataframe(self, points: List[Point], interpolate="linear", max_time=None):
+    def dataframe(
+        self, points: List[Point], interpolate="linear", max_time=None
+    ):
         """
         Extract a timeseries as a Pandas dataframe.
 
@@ -252,7 +266,9 @@ class FunmanResults(BaseModel):
                     l.warning(e)
         return vals
 
-    def _symbols(self, point: Point, variables: List[str]) -> Dict[str, Dict[str, str]]:
+    def _symbols(
+        self, point: Point, variables: List[str]
+    ) -> Dict[str, Dict[str, str]]:
         symbols = {}
         # vars.sort(key=lambda x: x.symbol_name())
         for var in point.values:
@@ -288,7 +304,14 @@ class FunmanResults(BaseModel):
 
         return ax
 
-    def plot(self, point: Point, variables=None, log_y=False, max_time=None, **kwargs):
+    def plot(
+        self,
+        point: Point,
+        variables=None,
+        log_y=False,
+        max_time=None,
+        **kwargs
+    ):
         """
         Plot the results in a matplotlib plot.
 

@@ -477,7 +477,9 @@ class BilayerModel(Model):
     measurements: BilayerMeasurement = None
     identical_parameters: List[List[str]] = []
 
-    def default_encoder(self, config: "FUNMANConfig", scenario: "AnalysisScenario") -> "Encoder":
+    def default_encoder(
+        self, config: "FUNMANConfig", scenario: "AnalysisScenario"
+    ) -> "Encoder":
         """
         Return the default Encoder for the model
 
@@ -530,6 +532,6 @@ class BilayerModel(Model):
 
     def _parameter_lb(self, p):
         return self.parameter_bounds[p][0]
-    
+
     def _parameter_ub(self, p):
         return self.parameter_bounds[p][1]

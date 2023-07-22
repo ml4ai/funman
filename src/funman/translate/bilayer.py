@@ -73,7 +73,7 @@ class BilayerEncoder(Encoder):
         step: int,
         next_step: int,
         time_dependent_parameters=None,
-        substitutions=None
+        substitutions=None,
     ) -> Tuple[FNode, Dict[FNode, FNode]]:
         transition = self._encode_bilayer(
             scenario.model.bilayer,
@@ -89,7 +89,9 @@ class BilayerEncoder(Encoder):
 
         return And(transition, measurements).simplify(), {}
 
-    def _encode_untimed_constraints(self, scenario: "AnalysisScenario") -> FNode:
+    def _encode_untimed_constraints(
+        self, scenario: "AnalysisScenario"
+    ) -> FNode:
         super_untimed_constraints = Encoder._encode_untimed_constraints(
             self, scenario
         )

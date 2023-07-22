@@ -6,7 +6,7 @@ from pysmt.typing import REAL
 from funman import Funman
 from funman.funman import FUNMANConfig
 from funman.model import EncodedModel, QueryTrue
-from funman.representation.representation import ModelParameter, ModelParameter
+from funman.representation.representation import ModelParameter
 from funman.scenario.parameter_synthesis import ParameterSynthesisScenario
 from funman.translate import EncodedEncoder
 

@@ -311,3 +311,4 @@ gmon.out
 *.code-workspace
 ./*.json
 *.smt2
+**/profile.stats

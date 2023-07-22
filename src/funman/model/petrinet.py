@@ -1,12 +1,12 @@
 from typing import Dict, List, Union
 
 import graphviz
+import sympy
 from pydantic import BaseModel
 
 from funman.representation.representation import ModelParameter
 from funman.translate.petrinet import PetrinetEncoder
 from funman.utils.sympy_utils import substitute, to_sympy
-import sympy
 
 from .generated_models.petrinet import Model as GeneratedPetrinet
 from .generated_models.petrinet import State, Transition
@@ -60,10 +60,14 @@ class AbstractPetriNetModel(Model):
         self, state_id: Union[str, int], transition_id: Union[str, int]
     ) -> float:
         num_flow_to_transition = self._num_flow_into_transition(transition_id)
-        num_inflow = self._num_flow_from_transition_to_state(state_id, transition_id)
+        num_inflow = self._num_flow_from_transition_to_state(
+            state_id, transition_id
+        )
         num_transition_outputs = self._num_flow_from_transition(transition_id)
         if num_transition_outputs > 0:
-            return (num_inflow / num_transition_outputs) * num_flow_to_transition
+            return (
+                num_inflow / num_transition_outputs
+            ) * num_flow_to_transition
         else:
             return 0
 
@@ -88,7 +92,8 @@ class AbstractPetriNetModel(Model):
 
         # Don't substitute initial state values for state variables, only parameters
         variable_values = {
-            k: (None if k in state_var_names else v) for k, v in variable_values.items()
+            k: (None if k in state_var_names else v)
+            for k, v in variable_values.items()
         }
 
         for _, var in enumerate(state_vars):
@@ -101,7 +106,8 @@ class AbstractPetriNetModel(Model):
                 #     self._parameter_values()[t] for t in transition_parameters
                 # ]
                 transition_parameter_value = [
-                    substitute(t, variable_values) for t in transition_parameters
+                    substitute(t, variable_values)
+                    for t in transition_parameters
                 ]
                 transition_name = f"{transition_id}({transition_parameters}) = {transition_parameter_value}"
                 dot.node(transition_name, _attributes={"shape": "box"})
@@ -123,7 +129,9 @@ class AbstractPetriNetModel(Model):
                         ) / self._num_flow_from_transition_to_state(
                             state_var_id, transition_id
                         )
-                        dot.edge(transition_name, state_var_name, label=f"{flow}")
+                        dot.edge(
+                            transition_name, state_var_name, label=f"{flow}"
+                        )
 
         return dot
 
@@ -196,14 +204,22 @@ class GeneratedPetriNetModel(AbstractPetriNetModel):
 
     def _parameter_lb(self, param_name: str):
         return next(
-            (p.distribution.parameters["minimum"] if p.distribution else p.value)
+            (
+                p.distribution.parameters["minimum"]
+                if p.distribution
+                else p.value
+            )
             for p in self.petrinet.semantics.ode.parameters
             if p.id == param_name
         )
 
     def _parameter_ub(self, param_name: str):
         return next(
-            (p.distribution.parameters["maximum"] if p.distribution else p.value)
+            (
+                p.distribution.parameters["maximum"]
+                if p.distribution
+                else p.value
+            )
             for p in self.petrinet.semantics.ode.parameters
             if p.id == param_name
         )
@@ -238,7 +254,9 @@ class GeneratedPetriNetModel(AbstractPetriNetModel):
                 t_rates = [
                     (
                         to_sympy(r.expression, self._symbols())
-                        if not any(p == r.expression for p in self._parameter_names())
+                        if not any(
+                            p == r.expression for p in self._parameter_names()
+                        )
                         else r.expression
                     )
                     for r in self.petrinet.semantics.ode.rates
@@ -247,7 +265,11 @@ class GeneratedPetriNetModel(AbstractPetriNetModel):
                 time_var = self._time_var()
                 if time_var:
                     t_rates = [
-                        t.subs({self._time_var().id: f"timer_{self._time_var().id}"})
+                        t.subs(
+                            {
+                                self._time_var().id: f"timer_{self._time_var().id}"
+                            }
+                        )
                         for t in t_rates
                     ]
                 self._transition_rates_cache[transition.id] = t_rates
@@ -272,7 +294,9 @@ class GeneratedPetriNetModel(AbstractPetriNetModel):
 
     def _parameter_values(self):
         if hasattr(self.petrinet.semantics, "ode"):
-            return {p.id: p.value for p in self.petrinet.semantics.ode.parameters}
+            return {
+                p.id: p.value for p in self.petrinet.semantics.ode.parameters
+            }
         else:
             return {}
 

@@ -128,7 +128,9 @@ class DReal(SmtLibSolver):
         smtcmd.CHECK_SAT,
     ]
 
-    def __init__(self, args, environment, logic, LOGICS=None, **options) -> None:
+    def __init__(
+        self, args, environment, logic, LOGICS=None, **options
+    ) -> None:
         Solver.__init__(self, environment, logic=logic, **options)
         self.to = self.environment.typeso
         self.LOGICS = DReal.LOGICS
@@ -176,9 +178,9 @@ class DReal(SmtLibSolver):
     def container_alive(func):
         def inner(*args):
             # time.sleep(1)
-            status = args[0].client.inspect_container(args[0].container)["State"][
-                "Status"
-            ]
+            status = args[0].client.inspect_container(args[0].container)[
+                "State"
+            ]["Status"]
             if status == "exited":
                 raise Exception(
                     f"Cannot send command to container with status: {status}"
@@ -224,7 +226,9 @@ class DReal(SmtLibSolver):
         return lst
 
     def get_value(self, item):
-        return Real(self.current_model[item.symbol_name()][0])  # return lower bound
+        return Real(
+            self.current_model[item.symbol_name()][0]
+        )  # return lower bound
 
     def _send_batch(self):
         payload = b""
@@ -294,7 +298,9 @@ class DReal(SmtLibSolver):
         while len(self.current_model) < len(self.symbols):
             line = self._read_line().decode()
             [symbol_str, bounds] = line.split(":")
-            [lb, ub] = bounds.replace("[", "").replace("]", "").strip().split(",")
+            [lb, ub] = (
+                bounds.replace("[", "").replace("]", "").strip().split(",")
+            )
             self.current_model[symbol_str.strip()] = [float(lb), float(ub)]
 
     def _get_check_sat_result(self, encoded_text):
@@ -413,7 +419,9 @@ class DRealNative(Solver, SmtLibBasicSolver, SmtLibIgnoreMixin):
     ]
     commands_to_flush = [smtcmd.CHECK_SAT, smtcmd.ASSERT]
 
-    def __init__(self, args, environment, logic, LOGICS=None, **options) -> None:
+    def __init__(
+        self, args, environment, logic, LOGICS=None, **options
+    ) -> None:
         faulthandler.enable()
 
         Solver.__init__(self, environment, logic=logic, **options)
@@ -433,7 +441,9 @@ class DRealNative(Solver, SmtLibBasicSolver, SmtLibIgnoreMixin):
         self.model = None
         if "solver_options" in options:
             if "dreal_precision" in options["solver_options"]:
-                self.config.precision = options["solver_options"]["dreal_precision"]
+                self.config.precision = options["solver_options"][
+                    "dreal_precision"
+                ]
             if "dreal_log_level" in options["solver_options"]:
                 if options["solver_options"]["dreal_log_level"] == "debug":
                     dreal.set_log_level(dreal.LogLevel.DEBUG)
@@ -476,14 +486,19 @@ class DRealNative(Solver, SmtLibBasicSolver, SmtLibIgnoreMixin):
         f = self.converter.convert(formula)
 
         # Convert Variable to a Formula
-        if isinstance(f, dreal.Variable) and f.get_type() == dreal.Variable.Bool:
+        if (
+            isinstance(f, dreal.Variable)
+            and f.get_type() == dreal.Variable.Bool
+        ):
             f = dreal.And(f, f)
 
         deps = formula.get_free_variables()
         # Declare all variables
         for symbol in deps:
             assert symbol.is_symbol()
-            self.cmd_declare_fun(SmtLibCommand(name=smtcmd.DECLARE_FUN, args=[symbol]))
+            self.cmd_declare_fun(
+                SmtLibCommand(name=smtcmd.DECLARE_FUN, args=[symbol])
+            )
         code = self.context.Assert(f)
 
     def cmd_set_option(self, cmd):
@@ -526,7 +541,9 @@ class DRealNative(Solver, SmtLibBasicSolver, SmtLibIgnoreMixin):
         with self.elapsed_timer() as t:
             result = self.context.CheckSat()
             elapsed_base_dreal = t()
-        l.debug(f"{('delta-sat' if result else 'unsat' )} took {elapsed_base_dreal}s")
+        l.debug(
+            f"{('delta-sat' if result else 'unsat' )} took {elapsed_base_dreal}s"
+        )
         # result = dreal.CheckSatisfiability(self.assertion, 0.001)
         self.model = result
         return result

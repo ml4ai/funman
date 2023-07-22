@@ -43,7 +43,9 @@ class TestAPI(unittest.TestCase):
             response = client.get(
                 f"/api/queries/{id}", headers={"token": f"{TEST_API_TOKEN}"}
             )
-            assert response.status_code == 200, f"Response code was not 200: {response.status_code}"
+            assert (
+                response.status_code == 200
+            ), f"Response code was not 200: {response.status_code}"
             data = FunmanResults.parse_raw(response.content.decode())
             if data.done:
                 return data
@@ -98,7 +100,9 @@ class TestAPI(unittest.TestCase):
                 },
                 headers={"token": f"{TEST_API_TOKEN}"},
             )
-            assert response.status_code == 200, f"Response code was not 200: {response.status_code}"
+            assert (
+                response.status_code == 200
+            ), f"Response code was not 200: {response.status_code}"
             work_unit = FunmanWorkUnit.parse_raw(response.content.decode())
             first_id = work_unit.id
             data = self.wait_for_done(client, first_id)
@@ -109,7 +113,9 @@ class TestAPI(unittest.TestCase):
                 f"/api/queries/{first_id}",
                 headers={"token": f"{TEST_API_TOKEN}"},
             )
-            assert response.status_code == 200, f"Response code was not 200: {response.status_code}"
+            assert (
+                response.status_code == 200
+            ), f"Response code was not 200: {response.status_code}"
             got_data = FunmanResults.parse_raw(response.content.decode())
             assert first_id == got_data.id
             self.check_consistency_success(data.parameter_space)
@@ -117,14 +123,18 @@ class TestAPI(unittest.TestCase):
     def test_api_bad_token(self):
         with TestClient(app) as client:
             response = client.get("/api/queries/bogus")
-            assert response.status_code == 401, f"Response code was not 401: {response.status_code}"
+            assert (
+                response.status_code == 401
+            ), f"Response code was not 401: {response.status_code}"
 
     def test_api_bad_id(self):
         with TestClient(app) as client:
             response = client.get(
                 "/api/queries/bogus", headers={"token": f"{TEST_API_TOKEN}"}
             )
-            assert response.status_code == 404, f"Response code was not 404: {response.status_code}"
+            assert (
+                response.status_code == 404
+            ), f"Response code was not 404: {response.status_code}"
 
     def test_bilayer_consistency(self):
         bilayer_path = (
@@ -156,16 +166,27 @@ class TestAPI(unittest.TestCase):
                             "ub": infected_threshold,
                             "at_end": False,
                         },
-                        
                         "structure_parameters": [
-                            {'name': 'num_steps', 'lb': 3.0, 'ub': 3.0, 'label': 'any'}, 
-                            {'name': 'step_size', 'lb': 1.0, 'ub': 1.0, 'label': 'any'}
-                        ]
+                            {
+                                "name": "num_steps",
+                                "lb": 3.0,
+                                "ub": 3.0,
+                                "label": "any",
+                            },
+                            {
+                                "name": "step_size",
+                                "lb": 1.0,
+                                "ub": 1.0,
+                                "label": "any",
+                            },
+                        ],
                     },
                 },
                 headers={"token": f"{TEST_API_TOKEN}"},
             )
-            assert response.status_code == 200, f"Response code was not 200: {response.status_code}"
+            assert (
+                response.status_code == 200
+            ), f"Response code was not 200: {response.status_code}"
             work_unit = FunmanWorkUnit.parse_raw(response.content.decode())
             data = self.wait_for_done(client, work_unit.id)
             self.check_consistency_success(data.parameter_space)
@@ -209,8 +230,18 @@ class TestAPI(unittest.TestCase):
                             }
                         ],
                         "structure_parameters": [
-                            {'name': 'num_steps', 'lb': 3.0, 'ub': 3.0, 'label': 'any'}, 
-                            {'name': 'step_size', 'lb': 1.0, 'ub': 1.0, 'label': 'any'}
+                            {
+                                "name": "num_steps",
+                                "lb": 3.0,
+                                "ub": 3.0,
+                                "label": "any",
+                            },
+                            {
+                                "name": "step_size",
+                                "lb": 1.0,
+                                "ub": 1.0,
+                                "label": "any",
+                            },
                         ],
                         "config": {
                             "tolerance": 1.0e-8,
@@ -220,7 +251,9 @@ class TestAPI(unittest.TestCase):
                 },
                 headers={"token": f"{TEST_API_TOKEN}"},
             )
-            assert response.status_code == 200, f"Response code was not 200: {response.status_code}"
+            assert (
+                response.status_code == 200
+            ), f"Response code was not 200: {response.status_code}"
             work_unit = FunmanWorkUnit.parse_raw(response.content.decode())
             data = self.wait_for_done(client, work_unit.id)
             self.check_parameter_synthesis_success(data.parameter_space)
@@ -238,7 +271,9 @@ class TestAPI(unittest.TestCase):
                 json={"model": model, "request": request},
                 headers={"token": f"{TEST_API_TOKEN}"},
             )
-            assert response.status_code == 200, f"Response code was not 200: {response.status_code}"
+            assert (
+                response.status_code == 200
+            ), f"Response code was not 200: {response.status_code}"
             work_unit = FunmanWorkUnit.parse_raw(response.content.decode())
             data = self.wait_for_done(client, work_unit.id)
             assert data

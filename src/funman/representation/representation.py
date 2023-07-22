@@ -4,12 +4,10 @@ during the configuration and execution of a search.
 """
 import copy
 import logging
-import sys
 import math
-from functools import total_ordering
+import sys
 from statistics import mean as average
 from typing import Dict, List, Literal, Optional, Union
-from funman.utils.sympy_utils import to_sympy
 
 from pydantic import BaseModel
 from pysmt.fnode import FNode
@@ -17,6 +15,7 @@ from pysmt.shortcuts import REAL, Symbol
 
 import funman.utils.math_utils as math_utils
 from funman.constants import BIG_NUMBER, NEG_INFINITY, POS_INFINITY
+from funman.utils.sympy_utils import to_sympy
 
 from .symbol import ModelSymbol
 
@@ -152,7 +151,9 @@ class Interval(BaseModel):
         bool
             are the intervals disjoint?
         """
-        return math_utils.lte(self.ub, other.lb) or math_utils.gte(self.lb, other.ub)
+        return math_utils.lte(self.ub, other.lb) or math_utils.gte(
+            self.lb, other.ub
+        )
 
     def width(self, normalize=None):
         """
@@ -178,7 +179,9 @@ class Interval(BaseModel):
         if isinstance(other, Interval):
             return self.width() < other.width()
         else:
-            raise Exception(f"Cannot compare __lt__() Interval to {type(other)}")
+            raise Exception(
+                f"Cannot compare __lt__() Interval to {type(other)}"
+            )
 
     def __eq__(self, other):
         if isinstance(other, Interval):
@@ -249,8 +252,14 @@ class Interval(BaseModel):
         return (
             self.contains_value(other.lb)
             or other.contains_value(self.lb)
-            or (self.contains_value(other.ub) and math_utils.gt(other.ub, self.lb))
-            or (other.contains_value(self.ub) and math_utils.gt(self.ub, other.lb))
+            or (
+                self.contains_value(other.ub)
+                and math_utils.gt(other.ub, self.lb)
+            )
+            or (
+                other.contains_value(self.ub)
+                and math_utils.gt(self.ub, other.lb)
+            )
         )
 
     def intersection(self, b: "Interval") -> "Interval":
@@ -370,13 +379,19 @@ class Interval(BaseModel):
             else:
                 minInterval = other
                 maxInterval = self
-        if math_utils.gte(minInterval.ub, maxInterval.lb):  ## intervals intersect.
+        if math_utils.gte(
+            minInterval.ub, maxInterval.lb
+        ):  ## intervals intersect.
             ans = Interval(lb=minInterval.lb, ub=maxInterval.ub)
             total_height = ans.width()
             return [ans], total_height
-        elif math_utils.lt(minInterval.ub, maxInterval.lb):  ## intervals are disjoint.
+        elif math_utils.lt(
+            minInterval.ub, maxInterval.lb
+        ):  ## intervals are disjoint.
             ans = [minInterval, maxInterval]
-            total_height = [math_utils.plus(minInterval.width(), maxInterval.width())]
+            total_height = [
+                math_utils.plus(minInterval.width(), maxInterval.width())
+            ]
             return ans, total_height
 
     def contains_value(self, value: float) -> bool:
@@ -440,7 +455,9 @@ class Point(BaseModel):
 
     def __eq__(self, other):
         if isinstance(other, Point):
-            return all([self.values[p] == other.values[p] for p in self.values.keys()])
+            return all(
+                [self.values[p] == other.values[p] for p in self.values.keys()]
+            )
         else:
             return False
 
@@ -470,7 +487,11 @@ class Box(BaseModel):
         ):
             advanced_box = Box(
                 bounds={
-                    n: (itv if n != "num_steps" else Interval(lb=itv.lb + 1, ub=itv.ub))
+                    n: (
+                        itv
+                        if n != "num_steps"
+                        else Interval(lb=itv.lb + 1, ub=itv.ub)
+                    )
                     for n, itv in self.bounds.items()
                 }
             )
@@ -483,7 +504,11 @@ class Box(BaseModel):
         if "num_steps" in self.bounds:
             current_step_box = Box(
                 bounds={
-                    n: (itv if n != "num_steps" else Interval(lb=itv.lb, ub=itv.lb))
+                    n: (
+                        itv
+                        if n != "num_steps"
+                        else Interval(lb=itv.lb, ub=itv.lb)
+                    )
                     for n, itv in self.bounds.items()
                 }
             )
@@ -512,7 +537,9 @@ class Box(BaseModel):
                 bp.bounds = {k: v for k, v in bp.bounds.items() if k in vars}
             elif isinstance(vars[0], ModelParameter):
                 vars_str = [v.name for v in vars]
-                bp.bounds = {k: v for k, v in bp.bounds.items() if k in vars_str}
+                bp.bounds = {
+                    k: v for k, v in bp.bounds.items() if k in vars_str
+                }
             else:
                 raise Exception(
                     f"Unknown type {type(vars[0])} used as intput to Box.project()"
@@ -535,7 +562,9 @@ class Box(BaseModel):
         Box
             merge of two boxes that meet in one dimension
         """
-        merged = Box(bounds={p: Interval(lb=0, ub=0) for p in self.bounds.keys()})
+        merged = Box(
+            bounds={p: Interval(lb=0, ub=0) for p in self.bounds.keys()}
+        )
         for p, i in merged.bounds.items():
             if self.bounds[p].meets(other.bounds[p]):
                 i.lb = min(self.bounds[p].lb, other.bounds[p].lb)
@@ -582,9 +611,9 @@ class Box(BaseModel):
                         if sorted[i] in equals_set:
                             equals_set.remove(sorted[i])
                         disqualified_set.add(sorted[i])
-                    if sorted[i].bounds[p].disjoint(self.bounds[p]) and not sorted[
-                        i
-                    ].bounds[p].meets(self.bounds[p]):
+                    if sorted[i].bounds[p].disjoint(
+                        self.bounds[p]
+                    ) and not sorted[i].bounds[p].meets(self.bounds[p]):
                         break  # Because sorted, no further checking needed
         if len(boxes.keys()) == 1:  # 1D
             candidates = meets_set
@@ -593,7 +622,11 @@ class Box(BaseModel):
         return candidates
 
     def _copy(self):
-        c = Box(bounds={p: Interval(lb=b.lb, ub=b.ub) for p, b in self.bounds.items()})
+        c = Box(
+            bounds={
+                p: Interval(lb=b.lb, ub=b.ub) for p, b in self.bounds.items()
+            }
+        )
         return c
 
     def __lt__(self, other):
@@ -604,7 +637,9 @@ class Box(BaseModel):
 
     def __eq__(self, other):
         if isinstance(other, Box):
-            return all([self.bounds[p] == other.bounds[p] for p in self.bounds.keys()])
+            return all(
+                [self.bounds[p] == other.bounds[p] for p in self.bounds.keys()]
+            )
         else:
             return False
 
@@ -640,7 +675,10 @@ class Box(BaseModel):
             self contains other
         """
         return all(
-            [interval.contains(other.bounds[p]) for p, interval in self.bounds.items()]
+            [
+                interval.contains(other.bounds[p])
+                for p, interval in self.bounds.items()
+            ]
         )
 
     def contains_point(self, point: Point) -> bool:
@@ -747,7 +785,11 @@ class Box(BaseModel):
         # print(points)
         # print(centers)
         point_distances = [
-            {p: abs(pt.values[p] - centers[p]) for p in pt.values if p in centers}
+            {
+                p: abs(pt.values[p] - centers[p])
+                for p in pt.values
+                if p in centers
+            }
             for grp in points
             for pt in grp
         ]
@@ -755,11 +797,14 @@ class Box(BaseModel):
             p: average([pt[p] for pt in point_distances]) for p in self.bounds
         }
         normalized_parameter_widths = {
-            p: average([pt[p] for pt in point_distances]) / (self.bounds[p].width())
+            p: average([pt[p] for pt in point_distances])
+            / (self.bounds[p].width())
             for p in self.bounds
             if self.bounds[p].width() > 0
         }
-        max_width_parameter = max(parameter_widths, key=lambda k: parameter_widths[k])
+        max_width_parameter = max(
+            parameter_widths, key=lambda k: parameter_widths[k]
+        )
         return max_width_parameter
 
     def _get_max_width_Parameter(
@@ -888,7 +933,9 @@ class Box(BaseModel):
             box representing intersection, optionally defined over parameters in param_list (when specified)
         """
         params_ans = []
-        common_params = param_list if param_list else [k.name for k in self.bounds]
+        common_params = (
+            param_list if param_list else [k.name for k in self.bounds]
+        )
         for p1 in common_params:
             # FIXME iterating over dict keys is not efficient
             for b, i in self.bounds.items():
@@ -911,7 +958,9 @@ class Box(BaseModel):
                     ub=intersection_ans[1],
                 )
                 params_ans.append(new_param)
-        return Box(bounds={p.name: Interval(lb=p.lb, ub=p.ub) for p in params_ans})
+        return Box(
+            bounds={p.name: Interval(lb=p.lb, ub=p.ub) for p in params_ans}
+        )
 
     def symm_diff(b1: "Box", b2: "Box"):
         result = []
@@ -1014,12 +1063,12 @@ class Box(BaseModel):
 
         return Box(
             bounds={
-                ModelParameter(name=a_params[0], lb=beta_0[0], ub=beta_0[1]): Interval(
-                    lb=beta_0[0], ub=beta_0[1]
-                ),
-                ModelParameter(name=a_params[1], lb=beta_1[0], ub=beta_1[1]): Interval(
-                    lb=beta_1[0], ub=beta_1[1]
-                ),
+                ModelParameter(
+                    name=a_params[0], lb=beta_0[0], ub=beta_0[1]
+                ): Interval(lb=beta_0[0], ub=beta_0[1]),
+                ModelParameter(
+                    name=a_params[1], lb=beta_1[0], ub=beta_1[1]
+                ): Interval(lb=beta_1[0], ub=beta_1[1]),
             }
         )
 
@@ -1099,12 +1148,20 @@ class ParameterSpace(BaseModel):
             num_steps = result["num_steps"]
             step_size = result["step_size"]
             for box in ps.true_boxes:
-                box.bounds["num_steps"] = Interval(lb=num_steps, ub=num_steps + 1)
-                box.bounds["step_size"] = Interval(lb=step_size, ub=step_size + 1)
+                box.bounds["num_steps"] = Interval(
+                    lb=num_steps, ub=num_steps + 1
+                )
+                box.bounds["step_size"] = Interval(
+                    lb=step_size, ub=step_size + 1
+                )
                 all_ps.true_boxes.append(box)
             for box in ps.false_boxes:
-                box.bounds["num_steps"] = Interval(lb=num_steps, ub=num_steps + 1)
-                box.bounds["step_size"] = Interval(lb=step_size, ub=step_size + 1)
+                box.bounds["num_steps"] = Interval(
+                    lb=num_steps, ub=num_steps + 1
+                )
+                box.bounds["step_size"] = Interval(
+                    lb=step_size, ub=step_size + 1
+                )
                 all_ps.false_boxes.append(box)
             for point in ps.true_points:
                 point.values["num_steps"] = num_steps
@@ -1143,8 +1200,12 @@ class ParameterSpace(BaseModel):
     @staticmethod
     def symmetric_difference(ps1: "ParameterSpace", ps2: "ParameterSpace"):
         return ParameterSpace(
-            ParameterSpace._symmetric_difference(ps1.true_boxes, ps2.true_boxes),
-            ParameterSpace._symmetric_difference(ps1.false_boxes, ps2.false_boxes),
+            ParameterSpace._symmetric_difference(
+                ps1.true_boxes, ps2.true_boxes
+            ),
+            ParameterSpace._symmetric_difference(
+                ps1.false_boxes, ps2.false_boxes
+            ),
         )
 
     @staticmethod
@@ -1306,7 +1367,11 @@ class ParameterSpace(BaseModel):
                         c = next(iter(candidates))
                         m = b._merge(c)
                         sorted_dimensions = {
-                            p: [box if box != b else m for box in boxes if box != c]
+                            p: [
+                                box if box != b else m
+                                for box in boxes
+                                if box != c
+                            ]
                             for p, boxes in sorted_dimensions.items()
                         }
                         merged = True

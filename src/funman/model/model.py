@@ -3,13 +3,13 @@ This module represents the abstract base classes for models.
 """
 import copy
 import uuid
-from abc import ABC, abstractmethod
+from abc import ABC
 from typing import Dict, List
 
 from pydantic import BaseModel
 from pysmt.formula import FNode
 
-from funman.representation.representation import ModelParameter, ModelParameter
+from funman.representation.representation import ModelParameter
 
 
 class Model(ABC, BaseModel):

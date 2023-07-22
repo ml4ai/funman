@@ -6,7 +6,6 @@ from pydantic import BaseModel
 
 from funman.representation.representation import (
     ModelParameter,
-    ModelParameter,
     ParameterSpace,
     StructureParameter,
 )
@@ -24,7 +23,9 @@ class AnalysisScenario(ABC, BaseModel):
         pass
 
     @abstractmethod
-    def solve(self, config: "FUNMANConfig", haltEvent: Optional[threading.Event]):
+    def solve(
+        self, config: "FUNMANConfig", haltEvent: Optional[threading.Event]
+    ):
         pass
 
     @abstractmethod
@@ -38,7 +39,9 @@ class AnalysisScenario(ABC, BaseModel):
         return len([p for p in self.parameters])
 
     def structure_parameters(self):
-        return [p for p in self.parameters if isinstance(p, StructureParameter)]
+        return [
+            p for p in self.parameters if isinstance(p, StructureParameter)
+        ]
 
     def model_parameters(self):
         return [p for p in self.parameters if isinstance(p, ModelParameter)]
@@ -61,7 +64,9 @@ class AnalysisScenario(ABC, BaseModel):
             param
             for param in model_parameters
             if param
-            not in [overridden_param.name for overridden_param in self.parameters]
+            not in [
+                overridden_param.name for overridden_param in self.parameters
+            ]
         ]:
             bounds = {}
             lb = self.model._parameter_lb(p)
@@ -88,7 +93,8 @@ class AnalysisScenario(ABC, BaseModel):
             filtered_parameters = [
                 p
                 for p in self.parameters
-                if p.name in model_parameters or isinstance(p, StructureParameter)
+                if p.name in model_parameters
+                or isinstance(p, StructureParameter)
             ]
             self.parameters = filtered_parameters
 

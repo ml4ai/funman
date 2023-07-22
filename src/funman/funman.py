@@ -75,9 +75,11 @@ class FUNMANConfig(BaseModel):
     """Normalize"""
     normalize = True
     """ Simplify query by propagating substutions """
-    simplify_query = False
+    simplify_query = True
     """ Series approximation threshold for dropping series terms """
     series_approximation_threshold = 1e-4
+    """ Generate profiling output"""
+    profile = False
 
     @validator("solver")
     def import_dreal(cls, v):
@@ -128,6 +130,19 @@ class Funman(object):
             produced by the analysis.
         """
         problem.model._normalize = config.normalize
-        return problem.solve(
-            config, haltEvent=haltEvent, resultsCallback=resultsCallback
-        )
+
+        if config.profile:
+            import cProfile
+
+            with cProfile.Profile() as pr:
+                result = problem.solve(
+                    config,
+                    haltEvent=haltEvent,
+                    resultsCallback=resultsCallback,
+                )
+                pr.dump_stats("profile.stats")
+        else:
+            result = problem.solve(
+                config, haltEvent=haltEvent, resultsCallback=resultsCallback
+            )
+        return result

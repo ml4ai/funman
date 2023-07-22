@@ -7,13 +7,13 @@ import multiprocessing as mp
 import os
 import threading
 import traceback
-from functools import partial
 from datetime import datetime
+from functools import partial
 from multiprocessing import Queue, Value
 from multiprocessing.synchronize import Condition, Event, Lock
 from queue import Empty
-from queue import Queue as QueueSP
 from queue import PriorityQueue as PQueueSP
+from queue import Queue as QueueSP
 from typing import Callable, List, Optional, Set, Union
 
 from pysmt.formula import FNode
@@ -26,7 +26,6 @@ from funman.representation.representation import (
     LABEL_TRUE,
     LABEL_UNKNOWN,
     Interval,
-    ModelParameter,
     ModelParameter,
 )
 from funman.search import Box, ParameterSpace, Point, Search, SearchEpisode
@@ -163,7 +162,9 @@ class BoxSearchEpisode(SearchEpisode):
 
     def _add_false_point(self, point: Point):
         if point in self._true_points:
-            l.debug(f"Point: {point} is marked false, but already marked true.")
+            l.debug(
+                f"Point: {point} is marked false, but already marked true."
+            )
         point.label = LABEL_FALSE
         self._false_points.add(point)
 
@@ -176,14 +177,18 @@ class BoxSearchEpisode(SearchEpisode):
 
     def _add_true_point(self, point: Point):
         if point in self._false_points:
-            l.debug(f"Point: {point} is marked true, but already marked false.")
+            l.debug(
+                f"Point: {point} is marked true, but already marked false."
+            )
         point.label = LABEL_TRUE
         self._true_points.add(point)
 
     def _get_unknown(self):
         box = self._unknown_boxes.get(timeout=self.config.queue_timeout)
         if self.config.number_of_processes > 1:
-            self.statistics._num_unknown.value = self.statistics._num_unknown.value - 1
+            self.statistics._num_unknown.value = (
+                self.statistics._num_unknown.value - 1
+            )
             self.statistics._current_residual.value = box.width()
         else:
             self.statistics._num_unknown += 1
@@ -278,7 +283,9 @@ class BoxSearch(Search):
                 # one last check to see if there is work to be done
                 # which would be an error at this point in the code
                 if episode._unknown_boxes.qsize() != 0:
-                    l.error(f"{process_name} found more work while preparing to exit")
+                    l.error(
+                        f"{process_name} found more work while preparing to exit"
+                    )
                     return False
                 l.info(f"{process_name} is exiting")
                 # tell other worker processing to check again with the expectation
@@ -302,7 +309,11 @@ class BoxSearch(Search):
             return True
 
     def _initialize_encoding(
-        self, solver: Solver, episode: BoxSearchEpisode, timepoint: int, box: Box
+        self,
+        solver: Solver,
+        episode: BoxSearchEpisode,
+        timepoint: int,
+        box: Box,
     ):
         """
         The formula encoding the model M is of the form:
@@ -369,9 +380,9 @@ class BoxSearch(Search):
 
         solver.push(1)
 
-        projected_box = box.project(episode.problem.model_parameters()).project(
+        projected_box = box.project(
             episode.problem.model_parameters()
-        )
+        ).project(episode.problem.model_parameters())
         formula = episode.problem._smt_encoder.box_to_smt(projected_box)
         episode._formula_stack.append(formula)
         solver.add_assertion(formula)
@@ -430,7 +441,9 @@ class BoxSearch(Search):
         solver.add_assertion(formula)
 
     def _get_false_points(self, solver, episode, box, rval):
-        false_points = [fp for fp in episode._false_points if box.contains_point(fp)]
+        false_points = [
+            fp for fp in episode._false_points if box.contains_point(fp)
+        ]
         if len(false_points) == 0:
             # If no cached point, then attempt to generate one
             # print("Checking false query")
@@ -452,7 +465,9 @@ class BoxSearch(Search):
         return false_points
 
     def _get_true_points(self, solver, episode, box, rval):
-        true_points = [tp for tp in episode._true_points if box.contains_point(tp)]
+        true_points = [
+            tp for tp in episode._true_points if box.contains_point(tp)
+        ]
         if len(true_points) == 0:
             # If no cached point, then attempt to generate one
             # print("Checking true query")
@@ -558,7 +573,9 @@ class BoxSearch(Search):
 
                         # Check whether box intersects t (true region)
                         # First see if a cached false point exists in the box
-                        true_points = self._get_true_points(solver, episode, box, rval)
+                        true_points = self._get_true_points(
+                            solver, episode, box, rval
+                        )
 
                         if len(true_points) > 0:
                             # box intersects f (true region)
@@ -612,7 +629,9 @@ class BoxSearch(Search):
                         episode._formula_stack.pop()
                         episode._on_iteration()
                         if handler:
-                            all_results = handler(rval, episode.config, all_results)
+                            all_results = handler(
+                                rval, episode.config, all_results
+                            )
                         l.info(f"{process_name} finished work")
                 self._initialize_encoding(
                     solver, episode, -1, None
@@ -802,7 +821,9 @@ class BoxSearch(Search):
         resultsCallback: Optional[Callable[[ParameterSpace], None]] = None,
     ) -> ParameterSpace:
         all_results = {
-            "parameter_space": ParameterSpace(num_dimensions=problem.num_dimensions()),
+            "parameter_space": ParameterSpace(
+                num_dimensions=problem.num_dimensions()
+            ),
             "dropped_boxes": [],
         }
         rval = QueueSP()
@@ -816,7 +837,9 @@ class BoxSearch(Search):
         config._handler.open()
 
         if problem._smt_encoder._timed_model_elements:
-            step_sizes = problem._smt_encoder._timed_model_elements["step_sizes"]
+            step_sizes = problem._smt_encoder._timed_model_elements[
+                "step_sizes"
+            ]
 
             configurations_by_step_size = {
                 step_size: [

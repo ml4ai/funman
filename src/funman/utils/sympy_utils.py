@@ -1,17 +1,20 @@
-from fractions import Fraction
-from functools import reduce
-from numbers import Rational
-import math
-from typing import Dict, List, Union
 import logging
+import math
+from functools import reduce
+from typing import Dict, List, Union
 
 import pysmt.operators as op
 import pysmt.typing as types
-import sympy
 from pysmt.formula import FNode, FormulaManager
 from pysmt.shortcuts import (
+    GE,
+    GT,
+    LE,
+    LT,
     REAL,
+    And,
     Div,
+    Equals,
     Minus,
     Plus,
     Pow,
@@ -20,6 +23,7 @@ from pysmt.shortcuts import (
     Times,
     get_env,
 )
+from sympy import Expr, Rational, Symbol, exp, series, symbols, sympify
 
 l = logging.getLogger(__name__)
 l.setLevel(logging.INFO)
@@ -64,17 +68,15 @@ class FUNMANFormulaManager(FormulaManager):
         return self.create_node(node_type=op.POW, args=(base, exponent))
 
 
-def series_approx(expr: sympy.Expr, vars: List[sympy.Symbol] = []) -> sympy.Expr:
-    sympy_symbols = [sympy.symbols(str(v)) for v in vars]
+def series_approx(expr: Expr, vars: List[Symbol] = []) -> Expr:
+    sympy_symbols = [symbols(str(v)) for v in vars]
     series_expr = reduce(
-        lambda v1, v2: sympy.series(v1, v2, n=4).removeO(), sympy_symbols, expr
+        lambda v1, v2: series(v1, v2, n=3).removeO(), sympy_symbols, expr
     )
     return series_expr
 
 
-def sympy_subs(
-    expr: sympy.Expr, substitution: Dict[str, Union[float, str]]
-) -> sympy.Expr:
+def sympy_subs(expr: Expr, substitution: Dict[str, Union[float, str]]) -> Expr:
     return expr.subs(substitution)
 
 
@@ -94,18 +96,17 @@ def replace_reserved(str_expr):
 
 def to_sympy(
     str_expr: str,
-    symbols: List[str],
-) -> sympy.Expr:
-    unreserved_symbols = [replace_reserved(s) for s in symbols]
-    expr = sympy.sympify(
-        replace_reserved(str_expr), {s: sympy.symbols(s) for s in unreserved_symbols}
-    )
+    str_symbols: List[str],
+) -> Expr:
+    unreserved_symbols = [replace_reserved(s) for s in str_symbols]
+    clean_expr = replace_reserved(str_expr)
+    expr = sympify(clean_expr, {s: symbols(s) for s in unreserved_symbols})
     return expr
 
 
 def substitute(str_expr: str, values: Dict[str, Union[float, str]]):
     # Set which substrings are symbols
-    symbols = {s: sympy.Symbol(s) for s in values}
+    symbols = {s: Symbol(s) for s in values}
 
     # Get expression
     expr = to_sympy(str_expr, list(values.values()))
@@ -119,7 +120,7 @@ def substitute(str_expr: str, values: Dict[str, Union[float, str]]):
     return sub_expr
 
 
-def rate_expr_to_pysmt(expr: Union[str, sympy.Expr], state=None):
+def rate_expr_to_pysmt(expr: Union[str, Expr], state=None):
     env_symbols = get_env().formula_manager.symbols
     f = to_sympy(expr, [str(s) for s in env_symbols])
     p: FNode = sympy_to_pysmt(f)
@@ -147,17 +148,30 @@ def sympy_to_pysmt(expr):
         return sympy_to_pysmt_symbol(Symbol, expr, op_type=REAL)
     elif func.is_Pow:
         return sympy_to_pysmt_pow(expr)
-    elif isinstance(expr, sympy.exp):
+    elif isinstance(expr, exp):
         return Pow(sympy_to_pysmt_real(math.e), sympy_to_pysmt(expr.exp))
+    elif expr.is_Boolean:
+        return sympy_to_pysmt_op(And, expr)
+    elif func.is_Relational:
+        if func.rel_op == "<=":
+            return sympy_to_pysmt_op(LE, expr, explode=True)
+        elif func.rel_op == "<":
+            return sympy_to_pysmt_op(LT, expr, explode=True)
+        elif func.rel_op == ">=":
+            return sympy_to_pysmt_op(GE, expr, explode=True)
+        elif func.rel_op == ">":
+            return sympy_to_pysmt_op(GT, expr, explode=True)
+        elif func.rel_op == "==":
+            return sympy_to_pysmt_op(Equals, expr, explode=True)
     elif expr.is_constant():
         return sympy_to_pysmt_real(expr)
     else:
         raise Exception(f"Could not convert expression: {expr}")
 
 
-def sympy_to_pysmt_op(op, expr):
+def sympy_to_pysmt_op(op, expr, explode=False):
     terms = [sympy_to_pysmt(arg) for arg in expr.args]
-    return op(terms)
+    return op(*terms) if explode else op(terms)
 
 
 def sympy_to_pysmt_pow(expr):
@@ -174,13 +188,13 @@ def sympy_to_pysmt_real(expr, numerator_digits=6):
     ):
         # going from sympy to python to pysmt will lose precision
         # need to convert to a rational first
-        r_expr = sympy.Rational(expr)
+        r_expr = Rational(expr)
         return Div(Real(r_expr.numerator), Real(r_expr.denominator)).simplify()
     else:
         return Real(float(expr))
 
-    # rnd_expr = sympy.Float(expr, 5)
-    # r_expr = sympy.Rational(rnd_expr)
+    # rnd_expr = Float(expr, 5)
+    # r_expr = Rational(rnd_expr)
     # f_expr = Fraction(int(r_expr.numerator), int(r_expr.denominator))
 
     # max_denominator = math.pow(10, (len(str(r_expr.denominator)) - len(str(abs(r_expr.numerator)))) + max(numerator_digits, 1)+1)
@@ -202,16 +216,16 @@ def sympy_to_pysmt_symbol(op, expr, op_type=None):
 
 if __name__ == "__main__":
     symbols = {
-        "I": sympy.Symbol("I"),
-        "S": sympy.Symbol("S"),
-        "N": sympy.Symbol("N"),
+        "I": Symbol("I"),
+        "S": Symbol("S"),
+        "N": Symbol("N"),
     }
     exprs = [
         "I*S",
         "I*S*kappa*(beta_c + (-beta_c + beta_s)/(1 + exp(-k*(-t + t_0))))/N",
     ]
     for e in exprs:
-        f = sympy.sympify(e, symbols)
+        f = sympify(e, symbols)
         p: FNode = sympy_to_pysmt(f)
         print(f"Read: {e}")
         print(f"Sympy parsed: {f}")

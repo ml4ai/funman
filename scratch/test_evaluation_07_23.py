@@ -1,4 +1,3 @@
-import json
 import os
 import unittest
 from time import sleep
@@ -16,9 +15,13 @@ from funman.server.query import FunmanWorkRequest, FunmanWorkUnit
 from funman.server.storage import Storage
 from funman.server.worker import FunmanWorker
 
-RESOURCES = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../resources")
+RESOURCES = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "../resources"
+)
 
-out_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "out", "evaluation")
+out_dir = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "out", "evaluation"
+)
 
 
 models = {GeneratedPetrinet, GeneratedRegnet}
@@ -35,30 +38,30 @@ MIRA_PETRI_DIR = os.path.join(AMR_EXAMPLES_DIR, "petrinet", "mira")
 
 cases = [
     # 1. b. 0 days delay
-    # (
-    #     os.path.join(MIRA_PETRI_DIR, "models", "eval_scenario1_base.json"),
-    #     os.path.join(MIRA_PETRI_DIR, "requests", "eval_scenario1_base.json"),
-    # ),
+    (
+        os.path.join(MIRA_PETRI_DIR, "models", "eval_scenario1_base.json"),
+        os.path.join(MIRA_PETRI_DIR, "requests", "eval_scenario1_base.json"),
+    ),
     # S1 1.ii.1
     # (
     #     os.path.join(MIRA_PETRI_DIR, "models", "eval_scenario1_1_ii_1_init1.json"),
     #     os.path.join(MIRA_PETRI_DIR, "requests", "eval_scenario1_1_ii_1.json"),
     # ),
     # S1 2 # has issue with integer overflow due to sympy taylor series
-    (
-        os.path.join(MIRA_PETRI_DIR, "models", "eval_scenario1_1_ii_2.json"),
-        os.path.join(MIRA_PETRI_DIR, "requests", "eval_scenario1_1_ii_2.json"),
-    ),
+    # (
+    #     os.path.join(MIRA_PETRI_DIR, "models", "eval_scenario1_1_ii_2.json"),
+    #     os.path.join(MIRA_PETRI_DIR, "requests", "eval_scenario1_1_ii_2.json"),
+    # ),
     # S1 3
     # (
     #     os.path.join(MIRA_PETRI_DIR, "models", "eval_scenario1_1_ii_3.json"),
     #     os.path.join(MIRA_PETRI_DIR, "requests", "eval_scenario1_1_ii_3.json"),
     # ),
     # S1 3, advanced to t=75, parmsynth to separate (non)compliant
-    (
-        os.path.join(MIRA_PETRI_DIR, "models", "eval_scenario1_1_ii_3_t75.json"),
-        os.path.join(MIRA_PETRI_DIR, "requests", "eval_scenario1_1_ii_3_t75_ps.json"),
-    ),
+    # (
+    #     os.path.join(MIRA_PETRI_DIR, "models", "eval_scenario1_1_ii_3_t75.json"),
+    #     os.path.join(MIRA_PETRI_DIR, "requests", "eval_scenario1_1_ii_3_t75_ps.json"),
+    # ),
     # S3 base for CEIMS
     # (
     #     os.path.join(MIRA_PETRI_DIR, "models", "eval_scenario3_base.json"),
@@ -66,8 +69,8 @@ cases = [
     # ),
 ]
 
-if not os.path.exists(out_dir):
-    os.mkdir(out_dir)
+# if not os.path.exists(out_dir):
+#     os.mkdir(out_dir)
 
 
 class TestModels(unittest.TestCase):
@@ -88,7 +91,9 @@ class TestModels(unittest.TestCase):
     def get_model(self, model_file: str):
         for model in models:
             try:
-                m = _wrap_with_internal_model(pydantic.parse_file_as(model, model_file))
+                m = _wrap_with_internal_model(
+                    pydantic.parse_file_as(model, model_file)
+                )
                 return m
             except Exception as e:
                 pass
@@ -131,4 +136,4 @@ class TestModels(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    unittest.main()
+    unittest.main(module="test_evaluation_07_23")

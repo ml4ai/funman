@@ -1,8 +1,8 @@
-from functools import partial
 import json
 import logging
 import sys
 import threading
+from functools import partial
 from typing import Callable, Optional
 
 from pysmt.logics import QF_NRA
@@ -18,6 +18,9 @@ from funman.utils.smtlib_utils import smtlibscript_from_formula_list
 # import funman.search as search
 from .search import Search, SearchEpisode
 
+# from funman.utils.sympy_utils import sympy_to_pysmt, to_sympy
+
+
 l = logging.getLogger(__file__)
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 l.setLevel(logging.INFO)
@@ -31,12 +34,14 @@ class SMTCheck(Search):
         haltEvent: Optional[threading.Event] = None,
         resultsCallback: Optional[Callable[["ParameterSpace"], None]] = None,
     ) -> "SearchEpisode":
-        parameter_space = ParameterSpace(num_dimensions=problem.num_dimensions())
+        parameter_space = ParameterSpace(
+            num_dimensions=problem.num_dimensions()
+        )
         models = {}
         consistent = {}
-        for structural_configuration in problem._smt_encoder._timed_model_elements[
-            "configurations"
-        ]:
+        for (
+            structural_configuration
+        ) in problem._smt_encoder._timed_model_elements["configurations"]:
             l.info(f"Solving configuration: {structural_configuration}")
             problem._encode_timed(
                 structural_configuration["num_steps"],
@@ -104,9 +109,21 @@ class SMTCheck(Search):
                     layers=timepoints,
                 ),
                 problem._smt_encoder.box_to_smt(
-                    episode._initial_box().project(episode.problem.model_parameters())
+                    episode._initial_box().project(
+                        episode.problem.model_parameters()
+                    )
                 ),
             )
+            if episode.config.simplify_query:
+                formula = formula.substitute(
+                    problem._smt_encoder._timed_model_elements[
+                        "time_step_substitutions"
+                    ][0]
+                ).simplify()
+                # fs = to_sympy(formula.serialize(), ["beta"])
+                # from sympy import simplify, factor, cancel, nsimplify
+                # ps = sympy_to_pysmt(fs)
+
             s.add_assertion(formula)
             self.store_smtlib(
                 formula,

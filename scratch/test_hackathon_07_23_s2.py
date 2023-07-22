@@ -21,7 +21,9 @@ RESOURCES = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "../resources"
 )
 
-out_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "out", "hackathon")
+out_dir = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "out", "hackathon"
+)
 
 
 models = {GeneratedPetrinet, GeneratedRegnet}

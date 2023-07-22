@@ -31,7 +31,9 @@ class EncodedEncoder(Encoder):
         """
         if isinstance(model, EncodedModel):
             encoding = LayeredEncoding(
-                _layers=[(model._formula,list(model._formula.get_free_variables()))],
+                _layers=[
+                    (model._formula, list(model._formula.get_free_variables()))
+                ],
             )
             return encoding
         else:
