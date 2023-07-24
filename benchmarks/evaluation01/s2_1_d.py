@@ -55,7 +55,9 @@ class TestUseCases(TestUnitTests):
     def common_test_model(self, model_name: str):
         result = self.analyze_model(model_name)
 
-    def sidarthe_query_2_1_d(self, steps, init_values, bound=(1.0 / 3.0), step_size=1):
+    def sidarthe_query_2_1_d(
+        self, steps, init_values, bound=(1.0 / 3.0), step_size=1
+    ):
         query = QueryEncoded()
         query._formula = And(
             [

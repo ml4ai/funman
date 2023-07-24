@@ -69,7 +69,9 @@ class TestS21BUnitTest(TestUnitTests):
     ):
         initial = self.initial_state_sidarthe()
         scenario = self.make_scenario(
-            BilayerDynamics(json_graph=self.sidarthe_bilayer(self.models[model_name])),
+            BilayerDynamics(
+                json_graph=self.sidarthe_bilayer(self.models[model_name])
+            ),
             initial,
             self.bounds_sidarthe(),
             [],

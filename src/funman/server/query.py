@@ -305,7 +305,12 @@ class FunmanResults(BaseModel):
         return ax
 
     def plot(
-        self, points: List[Point], variables=None, log_y=False, max_time=None, **kwargs
+        self,
+        points: List[Point],
+        variables=None,
+        log_y=False,
+        max_time=None,
+        **kwargs
     ):
         """
         Plot the results in a matplotlib plot.

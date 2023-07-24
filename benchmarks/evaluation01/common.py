@@ -61,7 +61,9 @@ class TestUnitTests(unittest.TestCase):
         return j
 
     def sidarthe_bilayer(self, model: str = "Morrison_bilayer"):
-        return self.from_json(os.path.join(TestUnitTests.RESOURCES, "bilayer", model))
+        return self.from_json(
+            os.path.join(TestUnitTests.RESOURCES, "bilayer", model)
+        )
 
     def initial_state_sidarthe(self):
         init = self.from_json(
@@ -92,11 +94,15 @@ class TestUnitTests(unittest.TestCase):
                 And(
                     [
                         LE(
-                            Plus([Symbol(f"{v}_{i}", REAL) for v in init_values]),
+                            Plus(
+                                [Symbol(f"{v}_{i}", REAL) for v in init_values]
+                            ),
                             Real(1.0 + tolerance),
                         ),
                         GE(
-                            Plus([Symbol(f"{v}_{i}", REAL) for v in init_values]),
+                            Plus(
+                                [Symbol(f"{v}_{i}", REAL) for v in init_values]
+                            ),
                             Real(1.0 - tolerance),
                         ),
                         And(
@@ -142,7 +148,9 @@ class TestUnitTests(unittest.TestCase):
             query=query,
             parameters=[
                 StructureParameter(name="num_steps", lb=steps, ub=steps),
-                StructureParameter(name="step_size", lb=step_size, ub=step_size),
+                StructureParameter(
+                    name="step_size", lb=step_size, ub=step_size
+                ),
             ],
         )
         return scenario

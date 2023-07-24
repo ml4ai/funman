@@ -1,9 +1,9 @@
 import os
 import unittest
-from time import sleep
-from typing import Tuple
 from contextlib import contextmanager
+from time import sleep
 from timeit import default_timer
+from typing import Tuple
 
 import matplotlib.pyplot as plt
 import pydantic
@@ -47,11 +47,15 @@ cases = [
     # S1 base model ps for beta
     (
         os.path.join(MIRA_PETRI_DIR, "models", "eval_scenario1_base.json"),
-        os.path.join(MIRA_PETRI_DIR, "requests", "eval_scenario1_base_ps_beta.json"),
+        os.path.join(
+            MIRA_PETRI_DIR, "requests", "eval_scenario1_base_ps_beta.json"
+        ),
     ),
     # S1 1.ii.1
     (
-        os.path.join(MIRA_PETRI_DIR, "models", "eval_scenario1_1_ii_1_init1.json"),
+        os.path.join(
+            MIRA_PETRI_DIR, "models", "eval_scenario1_1_ii_1_init1.json"
+        ),
         os.path.join(MIRA_PETRI_DIR, "requests", "eval_scenario1_1_ii_1.json"),
     ),
     # S1 2 # has issue with integer overflow due to sympy taylor series
@@ -76,13 +80,17 @@ speedup_cases = [
     # > 10m
     (
         os.path.join(MIRA_PETRI_DIR, "models", "eval_scenario1_base.json"),
-        os.path.join(MIRA_PETRI_DIR, "requests", "eval_scenario1_base_baseline.json"),
+        os.path.join(
+            MIRA_PETRI_DIR, "requests", "eval_scenario1_base_baseline.json"
+        ),
         "Baseline",
     ),
     # mcts: no substitution, no query simplification
     (
         os.path.join(MIRA_PETRI_DIR, "models", "eval_scenario1_base.json"),
-        os.path.join(MIRA_PETRI_DIR, "requests", "eval_scenario1_base_mcts.json"),
+        os.path.join(
+            MIRA_PETRI_DIR, "requests", "eval_scenario1_base_mcts.json"
+        ),
         "MCTS",
     ),
     # mcts, substitution, no query simplification
@@ -117,7 +125,9 @@ class TestModels(unittest.TestCase):
             elapser = None
 
     def test_scenario1_base_consistency_speedups(self):
-        case_out_dir = os.path.join(out_dir, "scenario1_base_consistency_speedup")
+        case_out_dir = os.path.join(
+            out_dir, "scenario1_base_consistency_speedup"
+        )
         time_results = {}
         for case in speedup_cases:
             print(f"Solving Case: {case}")
@@ -138,7 +148,9 @@ class TestModels(unittest.TestCase):
         tp = results.parameter_space.true_points[0]
         fig, ax = plt.subplots()
         ax = results.plot([tp], variables=["S", "E", "H", "D", "I", "R"])
-        plt.savefig(os.path.join(case_out_dir, "scenario1_base_consistency_point.png"))
+        plt.savefig(
+            os.path.join(case_out_dir, "scenario1_base_consistency_point.png")
+        )
 
     @unittest.skip(reason="tmp")
     def test_scenario1_base_ps_beta(self):
@@ -147,7 +159,9 @@ class TestModels(unittest.TestCase):
         results = self.run_test_case(case, case_out_dir)
 
         ParameterSpacePlotter(
-            results.parameter_space, plot_points=True, parameters=["beta", "num_steps"]
+            results.parameter_space,
+            plot_points=True,
+            parameters=["beta", "num_steps"],
         ).plot(show=False)
         plt.savefig(f"{case_out_dir}/scenario1_base_ps_beta_space.png")
 
@@ -196,7 +210,13 @@ class TestModels(unittest.TestCase):
         ParameterSpacePlotter(
             results.parameter_space,
             plot_points=True,
-            parameters=["eps_m_0", "eps_m_1", "eps_m_2", "eps_m_3", "num_steps"],
+            parameters=[
+                "eps_m_0",
+                "eps_m_1",
+                "eps_m_2",
+                "eps_m_3",
+                "num_steps",
+            ],
         ).plot(show=False)
         plt.savefig(f"{case_out_dir}/scenario1_3_ps_strat_eps_space.png")
 
