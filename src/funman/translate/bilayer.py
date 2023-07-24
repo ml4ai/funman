@@ -37,6 +37,8 @@ from funman.model.model import Model
 from funman.representation import ModelParameter
 from funman.representation.representation import Box, Interval
 from funman.translate import Encoder, Encoding, EncodingOptions
+from funman.translate.simplifier import FUNMANSimplifier
+from funman.utils.sympy_utils import to_sympy
 
 l = logging.Logger(__name__)
 
@@ -75,11 +77,14 @@ class BilayerEncoder(Encoder):
         time_dependent_parameters=None,
         substitutions=None,
     ) -> Tuple[FNode, Dict[FNode, FNode]]:
-        transition = self._encode_bilayer(
-            scenario.model.bilayer,
-            [step, next_step],
+        transition, substitutions = self._encode_bilayer_timepoint(
+            scenario,
+            step,
+            next_step,
             time_dependent_parameters=time_dependent_parameters,
+            substitutions=substitutions,
         )
+
         if scenario.model.measurements:
             measurements = self._encode_measurements(
                 scenario.model.measurements, [step + next_step]
@@ -87,7 +92,7 @@ class BilayerEncoder(Encoder):
         else:
             measurements = TRUE()
 
-        return And(transition, measurements).simplify(), {}
+        return And(transition, measurements).simplify(), substitutions
 
     def _encode_untimed_constraints(
         self, scenario: "AnalysisScenario"
@@ -307,31 +312,15 @@ class BilayerEncoder(Encoder):
         )
         return observable_defs
 
-    def _encode_bilayer(
-        self, bilayer, timepoints, time_dependent_parameters=False
-    ):
-        ans = simplify(
-            And(
-                [
-                    self._encode_bilayer_timepoint(
-                        bilayer,
-                        timepoints[i],
-                        timepoints[i + 1],
-                        time_dependent_parameters=time_dependent_parameters,
-                    )
-                    for i in range(len(timepoints) - 1)
-                ]
-            )
-        )
-        return ans
-
     def _encode_bilayer_timepoint(
         self,
-        bilayer,
+        scenario,
         timepoint,
         next_timepoint,
         time_dependent_parameters=False,
+        substitutions={},
     ):
+        bilayer = scenario.model.bilayer
         ## Calculate time step size
         time_step_size = next_timepoint - timepoint
         eqns = (
@@ -404,35 +393,56 @@ class BilayerEncoder(Encoder):
             )
             # noise = Symbol(f"noise_{state_var_next_step_smt}", REAL)
             # self._timed_symbols.add(f"{noise}".rsplit("_", 1)[0])
-            eqn = simplify(
-                And(
-                    LE(
-                        state_var_next_step_smt,
-                        Plus(
-                            state_var_smt,
-                            Times(
-                                Real(time_step_size),
-                                Minus(pos_terms, neg_terms),
+            if self.config.constraint_noise != 0.0:
+                eqn = simplify(
+                    And(
+                        LE(
+                            state_var_next_step_smt,
+                            Plus(
+                                state_var_smt,
+                                Times(
+                                    Real(time_step_size),
+                                    Minus(pos_terms, neg_terms),
+                                ),
+                                Real(self.config.constraint_noise),
                             ),
-                            Real(self.config.constraint_noise),
                         ),
-                    ),
-                    GE(
-                        state_var_next_step_smt,
-                        Plus(
-                            state_var_smt,
-                            Times(
-                                Real(time_step_size),
-                                Minus(pos_terms, neg_terms),
+                        GE(
+                            state_var_next_step_smt,
+                            Plus(
+                                state_var_smt,
+                                Times(
+                                    Real(time_step_size),
+                                    Minus(pos_terms, neg_terms),
+                                ),
+                                Real(-self.config.constraint_noise),
                             ),
-                            Real(-self.config.constraint_noise),
                         ),
-                    ),
+                    )
                 )
-            )
+            else:
+                rhs = Plus(
+                    state_var_smt,
+                    Times(
+                        Real(time_step_size),
+                        Minus(pos_terms, neg_terms),
+                    ),
+                ).simplify()
+                if self.config.substitute_subformulas:
+                    rhs = FUNMANSimplifier.sympy_simplify(
+                        to_sympy(
+                            rhs, [str(s) for s in rhs.get_free_variables()]
+                        ),
+                        parameters=scenario.parameters,
+                        substitutions=substitutions,
+                    )
+
+                eqn = Equals(state_var_next_step_smt, rhs)
+                substitutions[state_var_next_step_smt] = rhs
+
             # print(eqn)
             eqns.append(eqn)
-        return And(eqns)
+        return And(eqns), substitutions
 
     def _encode_bilayer_node(self, node, timepoint=None):
         if not isinstance(node, BilayerNode):

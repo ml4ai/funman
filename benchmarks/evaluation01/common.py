@@ -30,7 +30,10 @@ from funman.funman import FUNMANConfig
 from funman.model import QueryLE
 from funman.model.bilayer import BilayerDynamics, BilayerGraph, BilayerModel
 from funman.model.query import QueryEncoded, QueryTrue
-from funman.representation.representation import ModelParameter
+from funman.representation.representation import (
+    ModelParameter,
+    StructureParameter,
+)
 from funman.scenario import ConsistencyScenario, ConsistencyScenarioResult
 from funman.scenario.parameter_synthesis import ParameterSynthesisScenario
 from funman.scenario.scenario import AnalysisScenario
@@ -124,6 +127,7 @@ class TestUnitTests(unittest.TestCase):
         parameter_bounds,
         identical_parameters,
         steps,
+        step_size,
         query,
         extra_constraints=None,
     ):
@@ -134,8 +138,14 @@ class TestUnitTests(unittest.TestCase):
             identical_parameters=identical_parameters,
         )
         model._extra_constraints = extra_constraints
+        parameters = [
+            StructureParameter(name="num_steps", lb=steps, ub=steps),
+            StructureParameter(name="step_size", lb=step_size, ub=step_size),
+        ]
 
-        scenario = ConsistencyScenario(model=model, query=query)
+        scenario = ConsistencyScenario(
+            model=model, query=query, parameters=parameters
+        )
         return scenario
 
     def make_ps_scenario(
@@ -167,7 +177,7 @@ class TestUnitTests(unittest.TestCase):
         return scenario
 
     def report(self, result: AnalysisScenario, name):
-        if result.consistent:
+        if result.consistent is not None:
             parameters = result._parameters()
 
             res = pd.Series(name=name, data=parameters).to_frame().T

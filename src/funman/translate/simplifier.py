@@ -66,8 +66,8 @@ class FUNMANSimplifier(pysmt.simplifier.Simplifier):
             arg: 0
             for arg in formula.args
             if (
-                Abs(N(arg, subs=lb_values)) < threshold
-                and Abs(N(arg, subs=ub_values)) < threshold
+                bool(Abs(N(arg, subs=lb_values)) < threshold)
+                and bool(Abs(N(arg, subs=ub_values)) < threshold)
             )
         }
         # minimum_term_value = min(tm for arg, tm in term_magnitude.items()) if len(term_magnitude) > 0 else None
@@ -106,6 +106,7 @@ class FUNMANSimplifier(pysmt.simplifier.Simplifier):
         parameters: List[ModelParameter] = [],
         substitutions: Dict[FNode, FNode] = {},
         threshold: float = 1e-4,
+        taylor_series_order=None,
     ):
         # substitutions are FNodes
         # transition terms are sympy.Expr
@@ -131,7 +132,7 @@ class FUNMANSimplifier(pysmt.simplifier.Simplifier):
         # var_map = {}
         psymbols = [replace_reserved(p.name) for p in parameters]
         sympy_subs = {
-            symbols(str(s)): to_sympy(v.serialize(), psymbols)
+            symbols(str(s)): to_sympy(v, psymbols)
             for s, v in substitutions.items()
             if symbols(str(s)) in formula.free_symbols
         }
@@ -145,22 +146,25 @@ class FUNMANSimplifier(pysmt.simplifier.Simplifier):
         # )
         expanded_formula = formula.subs(sympy_subs)
 
-        series_expanded_formula = series_approx(
-            expanded_formula, list(expanded_formula.free_symbols)
-        )
+        f = expanded_formula
+        if taylor_series_order is None:
+            pass
+        else:
+            f = series_approx(
+                f,
+                list(expanded_formula.free_symbols, order=taylor_series_order),
+            )
 
         # expanded_formula = expand(sympy_formula)
 
         # print(expanded_formula)
-        approx_formula = FUNMANSimplifier.approximate(
-            series_expanded_formula, parameters, threshold=threshold
-        )
 
-        # factored_formula = nsimplify(approx_formula, tolerance=1e-10)
-        # simp_approx_formula = simplify(approx_formula)
-        # f = sympy_to_pysmt(simp_approx_formula)
-        # N_approx_formula = nsimplify(approx_formula, rational=True)
-        f = sympy_to_pysmt(approx_formula)
+        if threshold > 0:
+            f = FUNMANSimplifier.approximate(
+                f, parameters, threshold=threshold
+            )
+
+        f = sympy_to_pysmt(f)
 
         # print(f.serialize())
         return f

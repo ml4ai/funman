@@ -8,6 +8,7 @@ from typing import Dict, List
 
 from pydantic import BaseModel
 from pysmt.formula import FNode
+from pysmt.shortcuts import REAL, Div, Plus, Real, Symbol
 
 from funman.representation.representation import ModelParameter
 
@@ -52,9 +53,14 @@ class Model(ABC, BaseModel):
         else:
             value = None
 
+        if isinstance(value, str):
+            value = Symbol(value, REAL)
+        else:
+            value = Real(value)
+
         if value and normalize:
             norm = self.normalization()
-            value = str(f"{value}/({norm})")
+            value = Div(value, norm)
         return value
 
     def variables(self, include_next_state=False):
@@ -74,12 +80,12 @@ class Model(ABC, BaseModel):
     def normalization(self):
         if self._norm is None and self._normalize:
             compartments = [
-                str(self._get_init_value(v, normalize=False))
+                self._get_init_value(v, normalize=False)
                 for v in self._state_var_names()
             ]
 
-            norm_str = "+".join(compartments)
-            self._norm = norm_str
+            norm = Plus(compartments)
+            self._norm = norm
         elif self._norm is None and not self._normalize:
             self._norm = "1"
         return self._norm

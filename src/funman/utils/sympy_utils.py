@@ -5,6 +5,7 @@ from typing import Dict, List, Union
 
 import pysmt.operators as op
 import pysmt.typing as types
+import sympy
 from pysmt.formula import FNode, FormulaManager
 from pysmt.shortcuts import (
     GE,
@@ -15,18 +16,48 @@ from pysmt.shortcuts import (
     And,
     Div,
     Equals,
-    Minus,
     Plus,
     Pow,
     Real,
     Symbol,
-    Times,
     get_env,
 )
-from sympy import Expr, Rational, Symbol, exp, series, symbols, sympify
+from pysmt.walkers import IdentityDagWalker
+from sympy import Add, Expr, Rational, exp, series, symbols, sympify
 
 l = logging.getLogger(__name__)
 l.setLevel(logging.INFO)
+
+
+class SympySerializer(IdentityDagWalker):
+    def __init__(self):
+        super().__init__(invalidate_memoization=True)
+
+    def to_sympy(self, f: FNode) -> Expr:
+        try:
+            result = self.walk(f)
+            return result
+        except Exception as e:
+            print(f"Could not convert {f} to sympy expression: {e}")
+
+    def walk_plus(self, formula, args, **kwargs) -> Expr:
+        terms = [a for a in args]
+        return Add(*terms)
+
+    def walk_minus(self, formula, args, **kwargs) -> Expr:
+        return Add(args[0], -args[1])
+
+    def walk_times(self, formula, args, **kwargs) -> Expr:
+        return sympy.Mul(*[a for a in args])
+
+    def walk_symbol(self, formula, args, **kwargs):
+        return sympy.Symbol(formula.symbol_name())
+
+    def walk_real_constant(self, formula, args, **kwargs):
+        return formula.constant_value()
+
+    def walk_div(self, formula, args, **kwargs):
+        return sympify(args[0] / args[1])
 
 
 class FUNMANFormulaManager(FormulaManager):
@@ -68,10 +99,10 @@ class FUNMANFormulaManager(FormulaManager):
         return self.create_node(node_type=op.POW, args=(base, exponent))
 
 
-def series_approx(expr: Expr, vars: List[Symbol] = []) -> Expr:
+def series_approx(expr: Expr, vars: List[Symbol] = [], order=4) -> Expr:
     sympy_symbols = [symbols(str(v)) for v in vars]
     series_expr = reduce(
-        lambda v1, v2: series(v1, v2, n=3).removeO(), sympy_symbols, expr
+        lambda v1, v2: series(v1, v2, n=order).removeO(), sympy_symbols, expr
     )
     return series_expr
 
@@ -95,12 +126,13 @@ def replace_reserved(str_expr):
 
 
 def to_sympy(
-    str_expr: str,
+    formula: FNode,
     str_symbols: List[str],
 ) -> Expr:
-    unreserved_symbols = [replace_reserved(s) for s in str_symbols]
-    clean_expr = replace_reserved(str_expr)
-    expr = sympify(clean_expr, {s: symbols(s) for s in unreserved_symbols})
+    # unreserved_symbols = [replace_reserved(s) for s in str_symbols]
+    # clean_expr = replace_reserved(str_expr)
+    # expr = sympify(clean_expr, {s: symbols(s) for s in unreserved_symbols})
+    expr = SympySerializer().to_sympy(formula)
     return expr
 
 

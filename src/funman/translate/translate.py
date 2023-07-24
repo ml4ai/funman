@@ -500,11 +500,7 @@ class Encoder(ABC, BaseModel):
         init_term = None
         substitution = ()
 
-        if (
-            isinstance(value, float)
-            or isinstance(value, int)
-            or isinstance(value, str)
-        ):
+        if isinstance(value, FNode):
             value_expr = sympy_to_pysmt(to_sympy(value, model._symbols()))
             if self.config.substitute_subformulas and substitutions:
                 value_expr = value_expr.substitute(substitutions).simplify()
@@ -766,7 +762,7 @@ class Encoder(ABC, BaseModel):
     def _normalize(self, value):
         return sympy_to_pysmt(
             to_sympy(
-                f"{value}/({self._scenario.model.normalization()})",
+                Div(value, self._scenario.model.normalization()),
                 self._scenario.model._symbols(),
             )
         )

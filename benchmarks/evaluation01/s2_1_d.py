@@ -122,6 +122,7 @@ class TestUseCases(TestUnitTests):
             bounds,
             [],
             self.steps,
+            self.step_size,
             query,
             extra_constraints=extra_constraints,
         )

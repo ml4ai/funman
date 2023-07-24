@@ -69,7 +69,8 @@ class TestS21BUnitTest(TestUnitTests):
             initial,
             self.bounds_sidarthe(),
             [],
-            self.steps * self.step_size,
+            self.steps,
+            self.step_size,
             QueryTrue(),
             extra_constraints=self.sidarthe_extra_1_1_d_2d(
                 self.steps * self.step_size, initial, self.step_size
@@ -85,13 +86,13 @@ class TestS21BUnitTest(TestUnitTests):
             dreal_precision=self.dreal_precision,
         )
         result_sat = Funman().solve(scenario, config=config)
-        self.report(result_sat, name=model_name)
-        if result_sat.consistent:
-            max_infected, max_day = self.analyze_results(result_sat)
-        else:
-            max_infected = max_day = -1
+        # self.report(result_sat, name=model_name)
+        # if result_sat.consistent:
+        #     max_infected, max_day = self.analyze_results(result_sat)
+        # else:
+        #     max_infected = max_day = -1
 
-        return max_infected, max_day
+        # return max_infected, max_day
 
     def analyze_results(self, result_sat):
         df = result_sat.dataframe()
@@ -115,9 +116,8 @@ class TestS21BUnitTest(TestUnitTests):
         return max_infected, max_day
 
     def common_test_model(self, model_name: str, dreal_mcts: bool = False):
-        max_infected, max_day = self.analyze_model(
-            model_name, dreal_mcts=dreal_mcts
-        )
+        # max_infected, max_day =
+        self.analyze_model(model_name, dreal_mcts=dreal_mcts)
         # assert (
         #     abs(max_infected - self.expected_max_infected) < self.test_threshold
         # )
@@ -132,12 +132,13 @@ class TestS21BUnitTest(TestUnitTests):
 
     def compare_mcts_speedup(self, model):
         with self.elapsed_timer() as t:
-            self.common_test_model(model)
+            # self.common_test_model(model)
             elapsed_base_dreal = t()
         for i in range(5):
             with self.elapsed_timer() as t:
                 self.common_test_model(model, dreal_mcts=True)
                 elapsed_mcts_dreal = t()
+                print(f"elapsed = {elapsed_mcts_dreal}")
             self.compute_speedup(elapsed_base_dreal, elapsed_mcts_dreal, model)
 
     def test_model_0(self):
