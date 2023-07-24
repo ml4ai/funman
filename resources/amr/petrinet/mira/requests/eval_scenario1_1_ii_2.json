@@ -1,5 +1,8 @@
 {
-  "query": {},
+  "query": {
+    "variable": "I",
+    "ub": 5e5
+  },
   "parameters": [
     {
       "name": "t_0",
@@ -12,7 +15,7 @@
     {
       "name": "num_steps",
       "lb": 0,
-      "ub": 50,
+      "ub": 100,
       "label": "all"
     },
     {

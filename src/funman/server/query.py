@@ -194,7 +194,7 @@ class FunmanResults(BaseModel):
 
             if interpolate:
                 df = df.interpolate(method=interpolate)
-            if time_var:
+            if time_var and any("timer_t" in x for x in df.columns):
                 df = (
                     df.rename(columns={"timer_t": "time"})
                     .set_index("time", drop=True)
@@ -305,12 +305,7 @@ class FunmanResults(BaseModel):
         return ax
 
     def plot(
-        self,
-        point: Point,
-        variables=None,
-        log_y=False,
-        max_time=None,
-        **kwargs
+        self, points: List[Point], variables=None, log_y=False, max_time=None, **kwargs
     ):
         """
         Plot the results in a matplotlib plot.
@@ -321,7 +316,7 @@ class FunmanResults(BaseModel):
             failure if scenario is not consistent.
         """
 
-        df = self.dataframe(point, max_time=max_time)
+        df = self.dataframe(points, max_time=max_time)
 
         if variables is not None:
             ax = df[variables].plot(marker="o", **kwargs)
