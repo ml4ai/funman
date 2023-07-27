@@ -1,3 +1,4 @@
+from typing import List
 from pydantic import Extra
 from pysmt.formula import FNode
 from pysmt.shortcuts import TRUE
@@ -30,3 +31,6 @@ class EncodedModel(Model):
         from funman.translate.encoded import EncodedEncoder
 
         return EncodedEncoder(config=config, scenario=scenario)
+
+    def _parameter_names(self) -> List[str]:
+        return None

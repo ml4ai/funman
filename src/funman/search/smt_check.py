@@ -65,7 +65,7 @@ class SMTCheck(Search):
 
             result_dict = result.to_dict() if result else None
             l.info(f"Result: {json.dumps(result_dict, indent=4)}")
-            if result_dict:
+            if result_dict is not None:
                 parameter_values = {
                     k: v
                     for k, v in result_dict.items()
@@ -125,12 +125,13 @@ class SMTCheck(Search):
                 # ps = sympy_to_pysmt(fs)
 
             s.add_assertion(formula)
-            self.store_smtlib(
-                formula,
-                filename=f"dbg_steps{episode.structural_configuration['num_steps']}_ssize{episode.structural_configuration['step_size']}.smt2",
-            )
+            if episode.config.save_smtlib:
+                self.store_smtlib(
+                    formula,
+                    filename=f"dbg_steps{episode.structural_configuration['num_steps']}_ssize{episode.structural_configuration['step_size']}.smt2",
+                )
             result = s.solve()
-            print(episode.structural_configuration)
+            # print(episode.structural_configuration)
             if result:
                 result = s.get_model()
         return result

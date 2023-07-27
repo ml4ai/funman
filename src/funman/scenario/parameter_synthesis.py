@@ -223,7 +223,7 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
     def encode_simplified(self, box: Box, timepoint: int):
         model_encoding = self._model_encoding.encoding(
             self._model_encoding._encoder.encode_model_layer,
-            layers=[timepoint],
+            layers=list(range(timepoint+1)),
             box=box,
         )
         query_encoding = self._query_encoding.encoding(

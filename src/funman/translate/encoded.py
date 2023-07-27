@@ -31,9 +31,11 @@ class EncodedEncoder(Encoder):
         """
         if isinstance(model, EncodedModel):
             encoding = LayeredEncoding(
+                step_size=1,
                 _layers=[
                     (model._formula, list(model._formula.get_free_variables()))
                 ],
+                _encoder=self
             )
             return encoding
         else:
@@ -43,6 +45,9 @@ class EncodedEncoder(Encoder):
 
     def _encode_timed_model_elements(self, scenario: "AnalysisScenario"):
         pass
+
+    def encode_model_layer(self, layer_idx: int, step_size: int = None):
+        return self.encode_model(self._scenario.model)
 
     def encode_model_timed(
         self, scenario: "AnalysisScenario", num_steps: int, step_size: int

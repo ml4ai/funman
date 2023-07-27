@@ -79,7 +79,7 @@ class FUNMANConfig(BaseModel):
     """ Series approximation threshold for dropping series terms """
     series_approximation_threshold = 0
     """ Generate profiling output"""
-    profile = True
+    profile = False
     """ Use Taylor series of given order to approximate transition function, if None, then do not compute series """
     taylor_series_order: int = None
 

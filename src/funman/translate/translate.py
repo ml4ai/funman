@@ -20,6 +20,7 @@ from pysmt.shortcuts import (
     Real,
     Symbol,
     get_env,
+    Div
 )
 from pysmt.solvers.solver import Model as pysmtModel
 
@@ -775,7 +776,7 @@ class Encoder(ABC, BaseModel):
             layer_idx
         ]
         if normalize:
-            ub = self._normalize(query.ub)
+            ub = self._normalize(Real(query.ub))
         else:
             ub = Real(query.ub)
         q = LE(

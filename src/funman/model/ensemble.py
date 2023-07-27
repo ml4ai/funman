@@ -3,7 +3,7 @@ from typing import Dict, List, Tuple
 import graphviz
 
 from funman.representation import ModelParameter
-
+from pysmt.shortcuts import Real, REAL, Symbol, Div
 from .model import Model
 
 
@@ -40,9 +40,14 @@ class EnsembleModel(Model):
     def _get_init_value(self, var: str, normalize=True):
         (m_name, orig_var) = self._var_name_map[var]
         value = self._model_name_map[m_name].init_values[orig_var]
+        if isinstance(value, str):
+            value = Symbol(value, REAL)
+        else:
+            value = Real(value)
+
         if normalize:
             norm = self.normalization()
-            value = f"{value}/({norm})"
+            value = Div(value, norm)
         return value
 
     def _state_vars(self):

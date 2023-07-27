@@ -55,10 +55,10 @@ class Model(ABC, BaseModel):
 
         if isinstance(value, str):
             value = Symbol(value, REAL)
-        else:
+        elif isinstance(value, float):
             value = Real(value)
 
-        if value and normalize:
+        if value is not None and normalize:
             norm = self.normalization()
             value = Div(value, norm)
         return value
@@ -84,10 +84,10 @@ class Model(ABC, BaseModel):
                 for v in self._state_var_names()
             ]
 
-            norm = Plus(compartments)
+            norm = Plus(compartments).simplify()
             self._norm = norm
         elif self._norm is None and not self._normalize:
-            self._norm = "1"
+            self._norm = Real(1)
         return self._norm
 
     def _is_normalized(self, var: str):
@@ -98,7 +98,7 @@ class Model(ABC, BaseModel):
             return False
 
     def _parameters(self) -> List[ModelParameter]:
-        param_names = self._parameter_names()
+        param_names = self._parameter_names() 
         param_values = self._parameter_values()
 
         # Get Parameter Bounds in FunmanModel (potentially wrapping an AMR model),
@@ -113,7 +113,7 @@ class Model(ABC, BaseModel):
             if self.parameter_bounds
             # and p not in param_values
             and p in self.parameter_bounds and self.parameter_bounds[p]
-        ]
+        ] if param_names else []
 
         # Get values from wrapped model if not overridden by outer model
 
@@ -129,7 +129,7 @@ class Model(ABC, BaseModel):
             )
             for p in param_names
             if p in param_values and p not in self.parameter_bounds
-        ]
+        ] if param_names else []
 
         return params
 

@@ -1,9 +1,15 @@
+import datetime
+from functools import partial
+import json
+from typing import Dict, Union
 import unittest
 from contextlib import contextmanager
 from timeit import default_timer
-
+from interruptingcow import timeout
+import os
 import matplotlib.pyplot as plt
-from common import TestUnitTests
+
+from funman.benchmarks.evaluation01.evaluation1 import TestUnitTests
 from pysmt.shortcuts import (
     GE,
     GT,
@@ -26,14 +32,50 @@ from funman.model.bilayer import BilayerDynamics
 from funman.model.query import QueryTrue
 
 
+out_dir = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "out"
+)
+if not os.path.exists(out_dir):
+    os.mkdir(out_dir)
+
 class TestS21BUnitTest(TestUnitTests):
-    steps = 5
+    steps = 50
     step_size = 2
     dreal_precision = 1e-3
     expected_max_infected = 0.6
     test_threshold = 0.1
     expected_max_day = 47
     test_max_day_threshold = 25
+    test_timeout = 600
+    out_file = os.path.join(out_dir, "results.json")
+
+    cases = [{
+        "dreal_mcts": dreal_mcts, 
+        "substitute_subformulas": substitute_subformulas, 
+        "simplify_query": simplify_query,  
+        "series_approximation_threshold": series_approximation_threshold,
+         "taylor_series_order": taylor_series_order
+         } for dreal_mcts in [True, False] for substitute_subformulas in [True, False] for simplify_query in [True, False] for series_approximation_threshold in [1e-1, 1e-3, 1e-5] for taylor_series_order in [1, 3, 5]]
+    # [
+    #     {"dreal_mcts": False, "substitute_subformulas": False, "simplify_query": False,  "series_approximation_threshold": 1e-5,
+    #      "taylor_series_order": 5},
+    #     {"dreal_mcts": True, "substitute_subformulas": False, "simplify_query": False,  "series_approximation_threshold": 1e-5,
+    #      "taylor_series_order": 5},
+    #     {"dreal_mcts": True, "substitute_subformulas": True, "simplify_query": False,  "series_approximation_threshold": 1e-5,
+    #      "taylor_series_order": 5},
+    #      {"dreal_mcts": True, "substitute_subformulas": True, "simplify_query": True,  "series_approximation_threshold": 1e-5,
+    #      "taylor_series_order": 5},
+    #     {"dreal_mcts": True, "substitute_subformulas": True, "simplify_query": True,  "series_approximation_threshold": 1e-3,
+    #      "taylor_series_order": 5},
+    #      {"dreal_mcts": True, "substitute_subformulas": True, "simplify_query": True,  "series_approximation_threshold": 1e-1,
+    #      "taylor_series_order": 5},
+    #     {"dreal_mcts": True, "substitute_subformulas": True, "simplify_query": True,  "series_approximation_threshold": 1e-5,
+    #      "taylor_series_order": 3},
+    #     {"dreal_mcts": True, "substitute_subformulas": True, "simplify_query": True,  "series_approximation_threshold": 1e-5,
+    #      "taylor_series_order": 3},
+    #     {"dreal_mcts": True, "substitute_subformulas": True, "simplify_query": True,  "series_approximation_threshold": 1e-5,
+    #      "taylor_series_order": 1},
+    # ]
 
     s2_models = [
         "Mosaphir_petri_to_bilayer",
@@ -44,14 +86,6 @@ class TestS21BUnitTest(TestUnitTests):
 
     speedups = {m: [] for m in s2_models}
 
-    @contextmanager
-    def elapsed_timer(self):
-        start = default_timer()
-        elapser = lambda: default_timer() - start
-        try:
-            yield elapser
-        finally:
-            elapser = None
 
     def sidarthe_extra_1_1_d_2d(self, steps, init_values, step_size=1):
         return And(
@@ -63,10 +97,9 @@ class TestS21BUnitTest(TestUnitTests):
     def analyze_model(
         self,
         model_name: str,
-        dreal_mcts: bool = False,
-        substitute_subformulas: bool = False,
-        simplify_query: bool = False,
+        options: Dict[str, Union[bool, str]]
     ):
+        
         initial = self.initial_state_sidarthe()
         scenario = self.make_scenario(
             BilayerDynamics(
@@ -88,12 +121,10 @@ class TestS21BUnitTest(TestUnitTests):
             solver="dreal",
             initial_state_tolerance=0.0,
             save_smtlib=True,
-            dreal_mcts=dreal_mcts,
-            dreal_precision=self.dreal_precision,
-            substitute_subformulas=substitute_subformulas,
-            simplify_query=simplify_query,
+            **options
         )
         result_sat = Funman().solve(scenario, config=config)
+        return result_sat
         # self.report(result_sat, name=model_name)
         # if result_sat.consistent:
         #     max_infected, max_day = self.analyze_results(result_sat)
@@ -126,16 +157,18 @@ class TestS21BUnitTest(TestUnitTests):
     def common_test_model(
         self,
         model_name: str,
-        dreal_mcts: bool = False,
-        substitute_subformulas: bool = False,
-        simplify_query: bool = False,
+        options: Dict[str, Union[bool, str]]
     ):
-        max_infected, max_day = self.analyze_model(
-            model_name,
-            dreal_mcts=dreal_mcts,
-            substitute_subformulas=substitute_subformulas,
-            simplify_query=simplify_query,
-        )
+        result = self.analyze_model(model_name,options)
+        return result
+
+
+        # max_infected, max_day = self.analyze_model(
+        #     model_name,
+        #     dreal_mcts=dreal_mcts,
+        #     substitute_subformulas=substitute_subformulas,
+        #     simplify_query=simplify_query,
+        # )
         # assert (
         #     abs(max_infected - self.expected_max_infected) < self.test_threshold
         # )
@@ -150,7 +183,7 @@ class TestS21BUnitTest(TestUnitTests):
 
     def compare_mcts_speedup(self, model):
         with self.elapsed_timer() as t:
-            # self.common_test_model(model)
+            self.common_test_model(model)
             elapsed_base_dreal = t()
         for i in range(5):
             with self.elapsed_timer() as t:
@@ -159,18 +192,27 @@ class TestS21BUnitTest(TestUnitTests):
                 print(f"elapsed = {elapsed_mcts_dreal}")
             self.compute_speedup(elapsed_base_dreal, elapsed_mcts_dreal, model)
 
+
+        
+
+
+
     def test_model_0(self):
-        self.compare_mcts_speedup(self.s2_models[0])
+        
+        run_case_fn = partial(self.common_test_model, self.s2_models[0])
+        self.run_cases(run_case_fn, self.cases)
 
-    @unittest.expectedFailure
-    def test_model_1(self):
-        self.compare_mcts_speedup(self.s2_models[1])
 
-    def test_model_2(self):
-        self.compare_mcts_speedup(self.s2_models[2])
 
-    def test_model_3(self):
-        self.compare_mcts_speedup(self.s2_models[3])
+    # @unittest.expectedFailure
+    # def test_model_1(self):
+    #     self.compare_mcts_speedup(self.s2_models[1])
+
+    # def test_model_2(self):
+    #     self.compare_mcts_speedup(self.s2_models[2])
+
+    # def test_model_3(self):
+    #     self.compare_mcts_speedup(self.s2_models[3])
 
     @classmethod
     def tearDownClass(cls):

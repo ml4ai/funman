@@ -11,7 +11,7 @@ from funman.utils.sympy_utils import substitute, to_sympy
 from .generated_models.petrinet import Model as GeneratedPetrinet
 from .generated_models.petrinet import State, Transition
 from .model import Model
-
+from pysmt.shortcuts import REAL, Div, Plus, Real, Symbol
 
 class AbstractPetriNetModel(Model):
     def _num_flow_from_state_to_transition(
@@ -182,7 +182,7 @@ class GeneratedPetriNetModel(AbstractPetriNetModel):
             symbols += [self._time_var().id]
         return symbols
 
-    def _get_init_value(self, var: str, normalize=True):
+    def _get_init_value(self, var: str, normalize:bool=True):
         value = Model._get_init_value(self, var)
         if value is None:
             if hasattr(self.petrinet.semantics, "ode"):
@@ -190,15 +190,15 @@ class GeneratedPetriNetModel(AbstractPetriNetModel):
                 value = next(i.expression for i in initials if i.target == var)
                 try:
                     # Attempt to convert to a constant, if fail then its a string
-                    value = float(value)
+                    value = Real(float(value))
                 except:
                     pass
             else:
-                value = f"{var}0"
+                value = Symbol(f"{var}0", REAL)
 
         if normalize:
             norm = self.normalization()
-            value = str(f"{value}/({norm})")
+            value = Div(value, norm)
 
         return value
 

@@ -1,3 +1,5 @@
+import datetime
+from functools import partial
 import json
 import os
 import textwrap
@@ -25,7 +27,7 @@ from pysmt.shortcuts import (
 
 from funman import Funman
 from funman.funman import FUNMANConfig
-
+from interruptingcow import timeout
 # from funman.funman import FUNMANConfig
 from funman.model import QueryLE
 from funman.model.bilayer import BilayerDynamics, BilayerGraph, BilayerModel
@@ -39,11 +41,11 @@ from funman.scenario.parameter_synthesis import ParameterSynthesisScenario
 from funman.scenario.scenario import AnalysisScenario, AnalysisScenarioResult
 from funman.utils.handlers import ResultCombinedHandler
 
+from funman.benchmarks.benchmark import Benchmark
 
-class TestUnitTests(unittest.TestCase):
-    RESOURCES = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)), "../../resources"
-    )
+
+class TestUnitTests(Benchmark):
+
     results_df = pd.DataFrame()
     models = {
         "Mosaphir_petri_to_bilayer": "SIDARTHE_BiLayer_corrected.json",
@@ -51,6 +53,7 @@ class TestUnitTests(unittest.TestCase):
         "Morrison_bilayer": "SIDARTHE_BiLayer-CTM-correction.json",
         "Skema_bilayer": "SKEMA_SIDARTHE_PN_BL_renamed_transitions.json",
     }
+
 
     def from_json(self, filename):
         with open(

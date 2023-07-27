@@ -128,6 +128,7 @@ class TestUseCases(unittest.TestCase):
                 tolerance=1e-8,
                 number_of_processes=1,
                 normalize=False,
+                simplify_query=False
             ),
         )
         assert result
@@ -221,7 +222,7 @@ class TestUseCases(unittest.TestCase):
 
         # Show that region in parameter space is sat (i.e., there exists a true point)
         result_sat: ConsistencyScenarioResult = funman.solve(
-            scenario, config=FUNMANConfig(solver="dreal", normalize=False)
+            scenario, config=FUNMANConfig(solver="dreal", normalize=False, simplify_query=False)
         )
         df = result_sat.dataframe(result_sat.parameter_space.true_points[0])
 

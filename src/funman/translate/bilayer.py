@@ -311,6 +311,24 @@ class BilayerEncoder(Encoder):
             ]
         )
         return observable_defs
+    
+    def _encode_bilayer(
+        self, scenario, timepoints, time_dependent_parameters=False
+    ):
+        ans = simplify(
+            And(
+                [
+                    self._encode_bilayer_timepoint(
+                        scenario,
+                        timepoints[i],
+                        timepoints[i + 1],
+                        time_dependent_parameters=time_dependent_parameters,
+                    )[0]
+                    for i in range(len(timepoints) - 1)
+                ]
+            )
+        )
+        return ans
 
     def _encode_bilayer_timepoint(
         self,
@@ -435,6 +453,8 @@ class BilayerEncoder(Encoder):
                         ),
                         parameters=scenario.parameters,
                         substitutions=substitutions,
+                        threshold=self.config.series_approximation_threshold,
+                        taylor_series_order=self.config.taylor_series_order
                     )
 
                 eqn = Equals(state_var_next_step_smt, rhs)

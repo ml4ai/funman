@@ -5,7 +5,7 @@ import unittest
 
 import matplotlib.pyplot as plt
 import pandas as pd
-from common import TestUnitTests
+from funman.benchmarks.evaluation01.evaluation1 import TestUnitTests
 from funman_demo.handlers import RealtimeResultPlotter, ResultCacheWriter
 from pysmt.shortcuts import (
     GE,

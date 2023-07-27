@@ -1,6 +1,7 @@
 import threading
 from abc import ABC, abstractclassmethod, abstractmethod
 from typing import List, Optional, Union
+from funman.model.encoded import EncodedModel
 
 from pydantic import BaseModel
 

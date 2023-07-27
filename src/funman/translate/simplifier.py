@@ -132,9 +132,9 @@ class FUNMANSimplifier(pysmt.simplifier.Simplifier):
         # var_map = {}
         psymbols = [replace_reserved(p.name) for p in parameters]
         sympy_subs = {
-            symbols(str(s)): to_sympy(v, psymbols)
+            symbols(s.symbol_name()): to_sympy(v, psymbols)
             for s, v in substitutions.items()
-            if symbols(str(s)) in formula.free_symbols
+            if symbols(s.symbol_name()) in formula.free_symbols
         }
         # series_vars = [
         #     symbols(str(v)) for v in vars if symbols(str(v)) not in sympy_subs
@@ -144,15 +144,16 @@ class FUNMANSimplifier(pysmt.simplifier.Simplifier):
         # series_formula = reduce(
         #     lambda v1, v2: series(v1, v2).removeO(), series_vars, sympy_formula
         # )
-        expanded_formula = formula.subs(sympy_subs)
+        expanded_formula = expand(formula.subs(sympy_subs))
 
         f = expanded_formula
         if taylor_series_order is None:
             pass
-        else:
+        elif not f.is_polynomial(formula.free_symbols):
             f = series_approx(
                 f,
-                list(expanded_formula.free_symbols, order=taylor_series_order),
+                list(expanded_formula.free_symbols),
+                order=taylor_series_order
             )
 
         # expanded_formula = expand(sympy_formula)
