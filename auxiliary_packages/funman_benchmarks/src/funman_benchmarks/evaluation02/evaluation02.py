@@ -1,22 +1,22 @@
-from functools import partial
 import os
+import unittest
+from functools import partial
 from time import sleep
 from typing import Tuple
-import unittest
-from funman.api.settings import Settings
-from funman.model.generated_models.petrinet import Model as GeneratedPetrinet
-from funman.model.generated_models.regnet import Model as GeneratedRegnet
-from funman.server.query import FunmanWorkRequest, FunmanWorkUnit
+
 import pydantic
 from funman_benchmarks.benchmark import Benchmark
 from interruptingcow import timeout
 
+from funman.api.api import _wrap_with_internal_model
+from funman.api.settings import Settings
+from funman.model.generated_models.petrinet import Model as GeneratedPetrinet
+from funman.model.generated_models.regnet import Model as GeneratedRegnet
+from funman.server.query import FunmanWorkRequest, FunmanWorkUnit
 from funman.server.storage import Storage
 from funman.server.worker import FunmanWorker
-from funman.api.api import _wrap_with_internal_model
-out_dir = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)), "out"
-)
+
+out_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "out")
 if not os.path.exists(out_dir):
     os.mkdir(out_dir)
 
@@ -39,59 +39,75 @@ MIRA_PETRI_DIR = os.path.join(AMR_EXAMPLES_DIR, "petrinet", "mira")
 
 class Evaluation02(Benchmark):
     scenarios = [
-    # S1 base model
-    (
-        os.path.join(MIRA_PETRI_DIR, "models", "eval_scenario1_base.json"),
-        os.path.join(MIRA_PETRI_DIR, "requests", "eval_scenario1_base.json"),
-    ),
-    # S1 base model ps for beta
-    (
-        os.path.join(MIRA_PETRI_DIR, "models", "eval_scenario1_base.json"),
-        os.path.join(
-            MIRA_PETRI_DIR, "requests", "eval_scenario1_base_ps_beta.json"
+        # S1 base model
+        (
+            os.path.join(MIRA_PETRI_DIR, "models", "eval_scenario1_base.json"),
+            os.path.join(
+                MIRA_PETRI_DIR, "requests", "eval_scenario1_base.json"
+            ),
         ),
-    ),
-    # S1 1.ii.1
-    (
-        os.path.join(
-            MIRA_PETRI_DIR, "models", "eval_scenario1_1_ii_1_init1.json"
+        # S1 base model ps for beta
+        (
+            os.path.join(MIRA_PETRI_DIR, "models", "eval_scenario1_base.json"),
+            os.path.join(
+                MIRA_PETRI_DIR, "requests", "eval_scenario1_base_ps_beta.json"
+            ),
         ),
-        os.path.join(MIRA_PETRI_DIR, "requests", "eval_scenario1_1_ii_1.json"),
-    ),
-    # S1 2 # has issue with integer overflow due to sympy taylor series
-    (
-        os.path.join(MIRA_PETRI_DIR, "models", "eval_scenario1_1_ii_2.json"),
-        os.path.join(MIRA_PETRI_DIR, "requests", "eval_scenario1_1_ii_2.json"),
-    ),
-    # S1 3, advanced to t=75, parmsynth to separate (non)compliant
-    # (
-    #     os.path.join(MIRA_PETRI_DIR, "models", "eval_scenario1_1_ii_3_t75.json"),
-    #     os.path.join(MIRA_PETRI_DIR, "requests", "eval_scenario1_1_ii_3_t75_ps.json"),
-    # ),
-    # S3 base for CEIMS
-    (
-        os.path.join(MIRA_PETRI_DIR, "models", "eval_scenario3_base.json"),
-        os.path.join(MIRA_PETRI_DIR, "requests", "eval_scenario3_base.json"),
-    ),
+        # S1 1.ii.1
+        (
+            os.path.join(
+                MIRA_PETRI_DIR, "models", "eval_scenario1_1_ii_1_init1.json"
+            ),
+            os.path.join(
+                MIRA_PETRI_DIR, "requests", "eval_scenario1_1_ii_1.json"
+            ),
+        ),
+        # S1 2 # has issue with integer overflow due to sympy taylor series
+        (
+            os.path.join(
+                MIRA_PETRI_DIR, "models", "eval_scenario1_1_ii_2.json"
+            ),
+            os.path.join(
+                MIRA_PETRI_DIR, "requests", "eval_scenario1_1_ii_2.json"
+            ),
+        ),
+        # S1 3, advanced to t=75, parmsynth to separate (non)compliant
+        # (
+        #     os.path.join(MIRA_PETRI_DIR, "models", "eval_scenario1_1_ii_3_t75.json"),
+        #     os.path.join(MIRA_PETRI_DIR, "requests", "eval_scenario1_1_ii_3_t75_ps.json"),
+        # ),
+        # S3 base for CEIMS
+        (
+            os.path.join(MIRA_PETRI_DIR, "models", "eval_scenario3_base.json"),
+            os.path.join(
+                MIRA_PETRI_DIR, "requests", "eval_scenario3_base.json"
+            ),
+        ),
     ]
 
-    cases = [{
-        "dreal_mcts": dreal_mcts, 
-        "substitute_subformulas": substitute_subformulas, 
-        "simplify_query": simplify_query,  
-        "series_approximation_threshold": series_approximation_threshold,
-         "taylor_series_order": taylor_series_order,
-         "profile": True
-         } for dreal_mcts in [True] for substitute_subformulas in [True] for simplify_query in [True] for series_approximation_threshold in [1e-5] for taylor_series_order in [5]]
-    
+    cases = [
+        {
+            "dreal_mcts": dreal_mcts,
+            "substitute_subformulas": substitute_subformulas,
+            "simplify_query": simplify_query,
+            "series_approximation_threshold": series_approximation_threshold,
+            "taylor_series_order": taylor_series_order,
+            "profile": True,
+        }
+        for dreal_mcts in [True]
+        for substitute_subformulas in [True]
+        for simplify_query in [True]
+        for series_approximation_threshold in [1e-5]
+        for taylor_series_order in [5]
+    ]
+
     # cases = [{
-    #     "dreal_mcts": dreal_mcts, 
-    #     "substitute_subformulas": substitute_subformulas, 
-    #     "simplify_query": simplify_query,  
+    #     "dreal_mcts": dreal_mcts,
+    #     "substitute_subformulas": substitute_subformulas,
+    #     "simplify_query": simplify_query,
     #     "series_approximation_threshold": series_approximation_threshold,
     #      "taylor_series_order": taylor_series_order
     #      } for dreal_mcts in [True, False] for substitute_subformulas in [True, False] for simplify_query in [True, False] for series_approximation_threshold in [1e-1, 1e-3, 1e-5] for taylor_series_order in [1, 3, 5]]
-    
 
     out_file = os.path.join(out_dir, "results.json")
     test_timeout = 600
@@ -107,12 +123,12 @@ class Evaluation02(Benchmark):
                 pass
         raise Exception(f"Could not determine the Model type of {model_file}")
 
-    def test_model_s1_base(self):    
+    def test_model_s1_base(self):
         scenario_out_dir = os.path.join(out_dir, "scenario1_base_consistency")
         scenario = self.scenarios[0]
         run_case_fn = partial(self.run_test_case, scenario, scenario_out_dir)
         self.run_cases(run_case_fn, self.cases)
-    
+
     def run_test_case(self, case, case_out_dir, options):
         if not os.path.exists(case_out_dir):
             os.mkdir(case_out_dir)
@@ -163,6 +179,7 @@ class Evaluation02(Benchmark):
         # plt.close()
 
         return results
-    
+
+
 if __name__ == "__main__":
     unittest.main()

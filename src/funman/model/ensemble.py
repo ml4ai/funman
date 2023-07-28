@@ -1,9 +1,10 @@
 from typing import Dict, List, Tuple
 
 import graphviz
+from pysmt.shortcuts import REAL, Div, Real, Symbol
 
 from funman.representation import ModelParameter
-from pysmt.shortcuts import Real, REAL, Symbol, Div
+
 from .model import Model
 
 

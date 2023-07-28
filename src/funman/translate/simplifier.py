@@ -153,7 +153,7 @@ class FUNMANSimplifier(pysmt.simplifier.Simplifier):
             f = series_approx(
                 f,
                 list(expanded_formula.free_symbols),
-                order=taylor_series_order
+                order=taylor_series_order,
             )
 
         # expanded_formula = expand(sympy_formula)

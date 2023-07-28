@@ -1,17 +1,18 @@
 import datetime
-from functools import partial
 import json
 import os
 import unittest
 from contextlib import contextmanager
+from functools import partial
 from timeit import default_timer
+
 from interruptingcow import timeout
+
 
 class Benchmark(unittest.TestCase):
     RESOURCES = os.path.join(
         os.path.dirname(os.path.abspath(__file__)), "../../resources"
     )
-
 
     @contextmanager
     def elapsed_timer(self):
@@ -28,7 +29,12 @@ class Benchmark(unittest.TestCase):
                 try:
                     json_results = json.loads(f.read())
                     for result in json_results["results"]:
-                        matches = all([(k in result and result[k] == v) for k, v in case.items() ])
+                        matches = all(
+                            [
+                                (k in result and result[k] == v)
+                                for k, v in case.items()
+                            ]
+                        )
                         if matches:
                             return True
                 except Exception as e:
@@ -45,12 +51,11 @@ class Benchmark(unittest.TestCase):
                     elapsed = t()
             except RuntimeError:
                 timedout = True
-        return {"time" : elapsed, "timedout": timedout}
-    
+        return {"time": elapsed, "timedout": timedout}
+
     def run_cases(self, run_case_fn, cases):
-        
         for case in cases:
-            results = {"results" : []}
+            results = {"results": []}
             if self.case_already_ran(case):
                 print(f"Skipping already run case: {case}")
                 continue
@@ -60,7 +65,7 @@ class Benchmark(unittest.TestCase):
                 result["end_time"] = str(datetime.datetime.now())
                 results["results"].append({**case, **result})
 
-            json_results = {"results":[]}
+            json_results = {"results": []}
             if os.path.exists(self.out_file):
                 with open(self.out_file, "r") as f:
                     try:
@@ -68,7 +73,7 @@ class Benchmark(unittest.TestCase):
                     except Exception as e:
                         pass
             json_results["results"] += results["results"]
-            with open(self.out_file, "w") as f:    
+            with open(self.out_file, "w") as f:
                 json.dump(json_results, f, indent=4)
 
 

@@ -20,8 +20,8 @@ from pysmt.shortcuts import (
     Pow,
     Real,
     Symbol,
-    get_env,
     Times,
+    get_env,
 )
 from pysmt.walkers import IdentityDagWalker
 from sympy import Add, Expr, Rational, exp, series, symbols, sympify
@@ -62,6 +62,7 @@ class SympySerializer(IdentityDagWalker):
 
     def walk_pow(self, formula, args, **kwargs):
         return sympy.Pow(args[0], args[1])
+
 
 class FUNMANFormulaManager(FormulaManager):
     """FormulaManager is responsible for the creation of all formulae."""
@@ -132,7 +133,6 @@ def to_sympy(
     formula: Union[FNode, str],
     str_symbols: List[str],
 ) -> Expr:
-
     if isinstance(formula, str):
         unreserved_symbols = [replace_reserved(s) for s in str_symbols]
         clean_expr = replace_reserved(formula)

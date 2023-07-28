@@ -35,7 +35,7 @@ class EncodedEncoder(Encoder):
                 _layers=[
                     (model._formula, list(model._formula.get_free_variables()))
                 ],
-                _encoder=self
+                _encoder=self,
             )
             return encoding
         else:
@@ -43,13 +43,10 @@ class EncodedEncoder(Encoder):
                 f"An EncodedEncoder cannot encode models of type: {type(model)}"
             )
 
-    def _encode_timed_model_elements(self, scenario: "AnalysisScenario"):
-        pass
-
     def encode_model_layer(self, layer_idx: int, step_size: int = None):
-        return self.encode_model(self._scenario.model)
+        return self.encode_model(self._scenario.model)._layers[layer_idx]
 
     def encode_model_timed(
         self, scenario: "AnalysisScenario", num_steps: int, step_size: int
     ) -> Encoding:
-        return self.encode_model(scenario.model)
+        return self.encode_model(scenario.model)._layers[layer_idx]

@@ -123,7 +123,7 @@ class PetrinetEncoder(Encoder):
                             parameters=scenario.model_parameters(),
                             substitutions=substitutions,
                             threshold=self.config.series_approximation_threshold,
-                            taylor_series_order=self.config.taylor_series_order
+                            taylor_series_order=self.config.taylor_series_order,
                         )
                         for t in v
                     ]
@@ -187,7 +187,7 @@ class PetrinetEncoder(Encoder):
                         ),
                         parameters=scenario.model_parameters(),
                         threshold=self.config.series_approximation_threshold,
-                        taylor_series_order=self.config.taylor_series_order
+                        taylor_series_order=self.config.taylor_series_order,
                     )
             else:
                 flows = current_state[state_var_id]

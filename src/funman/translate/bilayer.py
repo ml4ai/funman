@@ -311,7 +311,7 @@ class BilayerEncoder(Encoder):
             ]
         )
         return observable_defs
-    
+
     def _encode_bilayer(
         self, scenario, timepoints, time_dependent_parameters=False
     ):
@@ -454,7 +454,7 @@ class BilayerEncoder(Encoder):
                         parameters=scenario.parameters,
                         substitutions=substitutions,
                         threshold=self.config.series_approximation_threshold,
-                        taylor_series_order=self.config.taylor_series_order
+                        taylor_series_order=self.config.taylor_series_order,
                     )
 
                 eqn = Equals(state_var_next_step_smt, rhs)

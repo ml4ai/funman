@@ -1,9 +1,11 @@
 from typing import List
+
 from pydantic import Extra
 from pysmt.formula import FNode
 from pysmt.shortcuts import TRUE
 
 from funman.model import Model
+from funman.representation.representation import ModelParameter
 
 
 class EncodedModel(Model):
@@ -13,9 +15,10 @@ class EncodedModel(Model):
 
     class Config:
         arbitrary_types_allowed = True
-        extra = Extra.allow
+        underscore_attrs_are_private = True
 
     _formula: FNode = TRUE()
+    parameters: List[ModelParameter] = []
 
     def default_encoder(
         self, config: "FUNMANConfig", scenario: "AnalysisScenario"
@@ -33,4 +36,4 @@ class EncodedModel(Model):
         return EncodedEncoder(config=config, scenario=scenario)
 
     def _parameter_names(self) -> List[str]:
-        return None
+        return [p.name for p in self.parameters]

@@ -83,8 +83,11 @@ class Model(ABC, BaseModel):
                 self._get_init_value(v, normalize=False)
                 for v in self._state_var_names()
             ]
-
-            norm = Plus(compartments).simplify()
+            if len(compartments) > 0:
+                # compartments = [((Symbol(c, REAL) if isinstance(c, str) else Real(c)) if not isinstance(c, FNode) else c for c in compartments]
+                norm = Plus(compartments).simplify()
+            else:
+                norm = Real(1.0)
             self._norm = norm
         elif self._norm is None and not self._normalize:
             self._norm = Real(1)
@@ -98,38 +101,46 @@ class Model(ABC, BaseModel):
             return False
 
     def _parameters(self) -> List[ModelParameter]:
-        param_names = self._parameter_names() 
+        param_names = self._parameter_names()
         param_values = self._parameter_values()
 
         # Get Parameter Bounds in FunmanModel (potentially wrapping an AMR model),
         # if they are overriden by the outer model.
-        params = [
-            ModelParameter(
-                name=p,
-                lb=self.parameter_bounds[p][0],
-                ub=self.parameter_bounds[p][1],
-            )
-            for p in param_names
-            if self.parameter_bounds
-            # and p not in param_values
-            and p in self.parameter_bounds and self.parameter_bounds[p]
-        ] if param_names else []
+        params = (
+            [
+                ModelParameter(
+                    name=p,
+                    lb=self.parameter_bounds[p][0],
+                    ub=self.parameter_bounds[p][1],
+                )
+                for p in param_names
+                if self.parameter_bounds
+                # and p not in param_values
+                and p in self.parameter_bounds and self.parameter_bounds[p]
+            ]
+            if param_names
+            else []
+        )
 
         # Get values from wrapped model if not overridden by outer model
 
-        params += [
-            (
-                ModelParameter(
-                    name=p,
-                    lb=param_values[p],
-                    ub=param_values[p],
+        params += (
+            [
+                (
+                    ModelParameter(
+                        name=p,
+                        lb=param_values[p],
+                        ub=param_values[p],
+                    )
+                    if param_values[p]
+                    else ModelParameter(name=p)
                 )
-                if param_values[p]
-                else ModelParameter(name=p)
-            )
-            for p in param_names
-            if p in param_values and p not in self.parameter_bounds
-        ] if param_names else []
+                for p in param_names
+                if p in param_values and p not in self.parameter_bounds
+            ]
+            if param_names
+            else []
+        )
 
         return params
 

@@ -15,12 +15,12 @@ from pysmt.shortcuts import (
     REAL,
     TRUE,
     And,
+    Div,
     Equals,
     Iff,
     Real,
     Symbol,
     get_env,
-    Div
 )
 from pysmt.solvers.solver import Model as pysmtModel
 
@@ -273,13 +273,17 @@ class Encoder(ABC, BaseModel):
         """
         pass
 
-    def encode_simplified(self, model, query):
+    def encode_simplified(self, model, query, step_size_idx: int):
         formula = And(model, query)
-        # Fixme, use real stepsize
-        sub_formula = formula.substitute(
-            self._timed_model_elements["time_step_substitutions"][0]
-        ).simplify()
-        return sub_formula
+        if self.config.substitute_subformulas:
+            sub_formula = formula.substitute(
+                self._timed_model_elements["time_step_substitutions"][
+                    step_size_idx
+                ]
+            ).simplify()
+            return sub_formula
+        else:
+            return formula
 
     def _encode_next_step(
         self, model: Model, step: int, next_step: int, substitutions={}

@@ -3,6 +3,7 @@ from typing import Dict, List, Union
 import graphviz
 import sympy
 from pydantic import BaseModel
+from pysmt.shortcuts import REAL, Div, Plus, Real, Symbol
 
 from funman.representation.representation import ModelParameter
 from funman.translate.petrinet import PetrinetEncoder
@@ -11,7 +12,7 @@ from funman.utils.sympy_utils import substitute, to_sympy
 from .generated_models.petrinet import Model as GeneratedPetrinet
 from .generated_models.petrinet import State, Transition
 from .model import Model
-from pysmt.shortcuts import REAL, Div, Plus, Real, Symbol
+
 
 class AbstractPetriNetModel(Model):
     def _num_flow_from_state_to_transition(
@@ -182,19 +183,21 @@ class GeneratedPetriNetModel(AbstractPetriNetModel):
             symbols += [self._time_var().id]
         return symbols
 
-    def _get_init_value(self, var: str, normalize:bool=True):
+    def _get_init_value(self, var: str, normalize: bool = True):
         value = Model._get_init_value(self, var)
         if value is None:
             if hasattr(self.petrinet.semantics, "ode"):
                 initials = self.petrinet.semantics.ode.initials
                 value = next(i.expression for i in initials if i.target == var)
-                try:
-                    # Attempt to convert to a constant, if fail then its a string
-                    value = Real(float(value))
-                except:
-                    pass
             else:
-                value = Symbol(f"{var}0", REAL)
+                value = f"{var}0"
+
+        if isinstance(value, float):
+            value = Real(value)
+        if isinstance(value, int):
+            value = Real(float(value))
+        elif isinstance(value, str):
+            value = Symbol(value, REAL)
 
         if normalize:
             norm = self.normalization()

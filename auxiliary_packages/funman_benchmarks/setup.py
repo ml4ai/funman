@@ -3,7 +3,9 @@ from pathlib import Path
 
 from setuptools import find_packages, setup
 
-with open(os.path.join("src", "funman_benchmarks", "_version.py")) as version_file:
+with open(
+    os.path.join("src", "funman_benchmarks", "_version.py")
+) as version_file:
     version = version_file.readlines()[-1].split()[-1].strip("\"'")
 
 # read the contents of your README file

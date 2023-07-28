@@ -223,7 +223,7 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
     def encode_simplified(self, box: Box, timepoint: int):
         model_encoding = self._model_encoding.encoding(
             self._model_encoding._encoder.encode_model_layer,
-            layers=list(range(timepoint+1)),
+            layers=list(range(timepoint + 1)),
             box=box,
         )
         query_encoding = self._query_encoding.encoding(
@@ -235,9 +235,12 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
             box=box,
             assumptions=self._assume_query,
         )
+        step_size_idx = self._smt_encoder._timed_model_elements[
+            "step_sizes"
+        ].index(self._model_encoding.step_size)
 
         return self._smt_encoder.encode_simplified(
-            model_encoding, query_encoding
+            model_encoding, query_encoding, step_size_idx
         )
 
 

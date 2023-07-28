@@ -1,15 +1,10 @@
-import datetime
-from functools import partial
-import json
-from typing import Dict, Union
-import unittest
-from contextlib import contextmanager
-from timeit import default_timer
-from interruptingcow import timeout
 import os
-import matplotlib.pyplot as plt
+import unittest
+from functools import partial
+from typing import Dict, Union
 
-from funman.benchmarks.evaluation01.evaluation1 import TestUnitTests
+import matplotlib.pyplot as plt
+from interruptingcow import timeout
 from pysmt.shortcuts import (
     GE,
     GT,
@@ -27,16 +22,15 @@ from pysmt.shortcuts import (
     Times,
 )
 
+from funman.benchmarks.evaluation01.evaluation1 import TestUnitTests
 from funman.funman import Funman, FUNMANConfig
 from funman.model.bilayer import BilayerDynamics
 from funman.model.query import QueryTrue
 
-
-out_dir = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)), "out"
-)
+out_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "out")
 if not os.path.exists(out_dir):
     os.mkdir(out_dir)
+
 
 class TestS21BUnitTest(TestUnitTests):
     steps = 50
@@ -49,13 +43,20 @@ class TestS21BUnitTest(TestUnitTests):
     test_timeout = 600
     out_file = os.path.join(out_dir, "results.json")
 
-    cases = [{
-        "dreal_mcts": dreal_mcts, 
-        "substitute_subformulas": substitute_subformulas, 
-        "simplify_query": simplify_query,  
-        "series_approximation_threshold": series_approximation_threshold,
-         "taylor_series_order": taylor_series_order
-         } for dreal_mcts in [True, False] for substitute_subformulas in [True, False] for simplify_query in [True, False] for series_approximation_threshold in [1e-1, 1e-3, 1e-5] for taylor_series_order in [1, 3, 5]]
+    cases = [
+        {
+            "dreal_mcts": dreal_mcts,
+            "substitute_subformulas": substitute_subformulas,
+            "simplify_query": simplify_query,
+            "series_approximation_threshold": series_approximation_threshold,
+            "taylor_series_order": taylor_series_order,
+        }
+        for dreal_mcts in [True, False]
+        for substitute_subformulas in [True, False]
+        for simplify_query in [True, False]
+        for series_approximation_threshold in [1e-1, 1e-3, 1e-5]
+        for taylor_series_order in [1, 3, 5]
+    ]
     # [
     #     {"dreal_mcts": False, "substitute_subformulas": False, "simplify_query": False,  "series_approximation_threshold": 1e-5,
     #      "taylor_series_order": 5},
@@ -86,7 +87,6 @@ class TestS21BUnitTest(TestUnitTests):
 
     speedups = {m: [] for m in s2_models}
 
-
     def sidarthe_extra_1_1_d_2d(self, steps, init_values, step_size=1):
         return And(
             [
@@ -95,11 +95,8 @@ class TestS21BUnitTest(TestUnitTests):
         )
 
     def analyze_model(
-        self,
-        model_name: str,
-        options: Dict[str, Union[bool, str]]
+        self, model_name: str, options: Dict[str, Union[bool, str]]
     ):
-        
         initial = self.initial_state_sidarthe()
         scenario = self.make_scenario(
             BilayerDynamics(
@@ -121,7 +118,7 @@ class TestS21BUnitTest(TestUnitTests):
             solver="dreal",
             initial_state_tolerance=0.0,
             save_smtlib=True,
-            **options
+            **options,
         )
         result_sat = Funman().solve(scenario, config=config)
         return result_sat
@@ -155,13 +152,10 @@ class TestS21BUnitTest(TestUnitTests):
         return max_infected, max_day
 
     def common_test_model(
-        self,
-        model_name: str,
-        options: Dict[str, Union[bool, str]]
+        self, model_name: str, options: Dict[str, Union[bool, str]]
     ):
-        result = self.analyze_model(model_name,options)
+        result = self.analyze_model(model_name, options)
         return result
-
 
         # max_infected, max_day = self.analyze_model(
         #     model_name,
@@ -192,17 +186,9 @@ class TestS21BUnitTest(TestUnitTests):
                 print(f"elapsed = {elapsed_mcts_dreal}")
             self.compute_speedup(elapsed_base_dreal, elapsed_mcts_dreal, model)
 
-
-        
-
-
-
     def test_model_0(self):
-        
         run_case_fn = partial(self.common_test_model, self.s2_models[0])
         self.run_cases(run_case_fn, self.cases)
-
-
 
     # @unittest.expectedFailure
     # def test_model_1(self):
