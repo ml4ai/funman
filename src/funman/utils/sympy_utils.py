@@ -138,8 +138,12 @@ def to_sympy(
         clean_expr = replace_reserved(formula)
         symbol_map = {s: symbols(s) for s in unreserved_symbols}
         expr = sympify(clean_expr, symbol_map)
-    else:
+    elif isinstance(formula, FNode):
         expr = SympySerializer().to_sympy(formula)
+    elif isinstance(formula, Expr):
+        expr = formula
+    else:
+        raise NotImplementedError(f"to_sympy() cannot convert formula {formula} of type {type(formula)} to sympy expression")
     return expr
 
 
