@@ -305,7 +305,9 @@ class BoxPlotter(object):
                         )
         plt.show(block=False)
 
-    def plot2DBox(self, i, p1: ModelParameter, p2: ModelParameter, color="g", alpha=0.2):
+    def plot2DBox(
+        self, i, p1: ModelParameter, p2: ModelParameter, color="g", alpha=0.2
+    ):
         x_limits = i.bounds[p1.name]
         y_limits = i.bounds[p2.name]
         if abs(float(x_limits.lb)) < 100 and abs(float(x_limits.ub)) < 100:

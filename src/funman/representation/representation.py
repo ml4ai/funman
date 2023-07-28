@@ -4,9 +4,8 @@ during the configuration and execution of a search.
 """
 import copy
 import logging
-import sys
 import math
-from functools import total_ordering
+import sys
 from statistics import mean as average
 from typing import Dict, List, Literal, Optional, Union
 
@@ -16,6 +15,7 @@ from pysmt.shortcuts import REAL, Symbol
 
 import funman.utils.math_utils as math_utils
 from funman.constants import BIG_NUMBER, NEG_INFINITY, POS_INFINITY
+from funman.utils.sympy_utils import to_sympy
 
 from .symbol import ModelSymbol
 
@@ -431,8 +431,27 @@ class Point(BaseModel):
         res = Point(values={k: v for k, v in data["values"].items()})
         return res
 
+    def denormalize(self, model):
+        norm = to_sympy(model.normalization(), model._symbols())
+        denormalized_values = {
+            k: (v * norm if model._is_normalized(k) else v)
+            for k, v in self.values.items()
+        }
+        denormalized_point = Point(
+            label=self.label, values=denormalized_values, type=self.type
+        )
+        return denormalized_point
+
     def __hash__(self):
-        return int(sum([v for _, v in self.values.items() if v != sys.float_info.max and not math.isinf(v)]))
+        return int(
+            sum(
+                [
+                    v
+                    for _, v in self.values.items()
+                    if v != sys.float_info.max and not math.isinf(v)
+                ]
+            )
+        )
 
     def __eq__(self, other):
         if isinstance(other, Point):
@@ -443,7 +462,7 @@ class Point(BaseModel):
             return False
 
 
-@total_ordering
+# @total_ordering
 class Box(BaseModel):
     """
     A Box maps n parameters to intervals, representing an n-dimensional connected open subset of R^n.
@@ -766,7 +785,11 @@ class Box(BaseModel):
         # print(points)
         # print(centers)
         point_distances = [
-            {p: abs(pt.values[p] - centers[p]) for p in pt.values if p in centers}
+            {
+                p: abs(pt.values[p] - centers[p])
+                for p in pt.values
+                if p in centers
+            }
             for grp in points
             for pt in grp
         ]

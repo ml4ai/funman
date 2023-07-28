@@ -173,7 +173,9 @@ class TestUseCases(unittest.TestCase):
         point = result_sat.parameter_space.true_points[0]
         df = result_sat.dataframe(point)
 
-        result_sat.plot(variables=scenario.model._state_var_names(), point=point)
+        result_sat.plot(
+            variables=scenario.model._state_var_names(), point=point
+        )
         plt.savefig("petri.png")
 
         # assert abs(df["Infected"][2] - 2.24) < 0.13

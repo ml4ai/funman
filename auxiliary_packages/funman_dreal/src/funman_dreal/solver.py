@@ -481,7 +481,7 @@ class DRealNative(Solver, SmtLibBasicSolver, SmtLibIgnoreMixin):
 
     @clear_pending_pop
     def add_assertion(self, formula, named=None):
-        # print(f"Assert({formula})")
+        # print(f"Assert({formula.serialize()})")
 
         f = self.converter.convert(formula)
 

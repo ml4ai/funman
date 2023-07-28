@@ -20,7 +20,9 @@ RESOURCES = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "../resources"
 )
 
-out_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "out", "hackathon")
+out_dir = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "out", "hackathon"
+)
 
 
 models = {GeneratedPetrinet, GeneratedRegnet}
@@ -59,23 +61,22 @@ cases = [
     #
     # 2. b. Wild Type variant and no vaccination
     # Determine if default parameters are consistent
-    (
-        os.path.join(MIRA_PETRI_DIR, "models", "scenario2_a_beta_scale_static.json"),
-        os.path.join(MIRA_PETRI_DIR, "requests", "request2_b_default_w_compartmental_constrs.json"),
-    ),
+    # (
+    #     os.path.join(MIRA_PETRI_DIR, "models", "scenario2_a_beta_scale_static.json"),
+    #     os.path.join(MIRA_PETRI_DIR, "requests", "request2_b_default_w_compartmental_constrs.json"),
+    # ),
     # 2. b. Wild Type variant and no vaccination
     # Determine if default parameters are consistent
-    (
-        os.path.join(MIRA_PETRI_DIR, "models", "scenario2_a_beta_scale_static.json"),
-        os.path.join(MIRA_PETRI_DIR, "requests", "request2_b_default_wo_compartmental_constrs.json"),
-    ),
-        # 2. b. Wild Type variant and no vaccination
+    # (
+    #     os.path.join(MIRA_PETRI_DIR, "models", "scenario2_a_beta_scale_static.json"),
+    #     os.path.join(MIRA_PETRI_DIR, "requests", "request2_b_default_wo_compartmental_constrs.json"),
+    # ),
+    # 2. b. Wild Type variant and no vaccination
     # Determine if default parameters are consistent
-    (
-        os.path.join(MIRA_PETRI_DIR, "models", "scenario2_a_beta_scale_static_fixed.json"),
-        os.path.join(MIRA_PETRI_DIR, "requests", "request2_b_default_w_compartmental_constrs.json"),
-    ),
-
+    # (
+    #     os.path.join(MIRA_PETRI_DIR, "models", "scenario2_a_beta_scale_static_fixed.json"),
+    #     os.path.join(MIRA_PETRI_DIR, "requests", "request2_b_default_w_compartmental_constrs.json"),
+    # ),
     # 2. b. Wild Type variant and no vaccination
     # Show that some assignment to the parameters is consistent
     # (
@@ -88,7 +89,7 @@ cases = [
     #     os.path.join(MIRA_PETRI_DIR, "requests", "request2_b_loose_param_bounds.json"),
     # ),
     # 2. b. synthesize
-        # 2. b. Find values for parameters near given values
+    # 2. b. Find values for parameters near given values
     # (
     #     os.path.join(MIRA_PETRI_DIR, "models", "scenario2_a_beta_scale_static.json"),
     #     os.path.join(MIRA_PETRI_DIR, "requests", "request2_b_synthesize.json"),

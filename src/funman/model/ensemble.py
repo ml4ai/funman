@@ -1,10 +1,9 @@
 from typing import Dict, List, Tuple
 
 import graphviz
-from pydantic import BaseModel
+from pysmt.shortcuts import REAL, Div, Real, Symbol
 
 from funman.representation import ModelParameter
-from funman.translate import EnsembleEncoder
 
 from .model import Model
 
@@ -24,7 +23,9 @@ class EnsembleModel(Model):
         self.models = kwargs["models"]
         self._initialize_mappings()
 
-    def default_encoder(self, config: "FUNMANConfig", scenario: "AnalysisScenario") -> "Encoder":
+    def default_encoder(
+        self, config: "FUNMANConfig", scenario: "AnalysisScenario"
+    ) -> "Encoder":
         """
         Return the default Encoder for the model
 
@@ -35,14 +36,20 @@ class EnsembleModel(Model):
         """
         from funman.translate import EnsembleEncoder
 
-        return EnsembleEncoder(
-            config=config,
-            scenario=scenario
-        )
+        return EnsembleEncoder(config=config, scenario=scenario)
 
-    def _get_init_value(self, var: str):
+    def _get_init_value(self, var: str, normalize=True):
         (m_name, orig_var) = self._var_name_map[var]
-        return self._model_name_map[m_name].init_values[orig_var]
+        value = self._model_name_map[m_name].init_values[orig_var]
+        if isinstance(value, str):
+            value = Symbol(value, REAL)
+        else:
+            value = Real(value)
+
+        if normalize:
+            norm = self.normalization()
+            value = Div(value, norm)
+        return value
 
     def _state_vars(self):
         return map(lambda m: m._state_vars(), self.models)
@@ -78,7 +85,12 @@ class EnsembleModel(Model):
         return list(self._parameter_name_map.keys())
 
     def _parameter_values(self):
-        return {p_name: self._model_name_map[m_name[0]]._parameter_values()[m_name[1]]  for p_name, m_name in self._parameter_name_map.items()}
+        return {
+            p_name: self._model_name_map[m_name[0]]._parameter_values()[
+                m_name[1]
+            ]
+            for p_name, m_name in self._parameter_name_map.items()
+        }
 
     def _parameters(self) -> List[ModelParameter]:
         return list(self._parameter_map.values())

@@ -1,4 +1,3 @@
-import json
 import os
 import unittest
 from time import sleep
@@ -47,9 +46,14 @@ cases = [
     #     os.path.join(SKEMA_PETRI_DIR, "linked_petrinet.json"),
     #     os.path.join(SKEMA_PETRI_DIR, "sir_request_skema2.json"),
     # ),
+    # (
+    #     os.path.join(AMR_PETRI_DIR, "sir.json"),
+    #     os.path.join(AMR_PETRI_DIR, "sir_request1a.json"),
+    # ),
+    # Missing timevar bug
     (
-        os.path.join(AMR_PETRI_DIR, "sir.json"),
-        os.path.join(AMR_PETRI_DIR, "sir_request1a.json"),
+        os.path.join(AMR_PETRI_DIR, "sir_api_example.json"),
+        os.path.join(AMR_PETRI_DIR, "sir_consistency.json"),
     ),
     # (
     #     os.path.join(AMR_EXAMPLES_DIR, "sir.json"),
@@ -112,8 +116,11 @@ class TestModels(unittest.TestCase):
         while True:
             if self._worker.is_processing_id(work_unit.id):
                 results = self._worker.get_results(work_unit.id)
+                assert (
+                    not results.error
+                ), "Request resulted in internal server error"
                 with open(f"{out_dir}/{work_unit.id}.json", "w") as f:
-                    f.write(json.dumps(results.json()))
+                    f.write(results.json())
                 # ParameterSpacePlotter(
                 #     results.parameter_space, plot_points=True
                 # ).plot(show=False)
@@ -123,6 +130,7 @@ class TestModels(unittest.TestCase):
             else:
                 results = self._worker.get_results(work_unit.id)
                 break
+        assert not results.error, "Request resulted in internal server error"
 
         ParameterSpacePlotter(results.parameter_space, plot_points=True).plot(
             show=False

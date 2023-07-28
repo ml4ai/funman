@@ -4,8 +4,8 @@ from typing import List, Optional, Union
 
 from pydantic import BaseModel
 
+from funman.model.encoded import EncodedModel
 from funman.representation.representation import (
-    ModelParameter,
     ModelParameter,
     ParameterSpace,
     StructureParameter,
@@ -72,12 +72,14 @@ class AnalysisScenario(ABC, BaseModel):
             bounds = {}
             lb = self.model._parameter_lb(p)
             ub = self.model._parameter_ub(p)
-            if ub and lb:
+            if ub is not None and lb is not None:
                 bounds["ub"] = ub
                 bounds["lb"] = lb
-            else:
+            elif model_parameter_values[p]:
                 value = model_parameter_values[p]
                 bounds["lb"] = bounds["ub"] = value
+            else:
+                bounds = {}
             non_overriden_parameters.append(
                 ModelParameter(name=p, **bounds, label=LABEL_ANY)
             )

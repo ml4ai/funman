@@ -1,11 +1,13 @@
 from typing import Dict, List, Union
 
 import graphviz
+import sympy
 from pydantic import BaseModel
+from pysmt.shortcuts import REAL, Div, Plus, Real, Symbol
 
 from funman.representation.representation import ModelParameter
 from funman.translate.petrinet import PetrinetEncoder
-from funman.utils.sympy_utils import substitute
+from funman.utils.sympy_utils import substitute, to_sympy
 
 from .generated_models.petrinet import Model as GeneratedPetrinet
 from .generated_models.petrinet import State, Transition
@@ -136,7 +138,12 @@ class AbstractPetriNetModel(Model):
 
 
 class GeneratedPetriNetModel(AbstractPetriNetModel):
+    class Config:
+        underscore_attrs_are_private = True
+        arbitrary_types_allowed = True
+
     petrinet: GeneratedPetrinet
+    _transition_rates_cache: Dict[str, Union[sympy.Expr, str]] = {}
 
     def default_encoder(
         self, config: "FUNMANConfig", scenario: "AnalysisScenario"
@@ -165,21 +172,42 @@ class GeneratedPetriNetModel(AbstractPetriNetModel):
             return None
 
     def _time_var_id(self, time_var):
-        return f"timer_{time_var.id}"
+        if time_var:
+            return f"timer_{time_var.id}"
+        else:
+            return None
 
-    def _get_init_value(self, var: str):
+    def _symbols(self):
+        symbols = self._state_var_names() + self._parameter_names()
+        if self._time_var():
+            symbols += [self._time_var().id]
+        return symbols
+
+    def _get_init_value(self, var: str, normalize: bool = True):
         value = Model._get_init_value(self, var)
         if value is None:
             if hasattr(self.petrinet.semantics, "ode"):
                 initials = self.petrinet.semantics.ode.initials
                 value = next(i.expression for i in initials if i.target == var)
-                try:
-                    # Attempt to convert to a constant, if fail then its a string
-                    value = float(value)
-                except:
-                    pass
             else:
                 value = f"{var}0"
+
+        try: # to cast to float
+            value = float(value)
+        except:
+            pass
+
+        if isinstance(value, float):
+            value = Real(value)
+        if isinstance(value, int):
+            value = Real(float(value))
+        elif isinstance(value, str):
+            value = Symbol(value, REAL)
+
+        if normalize:
+            norm = self.normalization()
+            value = Div(value, norm)
+
         return value
 
     def _parameter_lb(self, param_name: str):
@@ -228,14 +256,32 @@ class GeneratedPetriNetModel(AbstractPetriNetModel):
     def _output_edges(self):
         return [(t.id, o) for t in self._transitions() for o in t.output]
 
-    def _transition_rate(self, transition):
+    def _transition_rate(self, transition, sympify=False):
         if hasattr(self.petrinet.semantics, "ode"):
-            transition_rates = [
-                r.expression
-                for r in self.petrinet.semantics.ode.rates
-                if r.target == transition.id
-            ]
-            return transition_rates
+            if transition.id not in self._transition_rates_cache:
+                t_rates = [
+                    (
+                        to_sympy(r.expression, self._symbols())
+                        if not any(
+                            p == r.expression for p in self._parameter_names()
+                        )
+                        else r.expression
+                    )
+                    for r in self.petrinet.semantics.ode.rates
+                    if r.target == transition.id
+                ]
+                time_var = self._time_var()
+                if time_var:
+                    t_rates = [
+                        t.subs(
+                            {
+                                self._time_var().id: f"timer_{self._time_var().id}"
+                            }
+                        )
+                        for t in t_rates
+                    ]
+                self._transition_rates_cache[transition.id] = t_rates
+            return self._transition_rates_cache[transition.id]
         else:
             return transition.id
 

@@ -1,13 +1,15 @@
 from typing import Dict
 
-import matplotlib.patches as patches
 import matplotlib.pyplot as plt
 import numpy as np
-from IPython.display import clear_output
 from matplotlib.lines import Line2D
 
-from funman.representation import ParameterSpace
-from funman.representation.representation import Box, Interval, Point
+from funman.representation.representation import (
+    Box,
+    Interval,
+    ParameterSpace,
+    Point,
+)
 
 
 class ParameterSpacePlotter:
@@ -24,7 +26,7 @@ class ParameterSpacePlotter:
         shape_map: Dict[str, str] = {"true": "x", "false": "o"},
         alpha=0.2,
         plot_points=False,
-        parameters=None
+        parameters=None,
     ):
         if isinstance(parameter_space, ParameterSpace):
             self.ps = parameter_space
@@ -47,7 +49,7 @@ class ParameterSpacePlotter:
         self.title = title
         self.color_map = color_map
         self.shape_map = shape_map
-        clear_output(wait=True)
+        # clear_output(wait=True)
         self.custom_lines = [
             Line2D([0], [0], color="g", lw=4, alpha=alpha),
             Line2D([0], [0], color="r", lw=4, alpha=alpha),
@@ -152,8 +154,8 @@ class ParameterSpacePlotter:
                 else:
                     # Plot a box
                     if (
-                        abs(float(x_limits.lb)) < 100
-                        and abs(float(x_limits.ub)) < 100
+                        abs(float(x_limits.lb)) < 1000
+                        and abs(float(x_limits.ub)) < 1000
                     ):
                         x = np.linspace(
                             float(x_limits.lb), float(x_limits.ub), 1000

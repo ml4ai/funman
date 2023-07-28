@@ -8,9 +8,11 @@ import os
 import threading
 import traceback
 from datetime import datetime
+from functools import partial
 from multiprocessing import Queue, Value
 from multiprocessing.synchronize import Condition, Event, Lock
 from queue import Empty
+from queue import PriorityQueue as PQueueSP
 from queue import Queue as QueueSP
 from typing import Callable, List, Optional, Set, Union
 
@@ -24,7 +26,6 @@ from funman.representation.representation import (
     LABEL_TRUE,
     LABEL_UNKNOWN,
     Interval,
-    ModelParameter,
     ModelParameter,
 )
 from funman.search import Box, ParameterSpace, Point, Search, SearchEpisode
@@ -61,7 +62,7 @@ class BoxSearchEpisode(SearchEpisode):
     _false_boxes: List[Box] = []
     _true_points: Set[Point] = set({})
     _false_points: Set[Point] = set({})
-    _unknown_boxes: QueueSP
+    _unknown_boxes: PQueueSP
     _iteration: int = 0
     _formula_stack: List[FNode] = []
     _formula_stack_time: int = -1
@@ -204,15 +205,19 @@ class BoxSearchEpisode(SearchEpisode):
     def _extract_point(self, model, box: Box):
         point = Point(
             values={
-                str(p[0]):( float(p[1].constant_value()) if p[1].is_real_constant() else p[1].constant_value() )for p in model
+                str(p[0]): (
+                    float(p[1].constant_value())
+                    if p[1].is_real_constant()
+                    else p[1].constant_value()
+                )
+                for p in model
                 # p.name: (
                 #     float(model.get_py_value(p.symbol()))
                 #     if isinstance(p, ModelParameter)
                 #     else box.bounds[
                 #         p.name
-                #     ].lb  
+                #     ].lb
                 # for p in self.problem.parameters
-                
             }
         )
         for k, v in self.structural_configuration.items():
@@ -304,7 +309,11 @@ class BoxSearch(Search):
             return True
 
     def _initialize_encoding(
-        self, solver: Solver, episode: BoxSearchEpisode, timepoint: int
+        self,
+        solver: Solver,
+        episode: BoxSearchEpisode,
+        timepoint: int,
+        box: Box,
     ):
         """
         The formula encoding the model M is of the form:
@@ -322,32 +331,52 @@ class BoxSearch(Search):
         episode : episode
             data for the current search
         """
-        solver_timepoint = episode._formula_stack_time
-        time_difference = timepoint - solver_timepoint
-        if time_difference > 0:
-            for i in range(int(time_difference)):
-                solver.push(1)
-                timepoints = [solver_timepoint + i + 1]
-                formula = And(
-                    episode.problem._model_encoding.encoding(
-                        layers=timepoints
-                    ),
-                    episode.problem._query_encoding.encoding(
-                        layers=timepoints
-                    ),
-                )
-                episode._formula_stack.append(formula)
-                solver.add_assertion(formula)
-                episode._formula_stack_time += 1
-        elif time_difference < 0:  # need to pop
-            for i in range(abs(int(time_difference))):
+        if episode.config.simplify_query:
+            while episode._formula_stack_time > 0:
                 solver.pop(1)
                 episode._formula_stack.pop()
                 episode._formula_stack_time -= 1
 
+            formula = episode.problem.encode_simplified(box, timepoint)
+            solver.push(1)
+            episode._formula_stack.append(formula)
+            solver.add_assertion(formula)
+            episode._formula_stack_time += 1
+        else:
+            solver_timepoint = episode._formula_stack_time
+            time_difference = timepoint - solver_timepoint
+            if time_difference > 0:
+                for i in range(int(time_difference)):
+                    solver.push(1)
+                    timepoints = [solver_timepoint + i + 1]
+                    formula = And(
+                        episode.problem._model_encoding.encoding(
+                            episode.problem._model_encoding._encoder.encode_model_layer,
+                            layers=timepoints,
+                            box=box,
+                        ),
+                        episode.problem._query_encoding.encoding(
+                            partial(
+                                episode.problem._query_encoding._encoder.encode_query_layer,
+                                episode.problem.query,
+                            ),
+                            layers=timepoints,
+                            box=box,
+                            assumptions=episode.problem._assume_query,
+                        ),
+                    )
+                    episode._formula_stack.append(formula)
+                    solver.add_assertion(formula)
+                    episode._formula_stack_time += 1
+            elif time_difference < 0:  # need to pop
+                for i in range(abs(int(time_difference))):
+                    solver.pop(1)
+                    episode._formula_stack.pop()
+                    episode._formula_stack_time -= 1
+
     def _initialize_box(self, solver, box: Box, episode: BoxSearchEpisode):
-        box_timepoint = box.bounds["num_steps"].lb
-        self._initialize_encoding(solver, episode, box_timepoint)
+        box_timepoint = int(box.bounds["num_steps"].lb)
+        self._initialize_encoding(solver, episode, box_timepoint, box)
 
         solver.push(1)
 
@@ -456,6 +485,7 @@ class BoxSearch(Search):
                 res1 = solver.get_model()
                 true_points = [episode._extract_point(res1, box)]
                 for point in true_points:
+                    dp = point.denormalize(episode.problem.model)
                     episode._add_true_point(point)
                     rval.put(point.dict())
             solver.pop(1)  # Remove true query
@@ -604,7 +634,7 @@ class BoxSearch(Search):
                             )
                         l.info(f"{process_name} finished work")
                 self._initialize_encoding(
-                    solver, episode, -1
+                    solver, episode, -1, None
                 )  # Reset solver stack to empty
         except KeyboardInterrupt:
             l.info(f"{process_name} Keyboard Interrupt")
@@ -807,12 +837,10 @@ class BoxSearch(Search):
         config._handler.open()
 
         if problem._smt_encoder._timed_model_elements:
-            step_sizes = {
-                c["step_size"]
-                for c in problem._smt_encoder._timed_model_elements[
-                    "configurations"
-                ]
-            }
+            step_sizes = problem._smt_encoder._timed_model_elements[
+                "step_sizes"
+            ]
+
             configurations_by_step_size = {
                 step_size: [
                     c["num_steps"]
@@ -824,11 +852,13 @@ class BoxSearch(Search):
                 for step_size in step_sizes
             }
 
-            for step_size in step_sizes:
+            for step_size_idx, step_size in enumerate(step_sizes):
                 num_steps = max(configurations_by_step_size[step_size])
+
+                # initialize empty encoding
                 problem._encode_timed(
                     num_steps,
-                    step_size,
+                    step_size_idx,
                     config,
                 )
                 structural_configuration = {

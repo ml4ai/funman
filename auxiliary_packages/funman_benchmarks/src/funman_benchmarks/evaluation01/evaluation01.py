@@ -1,11 +1,11 @@
 import json
 import os
 import textwrap
-import unittest
 
 import matplotlib.pyplot as plt
 import pandas as pd
 from funman_demo.handlers import RealtimeResultPlotter, ResultCacheWriter
+from interruptingcow import timeout
 from pysmt.shortcuts import (
     GE,
     GT,
@@ -24,23 +24,24 @@ from pysmt.shortcuts import (
 )
 
 from funman import Funman
+from funman.benchmarks.benchmark import Benchmark
 from funman.funman import FUNMANConfig
 
 # from funman.funman import FUNMANConfig
 from funman.model import QueryLE
 from funman.model.bilayer import BilayerDynamics, BilayerGraph, BilayerModel
 from funman.model.query import QueryEncoded, QueryTrue
-from funman.representation.representation import ModelParameter
+from funman.representation.representation import (
+    ModelParameter,
+    StructureParameter,
+)
 from funman.scenario import ConsistencyScenario, ConsistencyScenarioResult
 from funman.scenario.parameter_synthesis import ParameterSynthesisScenario
-from funman.scenario.scenario import AnalysisScenario
+from funman.scenario.scenario import AnalysisScenario, AnalysisScenarioResult
 from funman.utils.handlers import ResultCombinedHandler
 
 
-class TestUnitTests(unittest.TestCase):
-    RESOURCES = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)), "../../resources"
-    )
+class TestUnitTests(Benchmark):
     results_df = pd.DataFrame()
     models = {
         "Mosaphir_petri_to_bilayer": "SIDARTHE_BiLayer_corrected.json",
@@ -124,6 +125,7 @@ class TestUnitTests(unittest.TestCase):
         parameter_bounds,
         identical_parameters,
         steps,
+        step_size,
         query,
         extra_constraints=None,
     ):
@@ -134,8 +136,21 @@ class TestUnitTests(unittest.TestCase):
             identical_parameters=identical_parameters,
         )
         model._extra_constraints = extra_constraints
+        parameters = [
+            StructureParameter(name="num_steps", lb=steps, ub=steps),
+            StructureParameter(name="step_size", lb=step_size, ub=step_size),
+        ]
 
-        scenario = ConsistencyScenario(model=model, query=query)
+        scenario = ConsistencyScenario(
+            model=model,
+            query=query,
+            parameters=[
+                StructureParameter(name="num_steps", lb=steps, ub=steps),
+                StructureParameter(
+                    name="step_size", lb=step_size, ub=step_size
+                ),
+            ],
+        )
         return scenario
 
     def make_ps_scenario(
@@ -145,6 +160,7 @@ class TestUnitTests(unittest.TestCase):
         parameter_bounds,
         identical_parameters,
         steps,
+        step_size,
         query,
         params_to_synth=["inf_o_o", "rec_o_o"],
         extra_constraints=None,
@@ -160,23 +176,28 @@ class TestUnitTests(unittest.TestCase):
             ModelParameter(name=k, lb=v[0], ub=v[1])
             for k, v in parameter_bounds.items()
             if k in params_to_synth
+        ] + [
+            StructureParameter(name="num_steps", lb=steps, ub=steps),
+            StructureParameter(name="step_size", lb=step_size, ub=step_size),
         ]
         scenario = ParameterSynthesisScenario(
             parameters=parameters, model=model, query=query
         )
         return scenario
 
-    def report(self, result: AnalysisScenario, name):
+    def report(self, result: AnalysisScenarioResult, name):
         if result.consistent:
-            parameters = result._parameters()
+            parameters = result.scenario.parameters
 
             res = pd.Series(name=name, data=parameters).to_frame().T
             self.results_df = pd.concat([self.results_df, res])
             result.scenario.model.bilayer.to_dot(
                 values=result.scenario.model.variables()
             ).render(f"{name}_bilayer")
-            print(result.dataframe())
+            point = result.parameter_space.true_points[0]
+            print(result.dataframe(point))
             ax = result.plot(
+                point,
                 variables=list(result.scenario.model.init_values.keys()),
                 title="\n".join(textwrap.wrap(str(parameters), width=75)),
             )

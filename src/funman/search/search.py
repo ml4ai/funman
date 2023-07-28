@@ -93,7 +93,6 @@ class SearchEpisode(BaseModel):
         return box
 
 
-
 class Search(ABC):
     def __init__(self) -> None:
         self.episodes = []

@@ -72,6 +72,16 @@ class FUNMANConfig(BaseModel):
     substitute_subformulas = True
     """Enforce compartmental variable constraints"""
     use_compartmental_constraints = True
+    """Normalize"""
+    normalize = True
+    """ Simplify query by propagating substutions """
+    simplify_query = True
+    """ Series approximation threshold for dropping series terms """
+    series_approximation_threshold = 0
+    """ Generate profiling output"""
+    profile = False
+    """ Use Taylor series of given order to approximate transition function, if None, then do not compute series """
+    taylor_series_order: int = None
 
     @validator("solver")
     def import_dreal(cls, v):
@@ -121,6 +131,20 @@ class Funman(object):
             The resulting data, statistics, and other relevant information
             produced by the analysis.
         """
-        return problem.solve(
-            config, haltEvent=haltEvent, resultsCallback=resultsCallback
-        )
+        problem.model._normalize = config.normalize
+
+        if config.profile:
+            import cProfile
+
+            with cProfile.Profile() as pr:
+                result = problem.solve(
+                    config,
+                    haltEvent=haltEvent,
+                    resultsCallback=resultsCallback,
+                )
+                pr.dump_stats("profile.stats")
+        else:
+            result = problem.solve(
+                config, haltEvent=haltEvent, resultsCallback=resultsCallback
+            )
+        return result
