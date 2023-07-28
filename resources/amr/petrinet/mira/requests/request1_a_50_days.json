@@ -1,0 +1,28 @@
+{
+  "query": {},
+  "parameters": [
+    {
+      "name": "t_0",
+      "lb": 50.0,
+      "ub": 50.0,
+      "label": "any"
+    }
+  ],
+  "structure_parameters": [
+    {
+      "name": "num_steps",
+      "lb": 400,
+      "ub": 400,
+      "label": "all"
+    },
+    {
+      "name": "step_size",
+      "lb": 1,
+      "ub": 1,
+      "label": "all"
+    }
+  ],
+  "config": {
+    "solver": "dreal"
+  }
+}

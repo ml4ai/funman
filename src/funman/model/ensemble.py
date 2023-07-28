@@ -1,10 +1,9 @@
 from typing import Dict, List, Tuple
 
 import graphviz
-from pydantic import BaseModel
+from pysmt.shortcuts import REAL, Div, Real, Symbol
 
-from funman.representation import Parameter
-from funman.translate import EnsembleEncoder
+from funman.representation import ModelParameter
 
 from .model import Model
 
@@ -14,7 +13,7 @@ class EnsembleModel(Model):
     _model_name_map: Dict[str, Model] = None
     _var_name_map: Dict[str, Tuple[str, Model]] = None
     _parameter_name_map: Dict[str, Tuple[str, Model]] = None
-    _parameter_map: Dict[str, Parameter] = None
+    _parameter_map: Dict[str, ModelParameter] = None
 
     class Config:
         underscore_attrs_are_private = True
@@ -24,7 +23,9 @@ class EnsembleModel(Model):
         self.models = kwargs["models"]
         self._initialize_mappings()
 
-    def default_encoder(self, config: "FUNMANConfig") -> "Encoder":
+    def default_encoder(
+        self, config: "FUNMANConfig", scenario: "AnalysisScenario"
+    ) -> "Encoder":
         """
         Return the default Encoder for the model
 
@@ -33,14 +34,22 @@ class EnsembleModel(Model):
         Encoder
             SMT encoder for model
         """
-        return EnsembleEncoder(
-            config=config,
-            model=self,
-        )
+        from funman.translate import EnsembleEncoder
 
-    def _get_init_value(self, var: str):
+        return EnsembleEncoder(config=config, scenario=scenario)
+
+    def _get_init_value(self, var: str, normalize=True):
         (m_name, orig_var) = self._var_name_map[var]
-        return self._model_name_map[m_name].init_values[orig_var]
+        value = self._model_name_map[m_name].init_values[orig_var]
+        if isinstance(value, str):
+            value = Symbol(value, REAL)
+        else:
+            value = Real(value)
+
+        if normalize:
+            norm = self.normalization()
+            value = Div(value, norm)
+        return value
 
     def _state_vars(self):
         return map(lambda m: m._state_vars(), self.models)
@@ -60,7 +69,7 @@ class EnsembleModel(Model):
             for p in model_parameters[m_name]
         }
         self._parameter_map = {
-            p_name: Parameter(
+            p_name: ModelParameter(
                 name=p_name,
                 lb=self._model_name_map[m_name].parameter_bounds[p][0],
                 ub=self._model_name_map[m_name].parameter_bounds[p][1],
@@ -76,9 +85,14 @@ class EnsembleModel(Model):
         return list(self._parameter_name_map.keys())
 
     def _parameter_values(self):
-        return map(lambda m: m._parameter_values(), self.models)
+        return {
+            p_name: self._model_name_map[m_name[0]]._parameter_values()[
+                m_name[1]
+            ]
+            for p_name, m_name in self._parameter_name_map.items()
+        }
 
-    def _parameters(self) -> List[Parameter]:
+    def _parameters(self) -> List[ModelParameter]:
         return list(self._parameter_map.values())
 
     def to_dot(self, values={}):

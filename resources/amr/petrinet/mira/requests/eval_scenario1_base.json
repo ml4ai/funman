@@ -1,0 +1,28 @@
+{
+  "query": {},
+  "parameters": [
+    {
+      "name": "beta"
+    }
+  ],
+  "structure_parameters": [
+    {
+      "name": "num_steps",
+      "lb": 100,
+      "ub": 100,
+      "label": "all"
+    },
+    {
+      "name": "step_size",
+      "lb": 2,
+      "ub": 2,
+      "label": "all"
+    }
+  ],
+  "config": {
+    "save_smtlib": true,
+    "substitute_subformulas": true,
+    "simplify_query": true,
+    "dreal_mcts": true
+  }
+}

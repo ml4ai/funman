@@ -2,6 +2,7 @@
 This module defines the Parameter Synthesis scenario.
 """
 import threading
+from functools import partial
 from typing import Callable, Dict, List, Optional, Union
 
 from pandas import DataFrame
@@ -27,8 +28,14 @@ from funman.model.query import (
     QueryLE,
 )
 from funman.model.regnet import GeneratedRegnetModel, RegnetModel
-from funman.representation import Parameter
-from funman.representation.representation import ParameterSpace, Point
+from funman.representation import ModelParameter, StructureParameter
+from funman.representation.representation import (
+    Box,
+    ModelParameter,
+    ParameterSpace,
+    Point,
+    StructureParameter,
+)
 from funman.scenario import (
     AnalysisScenario,
     AnalysisScenarioResult,
@@ -52,7 +59,6 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
         smart_union = True
         extra = "forbid"
 
-    parameters: List[Parameter]
     model: Union[
         GeneratedPetriNetModel,
         GeneratedRegnetModel,
@@ -108,91 +114,45 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
         else:
             search = config._search()
 
+        if len(self.structure_parameters()) == 0:
+            # either undeclared or wrong type
+            # if wrong type, recover structure parameters
+            self.parameters = [
+                (
+                    StructureParameter(name=p.name, lb=p.lb, ub=p.ub)
+                    if (p.name == "num_steps" or p.name == "step_size")
+                    else p
+                )
+                for p in self.parameters
+            ]
+            if len(self.structure_parameters()) == 0:
+                # Add the structure parameters if still missing
+                self.parameters += [
+                    StructureParameter(name="num_steps", lb=0, ub=0),
+                    StructureParameter(name="step_size", lb=1, ub=1),
+                ]
+
         self._extract_non_overriden_parameters()
         self._filter_parameters()
 
-        if self.model.structural_parameter_bounds:
-            if self._smt_encoder is None:
-                self._smt_encoder = self.model.default_encoder(config)
+        num_parameters = len(self.parameters)
+        if self._smt_encoder is None:
+            self._smt_encoder = self.model.default_encoder(config, self)
 
-            # FIXME these ranges are also computed in the encoder
-            num_steps_range = range(
-                self.model.structural_parameter_bounds["num_steps"][0],
-                self.model.structural_parameter_bounds["num_steps"][1] + 1,
-            )
-            step_size_range = range(
-                self.model.structural_parameter_bounds["step_size"][0],
-                self.model.structural_parameter_bounds["step_size"][1] + 1,
-            )
-            result = []
+        self._original_parameter_widths = {
+            p: minus(p.ub, p.lb) for p in self.parameters
+        }
+        parameter_space: ParameterSpace = search.search(
+            self,
+            config,
+            haltEvent=haltEvent,
+            resultsCallback=resultsCallback,
+        )
 
-            consistent = None
-            for configuration in self._smt_encoder._timed_model_elements[
-                "configurations"
-            ]:
-                num_steps = configuration["num_steps"]
-                step_size = configuration["step_size"]
-                self._encode_timed(num_steps, step_size, config)
-                r = search.search(
-                    self,
-                    config=config,
-                    haltEvent=haltEvent,
-                    resultsCallback=resultsCallback,
-                )
-                result.append(
-                    {
-                        "num_steps": num_steps,
-                        "step_size": step_size,
-                        "parameter_space": r,
-                    }
-                )
-                print(self._results_str(result))
-                print("-" * 80)
-
-            parameter_space = ParameterSpace._from_configurations(result)
-        else:
-            # self._encode(config)
-            if self._smt_encoder is None:
-                self._smt_encoder = self.model.default_encoder(config)
-            self._encode_timed(config.num_steps, config.step_size, config)
-
-            self._original_parameter_widths = {
-                p: minus(p.ub, p.lb) for p in self.parameters
-            }
-            parameter_space: ParameterSpace = search.search(
-                self,
-                config,
-                haltEvent=haltEvent,
-                resultsCallback=resultsCallback,
-            )
-
+        parameter_space.num_dimensions = num_parameters
         return ParameterSynthesisScenarioResult(
             parameter_space=parameter_space, scenario=self
         )
-
-    def _extract_non_overriden_parameters(self):
-        # If a model has parameters that are not overridden by the scenario, then add them to the scenario
-        model_parameters = self.model._parameter_names()
-        model_parameters = [] if model_parameters is None else model_parameters
-        non_overriden_parameters = []
-        for p in model_parameters:
-            bounds = {}
-            lb = self.model._parameter_lb(p)
-            if lb:
-                bounds["lb"] = lb
-            ub = self.model._parameter_ub(p)
-            if ub:
-                bounds["ub"] = ub
-            non_overriden_parameters.append(Parameter(name=p, **bounds))
-        self.parameters += non_overriden_parameters
-
-    def _filter_parameters(self):
-        # If the scenario has parameters that are not in the model, then remove them from the scenario
-        model_parameters = self.model._parameter_names()
-        if model_parameters is not None:
-            self.parameters = [
-                p for p in self.parameters if p.name in model_parameters
-            ]
 
     def _results_str(self, result: List[Dict]):
         return "\n".join(
@@ -228,25 +188,60 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
         )
         return self._model_encoding, self._query_encoding
 
-    def _encode_timed(self, num_steps, step_size, config: "FUNMANConfig"):
-        self._assume_model = Symbol("assume_model")
-        self._assume_query = Symbol("assume_query")
+    def _encode_timed(self, num_steps, step_size_idx, config: "FUNMANConfig"):
+        # self._assume_model = Symbol("assume_model")
+        if self._smt_encoder._timed_model_elements:
+            step_size = self._smt_encoder._timed_model_elements["step_sizes"][
+                step_size_idx
+            ]
+            self._assume_query = [
+                Symbol(f"assume_query_{t}")
+                for t in range(0, (num_steps * step_size) + 1, step_size)
+            ]
         # This will overwrite the _model_encoding for each configuration, but the encoder will retain components of the configurations.
-        self._model_encoding = self._smt_encoder.encode_model_timed(
-            self.model, num_steps, step_size
+        (
+            model_encoding,
+            query_encoding,
+        ) = self._smt_encoder.initialize_encodings(
+            self, num_steps, step_size_idx
         )
-        self._model_encoding._formula = Iff(
-            self._assume_model, self._model_encoding._formula
-        )
+        # self._smt_encoder.encode_model_timed(
+        #     self, num_steps, step_size
+        # )
+
+        self._model_encoding = model_encoding
+        self._query_encoding = query_encoding
 
         # This will create a new formula for each query without caching them (its typically inexpensive)
-        self._query_encoding = self._smt_encoder.encode_query(
-            self._model_encoding, self.query
-        )
-        self._query_encoding._formula = Iff(
-            self._assume_query, self._query_encoding._formula
-        )
+        # self._query_encoding = self._smt_encoder.initialize_encoding(self, num_steps, step_size)
+        # self._smt_encoder.encode_query(
+        #     self.query, num_steps, step_size
+        # )
+        # self._query_encoding.assume(self._assume_query)
         return self._model_encoding, self._query_encoding
+
+    def encode_simplified(self, box: Box, timepoint: int):
+        model_encoding = self._model_encoding.encoding(
+            self._model_encoding._encoder.encode_model_layer,
+            layers=list(range(timepoint + 1)),
+            box=box,
+        )
+        query_encoding = self._query_encoding.encoding(
+            partial(
+                self._query_encoding._encoder.encode_query_layer,
+                self.query,
+            ),
+            layers=[timepoint],
+            box=box,
+            assumptions=self._assume_query,
+        )
+        step_size_idx = self._smt_encoder._timed_model_elements[
+            "step_sizes"
+        ].index(self._model_encoding.step_size)
+
+        return self._smt_encoder.encode_simplified(
+            model_encoding, query_encoding, step_size_idx
+        )
 
 
 class ParameterSynthesisScenarioResult(AnalysisScenarioResult, BaseModel):

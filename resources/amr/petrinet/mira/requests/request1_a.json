@@ -1,0 +1,31 @@
+{
+  "query": {},
+  "parameters": [
+    {
+      "name": "t_0",
+      "lb": 0.0,
+      "ub": 0.0,
+      "label": "any"
+    }
+  ],
+  "structure_parameters": [
+    {
+      "name": "num_steps",
+      "lb": 1,
+      "ub": 100,
+      "label": "all"
+    },
+    {
+      "name": "step_size",
+      "lb": 4,
+      "ub": 4,
+      "label": "all"
+    }
+  ],
+  "config": {
+    "solver": "dreal",
+    "dreal_mcts": true,
+    "tolerance": 1e-5,
+    "dreal_precision": 0.001
+  }
+}

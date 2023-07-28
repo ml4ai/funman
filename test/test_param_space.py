@@ -13,7 +13,7 @@ class TestCompilation(unittest.TestCase):
         param_space_cache_file = os.path.join(
             RESOURCES, "cached", "param_space_1d.json"
         )
-        ps = ParameterSpace()
+        ps = ParameterSpace(num_dimensions=2)
         ps.append_result(
             {
                 "type": "point",

@@ -17,7 +17,10 @@ from funman.model import (
     SimulatorModel,
 )
 from funman.model.bilayer import BilayerDynamics, BilayerModel
-from funman.representation.representation import Parameter
+from funman.representation.representation import (
+    ModelParameter,
+    StructureParameter,
+)
 from funman.scenario import (
     ConsistencyScenario,
     ConsistencyScenarioResult,
@@ -65,6 +68,16 @@ class TestUseCases(unittest.TestCase):
                     init_values=init_values,
                 ),
                 query=query,
+                parameters=[
+                    StructureParameter(name="num_steps", lb=3, ub=3),
+                    StructureParameter(name="step_size", lb=1, ub=1),
+                ],
+                config=FUNMANConfig(
+                    solver="dreal",
+                    dreal_mcts=True,
+                    number_of_processes=1,
+                    normalize=False,
+                ),
             )
         )
 
@@ -88,8 +101,8 @@ class TestUseCases(unittest.TestCase):
 
     def test_use_case_simple_parameter_synthesis(self):
         parameters = [
-            Parameter(name="x"),
-            Parameter(name="y"),
+            ModelParameter(name="x"),
+            ModelParameter(name="y"),
         ]
         x = parameters[0].symbol()
         y = parameters[1].symbol()
@@ -114,6 +127,8 @@ class TestUseCases(unittest.TestCase):
                 dreal_mcts=True,
                 tolerance=1e-8,
                 number_of_processes=1,
+                normalize=False,
+                simplify_query=False,
             ),
         )
         assert result
@@ -149,7 +164,11 @@ class TestUseCases(unittest.TestCase):
         model, query = self.setup_use_case_bilayer_common()
         [lb, ub] = model.parameter_bounds["beta"]
         scenario = ParameterSynthesisScenario(
-            parameters=[Parameter(name="beta", lb=lb, ub=ub)],
+            parameters=[
+                ModelParameter(name="beta", lb=lb, ub=ub),
+                StructureParameter(name="num_steps", lb=3, ub=3),
+                StructureParameter(name="step_size", lb=1, ub=1),
+            ],
             model=model,
             query=query,
         )
@@ -166,6 +185,7 @@ class TestUseCases(unittest.TestCase):
                 dreal_mcts=True,
                 tolerance=1e-8,
                 number_of_processes=1,
+                normalize=False,
                 _handler=ResultCombinedHandler(
                     [
                         ResultCacheWriter(f"box_search.json"),
@@ -185,7 +205,14 @@ class TestUseCases(unittest.TestCase):
     def setup_use_case_bilayer_consistency(self):
         model, query = self.setup_use_case_bilayer_common()
 
-        scenario = ConsistencyScenario(model=model, query=query)
+        scenario = ConsistencyScenario(
+            model=model,
+            query=query,
+            parameters=[
+                StructureParameter(name="num_steps", lb=3, ub=3),
+                StructureParameter(name="step_size", lb=1, ub=1),
+            ],
+        )
         return scenario
 
     def test_use_case_bilayer_consistency(self):
@@ -194,11 +221,18 @@ class TestUseCases(unittest.TestCase):
         funman = Funman()
 
         # Show that region in parameter space is sat (i.e., there exists a true point)
-        result_sat: ConsistencyScenarioResult = funman.solve(scenario)
-        df = result_sat.dataframe()
+        result_sat: ConsistencyScenarioResult = funman.solve(
+            scenario,
+            config=FUNMANConfig(
+                solver="dreal", normalize=False, simplify_query=False
+            ),
+        )
+        df = result_sat.dataframe(result_sat.parameter_space.true_points[0])
 
-        assert abs(df["I"][2] - 2.24) < 0.5
-        beta = result_sat._parameters()["beta"]
+        assert abs(df["I"][2] - 2.0) < 1.0
+        beta = result_sat._parameters(
+            result_sat.parameter_space.true_points[0]
+        )["beta"]
         assert abs(beta - 0.00005) < 0.001
 
         # Show that region in parameter space is unsat/false
@@ -207,7 +241,9 @@ class TestUseCases(unittest.TestCase):
             0.000067 * 1.5,
             0.000067 * 1.75,
         ]
-        result_unsat: ConsistencyScenarioResult = funman.solve(scenario)
+        result_unsat: ConsistencyScenarioResult = funman.solve(
+            scenario, config=FUNMANConfig(solver="dreal", normalize=False)
+        )
         assert not result_unsat.consistent
 
 

@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from funman_demo.handlers import RealtimeResultPlotter, ResultCacheWriter
 
 from funman import Funman
-from funman.model import Parameter
+from funman.model import ModelParameter
 from funman.scenario.parameter_synthesis import (
     ParameterSynthesisScenario,
     ParameterSynthesisScenarioResult,
@@ -20,8 +20,8 @@ def realtime_plotting_and_caching():
     print(f"FUNMAN: Writing example realtime output to {tmp_dir_path}")
     gromet_file1 = "chime1"
     parameters = [
-        Parameter(name="beta_0", lb=0.0, ub=0.5),
-        Parameter(name="beta_1", lb=0.0, ub=0.5),
+        ModelParameter(name="beta_0", lb=0.0, ub=0.5),
+        ModelParameter(name="beta_1", lb=0.0, ub=0.5),
     ]
     result1: ParameterSynthesisScenarioResult = Funman().solve(
         ParameterSynthesisScenario(

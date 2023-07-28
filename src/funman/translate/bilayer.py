@@ -4,7 +4,7 @@ This module encodes bilayer models into a SMTLib formula.
 """
 import logging
 from functools import reduce
-from typing import List
+from typing import Dict, List, Tuple
 
 import pysmt
 from pysmt.formula import FNode
@@ -34,9 +34,11 @@ from funman.model.bilayer import (
     BilayerStateNode,
 )
 from funman.model.model import Model
-from funman.representation import Parameter
+from funman.representation import ModelParameter
 from funman.representation.representation import Box, Interval
 from funman.translate import Encoder, Encoding, EncodingOptions
+from funman.translate.simplifier import FUNMANSimplifier
+from funman.utils.sympy_utils import to_sympy
 
 l = logging.Logger(__name__)
 
@@ -69,28 +71,34 @@ class BilayerEncoder(Encoder):
 
     def _encode_next_step(
         self,
-        model: Model,
+        scenario: "AnalysisScenario",
         step: int,
         next_step: int,
         time_dependent_parameters=None,
-    ) -> FNode:
-        transition = self._encode_bilayer(
-            model.bilayer,
-            [step, next_step],
+        substitutions=None,
+    ) -> Tuple[FNode, Dict[FNode, FNode]]:
+        transition, substitutions = self._encode_bilayer_timepoint(
+            scenario,
+            step,
+            next_step,
             time_dependent_parameters=time_dependent_parameters,
+            substitutions=substitutions,
         )
-        if model.measurements:
+
+        if scenario.model.measurements:
             measurements = self._encode_measurements(
-                model.measurements, [step + next_step]
+                scenario.model.measurements, [step + next_step]
             )
         else:
             measurements = TRUE()
 
-        return And(transition, measurements).simplify()
+        return And(transition, measurements).simplify(), substitutions
 
-    def _encode_untimed_constraints(self, model: Model) -> FNode:
+    def _encode_untimed_constraints(
+        self, scenario: "AnalysisScenario"
+    ) -> FNode:
         super_untimed_constraints = Encoder._encode_untimed_constraints(
-            self, model
+            self, scenario
         )
         untimed_constraints = []
 
@@ -99,7 +107,7 @@ class BilayerEncoder(Encoder):
             And(
                 [
                     Equals(Symbol(var1, REAL), Symbol(var2, REAL))
-                    for group in model.identical_parameters
+                    for group in scenario.model.identical_parameters
                     for var1 in group
                     for var2 in group
                     if var1 != var2
@@ -164,7 +172,7 @@ class BilayerEncoder(Encoder):
             for _, node in model.bilayer._flux.items():
                 self._untimed_symbols.add(node.parameter)
 
-            init = self._define_init(model)
+            init = self._define_init(scenario)
 
             encoding = self._encode_bilayer(
                 model.bilayer,
@@ -174,7 +182,7 @@ class BilayerEncoder(Encoder):
 
             if model.parameter_bounds:
                 parameters = [
-                    Parameter(
+                    ModelParameter(
                         name=node.parameter,
                         lb=model.parameter_bounds[node.parameter][0],
                         ub=model.parameter_bounds[node.parameter][1],
@@ -185,7 +193,7 @@ class BilayerEncoder(Encoder):
                 ]
                 if model.measurements:
                     parameters += [
-                        Parameter(
+                        ModelParameter(
                             name=node.parameter,
                             lb=model.parameter_bounds[node.parameter][0],
                             ub=model.parameter_bounds[node.parameter][1],
@@ -305,17 +313,17 @@ class BilayerEncoder(Encoder):
         return observable_defs
 
     def _encode_bilayer(
-        self, bilayer, timepoints, time_dependent_parameters=False
+        self, scenario, timepoints, time_dependent_parameters=False
     ):
         ans = simplify(
             And(
                 [
                     self._encode_bilayer_timepoint(
-                        bilayer,
+                        scenario,
                         timepoints[i],
                         timepoints[i + 1],
                         time_dependent_parameters=time_dependent_parameters,
-                    )
+                    )[0]
                     for i in range(len(timepoints) - 1)
                 ]
             )
@@ -324,11 +332,13 @@ class BilayerEncoder(Encoder):
 
     def _encode_bilayer_timepoint(
         self,
-        bilayer,
+        scenario,
         timepoint,
         next_timepoint,
         time_dependent_parameters=False,
+        substitutions={},
     ):
+        bilayer = scenario.model.bilayer
         ## Calculate time step size
         time_step_size = next_timepoint - timepoint
         eqns = (
@@ -401,35 +411,58 @@ class BilayerEncoder(Encoder):
             )
             # noise = Symbol(f"noise_{state_var_next_step_smt}", REAL)
             # self._timed_symbols.add(f"{noise}".rsplit("_", 1)[0])
-            eqn = simplify(
-                And(
-                    LE(
-                        state_var_next_step_smt,
-                        Plus(
-                            state_var_smt,
-                            Times(
-                                Real(time_step_size),
-                                Minus(pos_terms, neg_terms),
+            if self.config.constraint_noise != 0.0:
+                eqn = simplify(
+                    And(
+                        LE(
+                            state_var_next_step_smt,
+                            Plus(
+                                state_var_smt,
+                                Times(
+                                    Real(time_step_size),
+                                    Minus(pos_terms, neg_terms),
+                                ),
+                                Real(self.config.constraint_noise),
                             ),
-                            Real(self.config.constraint_noise),
                         ),
-                    ),
-                    GE(
-                        state_var_next_step_smt,
-                        Plus(
-                            state_var_smt,
-                            Times(
-                                Real(time_step_size),
-                                Minus(pos_terms, neg_terms),
+                        GE(
+                            state_var_next_step_smt,
+                            Plus(
+                                state_var_smt,
+                                Times(
+                                    Real(time_step_size),
+                                    Minus(pos_terms, neg_terms),
+                                ),
+                                Real(-self.config.constraint_noise),
                             ),
-                            Real(-self.config.constraint_noise),
                         ),
-                    ),
+                    )
                 )
-            )
+            else:
+                rhs = Plus(
+                    state_var_smt,
+                    Times(
+                        Real(time_step_size),
+                        Minus(pos_terms, neg_terms),
+                    ),
+                ).simplify()
+                if self.config.substitute_subformulas:
+                    rhs = FUNMANSimplifier.sympy_simplify(
+                        to_sympy(
+                            rhs, [str(s) for s in rhs.get_free_variables()]
+                        ),
+                        parameters=scenario.parameters,
+                        substitutions=substitutions,
+                        threshold=self.config.series_approximation_threshold,
+                        taylor_series_order=self.config.taylor_series_order,
+                    )
+
+                eqn = Equals(state_var_next_step_smt, rhs)
+                substitutions[state_var_next_step_smt] = rhs
+
             # print(eqn)
             eqns.append(eqn)
-        return And(eqns)
+        return And(eqns), substitutions
 
     def _encode_bilayer_node(self, node, timepoint=None):
         if not isinstance(node, BilayerNode):

@@ -17,7 +17,7 @@ FUNMAN_PYTHON=${FUNMAN_ENV_PATH}/bin/python
 FUNMAN_PIP=${FUNMAN_ENV_PATH}/bin/pip
 
 cd "${DREAL_ROOT}"
-# OPTIONS=--copt=”-pg” --cxxopt=”-pg” --linkopt=“-pg” --compilation_mode=dbg
+# OPTIONS=--copt="-pg" --cxxopt="-pg" --linkopt="-pg" --compilation_mode=dbg
 OPTIONS=
 bazel build ${OPTIONS} --python_path=${FUNMAN_PYTHON} //:archive
 sudo /usr/local/bin/update-dreal

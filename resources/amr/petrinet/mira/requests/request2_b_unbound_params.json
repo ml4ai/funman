@@ -1,0 +1,81 @@
+{
+    "query": {},
+    "parameters": [
+        {
+            "name": "ai",
+            "label": "any"
+        },
+        {
+            "name": "beta",
+            "label": "any"
+        },
+        {
+            "name": "beta_scale",
+            "label": "any"
+        },
+        {
+            "name": "beta_v1",
+            "label": "any"
+        },
+        {
+            "name": "beta_v2",
+            "label": "any"
+        },
+        {
+            "name": "ai_R",
+            "label": "any"
+        },
+        {
+            "name": "beta_R",
+            "label": "any"
+        },
+        {
+            "name": "ai_beta_ratio",
+            "label": "any"
+        },
+        {
+            "name": "gamma",
+            "label": "any"
+        },
+        {
+            "name": "mu_IV",
+            "label": "any"
+        },
+        {
+            "name": "nu_v1",
+            "label": "any"
+        },
+        {
+            "name": "nu_v2",
+            "label": "any"
+        },
+        {
+            "name": "nu_R",
+            "label": "any"
+        },
+        {
+            "name": "mu",
+            "label": "any"
+        }
+    ],
+    "structure_parameters": [
+        {
+            "name": "num_steps",
+            "lb": 2,
+            "ub": 2,
+            "label": "all"
+        },
+        {
+            "name": "step_size",
+            "lb": 1,
+            "ub": 1,
+            "label": "all"
+        }
+    ],
+    "config": {
+        "solver": "dreal",
+        "save_smtlib": true,
+        "substitute_subformulas": false,
+        "use_compartmental_constraints": false
+    }
+}

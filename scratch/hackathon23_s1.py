@@ -29,7 +29,7 @@ from funman.funman import FUNMANConfig
 from funman.model import QueryLE
 from funman.model.bilayer import BilayerDynamics, BilayerGraph, BilayerModel
 from funman.model.query import QueryEncoded, QueryTrue
-from funman.representation.representation import Parameter
+from funman.representation.representation import ModelParameter
 from funman.scenario import ConsistencyScenario, ConsistencyScenarioResult
 from funman.scenario.parameter_synthesis import ParameterSynthesisScenario
 from funman.scenario.scenario import AnalysisScenario
@@ -327,12 +327,12 @@ class TestUseCases(unittest.TestCase):
             identical_parameters=identical_parameters,
         )
         parameters = [
-            Parameter(
+            ModelParameter(
                 name="beta_1",
                 lb=parameter_bounds["beta_1"][0],
                 ub=parameter_bounds["beta_1"][1],
             ),
-            Parameter(
+            ModelParameter(
                 name="mu_s",
                 lb=parameter_bounds["mu_s"][0],
                 ub=parameter_bounds["mu_s"][1],

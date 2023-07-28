@@ -1,0 +1,31 @@
+{
+  "query": {
+    "variable": "I",
+    "ub": 7.5e6
+  },
+  "parameters": [
+    {
+      "name": "beta",
+      "lb": 0.1,
+      "ub": 0.9,
+      "label": "all"
+    }
+  ],
+  "structure_parameters": [
+    {
+      "name": "num_steps",
+      "lb": 0,
+      "ub": 200,
+      "label": "all"
+    },
+    {
+      "name": "step_size",
+      "lb": 1,
+      "ub": 1,
+      "label": "all"
+    }
+  ],
+  "config": {
+    "save_smtlib": true
+  }
+}

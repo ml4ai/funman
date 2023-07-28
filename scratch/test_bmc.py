@@ -17,7 +17,7 @@ from funman.model import (
     SimulatorModel,
 )
 from funman.model.bilayer import BilayerDynamics, BilayerModel
-from funman.representation.representation import Parameter
+from funman.representation.representation import ModelParameter
 from funman.scenario import (
     ConsistencyScenario,
     ConsistencyScenarioResult,
@@ -71,7 +71,7 @@ class TestUseCases(unittest.TestCase):
         model, query = self.setup_use_case_bilayer_common()
         [lb, ub] = model.parameter_bounds["beta"]
         scenario = ParameterSynthesisScenario(
-            parameters=[Parameter(name="beta", lb=lb, ub=ub)],
+            parameters=[ModelParameter(name="beta", lb=lb, ub=ub)],
             model=model,
             query=query,
         )

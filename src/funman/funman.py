@@ -28,13 +28,14 @@ class FUNMANConfig(BaseModel):
     class Config:
         underscore_attrs_are_private = True
         arbitrary_types_allowed = True
+        validate_all = True
 
-    tolerance: float = 0.1
+    tolerance: float = 1e-8
     """Algorithm-specific tolerance for approximation, used by BoxSearch"""
 
     queue_timeout: int = 1
     """Multiprocessing queue timeout, used by BoxSearch"""
-    number_of_processes: int = mp.cpu_count()
+    number_of_processes: int = 1  # mp.cpu_count()
     """Number of BoxSearch processes"""
     _handler: Union[
         ResultCombinedHandler, NoopResultHandler, ResultHandler
@@ -48,7 +49,7 @@ class FUNMANConfig(BaseModel):
     # episode_type: =None,
     _search: str = None
     """Name of search algorithm to use"""
-    solver: str = "z3"
+    solver: str = "dreal"  # "z3"
     """Name of pysmt solver to use"""
     num_steps: int = 2
     """Number of timesteps to encode"""
@@ -60,13 +61,27 @@ class FUNMANConfig(BaseModel):
     """Factor used to relax initial state values bounds"""
     save_smtlib: bool = False
     """Whether to save each smt invocation as an SMTLib file"""
-    dreal_precision: float = 0.001
+    dreal_precision: float = 1e-3
     """Precision delta for dreal solver"""
     dreal_log_level: str = "off"
     """Constraint noise term to relax constraints"""
     constraint_noise: float = 0.0
     """Use MCTS in dreal"""
-    dreal_mcts = False
+    dreal_mcts = True
+    """Substitute subformulas to simplify overall encoding"""
+    substitute_subformulas = True
+    """Enforce compartmental variable constraints"""
+    use_compartmental_constraints = True
+    """Normalize"""
+    normalize = True
+    """ Simplify query by propagating substutions """
+    simplify_query = True
+    """ Series approximation threshold for dropping series terms """
+    series_approximation_threshold = 0
+    """ Generate profiling output"""
+    profile = False
+    """ Use Taylor series of given order to approximate transition function, if None, then do not compute series """
+    taylor_series_order: int = None
 
     @validator("solver")
     def import_dreal(cls, v):
@@ -116,6 +131,20 @@ class Funman(object):
             The resulting data, statistics, and other relevant information
             produced by the analysis.
         """
-        return problem.solve(
-            config, haltEvent=haltEvent, resultsCallback=resultsCallback
-        )
+        problem.model._normalize = config.normalize
+
+        if config.profile:
+            import cProfile
+
+            with cProfile.Profile() as pr:
+                result = problem.solve(
+                    config,
+                    haltEvent=haltEvent,
+                    resultsCallback=resultsCallback,
+                )
+                pr.dump_stats("profile.stats")
+        else:
+            result = problem.solve(
+                config, haltEvent=haltEvent, resultsCallback=resultsCallback
+            )
+        return result

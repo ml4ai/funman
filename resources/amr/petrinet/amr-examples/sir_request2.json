@@ -1,0 +1,55 @@
+{
+  "query": {},
+  "parameters": [
+    {
+      "name": "beta",
+      "lb": 2.6e-7,
+      "ub": 2.8e-7,
+      "label": "all"
+    },
+    {
+      "name": "gamma",
+      "lb": 0.1,
+      "ub": 0.18,
+      "label": "all"
+    },
+    {
+      "name": "S0",
+      "lb": 1000,
+      "ub": 1000,
+      "label": "any"
+    },
+    {
+      "name": "I0",
+      "lb": 1,
+      "ub": 1,
+      "label": "any"
+    },
+    {
+      "name": "R0",
+      "lb": 0,
+      "ub": 0,
+      "label": "any"
+    }
+  ],
+  "structure_parameters": [
+    {
+      "name": "num_steps",
+      "lb": 1,
+      "ub": 3,
+      "label": "all"
+    },
+    {
+      "name": "step_size",
+      "lb": 1,
+      "ub": 1,
+      "label": "all"
+    }
+  ],
+  "config": {
+    "tolerance": 1.0e-8,
+    "number_of_processes": 1,
+    "solver": "dreal",
+    "dreal_mcts": "true"
+  }
+}

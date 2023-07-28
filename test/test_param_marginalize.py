@@ -2,7 +2,7 @@ import unittest
 
 from matplotlib.lines import Line2D
 
-from funman.representation import Parameter
+from funman.representation import ModelParameter
 from funman.search import Box, Interval
 
 
@@ -13,13 +13,13 @@ def add_box_variable(b, vars_list, new_var_name, new_bounds_lb, new_bounds_ub):
         variable_name = list(b.bounds.keys())[i]
         variable_values = list(b.bounds.values())[i]
         if variable_name in vars_list:
-            current_param = Parameter(
+            current_param = ModelParameter(
                 name=f"{variable_name}",
                 lb=variable_values.lb,
                 ub=variable_values.ub,
             )
             param_list.append(current_param)
-    new_param = Parameter(
+    new_param = ModelParameter(
         name=f"{new_var_name}", lb=new_bounds_lb, ub=new_bounds_ub
     )
     param_list.append(new_param)

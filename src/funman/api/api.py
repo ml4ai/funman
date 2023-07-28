@@ -214,7 +214,7 @@ async def post_queries(
         GeneratedRegNet,
         RegnetModel,
         PetrinetModel,
-        DecapodeModel,
+        # DecapodeModel,
         BilayerModel,
     ],
     request: FunmanWorkRequest,

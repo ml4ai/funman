@@ -1,0 +1,41 @@
+{
+  "query": {},
+  "parameters": [
+    {
+      "name": "lambda",
+      "lb": 0,
+      "ub": 1,
+      "label": "all"
+    },
+    {
+      "name": "beta",
+      "lb": 4.48e7,
+      "ub": 4.5e7,
+      "label": "all"
+    },
+    {
+      "name": "gamma",
+      "lb": 0,
+      "ub": 1,
+      "label": "all"
+    }
+  ],
+  "structure_parameters": [
+    {
+      "name": "num_steps",
+      "lb": 0,
+      "ub": 10,
+      "label": "all"
+    },
+    {
+      "name": "step_size",
+      "lb": 1,
+      "ub": 1,
+      "label": "all"
+    }
+  ],
+  "config": {
+    "save_smtlib": true,
+    "tolerance": 1e-4
+  }
+}

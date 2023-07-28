@@ -11,7 +11,7 @@ from funman.funman import FUNMANConfig
 from funman.model import EnsembleModel, PetrinetModel, QueryLE
 from funman.model.petrinet import PetrinetDynamics
 from funman.model.query import QueryAnd
-from funman.representation.representation import Parameter
+from funman.representation.representation import ModelParameter
 from funman.representation.symbol import ModelSymbol
 from funman.scenario import (
     ConsistencyScenario,
@@ -92,7 +92,7 @@ class TestUseCases(unittest.TestCase):
         model, query = self.setup_use_case_petri_common()
         [lb, ub] = model.parameter_bounds["beta"]
         scenario = ParameterSynthesisScenario(
-            parameters=[Parameter(name="beta", lb=lb, ub=ub)],
+            parameters=[ModelParameter(name="beta", lb=lb, ub=ub)],
             model=model,
             query=query,
         )
@@ -136,7 +136,7 @@ class TestUseCases(unittest.TestCase):
     def setup_use_case_petri_ensemble_consistency(self):
         model, query = self.setup_use_case_petri_ensemble_common()
 
-        scenario = ConsistencyScenario(model=model, query=query)
+        scenario = ConsistencyScenario(model=model, query=query, parameters=[])
         return scenario
 
     @unittest.skip("tmp")
@@ -170,9 +170,12 @@ class TestUseCases(unittest.TestCase):
         # Show that region in parameter space is sat (i.e., there exists a true point)
         result_sat: ConsistencyScenarioResult = Funman().solve(scenario)
         assert result_sat.consistent
-        df = result_sat.dataframe()
+        point = result_sat.parameter_space.true_points[0]
+        df = result_sat.dataframe(point)
 
-        result_sat.plot(variables=scenario.model._state_var_names())
+        result_sat.plot(
+            variables=scenario.model._state_var_names(), point=point
+        )
         plt.savefig("petri.png")
 
         # assert abs(df["Infected"][2] - 2.24) < 0.13

@@ -11,7 +11,7 @@ from funman.funman import FUNMANConfig
 from funman.model import RegnetModel
 from funman.model.query import QueryGE, QueryLE, QueryTrue
 from funman.model.regnet import RegnetDynamics
-from funman.representation.representation import Parameter
+from funman.representation.representation import ModelParameter
 from funman.scenario import (
     ConsistencyScenario,
     ConsistencyScenarioResult,
@@ -67,7 +67,7 @@ class TestUseCases(unittest.TestCase):
 
         scenario = ParameterSynthesisScenario(
             parameters=[
-                Parameter(name=param, lb=bounds[0], ub=bounds[1])
+                ModelParameter(name=param, lb=bounds[0], ub=bounds[1])
                 for param, bounds in model.parameter_bounds.items()
             ],
             model=model,

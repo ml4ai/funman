@@ -26,7 +26,7 @@ from pysmt.shortcuts import (
 from pysmt.typing import BOOL, INT, REAL
 
 from funman import Funman
-from funman.model import Parameter, QueryEncoded
+from funman.model import ModelParameter, QueryEncoded
 from funman.model.encoded import EncodedModel
 from funman.scenario.parameter_synthesis import ParameterSynthesisScenario
 from funman.search import BoxSearch, SearchConfig
@@ -59,7 +59,7 @@ class TestCompilation(unittest.TestCase):
             delta,
         ) = vars
         parameters = [
-            Parameter(name="beta", lb=1e-6, ub=1e-4, _symbol=betas[0])
+            ModelParameter(name="beta", lb=1e-6, ub=1e-4, _symbol=betas[0])
         ]
 
         model = EncodedModel(phi)
