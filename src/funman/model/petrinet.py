@@ -192,6 +192,11 @@ class GeneratedPetriNetModel(AbstractPetriNetModel):
             else:
                 value = f"{var}0"
 
+        try: # to cast to float
+            value = float(value)
+        except:
+            pass
+
         if isinstance(value, float):
             value = Real(value)
         if isinstance(value, int):

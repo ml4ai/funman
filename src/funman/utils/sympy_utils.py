@@ -136,7 +136,8 @@ def to_sympy(
     if isinstance(formula, str):
         unreserved_symbols = [replace_reserved(s) for s in str_symbols]
         clean_expr = replace_reserved(formula)
-        expr = sympify(clean_expr, {s: symbols(s) for s in unreserved_symbols})
+        symbol_map = {s: symbols(s) for s in unreserved_symbols}
+        expr = sympify(clean_expr, symbol_map)
     else:
         expr = SympySerializer().to_sympy(formula)
     return expr

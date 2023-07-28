@@ -1,5 +1,6 @@
 from typing import Dict, List
-
+from funman.constants import POS_INFINITY
+import sys
 import pysmt
 from pysmt.fnode import FNode
 from pysmt.shortcuts import get_env
@@ -34,6 +35,24 @@ class FUNMANSimplifier(pysmt.simplifier.Simplifier):
         super().__init__(env=env)
         self.manager = self.env.formula_manager
 
+    def value_of(expr: Expr, subs:Dict[str, float] = {}):
+        arg_values = [subs[str(v)] for v in expr.free_symbols]
+        lfn = lambdify(expr.free_symbols, expr, 'numpy')
+        if len(arg_values) > 0:
+            try:
+                value = lfn(*arg_values)
+            except OverflowError as e:
+                value = 0.0 # sys.float_info.max
+                print(f"Convert lambdify overflow of {expr} with {subs} from {N(expr, subs=subs)} to {value}")
+            except:
+                pass
+            # except UnderflowError as e:
+            #     value = 0.0
+
+        else:
+            value = lfn()
+        return value
+
     def approximate(formula, parameters: List[ModelParameter], threshold=1e-4):
         if len(formula.free_symbols) == 0:
             return formula
@@ -66,8 +85,8 @@ class FUNMANSimplifier(pysmt.simplifier.Simplifier):
             arg: 0
             for arg in formula.args
             if (
-                bool(Abs(N(arg, subs=lb_values)) < threshold)
-                and bool(Abs(N(arg, subs=ub_values)) < threshold)
+                abs(FUNMANSimplifier.value_of(arg, subs=lb_values)) < threshold
+                and abs(FUNMANSimplifier.value_of(arg, subs=ub_values)) < threshold
             )
         }
         # minimum_term_value = min(tm for arg, tm in term_magnitude.items()) if len(term_magnitude) > 0 else None
@@ -79,10 +98,10 @@ class FUNMANSimplifier(pysmt.simplifier.Simplifier):
         #     if status:
         #         print(f"{status} {arg}")
 
-        # if len(to_drop) > 0:
-        #     print("*" * 80)
-        #     print(f"Drop\n {to_drop}")
-        #     print(f"From\n {formula}")
+        if len(to_drop) > 0:
+            print("*" * 80)
+            print(f"Drop\n {to_drop}")
+            print(f"From\n {formula}")
 
         # for drop in to_drop:
         # subbed_formula = formula.subs(to_drop)
