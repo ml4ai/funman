@@ -14,6 +14,17 @@ FILE_DIRECTORY = Path(__file__).resolve().parent
 API_BASE_PATH = FILE_DIRECTORY / ".."
 RESOURCES = API_BASE_PATH / "resources"
 
+AMR_DIR = RESOURCES / "amr"
+AMR_EXAMPLES_PETRI_DIR = AMR_DIR / "petrinet" / "amr-examples"
+AMR_EXAMPLES_REGNET_DIR = AMR_DIR / "regnet" / "amr-examples"
+
+SKEMA_PETRI_DIR = AMR_DIR / "petrinet" / "skema"
+SKEMA_REGNET_DIR = AMR_DIR / "regnet" / "skema"
+
+MIRA_PETRI_DIR = AMR_DIR / "petrinet" / "mira"
+MIRA_PETRI_MODELS = MIRA_PETRI_DIR / "models"
+MIRA_PETRI_REQUESTS = MIRA_PETRI_DIR / "requests"
+
 TEST_OUT = FILE_DIRECTORY / "out"
 TEST_OUT.mkdir(parents=True, exist_ok=True)
 
@@ -258,13 +269,37 @@ class TestAPI(unittest.TestCase):
             data = self.wait_for_done(client, work_unit.id)
             self.check_parameter_synthesis_success(data.parameter_space)
 
-    def test_amr_petri_net(self):
-        # Alternative example
-        EXAMPLE_DIR = RESOURCES / "amr" / "petrinet" / "amr-examples"
-        MODEL_PATH = EXAMPLE_DIR / "sir.json"
-        REQUEST_PATH = EXAMPLE_DIR / "sir_request1.json"
-        model = json.loads(MODEL_PATH.read_bytes())
-        request = json.loads(REQUEST_PATH.read_bytes())
+    def test_amr_pairs(self):
+        pairs = [
+            # (model, request)
+            (
+                AMR_EXAMPLES_PETRI_DIR / "sir.json",
+                AMR_EXAMPLES_PETRI_DIR / "sir_request1.json",
+            ),
+            (
+                MIRA_PETRI_MODELS / "scenario2_a_beta_scale_static.json",
+                MIRA_PETRI_REQUESTS
+                / "request2_b_default_w_compartmental_constrs.json",
+            ),
+            (
+                MIRA_PETRI_MODELS / "scenario2_a_beta_scale_static.json",
+                MIRA_PETRI_REQUESTS
+                / "request2_b_default_wo_compartmental_constrs.json",
+            ),
+            (
+                MIRA_PETRI_MODELS / "scenario2_a_beta_scale_static_fixed.json",
+                MIRA_PETRI_REQUESTS
+                / "request2_b_default_w_compartmental_constrs.json",
+            ),
+        ]
+        for model_path, request_path in pairs:
+            msg = f"({model_path.name}, {request_path.name})"
+            with self.subTest(msg):
+                self.subtest_amr_pair(model_path, request_path)
+
+    def subtest_amr_pair(self, model_path, request_path):
+        model = json.loads(model_path.read_bytes())
+        request = json.loads(request_path.read_bytes())
         with TestClient(app) as client:
             response = client.post(
                 "/api/queries",
@@ -276,4 +311,10 @@ class TestAPI(unittest.TestCase):
             ), f"Response code was not 200: {response.status_code}"
             work_unit = FunmanWorkUnit.parse_raw(response.content.decode())
             data = self.wait_for_done(client, work_unit.id)
-            assert data
+            assert data, "No FunmanResults returned"
+            assert (
+                data.error is False
+            ), "FunmanResults error flag is set. Worker processing error."
+            assert (
+                data.parameter_space is not None
+            ), "FunmanResults has no ParameterSpace"
