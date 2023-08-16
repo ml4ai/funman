@@ -3,10 +3,12 @@ import logging
 import sys
 import threading
 from functools import partial
-from typing import Callable, Optional
+from typing import Callable, Optional, Tuple
+from funman.scenario.scenario import AnalysisScenario
 
 from pysmt.logics import QF_NRA
-from pysmt.shortcuts import And, Solver
+from pysmt.shortcuts import And, Solver, Equals, Symbol, Real, REAL
+from pysmt.formula import FNode
 
 from funman.representation.representation import (
     LABEL_TRUE,
@@ -42,7 +44,7 @@ class SMTCheck(Search):
         for (
             structural_configuration
         ) in problem._smt_encoder._timed_model_elements["configurations"]:
-            l.info(f"Solving configuration: {structural_configuration}")
+            l.debug(f"Solving configuration: {structural_configuration}")
             problem._encode_timed(
                 structural_configuration["num_steps"],
                 problem._smt_encoder._timed_model_elements["step_sizes"].index(
@@ -64,7 +66,7 @@ class SMTCheck(Search):
             )
 
             result_dict = result.to_dict() if result else None
-            l.info(f"Result: {json.dumps(result_dict, indent=4)}")
+            l.debug(f"Result: {json.dumps(result_dict, indent=4)}")
             if result_dict is not None:
                 parameter_values = {
                     k: v
@@ -81,6 +83,48 @@ class SMTCheck(Search):
                 resultsCallback(parameter_space)
 
         return parameter_space, models, consistent
+    
+    def build_formula(self, episode: SearchEpisode, timepoints)-> Tuple[FNode, FNode]:
+        formula: FNode = And(
+                episode.problem._model_encoding.encoding(
+                    episode.problem._model_encoding._encoder.encode_model_layer,
+                    layers=timepoints,
+                ),
+                episode.problem._query_encoding.encoding(
+                    partial(
+                        episode.problem._query_encoding._encoder.encode_query_layer,
+                        episode.problem.query,
+                    ),
+                    layers=timepoints,
+                ),
+                episode.problem._smt_encoder.box_to_smt(
+                    episode._initial_box().project(
+                        episode.problem.model_parameters()
+                    )
+                ),
+            )
+        simplified_formula = None
+        if episode.config.simplify_query and episode.config.substitute_subformulas:
+            simplified_formula = formula.substitute(
+                episode.problem._smt_encoder._timed_model_elements[
+                    "time_step_substitutions"
+                ][0]
+            ).simplify()
+        return formula, simplified_formula
+
+    def solve_formula(self, s: Solver, formula: FNode, episode):
+        s.push(1)
+        s.add_assertion(formula)
+        if episode.config.save_smtlib:
+            self.store_smtlib(
+                formula,
+                filename=f"dbg_steps{episode.structural_configuration['num_steps']}_ssize{episode.structural_configuration['step_size']}.smt2",
+            )
+        result = s.solve()
+        if result:
+            result = s.get_model()
+        s.pop(1)
+        return result
 
     def expand(self, problem, episode, parameter_space, timepoints):
         if episode.config.solver == "dreal":
@@ -96,44 +140,20 @@ class SMTCheck(Search):
             logic=QF_NRA,
             solver_options=opts,
         ) as s:
-            formula = And(
-                problem._model_encoding.encoding(
-                    episode.problem._model_encoding._encoder.encode_model_layer,
-                    layers=timepoints,
-                ),
-                problem._query_encoding.encoding(
-                    partial(
-                        episode.problem._query_encoding._encoder.encode_query_layer,
-                        episode.problem.query,
-                    ),
-                    layers=timepoints,
-                ),
-                problem._smt_encoder.box_to_smt(
-                    episode._initial_box().project(
-                        episode.problem.model_parameters()
-                    )
-                ),
-            )
-            if episode.config.simplify_query:
-                formula = formula.substitute(
-                    problem._smt_encoder._timed_model_elements[
-                        "time_step_substitutions"
-                    ][0]
-                ).simplify()
-                # fs = to_sympy(formula.serialize(), ["beta"])
-                # from sympy import simplify, factor, cancel, nsimplify
-                # ps = sympy_to_pysmt(fs)
+            formula, simplified_formula = self.build_formula(episode, timepoints)
 
-            s.add_assertion(formula)
-            if episode.config.save_smtlib:
-                self.store_smtlib(
-                    formula,
-                    filename=f"dbg_steps{episode.structural_configuration['num_steps']}_ssize{episode.structural_configuration['step_size']}.smt2",
-                )
-            result = s.solve()
-            # print(episode.structural_configuration)
-            if result:
-                result = s.get_model()
+            if simplified_formula is not None:
+                # If using a simplified formula, we need to solve it and use its values in the original formula to get the values of all variables
+                result = self.solve_formula(s, simplified_formula, episode)
+                if result is not None:
+                    assigned_vars = result.to_dict()
+                    substitution = {Symbol(p, REAL): Real(v) for p, v in assigned_vars.items() }
+                    result_assignment = And([ Equals(Symbol(p, REAL), Real(v))  for p, v in assigned_vars.items()] + [Equals(Symbol(p.name, REAL), Real(0.0)) for p in episode.problem.model_parameters() if p.is_unbound() and p.name not in assigned_vars])
+                    formula_w_params = And(formula.substitute(substitution), result_assignment)
+                    result = self.solve_formula(s, formula_w_params, episode)
+            else:
+                result = self.solve_formula(s, formula, episode)
+
         return result
 
     def store_smtlib(self, formula, filename="dbg.smt2"):

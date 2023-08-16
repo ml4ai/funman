@@ -40,6 +40,9 @@ class ModelParameter(BaseModel):
 
     def width(self) -> Union[str, float]:
         return math_utils.minus(self.ub, self.lb)
+    
+    def is_unbound(self) -> bool:
+        return self.lb == NEG_INFINITY and self.ub == POS_INFINITY
 
     def __hash__(self):
         return abs(hash(self.name))

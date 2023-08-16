@@ -127,7 +127,7 @@ class FUNMANSimplifier(pysmt.simplifier.Simplifier):
             )
         else:
             subbed_formula = formula
-        print(
+        l.debug(
             f"*** {original_size}->{len(subbed_formula.args)}\t|{len(to_drop)}|"
         )
         # if len(to_drop) > 0:

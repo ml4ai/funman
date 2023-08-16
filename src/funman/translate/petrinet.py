@@ -31,7 +31,7 @@ from funman.utils.sympy_utils import (
 from .translate import Encoder, Encoding
 
 l = logging.getLogger(__file__)
-l.setLevel(logging.DEBUG)
+l.setLevel(logging.INFO)
 
 
 class PetrinetEncoder(Encoder):
@@ -181,8 +181,7 @@ class PetrinetEncoder(Encoder):
                         # flows.substitute(substitutions),
                         to_sympy(
                             flows.substitute(substitutions)
-                            .simplify()
-                            .serialize(),
+                            .simplify(),
                             scenario.model._symbols(),
                         ),
                         parameters=scenario.model_parameters(),

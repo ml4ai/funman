@@ -67,10 +67,10 @@ class DRealConverter(Converter, DagWalker):
         return term
 
     def walk_le(self, formula, args, **kwargs):
-        return args[0] <= args[1]
+        return self.bool_to_formula(args[0] <= args[1])
 
     def walk_lt(self, formula, args, **kwargs):
-        return args[0] < args[1]
+        return self.bool_to_formula(args[0] < args[1])
 
     def walk_plus(self, formula, args, **kwargs):
         return functools.reduce(lambda a, b: a + b, args)
@@ -88,6 +88,11 @@ class DRealConverter(Converter, DagWalker):
         res = dreal.pow(args[0], args[1])
         return res
 
+    def bool_to_formula(self, value):
+        if isinstance(value, bool):
+            value = dreal.Formula.TRUE() if value else dreal.Formula.FALSE()
+        return value
+
     def walk_equals(self, formula, args, **kwargs):
         res = args[0] == args[1]
         # tp = self._get_type(formula.arg(0))
@@ -100,7 +105,9 @@ class DRealConverter(Converter, DagWalker):
         #     assert tp.is_custom_type()
         #     res = yicespy.yices_eq(args[0], args[1])
         # self._check_term_result(res)
-        return res
+        
+
+        return self.bool_to_formula(res)
 
     def walk_bool_constant(self, formula, **kwargs):
         if formula.constant_value():

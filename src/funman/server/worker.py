@@ -17,7 +17,10 @@ from funman.server.query import (
     FunmanWorkRequest,
     FunmanWorkUnit,
 )
+import logging
 
+l = logging.getLogger(__name__)
+l.setLevel(logging.INFO)
 
 class WorkerState(Enum):
     """
@@ -117,7 +120,7 @@ class FunmanWorker:
                 # is still processing and the thread will exit if/when the solver
                 # returns. Ideally we could kill it here and abandon any state it
                 # holds.
-                print("Thread did not close")
+                l.warning("Thread did not close")
             # Reset state
             self._thread = None
             self._stop_event = None
@@ -149,7 +152,7 @@ class FunmanWorker:
             )
         with self._id_lock:
             if id == self.current_id:
-                print(f"Halting {id}")
+                l.debug(f"Halting {id}")
                 self._halt_event.set()
                 return
             with self._set_lock:
@@ -182,7 +185,7 @@ class FunmanWorker:
             self.current_results.update_parameter_space(scenario, results)
 
     def _run(self, stop_event: threading.Event):
-        print("FunmanWorker running...")
+        l.info("FunmanWorker running...")
         try:
             while True:
                 if stop_event.is_set():
@@ -208,7 +211,7 @@ class FunmanWorker:
                         parameter_space=ParameterSpace(),
                     )
 
-                print(f"Starting work on: {work.id}")
+                l.info(f"Starting work on: {work.id}")
                 try:
                     # convert to scenario
                     scenario = work.to_scenario()
@@ -238,7 +241,7 @@ class FunmanWorker:
                     traceback.print_exc()
                     with self._results_lock:
                         self.current_results.finalize_result_as_error()
-                    print(f"Aborting work on: {work.id}")
+                    l.exception(f"Aborting work on: {work.id}")
                 finally:
                     self.storage.add_result(self.current_results)
                     self.queue.task_done()
@@ -246,11 +249,11 @@ class FunmanWorker:
                         self.current_id = None
                         self.current_results = None
         except Exception:
-            print("Fatal error in worker!", file=sys.stderr)
+            l.exception("Fatal error in worker!", file=sys.stderr)
             traceback.print_exc()
             # Only mark the state as errored if the thread
             # has not yet been told to stop
             if not stop_event.is_set():
                 with self._state_lock:
                     self._state = WorkerState.ERRORED
-        print("FunmanWorker exiting...")
+        l.info("FunmanWorker exiting...")
