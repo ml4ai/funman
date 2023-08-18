@@ -145,7 +145,7 @@ class SMTCheck(Search):
             if simplified_formula is not None:
                 # If using a simplified formula, we need to solve it and use its values in the original formula to get the values of all variables
                 result = self.solve_formula(s, simplified_formula, episode)
-                if result is not None:
+                if result is not None and result:
                     assigned_vars = result.to_dict()
                     substitution = {Symbol(p, REAL): Real(v) for p, v in assigned_vars.items() }
                     result_assignment = And([ Equals(Symbol(p, REAL), Real(v))  for p, v in assigned_vars.items()] + [Equals(Symbol(p.name, REAL), Real(0.0)) for p in episode.problem.model_parameters() if p.is_unbound() and p.name not in assigned_vars])

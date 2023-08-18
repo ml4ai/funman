@@ -12,7 +12,7 @@ class DecapodeDynamics(BaseModel):
 class DecapodeModel(Model):
     decapode: DecapodeDynamics
 
-    def default_encoder(self, config: "FUNMANConfig") -> "Encoder":
+    def default_encoder(self, config: "FUNMANConfig", scenario: "AnalysisScenario") -> "Encoder":
         """
         Return the default Encoder for the model
 
@@ -23,4 +23,4 @@ class DecapodeModel(Model):
         """
         from funman.translate.decapode import DecapodeEncoder
 
-        return DecapodeEncoder(config=config)
+        return DecapodeEncoder(config=config, scenario=scenario)

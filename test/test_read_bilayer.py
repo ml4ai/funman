@@ -36,7 +36,9 @@ class TestCompilation(unittest.TestCase):
                 StructureParameter(name="num_steps", lb=1, ub=1),
             ],
         )
-        encoder = BilayerEncoder(config=FUNMANConfig(), scenario=scenario)
+        encoder = BilayerEncoder(config=FUNMANConfig(
+            substitute_subformulas=False # Need an initial state to ensure that substitutions get initialized properly
+            ), scenario=scenario)
 
         encoding = encoder._encode_bilayer(
             scenario, [2.5, 3, 4, 6]

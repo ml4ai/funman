@@ -59,7 +59,7 @@ class SympySerializer(IdentityDagWalker):
         return sympy.Rational(value)
 
     def walk_div(self, formula, args, **kwargs):
-        return sympy.div(args[0], args[1])
+        return sympy.Mul(args[0], sympy.Pow(args[1], -1))
 
     def walk_pow(self, formula, args, **kwargs):
         return sympy.Pow(args[0], args[1])
@@ -137,7 +137,8 @@ def to_sympy(
     if isinstance(formula, str):
         unreserved_symbols = [replace_reserved(s) for s in str_symbols]
         clean_expr = replace_reserved(formula)
-        symbol_map = {s: symbols(s) for s in unreserved_symbols}
+        expr_vars = [str(v) for v in clean_expr.get_free_variables()]
+        symbol_map = {s: symbols(s) for s in unreserved_symbols if s in expr_vars}
         expr = sympify(clean_expr, symbol_map)
     elif isinstance(formula, FNode):
         expr = SympySerializer().to_sympy(formula)

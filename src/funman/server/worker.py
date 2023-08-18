@@ -233,9 +233,9 @@ class FunmanWorker:
                     )
                     with self._results_lock:
                         self.current_results.finalize_result(scenario, result)
-                    print(f"Completed work on: {work.id}")
+                    l.info(f"Completed work on: {work.id}")
                 except Exception as e:
-                    print(
+                    l.exception(
                         f"Internal Server Error ({work.id}):", file=sys.stderr
                     )
                     traceback.print_exc()

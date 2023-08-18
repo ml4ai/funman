@@ -219,6 +219,12 @@ class Encoder(ABC, BaseModel):
 
         self._encode_timed_model_elements(self._scenario)
 
+    def can_encode():
+        """
+        Return boolean indicating if the scenario can be encoded with the FUNMANConfig
+        """
+        return True
+
     def _symbols(self, vars: List[FNode]) -> Dict[str, Dict[str, FNode]]:
         symbols = {}
         # vars.sort(key=lambda x: x.symbol_name())
