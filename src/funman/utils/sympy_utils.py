@@ -137,8 +137,7 @@ def to_sympy(
     if isinstance(formula, str):
         unreserved_symbols = [replace_reserved(s) for s in str_symbols]
         clean_expr = replace_reserved(formula)
-        expr_vars = [str(v) for v in clean_expr.get_free_variables()]
-        symbol_map = {s: symbols(s) for s in unreserved_symbols if s in expr_vars}
+        symbol_map = {s: symbols(s) for s in unreserved_symbols}
         expr = sympify(clean_expr, symbol_map)
     elif isinstance(formula, FNode):
         expr = SympySerializer().to_sympy(formula)
