@@ -33,7 +33,7 @@ LABEL_ANY = "any"
 LABEL_ALL = "all"
 
 
-class ModelParameter(BaseModel):
+class Parameter(BaseModel):
     name: Union[str, ModelSymbol]
     lb: Union[float, str] = NEG_INFINITY
     ub: Union[float, str] = POS_INFINITY
@@ -48,7 +48,7 @@ class ModelParameter(BaseModel):
         return abs(hash(self.name))
 
 
-class LabeledParameter(ModelParameter):
+class LabeledParameter(Parameter):
     label: Literal["any", "all"] = LABEL_ANY
 
     def is_synthesized(self) -> bool:

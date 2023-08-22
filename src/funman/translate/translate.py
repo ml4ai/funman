@@ -741,7 +741,7 @@ class Encoder(ABC, BaseModel):
                 f"Do not know how to encode query of type {type(query)}"
             )
 
-    def _return_encoded_query(self, model_encoding, query, normalize=True):
+    def _return_encoded_query(self, query, layer_idx, step_size, normalize=True):
         return (
             query._formula,
             {str(v): v for v in query._formula.get_free_variables()},

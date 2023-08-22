@@ -11,3 +11,7 @@ The funman package implements multiple simulator model analysis methods.  Curren
 
 from ._version import __version__
 from .funman import *
+from .representation import *
+from .model import *
+from .scenario import *
+from .utils import *
