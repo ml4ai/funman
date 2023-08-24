@@ -35,7 +35,7 @@ from funman.scenario.scenario import AnalysisScenario
 
 
 class FunmanWorkRequest(BaseModel):
-    query: Union[QueryAnd, QueryLE, QueryFunction, QueryTrue]
+    query: Optional[Union[QueryAnd, QueryLE, QueryFunction, QueryTrue]] = None
     parameters: Optional[List[LabeledParameter]] = None
     config: Optional[FUNMANConfig] = None
     structure_parameters: Optional[List[LabeledParameter]] = None
@@ -63,6 +63,11 @@ class FunmanWorkUnit(BaseModel):
     def to_scenario(
         self,
     ) -> Union[ConsistencyScenario, ParameterSynthesisScenario]:
+        query = (
+            self.request.query
+            if self.request.query is not None
+            else QueryTrue()
+        )
         parameters = []
         if (
             hasattr(self.request, "parameters")
@@ -98,7 +103,7 @@ class FunmanWorkUnit(BaseModel):
         ):
             return ConsistencyScenario(
                 model=self.model,
-                query=self.request.query,
+                query=query,
                 parameters=parameters,
             )
 
@@ -108,7 +113,7 @@ class FunmanWorkUnit(BaseModel):
             )
 
         return ParameterSynthesisScenario(
-            model=self.model, query=self.request.query, parameters=parameters
+            model=self.model, query=query, parameters=parameters
         )
 
 
