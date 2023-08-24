@@ -40,7 +40,7 @@ multiplatform-build-dreal4: multiplatform-build-ibex
 	${DOCKER_BAKE} funman-dreal4-multiplatform --${OUTPUT_TYPE_MULTI}
 
 build-base: build-dreal4
-	DOCKER_ORG=${DOCKER_ORG_LOCAL} \yy
+	DOCKER_ORG=${DOCKER_ORG_LOCAL} \
 	DOCKER_REGISTRY=${REGISTRY} \
 	${DOCKER_BAKE} funman-base --${OUTPUT_TYPE_LOCAL}
 
