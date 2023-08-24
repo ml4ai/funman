@@ -20,11 +20,11 @@ line-length = 79
 include = '\.pyi?$'
 force-exclude = '''
 /(
-    \.git
-  | \.venv
-  | _build
-  | build
-  | dist
+    \.git
+  | \.venv
+  | _build
+  | build
+  | dist
   | .*venv.*
 )/
 '''
@@ -32,11 +32,11 @@ force-exclude = '''
 [tool.pycln]
 exclude = '''
 /(
-    \.git
-  | \.venv
-  | _build
-  | build
-  | dist
+    \.git
+  | \.venv
+  | _build
+  | build
+  | dist
   | *venv*
   | __init__.py
 )/
@@ -53,11 +53,11 @@ ensure_newline_before_comments = true
 line_length = 79
 extend_skip =  '''
 /(
-    \.git
-  | \.venv
-  | _build
-  | build
-  | dist
+    \.git
+  | \.venv
+  | _build
+  | build
+  | dist
 )/
 '''
 skip_glob = ["**/__init__.py", "*venv*"]
