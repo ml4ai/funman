@@ -1,30 +1,16 @@
 import os
 import unittest
-from time import sleep
-from typing import Tuple
-
-import matplotlib.pyplot as plt
-import pydantic
 from parameterized import parameterized
-
 from funman.utils.run import Runner
+import logging
 
-from funman_demo.parameter_space_plotter import ParameterSpacePlotter
-
-from funman.api.api import _wrap_with_internal_model
-from funman.api.settings import Settings
-from funman.funman import FUNMANConfig
-from funman.model.generated_models.petrinet import Model as GeneratedPetrinet
-from funman.model.generated_models.regnet import Model as GeneratedRegnet
-from funman.server.query import FunmanWorkRequest, FunmanWorkUnit
-from funman.server.storage import Storage
-from funman.server.worker import FunmanWorker
+logging.getLogger('funman.translate.translate').setLevel(logging.DEBUG)
 
 RESOURCES = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "../../resources"
 )
 out_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "out")
-models = {GeneratedPetrinet, GeneratedRegnet}
+
 
 AMR_EXAMPLES_DIR = os.path.join(RESOURCES, "amr")
 AMR_PETRI_DIR = os.path.join(AMR_EXAMPLES_DIR, "petrinet", "terrarium-tests")

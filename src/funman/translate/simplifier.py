@@ -39,28 +39,31 @@ class FUNMANSimplifier(pysmt.simplifier.Simplifier):
         super().__init__(env=env)
         self.manager = self.env.formula_manager
 
-    def value_of(expr: Expr, subs: Dict[str, float] = {}):
+    def value_of(expr: Expr, subs:Dict[str, float] = {}, _lambdify=False):
         arg_values = [subs[str(v)] for v in expr.free_symbols]
-        lfn = lambdify(list(expr.free_symbols), expr, 'numpy')
-        if len(arg_values) > 0:
-            try:
-                value = lfn(*arg_values)
-            except OverflowError as e:
-                val = N(expr, subs=subs)
-                if val > 1:
-                    value = sys.float_info.max
-                elif val < -1:
-                    value = sys.float_info.min
-                else:
-                    value = 0.0 
-                l.debug(f"Convert lambdify overflow of {expr} with {subs} from {val} to {value}")
-            except:
-                pass
-            # except UnderflowError as e:
-            #     value = 0.0
+        if _lambdify:
+            lfn = lambdify(list(expr.free_symbols), expr, 'math')
+            if len(arg_values) > 0:
+                try:
+                    value = lfn(*arg_values)
+                except OverflowError as e:
+                    val = N(expr, subs=subs)
+                    if val > 1:
+                        value = sys.float_info.max
+                    elif val < -1:
+                        value = sys.float_info.min
+                    else:
+                        value = 0.0 
+                    l.debug(f"Convert lambdify overflow of {expr} with {subs} from {val} to {value}")
+                except:
+                    pass
+                # except UnderflowError as e:
+                #     value = 0.0
 
+            else:
+                value = lfn()
         else:
-            value = lfn()
+            value = float(expr.evalf(10, subs=subs))
         return value
 
     def approximate(formula, parameters: List[ModelParameter], threshold=1e-4):
@@ -95,6 +98,8 @@ class FUNMANSimplifier(pysmt.simplifier.Simplifier):
             args = formula.args
         else:
             args = [formula]
+
+        
 
         to_drop = {
             arg: 0
@@ -184,13 +189,13 @@ class FUNMANSimplifier(pysmt.simplifier.Simplifier):
         f = expanded_formula
         if taylor_series_order is None:
             pass
-        elif not f.is_polynomial(formula.free_symbols):
+        else: #if not f.is_polynomial(formula.free_symbols):
             f = series_approx(
                 f,
                 list(expanded_formula.free_symbols),
                 order=taylor_series_order,
             )
-
+            f = expand(f)
         # expanded_formula = expand(sympy_formula)
 
         # print(expanded_formula)
