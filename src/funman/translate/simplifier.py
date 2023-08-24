@@ -1,6 +1,5 @@
 from typing import Dict, List
-from funman.constants import POS_INFINITY
-import sys
+
 import pysmt
 from pysmt.fnode import FNode
 from pysmt.shortcuts import get_env
@@ -21,6 +20,7 @@ from sympy import (
     sympify,
 )
 
+from funman.constants import POS_INFINITY
 from funman.representation.representation import ModelParameter
 from funman.utils.sympy_utils import (
     replace_reserved,
@@ -35,15 +35,17 @@ class FUNMANSimplifier(pysmt.simplifier.Simplifier):
         super().__init__(env=env)
         self.manager = self.env.formula_manager
 
-    def value_of(expr: Expr, subs:Dict[str, float] = {}):
+    def value_of(expr: Expr, subs: Dict[str, float] = {}):
         arg_values = [subs[str(v)] for v in expr.free_symbols]
-        lfn = lambdify(expr.free_symbols, expr, 'numpy')
+        lfn = lambdify(expr.free_symbols, expr, "numpy")
         if len(arg_values) > 0:
             try:
                 value = lfn(*arg_values)
             except OverflowError as e:
-                value = 0.0 # sys.float_info.max
-                print(f"Convert lambdify overflow of {expr} with {subs} from {N(expr, subs=subs)} to {value}")
+                value = 0.0  # sys.float_info.max
+                print(
+                    f"Convert lambdify overflow of {expr} with {subs} from {N(expr, subs=subs)} to {value}"
+                )
             except:
                 pass
             # except UnderflowError as e:
@@ -86,7 +88,8 @@ class FUNMANSimplifier(pysmt.simplifier.Simplifier):
             for arg in formula.args
             if (
                 abs(FUNMANSimplifier.value_of(arg, subs=lb_values)) < threshold
-                and abs(FUNMANSimplifier.value_of(arg, subs=ub_values)) < threshold
+                and abs(FUNMANSimplifier.value_of(arg, subs=ub_values))
+                < threshold
             )
         }
         # minimum_term_value = min(tm for arg, tm in term_magnitude.items()) if len(term_magnitude) > 0 else None
