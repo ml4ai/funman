@@ -227,6 +227,7 @@ update-versions:
 	@${CMD_UPDATE_VERSION} auxiliary_packages/funman_demo/src/funman_demo/_version.py
 	@${CMD_UPDATE_VERSION} auxiliary_packages/funman_dreal/src/funman_dreal/_version.py
 	@${CMD_UPDATE_VERSION} src/funman/_version.py
+	@${CMD_UPDATE_VERSION} terarium/scripts/run-api-in-docker.sh
 
 # -----------------------------------------------------------------
 #  Distribution

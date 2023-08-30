@@ -1,0 +1,14 @@
+{
+    "tests": [
+        {
+            "name": "petrinet-query-default",
+            "model-path": "amr/petrinet/mira/models/scenario1_a.json",
+            "request-path": null
+        },
+        {
+            "name": "petrinet-query-with-parameters",
+            "model-path": "amr/petrinet/mira/models/scenario2_a_beta_scale_static.json",
+            "request-path": "amr/petrinet/mira/requests/request2_b_default_w_compartmental_constrs.json"
+        }
+    ]
+}

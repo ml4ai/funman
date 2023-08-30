@@ -1,6 +1,6 @@
-import contextlib
 import json
 import unittest
+from pathlib import Path
 from time import sleep
 
 import httpx
@@ -8,43 +8,66 @@ from fastapi.testclient import TestClient
 
 from funman.api.api import app
 
+# Read in the model associated with this example
+RESOURCES_PREFIX = "resources/"
+TEST_JSON = json.loads(
+    Path(f"{RESOURCES_PREFIX}terarium-tests.json").read_bytes()
+)
 
-class MockTerariumTestCase(unittest.TestCase):
-    """
-    TestCase that mimics the functions a user without the funman
-    package might need to interact with the API server running
-    on Terarium
-    """
 
-    def setUp(self) -> None:
-        """
-        Setup the test case with a running FastAPI TestClient
-        """
-        with contextlib.ExitStack() as stack:
-            self.terarium = stack.enter_context(TestClient(app))
-            self._exit_stack = self.terarium.exit_stack.pop_all()
+class TestTerarium(unittest.TestCase):
+    def test_terarium(self):
+        tests = TEST_JSON["tests"]
+        for test in tests:
+            name = test["name"]
 
-    def tearDown(self) -> None:
-        """
-        Tear down the TestClient
-        """
-        self._exit_stack.close()
+            # Read in the model dict
+            model = json.loads(
+                Path(f'{RESOURCES_PREFIX}{test["model-path"]}').read_bytes()
+            )
 
-    def POST(self, url: str, json: dict, *, expect=200):
+            # Either read in the request json or default to an empty dict
+            if test["request-path"] is None:
+                request = {}
+            else:
+                request = json.loads(
+                    Path(
+                        f'{RESOURCES_PREFIX}{test["request-path"]}'
+                    ).read_bytes()
+                )
+
+            with self.subTest(name):
+                with TestClient(app) as client:
+                    # run the defined test
+                    self.subtest_terarium(client, name, model, request)
+
+    def subtest_terarium(self, client, name, model, request):
+        results = self.post_query_and_wait_until_done(client, model, request)
+        assert (
+            "parameter_space" in results
+        ), "Results does not contain a 'parameter_space' field"
+        ps = results["parameter_space"]
+        assert ps is not None, "ParameterSpace is None"
+        assert (
+            len(ps.get("true_points", [])) > 0
+            or len(ps.get("true_boxes", [])) > 0
+        ), f"Terarium Test '{name}' has neither true points nor true boxes"
+
+    def POST(self, client: TestClient, url: str, json: dict, *, expect=200):
         """
         Make a POST request through the TestClient
         """
-        response = self.terarium.post(url, json=json)
+        response = client.post(url, json=json)
         assert (
             response.status_code == expect
         ), f"Unexpected status code {response.status_code}. Expected {expect}"
         return response
 
-    def GET(self, url: str, *, expect=200):
+    def GET(self, client: TestClient, url: str, *, expect=200):
         """
         Make a GET request through the TestClient
         """
-        response = self.terarium.get(url)
+        response = client.get(url)
         assert (
             response.status_code == expect
         ), f"Unexpected status code {response.status_code}. Expected {expect}"
@@ -56,7 +79,9 @@ class MockTerariumTestCase(unittest.TestCase):
         """
         return json.loads(response.content.decode())
 
-    def poll_until_done(self, uuid, sleep_step=1.0, max_steps=20):
+    def poll_until_done(
+        self, client: TestClient, uuid: str, sleep_step=1.0, max_steps=20
+    ):
         """
         Helper function to poll the status of the request associated
         with the provided UUID.
@@ -65,7 +90,7 @@ class MockTerariumTestCase(unittest.TestCase):
             # Sleep for wait_time
             sleep(sleep_step)
             # Check the status of the query
-            response = self.terarium.get(f"/api/queries/{uuid}")
+            response = client.get(f"/api/queries/{uuid}")
             # Ensure no error status code
             assert (
                 response.status_code == 200
@@ -82,7 +107,9 @@ class MockTerariumTestCase(unittest.TestCase):
             max_steps -= 1
             assert max_steps > 0
 
-    def post_query(self, model: dict, request: dict) -> str:
+    def post_query(
+        self, client: TestClient, model: dict, request: dict
+    ) -> str:
         """
         Make a POST request to /api/queries through the TestClient.
         - model: The model to query
@@ -94,12 +121,14 @@ class MockTerariumTestCase(unittest.TestCase):
         - request: A copy of the submitted request
         """
         work_unit = self.decode_response_to_dict(
-            self.POST("/api/queries", {"model": model, "request": request})
+            self.POST(
+                client, "/api/queries", {"model": model, "request": request}
+            )
         )
         # Extract the UUID
         return work_unit["id"]
 
-    def get_status(self, uuid: str) -> dict:
+    def get_status(self, client: TestClient, uuid: str) -> dict:
         """
         Make a GET request to /api/queries/{uuid} through the TestClient.
 
@@ -111,10 +140,17 @@ class MockTerariumTestCase(unittest.TestCase):
         - error: A boolean flag for if the request errored
         - parameter_space: The current ParameterSpace if one exists
         """
-        return self.decode_response_to_dict(self.GET(f"/api/queries/{uuid}"))
+        return self.decode_response_to_dict(
+            self.GET(client, f"/api/queries/{uuid}")
+        )
 
     def post_query_and_wait_until_done(
-        self, model: dict, request: dict, *, expect_error: bool = False
+        self,
+        client: TestClient,
+        model: dict,
+        request: dict,
+        *,
+        expect_error: bool = False,
     ) -> dict:
 
         """
@@ -123,9 +159,9 @@ class MockTerariumTestCase(unittest.TestCase):
         - model: One of the supported models
         - request: A request to funman
         """
-        uuid = self.post_query(model, request)
-        self.poll_until_done(uuid)
-        results = self.get_status(uuid)
+        uuid = self.post_query(client, model, request)
+        self.poll_until_done(client, uuid)
+        results = self.get_status(client, uuid)
 
         is_done_processing = results.get("done", False)
         error_occurred = results.get("error", False)

@@ -6,9 +6,29 @@ from pathlib import Path
 
 import requests
 
+QUERIES_ENDPOINT = "/api/queries"
 
-def query(url: str, model: dict, request: dict, timeout: float = None):
-    endpoint = f"{url.rstrip('/')}/api/queries"
+
+def post_query(
+    url: str, model_path: str, request_path: str, timeout: float = None
+):
+    if request_path is None:
+        print("Falling back to default request of {}", file=sys.stderr)
+        request = {}
+        payload = [f'"model": <Contents of {model_path}>', '"request": {}']
+    else:
+        request = read_to_dict(request_path)
+        payload = [
+            f'"model": <Contents of {model_path}>',
+            f'"request": <Contents of {request_path}>',
+        ]
+    print("{", file=sys.stderr)
+    for p in payload:
+        print(f"    {p}", file=sys.stderr)
+    print("}", file=sys.stderr)
+
+    model = read_to_dict(model_path)
+    endpoint = f"{url.rstrip('/')}{QUERIES_ENDPOINT}"
     payload = {"model": model, "request": request}
     response = requests.post(endpoint, json=payload, timeout=timeout)
     response.raise_for_status()
@@ -37,23 +57,6 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    model = read_to_dict(args.model)
-    if args.request is None:
-        print("Using default request:", file=sys.stderr)
-        request = {}
-        payload = [f'"model": <Contents of {args.model}>', '"request": {}']
-    else:
-        print(f"Using request from path: {args.request}", file=sys.stderr)
-        request = read_to_dict(args.request)
-        payload = [
-            f'"model": <Contents of {args.model}>',
-            f'"request": <Contents of {args.request}>',
-        ]
-    print("The POST payload: \n{", file=sys.stderr)
-    for p in payload:
-        print(f"    {p}", file=sys.stderr)
-    print("}", file=sys.stderr)
-
-    results = query(args.url, model, request)
+    results = post_query(args.url, args.model, args.request)
     print(f"Query received work id: {results['id']}", file=sys.stderr)
     print(results["id"], file=sys.stdout)
