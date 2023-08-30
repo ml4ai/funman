@@ -221,13 +221,14 @@ format:
 	black --config pyproject.toml .
 	
 FUNMAN_VERSION ?= 0.0.0
-CMD_UPDATE_VERSION = sed -i -E 's/^__version__ = \"[0-9]+\.[0-9]+\.[0-9]+((a|b|rc)[0-9]*)?\"/__version__ = \"${FUNMAN_VERSION}\"/g'
+CMD_UPDATE_VERSION_PY = sed -i -E 's/^__version__ = \"[0-9]+\.[0-9]+\.[0-9]+((a|b|rc)[0-9]*)?\"/__version__ = \"${FUNMAN_VERSION}\"/g'
+CMD_UPDATE_VERSION_SH = sed -i -E 's/^FUNMAN_VERSION=\"[0-9]+\.[0-9]+\.[0-9]+((a|b|rc)[0-9]*)?\"/FUNMAN_VERSION=\"${FUNMAN_VERSION}\"/g'
 update-versions:
 	@test "${FUNMAN_VERSION}" != "0.0.0" || (echo "ERROR: FUNMAN_VERSION must be set" && exit 1)
-	@${CMD_UPDATE_VERSION} auxiliary_packages/funman_demo/src/funman_demo/_version.py
-	@${CMD_UPDATE_VERSION} auxiliary_packages/funman_dreal/src/funman_dreal/_version.py
-	@${CMD_UPDATE_VERSION} src/funman/_version.py
-	@${CMD_UPDATE_VERSION} terarium/scripts/run-api-in-docker.sh
+	@${CMD_UPDATE_VERSION_PY} auxiliary_packages/funman_demo/src/funman_demo/_version.py
+	@${CMD_UPDATE_VERSION_PY} auxiliary_packages/funman_dreal/src/funman_dreal/_version.py
+	@${CMD_UPDATE_VERSION_PY} src/funman/_version.py
+	@${CMD_UPDATE_VERSION_SH} terarium/scripts/run-api-in-docker.sh
 
 # -----------------------------------------------------------------
 #  Distribution
