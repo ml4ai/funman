@@ -58,7 +58,7 @@ Available examples:
 
 Run an example with:
 ```
-./run-example.sh petrinet-query-with-parameters
+./run_example.sh petrinet-query-with-parameters
 ```
 
 This will output the following:
