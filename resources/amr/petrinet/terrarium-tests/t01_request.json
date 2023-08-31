@@ -3,52 +3,43 @@
         "queries": [
             {
                 "variable": "I",
-                "ub": 0.3
+                "ub": 0.9
             }
         ]
     },
     "parameters": [
         {
-            "name": "beta",
-            "lb": 0.01,
-            "ub": 1.0
+            "name": "beta"
         },
         {
-            "name": "gamma",
-            "lb": 0.01,
-            "ub": 1.0
+            "name": "gamma"
         },
         {
-            "name": "S0",
-            "lb": 0.9,
-            "ub": 1.0
+            "name": "S0"
         },
         {
-            "name": "I0",
-            "lb": 0.01,
-            "ub": 0.1
+            "name": "I0"
         },
         {
-            "name": "R0",
-            "lb": 0.001,
-            "ub": 0.1
+            "name": "R0"
         }
     ],
     "structure_parameters": [
         {
             "name": "step_size",
-            "lb": 10.0,
-            "ub": 10.0,
+            "lb": 1.0,
+            "ub": 1.0,
             "label": "all"
         },
         {
             "name": "num_steps",
-            "lb": 4.0,
-            "ub": 4.0,
+            "lb": 2.0,
+            "ub": 2.0,
             "label": "all"
         }
     ],
     "config": {
-        "profile": true
+        "profile": true,
+        "normalize": 1.0
     }
 }

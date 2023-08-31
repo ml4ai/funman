@@ -4,7 +4,7 @@ This module represents the abstract base classes for models.
 import copy
 import uuid
 from abc import ABC
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from pydantic import ConfigDict, BaseModel
 from pysmt.formula import FNode
@@ -23,9 +23,9 @@ class Model(ABC, BaseModel):
     name: str = f"model_{uuid.uuid4()}"
     init_values: Dict[str, float] = {}
     parameter_bounds: Dict[str, List[float]] = {}
-    _normalize: bool = False
+    _normalization_constant: Optional[float] = None
     _extra_constraints: FNode = None
-    _norm: str = None
+    _normalization_term: Optional[FNode] = None
 
     # @abstractmethod
     # def default_encoder(self, config: "FUNMANConfig") -> "Encoder":
@@ -42,7 +42,7 @@ class Model(ABC, BaseModel):
     def _symbols(self):
         return self._state_var_names() + self._parameter_names()
 
-    def _get_init_value(self, var: str, normalize: bool = True):
+    def _get_init_value(self, var: str, scenario: "AnalysisScenario", normalize: bool = True):
         if var in self.init_values:
             value = self.init_values[var]
         elif var in self.parameter_bounds:
@@ -56,8 +56,8 @@ class Model(ABC, BaseModel):
         elif isinstance(value, float):
             value = Real(value)
 
-        if value is not None and normalize:
-            norm = self.normalization()
+        if value is not None and scenario.normalization_constant:
+            norm = Real(scenario.normalization_constant)
             value = Div(value, norm)
         return value
 
@@ -74,29 +74,21 @@ class Model(ABC, BaseModel):
         vars.update(self.parameter_bounds)
 
         return vars
+    
+    def calculate_normalization_constant(self, parameters: List["Parameter"]) -> float:
+        raise NotImplementedError(f"Cannot Calculate a normalization constant for a model of type {type(self)}")
 
-    def normalization(self):
-        if self._norm is None and self._normalize:
-            compartments = [
-                self._get_init_value(v, normalize=False)
-                for v in self._state_var_names()
-            ]
-            if len(compartments) > 0:
-                # compartments = [((Symbol(c, REAL) if isinstance(c, str) else Real(c)) if not isinstance(c, FNode) else c for c in compartments]
-                norm = Plus(compartments).simplify()
-            else:
-                norm = Real(1.0)
-            self._norm = norm
-        elif self._norm is None and not self._normalize:
-            self._norm = Real(1)
-        return self._norm
+    # def normalization(self):
+    #     if self._normalization_constant:
+    #         self._normalization_term = Real(self._normalization_constant)
+    #     return self._normalization_term
 
-    def _is_normalized(self, var: str):
-        try:
-            name, time = var.rsplit("_", 1)
-            return name in self._state_var_names()
-        except:
-            return False
+    # def _is_normalized(self, var: str):
+    #     try:
+    #         name, time = var.rsplit("_", 1)
+    #         return name in self._state_var_names()
+    #     except:
+    #         return False
 
     def _parameters(self) -> List[ModelParameter]:
         param_names = self._parameter_names()

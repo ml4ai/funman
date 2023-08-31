@@ -66,6 +66,46 @@ class FUNMANSimplifier(pysmt.simplifier.Simplifier):
             value = float(expr.evalf(10, subs=subs))
         return value
 
+    def arg_magnitude(formula, lb_values: Dict[str, float], ub_values: Dict[str, float]):
+        """
+        Get the maximum magnitude of formula given the lb/ub of each parameter.  Assume that the formula is a polynomial term.  Use the ub for the variables in the numerator, and the lb for the variables in the denominator.
+
+        Parameters
+        ----------
+        formula : sympy.Formula
+            polynomial term to evaluate
+        lb_values : Dict[str, float]
+            lb values for each variable
+        ub_values : Dict[str, float]
+            ub values for each variable
+        """
+        if formula.is_Mul:
+            subs = {}
+            for a in formula.args:
+                if a.is_Pow:
+                    (var, exponent) = a.args
+                    subs[var.name] = ub_values[var.name] if exponent >= 0 else lb_values[var.name]
+                elif a.is_number:
+                    pass
+                else: # no exponent, i.e., 1
+                    subs[a.name] = ub_values[a.name]
+            value = formula.evalf(subs=subs)
+        elif formula.is_number:
+            value = formula
+        elif formula.is_Symbol: # no exponent, i.e., 1
+            value = formula.evalf(subs={formula: ub_values[formula.name]})
+        elif formula.is_Pow:
+            value = formula.evalf(subs={formula: 
+                                        (ub_values[args[0].name] if formula.args[-1] >= 0 else lb_values[args[0].name])
+                                         })
+        else:
+            raise Exception(f"Don't know how to calculate magnitude of {formula}")
+
+        return abs(float(value))
+        
+        
+
+
     def approximate(formula, parameters: List[ModelParameter], threshold=1e-4):
         if len(formula.free_symbols) == 0:
             return formula
@@ -99,16 +139,17 @@ class FUNMANSimplifier(pysmt.simplifier.Simplifier):
         else:
             args = [formula]
 
-        
+        arg_mag = {
+            arg: FUNMANSimplifier.arg_magnitude(arg, lb_values, ub_values) for arg in formula.args
+        }
 
         to_drop = {
-            arg: 0
-            for arg in args
-            if (
-                abs(FUNMANSimplifier.value_of(arg, subs=lb_values)) < threshold
-                and abs(FUNMANSimplifier.value_of(arg, subs=ub_values))
-                < threshold
-            )
+            arg: value
+            for arg, value in arg_mag.items() if value < threshold
+            # if (
+            #     abs(FUNMANSimplifier.value_of(arg, subs=lb_values)) < threshold
+            #     and abs(FUNMANSimplifier.value_of(arg, subs=ub_values)) < threshold
+            # )
         }
         # minimum_term_value = min(tm for arg, tm in term_magnitude.items()) if len(term_magnitude) > 0 else None
         # maximum_term_value = max(tm for arg, tm in term_magnitude.items()) if len(term_magnitude) > 0 else None

@@ -132,6 +132,13 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
         self._extract_non_overriden_parameters()
         self._filter_parameters()
 
+        if config.normalize:
+            if isinstance(config.normalize, float):
+                self.normalization_constant = config.normalize
+            else: # is bool True
+                self.normalization_constant = self.model.calculate_normalization_constant(self.parameters)
+         
+
         num_parameters = len(self.parameters)
         if self._smt_encoder is None:
             self._smt_encoder = self.model.default_encoder(config, self)
@@ -139,6 +146,9 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
         self._original_parameter_widths = {
             p: minus(p.ub, p.lb) for p in self.parameters
         }
+
+   
+
         parameter_space: ParameterSpace = search.search(
             self,
             config,

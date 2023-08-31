@@ -37,7 +37,7 @@ class EnsembleModel(Model):
 
         return EnsembleEncoder(config=config, scenario=scenario)
 
-    def _get_init_value(self, var: str, normalize=True):
+    def _get_init_value(self, var: str, scenario: "AnalysisScenario", normalize=True):
         (m_name, orig_var) = self._var_name_map[var]
         value = self._model_name_map[m_name].init_values[orig_var]
         if isinstance(value, str):
@@ -45,8 +45,8 @@ class EnsembleModel(Model):
         else:
             value = Real(value)
 
-        if normalize:
-            norm = self.normalization()
+        if scenario.normalization_constant:
+            norm = Real(scenario.normalization_constant)
             value = Div(value, norm)
         return value
 

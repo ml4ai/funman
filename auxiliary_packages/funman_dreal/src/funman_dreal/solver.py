@@ -571,9 +571,13 @@ class DRealNative(Solver, SmtLibBasicSolver, SmtLibIgnoreMixin):
 
     def get_value(self, item):
         # print(f"get_value() {item}: {self.model[item]}")
-        mid = (self.model[item].ub() - self.model[item].lb()) / 2.0
-        mid = mid + self.model[item].lb()
-        if not math.isinf(mid):
+        ub =self.model[item].ub()
+        lb = self.model[item].lb()
+        mid = (ub - lb) / 2.0
+        mid = mid + lb
+        if not mid.is_integer() and (ub.is_integer() or lb.is_integer()):
+            return Real(lb) if lb.is_integer() else Real(ub)
+        elif not math.isinf(mid):
             return Real(mid)
         else:
             return Real(self.model[item].lb())

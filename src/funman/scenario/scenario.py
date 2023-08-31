@@ -22,6 +22,7 @@ class AnalysisScenario(ABC, BaseModel):
     """
 
     parameters: List[Union[ModelParameter, StructureParameter]]
+    normalization_constant: Optional[float] = None
 
     @abstractclassmethod
     def get_kind(cls) -> str:

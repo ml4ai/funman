@@ -376,44 +376,14 @@ class Encoder(ABC, BaseModel):
         self, scenario: "AnalysisScenario", normalization=True
     ):
         # Add parameter assignments
-        # norm = scenario.model.normalization() if normalization else 1.0
         parameters = scenario.model_parameters()
 
-        # Normalize
+        # Normalize if constant value
         parameter_assignments = {
             self._encode_state_var(k.name): Real(float(k.lb))
             for k in parameters
             if k.lb == k.ub
         }
-
-        # # to pysmt
-        # parameter_assignments = {
-        #     k: sympy_to_pysmt(to_sympy(v, [k.name for k in parameters]))
-        #     for k, v in parameter_assignments.items()
-        # }
-
-        # substitute and simplify
-        # parameter_assignments = self._propagate_substitutions(parameter_assignments)
-
-        # # # TODO Use init for the substitutions
-        # # init_assignments = {
-        # #     self._encode_state_var(k, time=0): scenario.model._get_init_value(k)
-        # #     for k in scenario.model._state_var_names()
-        # # }
-        # # init_assignments = {
-        # #     s: (Real(v) if isinstance(v, float) else Symbol(v, REAL))
-        # #     for s, v in init_assignments.items()
-        # # }
-
-        # time_var = scenario.model._time_var()
-        # if time_var is not None:
-        #     time_var_name = scenario.model._time_var_id(time_var)
-        #     time_symbol = self._encode_state_var(
-        #         time_var_name, time=0
-        #     )  # Needed so that there is a pysmt symbol for 't'
-
-        #     if self.config.substitute_subformulas:
-        #         init_assignments[time_symbol] = Real(0.0)
 
         return parameter_assignments
 
@@ -503,20 +473,27 @@ class Encoder(ABC, BaseModel):
         return configurations, max_step_index, max_step_size
 
     def _define_init_term(
-        self, model: Model, var: str, init_time: int, substitutions=None
+        self, scenario: "AnalysisScenario", var: str, init_time: int, substitutions=None
     ):
-        value = model._get_init_value(var)
+        value = scenario.model._get_init_value(var, scenario)
 
         init_term = None
         substitution = ()
 
         if isinstance(value, FNode):
-            value_expr = sympy_to_pysmt(to_sympy(value, model._symbols()))
+            value_expr = to_sympy(value, scenario.model._symbols())
             if self.config.substitute_subformulas and substitutions:
-                value_expr = value_expr.substitute(substitutions).simplify()
-            # value_symbol = (
-            #     Symbol(value, REAL) if isinstance(value, str) else Real(value)
-            # )
+                value_expr = sympy_to_pysmt(value_expr).substitute(substitutions).simplify()
+                # value_expr = FUNMANSimplifier.sympy_simplify(
+                #             value_expr,
+                #             parameters=scenario.model_parameters(),
+                #             substitutions=substitutions,
+                #             threshold=self.config.series_approximation_threshold,
+                #             taylor_series_order=self.config.taylor_series_order,
+                #         )
+            else: 
+                value_expr = sympy_to_pysmt(value_expr)
+
             substitution = (
                 self._encode_state_var(var, time=init_time),
                 value_expr,
@@ -545,17 +522,7 @@ class Encoder(ABC, BaseModel):
         # Generate Parameter symbols and assignments
         substitutions = self._initialize_substitutions(scenario)
         initial_state = And([Equals(k, v) for k, v in substitutions.items()])
-        # Substitute parameters into initial state
-        # new_subs = {}
-        # for var, sub in self._timed_model_elements["time_step_substitutions"][
-        #     step_size_idx
-        # ].items():
-        #     new_subs[var] = sub.substitute(parameter_subs).simplify()
 
-        # self._timed_model_elements["time_step_substitutions"][step_size_idx] = {
-        #     **parameter_subs,
-        #     **new_subs,
-        # }
 
         state_var_names = scenario.model._state_var_names()
 
@@ -573,7 +540,7 @@ class Encoder(ABC, BaseModel):
 
         initial_state_vars_and_subs = [
             self._define_init_term(
-                scenario.model, var, init_time, substitutions=substitutions
+                scenario, var, init_time, substitutions=substitutions
             )
             for var in state_var_names
         ]
@@ -772,7 +739,7 @@ class Encoder(ABC, BaseModel):
     def _normalize(self, value):
         return sympy_to_pysmt(
             to_sympy(
-                Div(value, self._scenario.model.normalization()),
+                Div(value, Real(self._scenario.normalization_constant)),
                 self._scenario.model._symbols(),
             )
         )

@@ -1,4 +1,5 @@
 from typing import Dict, List, Union
+from funman.funman import FUNMANConfig
 
 import graphviz
 import sympy
@@ -182,7 +183,7 @@ class GeneratedPetriNetModel(AbstractPetriNetModel):
             symbols += [self._time_var().id]
         return symbols
 
-    def _get_init_value(self, var: str, normalize: bool = True):
+    def _get_init_value(self, var: str, scenario: "AnalysisScenario"):
         value = Model._get_init_value(self, var)
         if value is None:
             if hasattr(self.petrinet.semantics, "ode"):
@@ -203,9 +204,8 @@ class GeneratedPetriNetModel(AbstractPetriNetModel):
         elif isinstance(value, str):
             value = Symbol(value, REAL)
 
-        if normalize:
-            norm = self.normalization()
-            value = Div(value, norm)
+        if scenario.normalization_constant:
+            value = Div(value, Real(scenario.normalization_constant))
 
         return value
 

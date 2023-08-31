@@ -10,6 +10,7 @@ from pysmt.solvers.solver import (
     UnsatCoreSolver,
 )
 from pysmt.walkers import DagWalker
+from fractions import Fraction
 
 
 class DRealConverter(Converter, DagWalker):
@@ -79,13 +80,16 @@ class DRealConverter(Converter, DagWalker):
         return args[0] - args[1]
 
     def walk_times(self, formula, args, **kwargs):
-        res = functools.reduce(lambda a, b: a * b, args)
-        # res = yicespy.yices_sum(len(args), args)
-        # self._check_term_result(res)
+        try:
+            res = functools.reduce(lambda a, b: a * b, args)
+        except OverflowError as e:
+            pass
+
         return res
 
     def walk_pow(self, formula, args, **kwargs):
-        res = dreal.pow(args[0], args[1])
+        exponent = float(args[1]) if isinstance(args[1], Fraction) else args[1]
+        res = dreal.pow(args[0], exponent)
         return res
 
     def bool_to_formula(self, value):
@@ -117,11 +121,21 @@ class DRealConverter(Converter, DagWalker):
 
     def walk_real_constant(self, formula, **kwargs):
         frac = formula.constant_value()
-        n, d = frac.numerator, frac.denominator
-        # print(f"n = {n}, d = {d}")
-        res = float(n) / float(d)
-        # self._check_term_result(res)
-        return res
+        return frac
+        # n, d = frac.numerator, frac.denominator
+        # # print(f"n = {n}, d = {d}")
+        # try:
+        #     res = float(n) / float(d)
+        # except OverflowError as e:
+        #     # int cannot be coverted to float
+        #     try:
+        #         f = Fraction(n, d).limit_denominator(1e309)
+        #         res = float(f)
+        #     except OverflowError as e1:
+        #         res = frac
+
+        # # self._check_term_result(res)
+        # return res
 
     def _type_to_dreal(self, tp):
         if tp.is_bool_type():
