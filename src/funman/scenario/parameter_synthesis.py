@@ -133,10 +133,10 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
         self._filter_parameters()
 
         if config.normalize:
-            if isinstance(config.normalize, float):
-                self.normalization_constant = config.normalize
+            if config.normalization_constant is not None:
+                self.normalization_constant = config.normalization_constant
             else: # is bool True
-                self.normalization_constant = self.model.calculate_normalization_constant(self.parameters)
+                self.normalization_constant = self.model.calculate_normalization_constant(self)
          
 
         num_parameters = len(self.parameters)
@@ -183,7 +183,7 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
             self._smt_encoder = self.model.default_encoder(config)
         self._assume_model = Symbol("assume_model")
         self._assume_query = Symbol("assume_query")
-        self._model_encoding = self._smt_encoder.encode_model(self.model)
+        self._model_encoding = self._smt_encoder.encode_model(self.model, config)
         self._model_encoding._formula = Iff(
             self._assume_model, self._model_encoding._formula
         )
@@ -237,6 +237,7 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
             partial(
                 self._query_encoding._encoder.encode_query_layer,
                 self.query,
+                self
             ),
             layers=[timepoint],
             box=box,

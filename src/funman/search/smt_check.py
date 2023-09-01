@@ -94,6 +94,7 @@ class SMTCheck(Search):
                     partial(
                         episode.problem._query_encoding._encoder.encode_query_layer,
                         episode.problem.query,
+                        episode.problem
                     ),
                     layers=timepoints,
                 ),

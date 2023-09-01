@@ -72,8 +72,10 @@ class FUNMANConfig(BaseModel):
     substitute_subformulas: bool = True
     """Enforce compartmental variable constraints"""
     use_compartmental_constraints: bool = True
-    """Normalization constant > 0 if float, auto calculate if True, or no normalization if False"""
-    normalize: Union[float, bool] = 1.0
+    """Normalize scenarios prior to solving"""
+    normalize: bool = True
+    """Normalization constant to use for normalization (attempt to compute if None)"""
+    normalization_constant: float = None
     """ Simplify query by propagating substutions """
     simplify_query: bool = True
     """ Series approximation threshold for dropping series terms """

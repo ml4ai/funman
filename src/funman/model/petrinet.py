@@ -137,6 +137,17 @@ class AbstractPetriNetModel(Model):
 
         return dot
 
+    def calculate_normalization_constant(self, scenario: "AnalysisScenario") -> float:
+        vars = self._state_var_names()
+        values = {
+            v: self._get_init_value(v, scenario)
+            for v in vars
+        }
+        if all(v.is_constant() for v in values.values()):
+            return float(sum(v.constant_value() for v in values.values()))
+        else:
+            raise Exception(f"Cannot calculate the normalization constant for {type(self)} because the initial state variables are not constants. Try setting the 'normalize' in the configuration to constant.")
+
 
 class GeneratedPetriNetModel(AbstractPetriNetModel):
     model_config = ConfigDict(arbitrary_types_allowed=True
@@ -184,7 +195,7 @@ class GeneratedPetriNetModel(AbstractPetriNetModel):
         return symbols
 
     def _get_init_value(self, var: str, scenario: "AnalysisScenario"):
-        value = Model._get_init_value(self, var)
+        value = Model._get_init_value(self, var, scenario)
         if value is None:
             if hasattr(self.petrinet.semantics, "ode"):
                 initials = self.petrinet.semantics.ode.initials

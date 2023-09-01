@@ -259,9 +259,10 @@ class PetrinetEncoder(Encoder):
                 # .substitute(substitutions)
                 # .simplify()
             )
+            population = Real(1.0) if self.config.normalize else Real(scenario.normalization_constant) 
             ub = LE(
                 self._encode_state_var(scenario.model._state_var_name(var), time=step),
-                Real(scenario.normalization_constant)
+                population
                 # Plus(
                 #     [
                 #         self._encode_state_var(
@@ -281,8 +282,8 @@ class PetrinetEncoder(Encoder):
                         scenario.model._state_var_name(var), time=step
                     ) for var in scenario.model._state_vars()])
         total = And(
-            LE(sum_vars, Plus(Real(scenario.normalization_constant), noise_const )), 
-            LE(Minus(Real(scenario.normalization_constant), noise_const ), sum_vars ))
+            LE(sum_vars, Plus(population, noise_const )), 
+            LE(Minus(population, noise_const ), sum_vars ))
         
         return And(bounds+[total])
 

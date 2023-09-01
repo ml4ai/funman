@@ -3,6 +3,7 @@ import os
 import unittest
 from pathlib import Path
 from time import sleep
+import os
 
 import httpx
 from fastapi.testclient import TestClient
@@ -184,3 +185,7 @@ class TestTerarium(unittest.TestCase):
 
         assert progress > 0.999999, "Progress was not at 100%"
         return results
+
+
+if __name__ == "__main__":
+    unittest.main()

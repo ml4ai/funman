@@ -115,11 +115,10 @@ class ConsistencyScenario(AnalysisScenario, BaseModel):
         self._filter_parameters()
         num_parameters = len(self.parameters)
 
-        if config.normalize:
-            if isinstance(config.normalize, float):
-                self.normalization_constant = config.normalize
-            else: # is bool True
-                self.normalization_constant = self.model.calculate_normalization_constant(self.parameters)
+        if config.normalization_constant is not None:
+            self.normalization_constant = config.normalization_constant
+        else: 
+            self.normalization_constant = self.model.calculate_normalization_constant(self)
             
 
 

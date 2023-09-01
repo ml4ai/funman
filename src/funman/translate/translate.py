@@ -261,7 +261,7 @@ class Encoder(ABC, BaseModel):
         return model_encoding, query_encoding
 
     @abstractmethod
-    def encode_model(self, model: "Model") -> Encoding:
+    def encode_model(self, model: "Model", config: "FUNMANConfig") -> Encoding:
         """
         Encode a model into an SMTLib formula.
 
@@ -670,6 +670,7 @@ class Encoder(ABC, BaseModel):
     def encode_query_layer(
         self,
         query: Query,
+        scenario: "AnalysisScenario",
         layer_idx: int,
         step_size: int = None,
         normalize=True,
@@ -697,7 +698,7 @@ class Encoder(ABC, BaseModel):
 
         if type(query) in query_handlers:
             layer = query_handlers[type(query)](
-                query, layer_idx, step_size, normalize=normalize
+                query, scenario, layer_idx, step_size, normalize=normalize
             )
             return layer
             # encoded_query.substitute(substitutions)
@@ -708,7 +709,7 @@ class Encoder(ABC, BaseModel):
                 f"Do not know how to encode query of type {type(query)}"
             )
 
-    def _return_encoded_query(self, query, layer_idx, step_size, normalize=True):
+    def _return_encoded_query(self, query, scenario, layer_idx, step_size, normalize=True):
         return (
             query._formula,
             {str(v): v for v in query._formula.get_free_variables()},
@@ -721,10 +722,10 @@ class Encoder(ABC, BaseModel):
             else str(query.variable)
         )
 
-    def _encode_query_and(self, query, layer_idx, step_size, normalize=True):
+    def _encode_query_and(self, query, scenario, layer_idx, step_size, normalize=True):
         queries = [
             self.encode_query_layer(
-                q, layer_idx, step_size, normalize=normalize
+                q, scenario, layer_idx, step_size, normalize=normalize
             )
             for q in query.queries
         ]
@@ -744,15 +745,15 @@ class Encoder(ABC, BaseModel):
             )
         )
 
-    def _encode_query_le(self, query, layer_idx, step_size, normalize=True):
+    def _encode_query_le(self, query, scenario, layer_idx, step_size, normalize=True):
         step_size_idx = self._timed_model_elements["step_sizes"].index(
             step_size
         )
         time = self._timed_model_elements["state_timepoints"][step_size_idx][
             layer_idx
         ]
-        if normalize:
-            ub = self._normalize(Real(query.ub))
+        if scenario.normalization_constant:
+            ub = Div(Real(query.ub), Real(scenario.normalization_constant))
         else:
             ub = Real(query.ub)
         q = LE(
@@ -762,15 +763,15 @@ class Encoder(ABC, BaseModel):
 
         return (q, {str(v): v for v in q.get_free_variables()})
 
-    def _encode_query_ge(self, query, layer_idx, step_size, normalize=True):
+    def _encode_query_ge(self, query, scenario, layer_idx, step_size, normalize=True):
         step_size_idx = self._timed_model_elements["step_sizes"].index(
             step_size
         )
         time = self._timed_model_elements["state_timepoints"][step_size_idx][
             layer_idx
         ]
-        if normalize:
-            lb = self._normalize(query.lb)
+        if scenario.normalization_constant:
+            lb = Div(Real(query.lb), Real(scenario.normalization_constant))
         else:
             lb = Real(query.lb)
         q = GE(
@@ -779,7 +780,7 @@ class Encoder(ABC, BaseModel):
         )
         return (q, {str(v): v for v in q.get_free_variables()})
 
-    def _encode_query_true(self, query, layer_idx, step_size, normalize=True):
+    def _encode_query_true(self, query, scenario, layer_idx, step_size, normalize=True):
         return (TRUE(), {})
 
     def symbol_timeseries(

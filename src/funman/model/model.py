@@ -75,7 +75,7 @@ class Model(ABC, BaseModel):
 
         return vars
     
-    def calculate_normalization_constant(self, parameters: List["Parameter"]) -> float:
+    def calculate_normalization_constant(self, scenario: "AnalysisScenario") -> float:
         raise NotImplementedError(f"Cannot Calculate a normalization constant for a model of type {type(self)}")
 
     # def normalization(self):
@@ -83,12 +83,12 @@ class Model(ABC, BaseModel):
     #         self._normalization_term = Real(self._normalization_constant)
     #     return self._normalization_term
 
-    # def _is_normalized(self, var: str):
-    #     try:
-    #         name, time = var.rsplit("_", 1)
-    #         return name in self._state_var_names()
-    #     except:
-    #         return False
+    def _is_normalized(self, var: str):
+        try:
+            name, time = var.rsplit("_", 1)
+            return name in self._state_var_names()
+        except:
+            return False
 
     def _parameters(self) -> List[ModelParameter]:
         param_names = self._parameter_names()

@@ -482,7 +482,7 @@ class BoxSearch(Search):
                 res1 = solver.get_model()
                 true_points = [episode._extract_point(res1, box)]
                 for point in true_points:
-                    dp = point.denormalize(episode.problem.model)
+                    dp = point.denormalize(episode.problem)
                     episode._add_true_point(point)
                     rval.put(point.dict())
             solver.pop(1)  # Remove true query
