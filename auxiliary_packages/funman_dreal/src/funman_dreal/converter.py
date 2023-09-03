@@ -1,4 +1,5 @@
 import functools
+from fractions import Fraction
 
 import dreal
 from pysmt.decorators import catch_conversion_error
@@ -10,7 +11,6 @@ from pysmt.solvers.solver import (
     UnsatCoreSolver,
 )
 from pysmt.walkers import DagWalker
-from fractions import Fraction
 
 
 class DRealConverter(Converter, DagWalker):
@@ -109,7 +109,6 @@ class DRealConverter(Converter, DagWalker):
         #     assert tp.is_custom_type()
         #     res = yicespy.yices_eq(args[0], args[1])
         # self._check_term_result(res)
-        
 
         return self.bool_to_formula(res)
 

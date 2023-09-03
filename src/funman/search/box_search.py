@@ -334,7 +334,9 @@ class BoxSearch(Search):
                 episode._formula_stack.pop()
                 episode._formula_stack_time -= 1
 
-            formula = episode.problem.encode_simplified(box, timepoint)
+            formula = episode.problem.encode_simplified(
+                box, timepoint, episode.config
+            )
             solver.push(1)
             episode._formula_stack.append(formula)
             solver.add_assertion(formula)
@@ -380,7 +382,9 @@ class BoxSearch(Search):
         projected_box = box.project(
             episode.problem.model_parameters()
         ).project(episode.problem.model_parameters())
-        formula = episode.problem._smt_encoder.box_to_smt(projected_box, infinity_constraints=False)
+        formula = episode.problem._smt_encoder.box_to_smt(
+            projected_box, infinity_constraints=False
+        )
         episode._formula_stack.append(formula)
         solver.add_assertion(formula)
 
@@ -454,6 +458,7 @@ class BoxSearch(Search):
                 res = solver.get_model()
                 false_points = [episode._extract_point(res, box)]
                 for point in false_points:
+                    point = point.denormalize(episode.problem)
                     episode._add_false_point(point)
                     rval.put(point.dict())
             solver.pop(1)  # Remove false query
@@ -482,7 +487,7 @@ class BoxSearch(Search):
                 res1 = solver.get_model()
                 true_points = [episode._extract_point(res1, box)]
                 for point in true_points:
-                    dp = point.denormalize(episode.problem)
+                    point = point.denormalize(episode.problem)
                     episode._add_true_point(point)
                     rval.put(point.dict())
             solver.pop(1)  # Remove true query

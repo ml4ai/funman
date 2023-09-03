@@ -1,5 +1,4 @@
 import os
-import unittest
 from contextlib import contextmanager
 from time import sleep
 from timeit import default_timer
@@ -110,7 +109,6 @@ models = {GeneratedPetrinet, GeneratedRegnet}
 # ]
 
 
-
 class Runner:
     @contextmanager
     def elapsed_timer(self):
@@ -122,7 +120,9 @@ class Runner:
             elapser = None
 
     def run(self, model, request, description="", case_out_dir="."):
-        results = self.run_test_case((model, request, description), case_out_dir)
+        results = self.run_test_case(
+            (model, request, description), case_out_dir
+        )
         return results
         # ParameterSpacePlotter(
         #     results.parameter_space,
@@ -130,8 +130,6 @@ class Runner:
         #     parameters=["beta", "num_steps"],
         # ).plot(show=False)
         # plt.savefig(f"{case_out_dir}/scenario1_base_ps_beta_space.png")
-
-
 
     def run_test_case(self, case, case_out_dir):
         if not os.path.exists(case_out_dir):
@@ -162,7 +160,9 @@ class Runner:
                 pass
         raise Exception(f"Could not determine the Model type of {model_file}")
 
-    def run_instance(self, case: Tuple[str, Union[str, Dict], str], out_dir="."):
+    def run_instance(
+        self, case: Tuple[str, Union[str, Dict], str], out_dir="."
+    ):
         (model_file, request_file, description) = case
 
         model = self.get_model(model_file)
@@ -172,7 +172,9 @@ class Runner:
         except TypeError as te:
             # request_file may not be a path, could be a dict
             try:
-                request = pydantic.parse_obj_as(FunmanWorkRequest, request_file)
+                request = pydantic.parse_obj_as(
+                    FunmanWorkRequest, request_file
+                )
             except Exception as e:
                 raise e
 

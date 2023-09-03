@@ -4,6 +4,7 @@ import textwrap
 
 import matplotlib.pyplot as plt
 import pandas as pd
+from funman_benchmarks.benchmark import Benchmark
 from funman_demo.handlers import RealtimeResultPlotter, ResultCacheWriter
 from interruptingcow import timeout
 from pysmt.shortcuts import (
@@ -22,10 +23,6 @@ from pysmt.shortcuts import (
     Symbol,
     Times,
 )
-
-
-from funman_benchmarks.benchmark import Benchmark
-
 
 # from funman.funman import FUNMANConfig
 from funman.model import QueryLE

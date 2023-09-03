@@ -28,7 +28,9 @@ class TestCompilation(unittest.TestCase):
         )
         funman = Funman()
         config = FUNMANConfig(
-            number_of_processes=1, substitute_subformulas=False
+            number_of_processes=1,
+            substitute_subformulas=False,
+            normalization_constant=5.0,
         )
         result = funman.solve(scenario, config)
 
@@ -57,7 +59,10 @@ class TestCompilation(unittest.TestCase):
         )
         funman = Funman()
         config = FUNMANConfig(
-            tolerance=1e-1, number_of_processes=1, substitute_subformulas=False
+            tolerance=1e-1,
+            number_of_processes=1,
+            substitute_subformulas=False,
+            normalization_constant=12.0,
         )
         result = funman.solve(scenario, config=config)
         assert result

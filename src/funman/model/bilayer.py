@@ -526,3 +526,15 @@ class BilayerModel(Model):
 
     def _parameter_ub(self, p):
         return self.parameter_bounds[p][1]
+
+    def calculate_normalization_constant(
+        self, scenario: "AnalysisScenario", config: "FUNMANConfig"
+    ) -> float:
+        vars = self._state_var_names()
+        values = {v: self._get_init_value(v, scenario, config) for v in vars}
+        if all(v.is_constant() for v in values.values()):
+            return float(sum(v.constant_value() for v in values.values()))
+        else:
+            raise Exception(
+                f"Cannot calculate the normalization constant for {type(self)} because the initial state variables are not constants. Try setting the 'normalization_constant' in the configuration to constant."
+            )

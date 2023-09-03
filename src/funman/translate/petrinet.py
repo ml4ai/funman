@@ -180,8 +180,7 @@ class PetrinetEncoder(Encoder):
                     flows = FUNMANSimplifier.sympy_simplify(
                         # flows.substitute(substitutions),
                         to_sympy(
-                            flows.substitute(substitutions)
-                            .simplify(),
+                            flows.substitute(substitutions).simplify(),
                             scenario.model._symbols(),
                         ),
                         parameters=scenario.model_parameters(),
@@ -245,7 +244,10 @@ class PetrinetEncoder(Encoder):
         return initial_state, substitutions
 
     def _encode_compartmental_bounds(
-        self, scenario: "AnalysisScenario", step, substitutions: Dict[FNode, FNode] = {}
+        self,
+        scenario: "AnalysisScenario",
+        step,
+        substitutions: Dict[FNode, FNode] = {},
     ):
         bounds = []
         for var in scenario.model._state_vars():
@@ -259,9 +261,15 @@ class PetrinetEncoder(Encoder):
                 # .substitute(substitutions)
                 # .simplify()
             )
-            population = Real(1.0) if self.config.normalize else Real(scenario.normalization_constant) 
+            population = (
+                Real(1.0)
+                if self.config.normalize
+                else Real(scenario.normalization_constant)
+            )
             ub = LE(
-                self._encode_state_var(scenario.model._state_var_name(var), time=step),
+                self._encode_state_var(
+                    scenario.model._state_var_name(var), time=step
+                ),
                 population
                 # Plus(
                 #     [
@@ -274,18 +282,24 @@ class PetrinetEncoder(Encoder):
                 # .substitute(substitutions)
                 # .simplify(),
             )
-            
+
             bounds += [lb, ub]
         # noise_var = Symbol("noise", REAL)
         noise_const = Real(1e-3)
-        sum_vars = Plus([self._encode_state_var(
-                        scenario.model._state_var_name(var), time=step
-                    ) for var in scenario.model._state_vars()])
+        sum_vars = Plus(
+            [
+                self._encode_state_var(
+                    scenario.model._state_var_name(var), time=step
+                )
+                for var in scenario.model._state_vars()
+            ]
+        )
         total = And(
-            LE(sum_vars, Plus(population, noise_const )), 
-            LE(Minus(population, noise_const ), sum_vars ))
-        
-        return And(bounds+[total])
+            LE(sum_vars, Plus(population, noise_const)),
+            LE(Minus(population, noise_const), sum_vars),
+        )
+
+        return And(bounds + [total])
 
     def _encode_transition_term(
         self, transition, current_state, next_state, scenario, substitutions={}

@@ -317,12 +317,17 @@ class BilayerEncoder(Encoder):
         encodable = True
         reasons = []
         if self.config.substitute_subformulas:
-            if not all(v in self._scenario.model.init_values for v in self._scenario.model._state_var_names()):
-                encodable=False
-                reasons.append("Cannot use configuration option 'substitute_subformulas=True' if there is no init_values specified for model.")
+            if not all(
+                v in self._scenario.model.init_values
+                for v in self._scenario.model._state_var_names()
+            ):
+                encodable = False
+                reasons.append(
+                    "Cannot use configuration option 'substitute_subformulas=True' if there is no init_values specified for model."
+                )
         if len(reasons) > 0:
             l.error(reasons)
-            
+
         return encodable
 
     def _encode_bilayer(

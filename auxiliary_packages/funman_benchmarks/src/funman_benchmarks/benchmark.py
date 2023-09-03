@@ -29,13 +29,12 @@ class Benchmark(unittest.TestCase):
                 try:
                     json_results = json.loads(f.read())
                     for result in json_results["results"]:
-
                         matches = all(
                             [
                                 (k in result and result[k] == v)
                                 for k, v in case.items()
                             ]
-                        ) and all( k in result["scenario"] for k in scenario)
+                        ) and all(k in result["scenario"] for k in scenario)
                         if matches:
                             return True
                 except Exception as e:

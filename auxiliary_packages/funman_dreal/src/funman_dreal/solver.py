@@ -571,7 +571,7 @@ class DRealNative(Solver, SmtLibBasicSolver, SmtLibIgnoreMixin):
 
     def get_value(self, item):
         # print(f"get_value() {item}: {self.model[item]}")
-        ub =self.model[item].ub()
+        ub = self.model[item].ub()
         lb = self.model[item].lb()
         mid = (ub - lb) / 2.0
         mid = mid + lb

@@ -4,6 +4,7 @@ from functools import partial
 from typing import Dict, Union
 
 import matplotlib.pyplot as plt
+from funman_benchmarks.evaluation01.evaluation01 import TestUnitTests
 from interruptingcow import timeout
 from pysmt.shortcuts import (
     GE,
@@ -21,9 +22,6 @@ from pysmt.shortcuts import (
     Symbol,
     Times,
 )
-
-
-from funman_benchmarks.evaluation01.evaluation01 import TestUnitTests
 
 from funman.funman import Funman, FUNMANConfig
 from funman.model.bilayer import BilayerDynamics
@@ -58,7 +56,7 @@ class TestS21BUnitTest(TestUnitTests):
         for simplify_query in [True, False]
         for series_approximation_threshold in [1e-1, 1e-3, 1e-5]
         for taylor_series_order in [1, 3, 5]
-        if not simplify_query or substitute_subformulas 
+        if not simplify_query or substitute_subformulas
     ]
     # [
     #     {"dreal_mcts": False, "substitute_subformulas": False, "simplify_query": False,  "series_approximation_threshold": 1e-5,

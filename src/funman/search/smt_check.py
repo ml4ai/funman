@@ -4,17 +4,17 @@ import sys
 import threading
 from functools import partial
 from typing import Callable, Optional, Tuple
-from funman.scenario.scenario import AnalysisScenario
 
-from pysmt.logics import QF_NRA
-from pysmt.shortcuts import And, Solver, Equals, Symbol, Real, REAL
 from pysmt.formula import FNode
+from pysmt.logics import QF_NRA
+from pysmt.shortcuts import REAL, And, Equals, Real, Solver, Symbol
 
 from funman.representation.representation import (
     LABEL_TRUE,
     ParameterSpace,
     Point,
 )
+from funman.scenario.scenario import AnalysisScenario
 from funman.utils.smtlib_utils import smtlibscript_from_formula_list
 
 # import funman.search as search
@@ -76,6 +76,9 @@ class SMTCheck(Search):
                 for k, v in structural_configuration.items():
                     parameter_values[k] = v
                 point = Point(values=parameter_values, label=LABEL_TRUE)
+                if config.normalize:
+                    denormalized_point = point.denormalize(problem)
+                    point = denormalized_point
                 models[point] = result
                 consistent[point] = result_dict
                 parameter_space.true_points.append(point)
@@ -83,29 +86,35 @@ class SMTCheck(Search):
                 resultsCallback(parameter_space)
 
         return parameter_space, models, consistent
-    
-    def build_formula(self, episode: SearchEpisode, timepoints)-> Tuple[FNode, FNode]:
+
+    def build_formula(
+        self, episode: SearchEpisode, timepoints
+    ) -> Tuple[FNode, FNode]:
         formula: FNode = And(
-                episode.problem._model_encoding.encoding(
-                    episode.problem._model_encoding._encoder.encode_model_layer,
-                    layers=timepoints,
+            episode.problem._model_encoding.encoding(
+                episode.problem._model_encoding._encoder.encode_model_layer,
+                layers=timepoints,
+            ),
+            episode.problem._query_encoding.encoding(
+                partial(
+                    episode.problem._query_encoding._encoder.encode_query_layer,
+                    episode.problem.query,
+                    episode.problem,
+                    episode.config,
                 ),
-                episode.problem._query_encoding.encoding(
-                    partial(
-                        episode.problem._query_encoding._encoder.encode_query_layer,
-                        episode.problem.query,
-                        episode.problem
-                    ),
-                    layers=timepoints,
-                ),
-                episode.problem._smt_encoder.box_to_smt(
-                    episode._initial_box().project(
-                        episode.problem.model_parameters()
-                    )
-                ),
-            )
+                layers=timepoints,
+            ),
+            episode.problem._smt_encoder.box_to_smt(
+                episode._initial_box().project(
+                    episode.problem.model_parameters()
+                )
+            ),
+        )
         simplified_formula = None
-        if episode.config.simplify_query and episode.config.substitute_subformulas:
+        if (
+            episode.config.simplify_query
+            and episode.config.substitute_subformulas
+        ):
             simplified_formula = formula.substitute(
                 episode.problem._smt_encoder._timed_model_elements[
                     "time_step_substitutions"
@@ -141,16 +150,33 @@ class SMTCheck(Search):
             logic=QF_NRA,
             solver_options=opts,
         ) as s:
-            formula, simplified_formula = self.build_formula(episode, timepoints)
+            formula, simplified_formula = self.build_formula(
+                episode, timepoints
+            )
 
             if simplified_formula is not None:
                 # If using a simplified formula, we need to solve it and use its values in the original formula to get the values of all variables
                 result = self.solve_formula(s, simplified_formula, episode)
                 if result is not None and result:
                     assigned_vars = result.to_dict()
-                    substitution = {Symbol(p, REAL): Real(v) for p, v in assigned_vars.items() }
-                    result_assignment = And([ Equals(Symbol(p, REAL), Real(v))  for p, v in assigned_vars.items()] + [Equals(Symbol(p.name, REAL), Real(0.0)) for p in episode.problem.model_parameters() if p.is_unbound() and p.name not in assigned_vars])
-                    formula_w_params = And(formula.substitute(substitution), result_assignment)
+                    substitution = {
+                        Symbol(p, REAL): Real(v)
+                        for p, v in assigned_vars.items()
+                    }
+                    result_assignment = And(
+                        [
+                            Equals(Symbol(p, REAL), Real(v))
+                            for p, v in assigned_vars.items()
+                        ]
+                        + [
+                            Equals(Symbol(p.name, REAL), Real(0.0))
+                            for p in episode.problem.model_parameters()
+                            if p.is_unbound() and p.name not in assigned_vars
+                        ]
+                    )
+                    formula_w_params = And(
+                        formula.substitute(substitution), result_assignment
+                    )
                     result = self.solve_formula(s, formula_w_params, episode)
             else:
                 result = self.solve_formula(s, formula, episode)

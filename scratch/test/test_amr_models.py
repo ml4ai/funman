@@ -1,10 +1,12 @@
+import logging
 import os
 import unittest
-from parameterized import parameterized
-from funman.utils.run import Runner
-import logging
 
-logging.getLogger('funman.translate.translate').setLevel(logging.DEBUG)
+from parameterized import parameterized
+
+from funman.utils.run import Runner
+
+logging.getLogger("funman.translate.translate").setLevel(logging.DEBUG)
 
 RESOURCES = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "../../resources"
@@ -19,7 +21,7 @@ cases = [
     (
         os.path.join(AMR_PETRI_DIR, "t01_request.json"),
         os.path.join(AMR_PETRI_DIR, "t01_model.json"),
-        "Nelson's test case using ub query on I and parameter ranges.  Consistency Problem."
+        "Nelson's test case using ub query on I and parameter ranges.  Consistency Problem.",
     ),
 ]
 

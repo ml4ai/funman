@@ -89,6 +89,7 @@ class ConsistencyScenario(AnalysisScenario, BaseModel):
         """
         if config._search is None:
             from funman.search.smt_check import SMTCheck
+
             search = SMTCheck()
         else:
             search = config._search()
@@ -117,10 +118,10 @@ class ConsistencyScenario(AnalysisScenario, BaseModel):
 
         if config.normalization_constant is not None:
             self.normalization_constant = config.normalization_constant
-        else: 
-            self.normalization_constant = self.model.calculate_normalization_constant(self)
-            
-
+        else:
+            self.normalization_constant = (
+                self.model.calculate_normalization_constant(self, config)
+            )
 
         if self._smt_encoder is None:
             self._smt_encoder = self.model.default_encoder(config, self)

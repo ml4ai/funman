@@ -38,23 +38,25 @@ MIRA_PETRI_DIR = os.path.join(AMR_EXAMPLES_DIR, "petrinet", "mira")
 
 
 class Evaluation02(Benchmark):
-
-
     incremental_speedup_scenarios = [
-        # S1 base model, parameter synthesis of beta [0.1, 0.9].  
+        # S1 base model, parameter synthesis of beta [0.1, 0.9].
         # Illustrates the impact of using invariants to evaluate a query incrementally.
         (
             os.path.join(MIRA_PETRI_DIR, "models", "eval_scenario1_base.json"),
             os.path.join(
-                MIRA_PETRI_DIR, "requests", "eval_scenario1_base_incremental.json"
+                MIRA_PETRI_DIR,
+                "requests",
+                "eval_scenario1_base_incremental.json",
             ),
         ),
-        # S1 base model, parameter synthesis of beta [0.1, 0.9].  
+        # S1 base model, parameter synthesis of beta [0.1, 0.9].
         # Illustrates the impact of using invariants to evaluate a query non incrementally.
         (
             os.path.join(MIRA_PETRI_DIR, "models", "eval_scenario1_base.json"),
             os.path.join(
-                MIRA_PETRI_DIR, "requests", "eval_scenario1_base_non_incremental.json"
+                MIRA_PETRI_DIR,
+                "requests",
+                "eval_scenario1_base_non_incremental.json",
             ),
         ),
     ]
@@ -76,12 +78,14 @@ class Evaluation02(Benchmark):
     ]
 
     mcts_speedup_scenarios = [
-        # S1 base model, parameter synthesis of beta [0.1, 0.9].  
+        # S1 base model, parameter synthesis of beta [0.1, 0.9].
         # Illustrates the impact of using invariants to evaluate a query incrementally.
-       (
+        (
             os.path.join(MIRA_PETRI_DIR, "models", "eval_scenario1_base.json"),
             os.path.join(
-                MIRA_PETRI_DIR, "requests", "eval_scenario1_base_mcts_2param.json"
+                MIRA_PETRI_DIR,
+                "requests",
+                "eval_scenario1_base_mcts_2param.json",
             ),
         ),
         (
@@ -90,7 +94,6 @@ class Evaluation02(Benchmark):
                 MIRA_PETRI_DIR, "requests", "eval_scenario1_base_mcts.json"
             ),
         ),
-         
     ]
 
     mcts_speedup_cases = [
@@ -98,7 +101,7 @@ class Evaluation02(Benchmark):
             "dreal_mcts": dreal_mcts,
             "substitute_subformulas": substitute_subformulas,
             "dreal_precision": dreal_precision,
-            "series_approximation_threshold": series_approximation_threshold
+            "series_approximation_threshold": series_approximation_threshold,
         }
         for dreal_mcts in [True, False]
         for dreal_precision in [1e2, 1e1, 1, 1e-1, 1e-3, 1e-5, 1e-10]
@@ -107,20 +110,24 @@ class Evaluation02(Benchmark):
     ]
 
     scenarios = [
-        # S1 base model, parameter synthesis of beta [0.1, 0.9].  
+        # S1 base model, parameter synthesis of beta [0.1, 0.9].
         # Illustrates the impact of using invariants to evaluate a query incrementally.
         (
             os.path.join(MIRA_PETRI_DIR, "models", "eval_scenario1_base.json"),
             os.path.join(
-                MIRA_PETRI_DIR, "requests", "eval_scenario1_base_incremental.json"
+                MIRA_PETRI_DIR,
+                "requests",
+                "eval_scenario1_base_incremental.json",
             ),
         ),
-        # S1 base model, parameter synthesis of beta [0.1, 0.9].  
+        # S1 base model, parameter synthesis of beta [0.1, 0.9].
         # Illustrates the impact of using invariants to evaluate a query non incrementally.
         (
             os.path.join(MIRA_PETRI_DIR, "models", "eval_scenario1_base.json"),
             os.path.join(
-                MIRA_PETRI_DIR, "requests", "eval_scenario1_base_non_incremental.json"
+                MIRA_PETRI_DIR,
+                "requests",
+                "eval_scenario1_base_non_incremental.json",
             ),
         ),
         # S1 base model ps for beta
@@ -204,19 +211,27 @@ class Evaluation02(Benchmark):
     def test_model_s1_base_incremental(self):
         scenario_out_dir = os.path.join(out_dir, "scenario1_base_incremental")
         scenarios = self.incremental_speedup_scenarios
-        run_case_fn = partial(self.run_test_case, scenarios[0], scenario_out_dir)
-        self.run_cases(run_case_fn, self.incremental_speedup_cases, scenarios[0])
-        run_case_fn = partial(self.run_test_case, scenarios[1], scenario_out_dir)
-        self.run_cases(run_case_fn, self.incremental_speedup_cases, scenarios[1])
+        run_case_fn = partial(
+            self.run_test_case, scenarios[0], scenario_out_dir
+        )
+        self.run_cases(
+            run_case_fn, self.incremental_speedup_cases, scenarios[0]
+        )
+        run_case_fn = partial(
+            self.run_test_case, scenarios[1], scenario_out_dir
+        )
+        self.run_cases(
+            run_case_fn, self.incremental_speedup_cases, scenarios[1]
+        )
 
     # @unittest.skip(reason="tmp")
     def test_model_s1_base_mcts(self):
         scenario_out_dir = os.path.join(out_dir, "scenario1_base_mcts")
         scenarios = self.mcts_speedup_scenarios
-        run_case_fn = partial(self.run_test_case, scenarios[0], scenario_out_dir)
+        run_case_fn = partial(
+            self.run_test_case, scenarios[0], scenario_out_dir
+        )
         self.run_cases(run_case_fn, self.mcts_speedup_cases, scenarios[0])
-        
-
 
     def run_test_case(self, scenario, scenario_out_dir, options):
         if not os.path.exists(scenario_out_dir):

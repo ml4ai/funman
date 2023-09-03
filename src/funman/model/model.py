@@ -42,7 +42,9 @@ class Model(ABC, BaseModel):
     def _symbols(self):
         return self._state_var_names() + self._parameter_names()
 
-    def _get_init_value(self, var: str, scenario: "AnalysisScenario", normalize: bool = True):
+    def _get_init_value(
+        self, var: str, scenario: "AnalysisScenario", config: "FUNMANConfig"
+    ):
         if var in self.init_values:
             value = self.init_values[var]
         elif var in self.parameter_bounds:
@@ -56,7 +58,11 @@ class Model(ABC, BaseModel):
         elif isinstance(value, float):
             value = Real(value)
 
-        if value is not None and scenario.normalization_constant:
+        if (
+            value is not None
+            and config.normalize
+            and scenario.normalization_constant
+        ):
             norm = Real(scenario.normalization_constant)
             value = Div(value, norm)
         return value
@@ -74,9 +80,13 @@ class Model(ABC, BaseModel):
         vars.update(self.parameter_bounds)
 
         return vars
-    
-    def calculate_normalization_constant(self, scenario: "AnalysisScenario") -> float:
-        raise NotImplementedError(f"Cannot Calculate a normalization constant for a model of type {type(self)}")
+
+    def calculate_normalization_constant(
+        self, scenario: "AnalysisScenario", config: "FUNMANConfig"
+    ) -> float:
+        raise NotImplementedError(
+            f"Cannot Calculate a normalization constant for a model of type {type(self)}"
+        )
 
     # def normalization(self):
     #     if self._normalization_constant:

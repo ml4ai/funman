@@ -40,7 +40,7 @@ class Parameter(BaseModel):
 
     def width(self) -> Union[str, float]:
         return math_utils.minus(self.ub, self.lb)
-    
+
     def is_unbound(self) -> bool:
         return self.lb == NEG_INFINITY and self.ub == POS_INFINITY
 
@@ -410,6 +410,7 @@ class Point(BaseModel):
     type: Literal["point"] = "point"
     label: Label = LABEL_UNKNOWN
     values: Dict[str, float]
+    normalized_values: Optional[Dict[str, float]]
 
     # def __init__(self, **kw) -> None:
     #     super().__init__(**kw)
@@ -428,13 +429,18 @@ class Point(BaseModel):
 
     def denormalize(self, scenario):
         if scenario.normalization_constant:
-            norm = to_sympy(scenario.normalization_constant, scenario.model._symbols())
+            norm = to_sympy(
+                scenario.normalization_constant, scenario.model._symbols()
+            )
             denormalized_values = {
                 k: (v * norm if scenario.model._is_normalized(k) else v)
                 for k, v in self.values.items()
             }
             denormalized_point = Point(
-                label=self.label, values=denormalized_values, type=self.type
+                label=self.label,
+                values=denormalized_values,
+                normalized_values=self.values,
+                type=self.type,
             )
             return denormalized_point
         else:

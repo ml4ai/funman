@@ -365,7 +365,7 @@ class FunmanResults(BaseModel):
         variables=None,
         log_y=False,
         max_time=None,
-        **kwargs
+        **kwargs,
     ):
         """
         Plot the results in a matplotlib plot.

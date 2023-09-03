@@ -134,7 +134,7 @@ class Funman(object):
             The resulting data, statistics, and other relevant information
             produced by the analysis.
         """
-        
+
         if config.profile:
             import cProfile
 

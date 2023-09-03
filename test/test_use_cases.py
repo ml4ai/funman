@@ -129,6 +129,7 @@ class TestUseCases(unittest.TestCase):
                 number_of_processes=1,
                 normalize=False,
                 simplify_query=False,
+                normalization_constant=12,
             ),
         )
         assert result

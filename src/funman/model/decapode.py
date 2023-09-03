@@ -12,7 +12,9 @@ class DecapodeDynamics(BaseModel):
 class DecapodeModel(Model):
     decapode: DecapodeDynamics
 
-    def default_encoder(self, config: "FUNMANConfig", scenario: "AnalysisScenario") -> "Encoder":
+    def default_encoder(
+        self, config: "FUNMANConfig", scenario: "AnalysisScenario"
+    ) -> "Encoder":
         """
         Return the default Encoder for the model
 

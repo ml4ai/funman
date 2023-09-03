@@ -55,7 +55,7 @@ class SympySerializer(IdentityDagWalker):
         return sympy.Symbol(formula.symbol_name())
 
     def walk_real_constant(self, formula, args, **kwargs):
-        value = formula.constant_value() 
+        value = formula.constant_value()
         return sympy.Rational(value)
 
     def walk_div(self, formula, args, **kwargs):

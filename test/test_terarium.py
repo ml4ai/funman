@@ -3,7 +3,6 @@ import os
 import unittest
 from pathlib import Path
 from time import sleep
-import os
 
 import httpx
 from fastapi.testclient import TestClient
