@@ -25,7 +25,7 @@ from pysmt.smtlib.script import SmtLibCommand
 from pysmt.smtlib.solver import SmtLibOptions, SmtLibSolver
 from pysmt.solvers.eager import EagerModel
 from pysmt.solvers.smtlib import SmtLibBasicSolver, SmtLibIgnoreMixin
-from pysmt.solvers.solver import Solver, SolverOptions
+from pysmt.solvers.solver import Solver, SolverOptions, UnsatCoreSolver
 from tenacity import retry
 
 import docker
@@ -407,7 +407,7 @@ class DReal(SmtLibSolver):
         return rval.getvalue()
 
 
-class DRealNative(Solver, SmtLibBasicSolver, SmtLibIgnoreMixin):
+class DRealNative(Solver, UnsatCoreSolver, SmtLibBasicSolver, SmtLibIgnoreMixin):
     LOGICS = [QF_NRA]
     OptionsClass = SolverOptions
 
@@ -457,6 +457,8 @@ class DRealNative(Solver, SmtLibBasicSolver, SmtLibIgnoreMixin):
                 and options["solver_options"]["dreal_mcts"]
             ):
                 self.config.mcts = True
+
+        self.config.unsat_core = True
 
         self.context = dreal.Context(self.config)
         self.context.SetLogic(dreal.Logic.QF_NRA)
@@ -547,6 +549,19 @@ class DRealNative(Solver, SmtLibBasicSolver, SmtLibIgnoreMixin):
         # result = dreal.CheckSatisfiability(self.assertion, 0.001)
         self.model = result
         return result
+
+    def get_unsat_core(self):
+        unsat_core = self.context.get_unsat_core()
+        f = self.converter.back(unsat_core)
+        return f
+    
+    def get_named_unsat_core(self):
+        """Returns the unsat core as a dict of names to formulae.
+
+        After a call to solve() yielding UNSAT, returns the unsat core as a
+        dict of names to formulae
+        """
+        raise NotImplementedError
 
     def _send_command(self, cmd):
         handlers = {

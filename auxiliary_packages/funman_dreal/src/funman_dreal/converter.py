@@ -11,6 +11,7 @@ from pysmt.solvers.solver import (
     UnsatCoreSolver,
 )
 from pysmt.walkers import DagWalker
+from pysmt.formula import FNode
 
 
 class DRealConverter(Converter, DagWalker):
@@ -24,6 +25,10 @@ class DRealConverter(Converter, DagWalker):
         self.symbol_to_decl = {}
         # Maps an internal yices instance into the corresponding symbol
         self.decl_to_symbol = {}
+
+    # FIXME convert to FNode instead of string
+    def back(self, formula: dreal.Formula) -> str:
+        return formula.ToPrefix()
 
     @catch_conversion_error
     def convert(self, formula):

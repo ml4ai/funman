@@ -10,12 +10,16 @@ from pysmt.logics import QF_NRA
 from pysmt.shortcuts import REAL, And, Equals, Real, Solver, Symbol
 
 from funman.representation.representation import (
+    LABEL_FALSE,
     LABEL_TRUE,
+    Box,
+    Interval,
     ParameterSpace,
     Point,
 )
 from funman.scenario.scenario import AnalysisScenario
 from funman.utils.smtlib_utils import smtlibscript_from_formula_list
+from pysmt.solvers.solver import Model as pysmtModel
 
 # import funman.search as search
 from .search import Search, SearchEpisode
@@ -65,23 +69,27 @@ class SMTCheck(Search):
                 list(range(structural_configuration["num_steps"] + 1)),
             )
 
-            result_dict = result.to_dict() if result else None
-            l.debug(f"Result: {json.dumps(result_dict, indent=4)}")
-            if result_dict is not None:
-                parameter_values = {
-                    k: v
-                    for k, v in result_dict.items()
-                    # if k in [p.name for p in problem.parameters]
-                }
-                for k, v in structural_configuration.items():
-                    parameter_values[k] = v
-                point = Point(values=parameter_values, label=LABEL_TRUE)
-                if config.normalize:
-                    denormalized_point = point.denormalize(problem)
-                    point = denormalized_point
-                models[point] = result
-                consistent[point] = result_dict
-                parameter_space.true_points.append(point)
+            if result is not None and isinstance(result, pysmtModel):
+                result_dict = result.to_dict() if result else None
+                l.debug(f"Result: {json.dumps(result_dict, indent=4)}")
+                if result_dict is not None:
+                    parameter_values = {
+                        k: v
+                        for k, v in result_dict.items()
+                        # if k in [p.name for p in problem.parameters]
+                    }
+                    for k, v in structural_configuration.items():
+                        parameter_values[k] = v
+                    point = Point(values=parameter_values, label=LABEL_TRUE)
+                    if config.normalize:
+                        denormalized_point = point.denormalize(problem)
+                        point = denormalized_point
+                    models[point] = result
+                    consistent[point] = result_dict
+                    parameter_space.true_points.append(point)
+            elif result is not  None and isinstance(result, str):
+                box = Box(bounds={p.name: Interval(lb=p.lb, ub=p.ub) for p in problem.parameters}, label=LABEL_FALSE, explanation=result)
+                parameter_space.false_boxes.append(box)
             if resultsCallback:
                 resultsCallback(parameter_space)
 
@@ -133,6 +141,8 @@ class SMTCheck(Search):
         result = s.solve()
         if result:
             result = s.get_model()
+        else:
+            result = s.get_unsat_core()
         s.pop(1)
         return result
 
@@ -157,7 +167,7 @@ class SMTCheck(Search):
             if simplified_formula is not None:
                 # If using a simplified formula, we need to solve it and use its values in the original formula to get the values of all variables
                 result = self.solve_formula(s, simplified_formula, episode)
-                if result is not None and result:
+                if result is not None and isinstance(result, pysmtModel):
                     assigned_vars = result.to_dict()
                     substitution = {
                         Symbol(p, REAL): Real(v)
@@ -178,6 +188,9 @@ class SMTCheck(Search):
                         formula.substitute(substitution), result_assignment
                     )
                     result = self.solve_formula(s, formula_w_params, episode)
+                elif result is not None and isinstance(result, str):
+                    # Unsat core
+                    pass
             else:
                 result = self.solve_formula(s, formula, episode)
 
