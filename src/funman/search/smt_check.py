@@ -8,6 +8,7 @@ from typing import Callable, Optional, Tuple
 from pysmt.formula import FNode
 from pysmt.logics import QF_NRA
 from pysmt.shortcuts import REAL, And, Equals, Real, Solver, Symbol
+from pysmt.solvers.solver import Model as pysmtModel
 
 from funman.representation.representation import (
     LABEL_FALSE,
@@ -19,7 +20,6 @@ from funman.representation.representation import (
 )
 from funman.scenario.scenario import AnalysisScenario
 from funman.utils.smtlib_utils import smtlibscript_from_formula_list
-from pysmt.solvers.solver import Model as pysmtModel
 
 # import funman.search as search
 from .search import Search, SearchEpisode
@@ -87,8 +87,15 @@ class SMTCheck(Search):
                     models[point] = result
                     consistent[point] = result_dict
                     parameter_space.true_points.append(point)
-            elif result is not  None and isinstance(result, str):
-                box = Box(bounds={p.name: Interval(lb=p.lb, ub=p.ub) for p in problem.parameters}, label=LABEL_FALSE, explanation=result)
+            elif result is not None and isinstance(result, str):
+                box = Box(
+                    bounds={
+                        p.name: Interval(lb=p.lb, ub=p.ub)
+                        for p in problem.parameters
+                    },
+                    label=LABEL_FALSE,
+                    explanation=result,
+                )
                 parameter_space.false_boxes.append(box)
             if resultsCallback:
                 resultsCallback(parameter_space)

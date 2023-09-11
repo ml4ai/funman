@@ -3,6 +3,7 @@ from fractions import Fraction
 
 import dreal
 from pysmt.decorators import catch_conversion_error
+from pysmt.formula import FNode
 from pysmt.solvers.solver import (
     Converter,
     IncrementalTrackingSolver,
@@ -11,7 +12,6 @@ from pysmt.solvers.solver import (
     UnsatCoreSolver,
 )
 from pysmt.walkers import DagWalker
-from pysmt.formula import FNode
 
 
 class DRealConverter(Converter, DagWalker):

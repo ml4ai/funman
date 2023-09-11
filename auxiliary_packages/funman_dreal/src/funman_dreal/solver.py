@@ -407,7 +407,9 @@ class DReal(SmtLibSolver):
         return rval.getvalue()
 
 
-class DRealNative(Solver, UnsatCoreSolver, SmtLibBasicSolver, SmtLibIgnoreMixin):
+class DRealNative(
+    Solver, UnsatCoreSolver, SmtLibBasicSolver, SmtLibIgnoreMixin
+):
     LOGICS = [QF_NRA]
     OptionsClass = SolverOptions
 
@@ -554,7 +556,7 @@ class DRealNative(Solver, UnsatCoreSolver, SmtLibBasicSolver, SmtLibIgnoreMixin)
         unsat_core = self.context.get_unsat_core()
         f = self.converter.back(unsat_core)
         return f
-    
+
     def get_named_unsat_core(self):
         """Returns the unsat core as a dict of names to formulae.
 
