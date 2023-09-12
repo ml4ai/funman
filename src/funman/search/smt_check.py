@@ -3,7 +3,8 @@ import logging
 import sys
 import threading
 from functools import partial
-from typing import Callable, Optional, Tuple
+from typing import Callable, Optional, Tuple, Union
+from funman.representation.explanation import Explanation
 
 from pysmt.formula import FNode
 from pysmt.logics import QF_NRA
@@ -137,7 +138,7 @@ class SMTCheck(Search):
             ).simplify()
         return formula, simplified_formula
 
-    def solve_formula(self, s: Solver, formula: FNode, episode):
+    def solve_formula(self, s: Solver, formula: FNode, episode) -> Union[pysmtModel, Explanation]:
         s.push(1)
         s.add_assertion(formula)
         if episode.config.save_smtlib:
@@ -145,11 +146,7 @@ class SMTCheck(Search):
                 formula,
                 filename=f"dbg_steps{episode.structural_configuration['num_steps']}_ssize{episode.structural_configuration['step_size']}.smt2",
             )
-        result = s.solve()
-        if result:
-            result = s.get_model()
-        else:
-            result = s.get_unsat_core()
+        result = self.invoke_solver(s)
         s.pop(1)
         return result
 
@@ -162,6 +159,11 @@ class SMTCheck(Search):
             }
         else:
             opts = {}
+        # s1 = Solver(
+        #     name=episode.config.solver,
+        #     logic=QF_NRA,
+        #     solver_options=opts,
+        # )
         with Solver(
             name=episode.config.solver,
             logic=QF_NRA,

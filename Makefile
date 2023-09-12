@@ -1,3 +1,5 @@
+.PHONY: test
+
 # -----------------------------------------------------------------
 #  Base Image Construction
 
@@ -247,6 +249,9 @@ check-test-release: dist
 
 test-release: check-test-release
 	python3 -m twine upload --repository testpypi dist/*
+
+test:
+	pytest test
 
 check-release: dist
 	@echo -e "\nReleasing the following packages to PyPI:"

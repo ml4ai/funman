@@ -15,7 +15,8 @@ from queue import Empty
 from queue import PriorityQueue as PQueueSP
 from queue import Queue as QueueSP
 from typing import Callable, List, Optional, Set, Union
-
+from funman.representation.explanation import Explanation
+from pysmt.solvers.solver import Model as pysmtModel
 from pysmt.formula import FNode
 from pysmt.logics import QF_NRA
 from pysmt.shortcuts import And, Not, Solver, get_model
@@ -151,14 +152,15 @@ class BoxSearchEpisode(SearchEpisode):
             did_add = self._add_unknown_box(box)
         return did_add
 
-    def _add_false(self, box: Box):
+    def _add_false(self, box: Box, explanation: Explanation = None):
         box.label = LABEL_FALSE
+        box.explanation = explanation
         self._false_boxes.append(box)
         # with self.statistics.num_false.get_lock():
         #     self.statistics.num_false.value += 1
         # self.statistics.iteration_operation.put("f")
 
-    def _add_false_point(self, point: Point):
+    def _add_false_point(self, point: Point, explanation: Explanation = None):
         if point in self._true_points:
             l.debug(
                 f"Point: {point} is marked false, but already marked true."
@@ -166,8 +168,9 @@ class BoxSearchEpisode(SearchEpisode):
         point.label = LABEL_FALSE
         self._false_points.add(point)
 
-    def _add_true(self, box: Box):
+    def _add_true(self, box: Box, explanation: Explanation = None):
         box.label = LABEL_TRUE
+        box.explanation = explanation
         self._true_boxes.append(box)
         # with self.statistics.num_true.get_lock():
         #     self.statistics.num_true.value += 1
@@ -358,6 +361,8 @@ class BoxSearch(Search):
                             partial(
                                 episode.problem._query_encoding._encoder.encode_query_layer,
                                 episode.problem.query,
+                                episode.problem,
+                                episode.config
                             ),
                             layers=timepoints,
                             box=box,
@@ -441,59 +446,50 @@ class BoxSearch(Search):
         episode._formula_stack.append(formula)
         solver.add_assertion(formula)
 
-    def _get_false_points(self, solver, episode, box, rval):
-        false_points = [
-            fp for fp in episode._false_points if box.contains_point(fp)
+    def _get_points(self, solver: Solver, box: Box, existing_points: List[Point], episode: SearchEpisode, rval, _encoding_fn: Callable, _point_handler_fn: Callable,  _smtlib_save_fn: Callable =None):
+        points = [
+            p for p in existing_points if box.contains_point(p)
         ]
-        if len(false_points) == 0:
+        explanation = None
+
+        if len(points) == 0:
             # If no cached point, then attempt to generate one
             # print("Checking false query")
-            self._setup_false_query(solver, episode, box)
-            if episode.config.save_smtlib:
-                self.store_smtlib(
-                    episode, box, filename=f"fp_{episode._iteration}.smt2"
-                )
-            if solver.solve():
+            _encoding_fn()
+            if _smtlib_save_fn:
+                _smtlib_save_fn()
+            result = self.invoke_solver(solver)
+            if result is not None and isinstance(result, pysmtModel):
                 # Record the false point
-                res = solver.get_model()
-                false_points = [episode._extract_point(res, box)]
-                for point in false_points:
+                points = [episode._extract_point(result, box)]
+                for point in points:
                     point = point.denormalize(episode.problem)
-                    episode._add_false_point(point)
+                    _point_handler_fn(point)
                     rval.put(point.dict())
+                
+            else: # unsat
+                explanation = result
             solver.pop(1)  # Remove false query
             episode._formula_stack.pop()
+        return points, explanation
+       
 
-        return false_points
 
-    def _get_true_points(self, solver, episode, box, rval):
-        true_points = [
-            tp for tp in episode._true_points if box.contains_point(tp)
-        ]
-        if len(true_points) == 0:
-            # If no cached point, then attempt to generate one
-            # print("Checking true query")
-            self._setup_true_query(solver, episode, box)
-            if episode.config.save_smtlib:
-                self.store_smtlib(
+            
+    def _get_false_points(self, solver, episode, box, rval) -> Optional[Union[List[Point], Explanation]]:
+        false_points, explanation = self._get_points(solver,  box, episode._false_points, episode, rval, partial(self._setup_false_query, solver, episode, box), episode._add_false_point, _smtlib_save_fn=partial(self.store_smtlib,
+                    episode, box, filename=f"fp_{episode._iteration}.smt2"
+                ) if episode.config.save_smtlib else None)
+        
+        return false_points, explanation
+
+    def _get_true_points(self, solver, episode, box, rval) -> Optional[Union[List[Point], Explanation]]:
+        true_points, explanation = self._get_points(
+            solver,  box, episode._true_points, episode, rval, partial(self._setup_true_query, solver, episode, box), episode._add_true_point, _smtlib_save_fn=partial(self.store_smtlib,
                     episode, box, filename=f"tp_{episode._iteration}.smt2"
-                )
-            # self.store_smtlib(episode, box)
-            if solver.solve():
-                # self.store_smtlib(
-                #     episode, box, filename=f"tp_{episode._iteration}.smt2"
-                # )
-                # Record the true point
-                res1 = solver.get_model()
-                true_points = [episode._extract_point(res1, box)]
-                for point in true_points:
-                    point = point.denormalize(episode.problem)
-                    episode._add_true_point(point)
-                    rval.put(point.dict())
-            solver.pop(1)  # Remove true query
-            episode._formula_stack.pop()
-
-        return true_points
+                )if episode.config.save_smtlib else None)
+                
+        return true_points, explanation 
 
     def _expand(
         self,
@@ -575,7 +571,7 @@ class BoxSearch(Search):
 
                         # Check whether box intersects t (true region)
                         # First see if a cached false point exists in the box
-                        true_points = self._get_true_points(
+                        true_points, false_explanation = self._get_true_points(
                             solver, episode, box, rval
                         )
 
@@ -584,7 +580,7 @@ class BoxSearch(Search):
 
                             # Check whether box intersects f (false region)
                             # First see if a cached false point exists in the box
-                            false_points = self._get_false_points(
+                            false_points, true_explanation = self._get_false_points(
                                 solver, episode, box, rval
                             )
 
@@ -612,7 +608,7 @@ class BoxSearch(Search):
                             else:
                                 # box does not intersect f, so it is in t (true region)
                                 curr_step_box = box.current_step()
-                                episode._add_true(curr_step_box)
+                                episode._add_true(curr_step_box,explanation=true_explanation)
                                 rval.put(curr_step_box.dict())
                                 print(f"+++ True({curr_step_box})")
 
@@ -623,7 +619,8 @@ class BoxSearch(Search):
                         else:
                             # box is a subset of f (intersects f but not t)
                             episode._add_false(
-                                box
+                                box,
+                                explanation=false_explanation
                             )  # TODO consider merging lists of boxes
                             rval.put(box.dict())
                             print(f"--- False({box})")
