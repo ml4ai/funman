@@ -480,6 +480,7 @@ class DRealNative(
             elapser = None
 
     def __del__(self):
+        # print("Exit()")
         self.context.Exit()  # Exit() only logs within dreal
         self.context = None
 

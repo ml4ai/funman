@@ -105,7 +105,7 @@ class BoxSearchEpisode(SearchEpisode):
             b = initial_boxes.get()
             if not self._add_unknown(b):
                 l.exception(
-                    f"Did not add an initial box (of width {b.width()}), try reducing config.tolerance, currently {self.config.tolerance}"
+                    f"Did not find add an initial box (of width {b.width()}), try reducing config.tolerance, currently {self.config.tolerance}"
                 )
             # l.debug(f"Initial box: {b}")
 
@@ -571,7 +571,7 @@ class BoxSearch(Search):
 
                         # Check whether box intersects t (true region)
                         # First see if a cached false point exists in the box
-                        true_points, false_explanation = self._get_true_points(
+                        true_points, not_true_explanation = self._get_true_points(
                             solver, episode, box, rval
                         )
 
@@ -580,7 +580,7 @@ class BoxSearch(Search):
 
                             # Check whether box intersects f (false region)
                             # First see if a cached false point exists in the box
-                            false_points, true_explanation = self._get_false_points(
+                            false_points, not_false_explanation = self._get_false_points(
                                 solver, episode, box, rval
                             )
 
@@ -608,7 +608,7 @@ class BoxSearch(Search):
                             else:
                                 # box does not intersect f, so it is in t (true region)
                                 curr_step_box = box.current_step()
-                                episode._add_true(curr_step_box,explanation=true_explanation)
+                                episode._add_true(curr_step_box,explanation=not_false_explanation)
                                 rval.put(curr_step_box.dict())
                                 print(f"+++ True({curr_step_box})")
 
@@ -620,7 +620,7 @@ class BoxSearch(Search):
                             # box is a subset of f (intersects f but not t)
                             episode._add_false(
                                 box,
-                                explanation=false_explanation
+                                explanation=not_true_explanation
                             )  # TODO consider merging lists of boxes
                             rval.put(box.dict())
                             print(f"--- False({box})")

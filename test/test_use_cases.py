@@ -186,7 +186,7 @@ class TestUseCases(unittest.TestCase):
                 # dreal_mcts=True,
                 tolerance=1e-8,
                 number_of_processes=1,
-                # normalize=False,
+                normalize=False,
                 _handler=ResultCombinedHandler(
                     [
                         ResultCacheWriter(f"box_search.json"),
