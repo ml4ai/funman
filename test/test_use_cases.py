@@ -187,6 +187,7 @@ class TestUseCases(unittest.TestCase):
                 tolerance=1e-8,
                 number_of_processes=1,
                 normalize=False,
+                simplify_query=False,
                 _handler=ResultCombinedHandler(
                     [
                         ResultCacheWriter(f"box_search.json"),
