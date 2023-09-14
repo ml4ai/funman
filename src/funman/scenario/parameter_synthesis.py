@@ -6,7 +6,7 @@ from functools import partial
 from typing import Callable, Dict, List, Optional, Union
 
 from pandas import DataFrame
-from pydantic import BaseModel
+from pydantic import ConfigDict, BaseModel
 from pysmt.formula import FNode
 from pysmt.shortcuts import BOOL, Iff, Symbol
 
@@ -53,11 +53,9 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
     points in the region are valid (true) parameters for the model or invalid
     (false) parameters.
     """
-
-    class Config:
-        underscore_attrs_are_private = True
-        smart_union = True
-        extra = "forbid"
+    # TODO[pydantic]: The following keys were removed: `underscore_attrs_are_private`, `smart_union`.
+    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-config for more information.
+    model_config = ConfigDict(smart_union=True, extra="forbid")
 
     model: Union[
         GeneratedPetriNetModel,
@@ -249,9 +247,7 @@ class ParameterSynthesisScenarioResult(AnalysisScenarioResult, BaseModel):
     ParameterSynthesisScenario result, which includes the parameter space and
     search statistics.
     """
-
-    class Config:
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
     # episode: SearchEpisode
     scenario: ParameterSynthesisScenario

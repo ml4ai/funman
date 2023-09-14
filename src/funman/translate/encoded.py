@@ -32,11 +32,11 @@ class EncodedEncoder(Encoder):
         if isinstance(model, EncodedModel):
             encoding = LayeredEncoding(
                 step_size=1,
-                _layers=[
-                    (model._formula, list(model._formula.get_free_variables()))
-                ],
-                _encoder=self,
             )
+            encoding._layers = [
+                (model._formula, list(model._formula.get_free_variables()))
+            ]
+            encoding._encoder = self
             return encoding
         else:
             raise Exception(

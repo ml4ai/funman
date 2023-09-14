@@ -6,6 +6,7 @@ from pysmt.shortcuts import REAL, Div, Real, Symbol
 from funman.representation import ModelParameter
 
 from .model import Model
+from pydantic import ConfigDict
 
 
 class EnsembleModel(Model):
@@ -14,9 +15,9 @@ class EnsembleModel(Model):
     _var_name_map: Dict[str, Tuple[str, Model]] = None
     _parameter_name_map: Dict[str, Tuple[str, Model]] = None
     _parameter_map: Dict[str, ModelParameter] = None
-
-    class Config:
-        underscore_attrs_are_private = True
+    # TODO[pydantic]: The following keys were removed: `underscore_attrs_are_private`.
+    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-config for more information.
+    model_config = ConfigDict()
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

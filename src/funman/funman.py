@@ -7,7 +7,7 @@ import threading
 from typing import Callable, Optional, Union
 
 import multiprocess as mp
-from pydantic import BaseModel, Field, validator
+from pydantic import ConfigDict, BaseModel, field_validator
 
 from funman.utils.handlers import (
     NoopResultHandler,
@@ -25,10 +25,12 @@ class FUNMANConfig(BaseModel):
     Base definition of a configuration object
     """
 
-    class Config:
-        underscore_attrs_are_private = True
-        arbitrary_types_allowed = True
-        validate_all = True
+    # TODO[pydantic]: The following keys were removed: `underscore_attrs_are_private`.
+    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-config for more information.
+    model_config = ConfigDict(
+        arbitrary_types_allowed=True,
+        validate_default=True,
+    )
 
     tolerance: float = 1e-8
     """Algorithm-specific tolerance for approximation, used by BoxSearch"""
@@ -40,7 +42,7 @@ class FUNMANConfig(BaseModel):
     _handler: Union[
         ResultCombinedHandler, NoopResultHandler, ResultHandler
     ] = NoopResultHandler()
-    wait_timeout: int = None
+    wait_timeout: Optional[int] = None
     """Timeout for BoxSearch procesess to wait for boxes to evaluate"""
     _wait_action: WaitAction = None
     wait_action_timeout: float = 0.05
@@ -57,7 +59,7 @@ class FUNMANConfig(BaseModel):
     """Step size for encoding"""
     num_initial_boxes: int = 1
     """Number of initial boxes for BoxSearch"""
-    initial_state_tolerance = 0.0
+    initial_state_tolerance: float = 0.0
     """Factor used to relax initial state values bounds"""
     save_smtlib: bool = False
     """Whether to save each smt invocation as an SMTLib file"""
@@ -67,24 +69,25 @@ class FUNMANConfig(BaseModel):
     """Constraint noise term to relax constraints"""
     constraint_noise: float = 0.0
     """Use MCTS in dreal"""
-    dreal_mcts = True
+    dreal_mcts: bool = True
     """Substitute subformulas to simplify overall encoding"""
-    substitute_subformulas = True
+    substitute_subformulas: bool = True
     """Enforce compartmental variable constraints"""
-    use_compartmental_constraints = True
+    use_compartmental_constraints: bool = True
     """Normalize"""
-    normalize = True
+    normalize: bool = True
     """ Simplify query by propagating substutions """
-    simplify_query = True
+    simplify_query: bool = True
     """ Series approximation threshold for dropping series terms """
-    series_approximation_threshold = 0
+    series_approximation_threshold: float = 0
     """ Generate profiling output"""
-    profile = False
+    profile: bool = False
     """ Use Taylor series of given order to approximate transition function, if None, then do not compute series """
-    taylor_series_order: int = None
+    taylor_series_order: Optional[int] = None
 
-    @validator("solver")
-    def import_dreal(cls, v):
+    @field_validator("solver")
+    @classmethod
+    def import_dreal(cls, v: str) -> str:
         if v == "dreal":
             try:
                 import funman_dreal

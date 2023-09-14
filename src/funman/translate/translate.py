@@ -5,7 +5,7 @@ import logging
 from abc import ABC, abstractmethod
 from typing import Dict, List, Set, Tuple, Union
 
-from pydantic import BaseModel, Extra
+from pydantic import ConfigDict, BaseModel
 from pysmt.constants import Numeral
 from pysmt.formula import FNode
 from pysmt.shortcuts import (
@@ -64,9 +64,7 @@ class FlatEncoding(BaseModel):
 
     """
 
-    class Config:
-        arbitrary_types_allowed = True
-        extra = Extra.allow
+    model_config = ConfigDict(arbitrary_types_allowed=True, extra="allow")
 
     _formula: FNode = None
     _symbols: Union[List[FNode], Dict[str, Dict[str, FNode]]] = None
@@ -95,9 +93,7 @@ class LayeredEncoding(BaseModel):
 
     """
 
-    class Config:
-        arbitrary_types_allowed = True
-        extra = Extra.allow
+    model_config = ConfigDict(arbitrary_types_allowed=True, extra="allow")
 
     step_size: int
     _layers: List[
@@ -189,9 +185,11 @@ class Encoder(ABC, BaseModel):
 
     """
 
-    class Config:
-        underscore_attrs_are_private = True
-        arbitrary_types_allowed = True
+    # TODO[pydantic]: The following keys were removed: `underscore_attrs_are_private`.
+    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-config for more information.
+    model_config = ConfigDict(
+        arbitrary_types_allowed=True
+    )
 
     config: FUNMANConfig
     _timed_model_elements: Dict = None
@@ -202,8 +200,8 @@ class Encoder(ABC, BaseModel):
     _untimed_constraints: FNode
     _scenario: "AnalysisScenario"
     # _assignments: Dict[str, float] = {}
-    env = get_env()
-    env._simplifier = FUNMANSimplifier(env)
+    _env = get_env()
+    _env._simplifier = FUNMANSimplifier(_env)
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -246,15 +244,17 @@ class Encoder(ABC, BaseModel):
         else:
             step_size = 1
 
-        return LayeredEncoding(
+        model_encoding = LayeredEncoding(
             step_size=step_size,
-            _layers=[None] * (num_steps + 1),
-            _encoder=self,
-        ), LayeredEncoding(
-            step_size=step_size,
-            _layers=[None] * (num_steps + 1),
-            _encoder=self,
         )
+        model_encoding._layers = [None] * (num_steps + 1)
+        model_encoding._encoder = self
+        query_encoding = LayeredEncoding(
+            step_size=step_size,
+        )
+        query_encoding._layers = [None] * (num_steps + 1)
+        query_encoding._encoder = self
+        return model_encoding, query_encoding
 
     @abstractmethod
     def encode_model(self, model: "Model") -> Encoding:
@@ -362,10 +362,11 @@ class Encoder(ABC, BaseModel):
             layer = self.encode_transition_layer(i + 1, step_size=step_size)
             layers.append(layer)
 
-        return LayeredEncoding(
-            _layers=layers,
+        encoding = LayeredEncoding(
             substitutions=self.substitutions,
         )
+        encoding._layers = layers
+        return encoding
 
     def _initialize_substitutions(
         self, scenario: "AnalysisScenario", normalization=True

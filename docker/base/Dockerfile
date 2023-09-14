@@ -40,8 +40,9 @@ RUN pip install -e automates
 
 RUN pip install --no-cache-dir z3-solver
 RUN pip install --no-cache-dir graphviz
-RUN pip install --no-cache-dir pydantic==1.10.9
-RUN pip install --no-cache-dir fastapi==0.98.0
+RUN pip install --no-cache-dir pydantic>=2.3.0
+RUN pip install --no-cache-dir pydantic-settings
+RUN pip install --no-cache-dir fastapi>=0.103.1
 
 RUN pip install --no-cache-dir --upgrade setuptools pip
 RUN pip install --no-cache-dir wheel

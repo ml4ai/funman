@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Dict, List, Literal, Optional, Union
 
 import graphviz
-from pydantic import BaseModel, validator
+from pydantic import ConfigDict, BaseModel, validator
 from pysmt.formula import FNode
 from pysmt.shortcuts import (
     FALSE,
@@ -149,16 +149,13 @@ class BilayerGraph(ABC, BaseModel):
     Abstract representation of a Bilayer graph.
     """
 
-    class Config:
-        underscore_attrs_are_private = True
+    # TODO[pydantic]: The following keys were removed: `underscore_attrs_are_private`.
+    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-config for more information.
+    model_config = ConfigDict()
 
     json_graph: Dict
-    _node_incoming_edges: Dict[
-        BilayerNode, Dict[BilayerNode, BilayerEdge]
-    ] = {}
-    _node_outgoing_edges: Dict[
-        BilayerNode, Dict[BilayerNode, BilayerEdge]
-    ] = {}
+    _node_incoming_edges: Dict[BilayerNode, Dict[BilayerNode, BilayerEdge]] = {}
+    _node_outgoing_edges: Dict[BilayerNode, Dict[BilayerNode, BilayerEdge]] = {}
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -211,8 +208,9 @@ class BilayerDynamics(BilayerGraph):
     * flux nodes (causal relationships).
     """
 
-    class Config:
-        underscore_attrs_are_private = True
+    # TODO[pydantic]: The following keys were removed: `underscore_attrs_are_private`.
+    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-config for more information.
+    model_config = ConfigDict()
 
     _tangent: Dict[
         int, BilayerStateNode
@@ -470,8 +468,9 @@ class BilayerModel(Model):
 
     """
 
-    class Config:
-        underscore_attrs_are_private = True
+    # TODO[pydantic]: The following keys were removed: `underscore_attrs_are_private`.
+    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-config for more information.
+    model_config = ConfigDict()
 
     bilayer: BilayerDynamics
     measurements: BilayerMeasurement = None
@@ -496,9 +495,7 @@ class BilayerModel(Model):
         return self.bilayer._state_var_names()
 
     def _parameter_names(self):
-        param_names = [
-            node.parameter for _, node in self.bilayer._flux.items()
-        ]
+        param_names = [node.parameter for _, node in self.bilayer._flux.items()]
         if self.measurements:
             param_names += [
                 node.parameter for _, node in self.measurements._flux.items()

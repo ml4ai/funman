@@ -3,7 +3,7 @@ This module defines all Query classes.  Queries are combined with Model objects 
 """
 from typing import List, Optional, Union
 
-from pydantic import BaseModel
+from pydantic import ConfigDict, BaseModel
 from pysmt.formula import FNode
 
 from funman.model.model import Model
@@ -39,9 +39,11 @@ class QueryEncoded(Query):
     Class to contain a formula that is already encoded by a pysmt FNode.
     """
 
-    class Config:
-        arbitrary_types_allowed = True
-        underscore_attrs_are_private = True
+    # TODO[pydantic]: The following keys were removed: `underscore_attrs_are_private`.
+    # Check https://docs.pydantic.dev/dev-v2/migration/#chann.
+    model_config = ConfigDict(
+        arbitrary_types_allowed=True,
+    )
 
     _formula: FNode
 

@@ -7,7 +7,7 @@ from queue import Queue as SQueue
 from typing import Callable, Dict, List, Optional
 
 import pysmt
-from pydantic import BaseModel
+from pydantic import ConfigDict, BaseModel
 
 from funman.funman import FUNMANConfig
 from funman.representation.representation import Box, Interval, ModelParameter
@@ -15,9 +15,11 @@ from funman.scenario.scenario import AnalysisScenario
 
 
 class SearchStatistics(BaseModel):
-    class Config:
-        arbitrary_types_allowed = True
-        underscore_attrs_are_private = True
+    # TODO[pydantic]: The following keys were removed: `underscore_attrs_are_private`.
+    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-config for more information.
+    model_config = ConfigDict(
+        arbitrary_types_allowed=True,
+    )
 
     _multiprocessing: bool = False
     _num_true: int = 0
@@ -63,9 +65,11 @@ class SearchStaticsMP(SearchStatistics):
 
 
 class SearchEpisode(BaseModel):
-    class Config:
-        arbitrary_types_allowed = True
-        underscore_attrs_are_private = True
+    # TODO[pydantic]: The following keys were removed: `underscore_attrs_are_private`.
+    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-config for more information.
+    model_config = ConfigDict(
+        arbitrary_types_allowed=True,
+    )
 
     structural_configuration: Dict[str, int] = {}
     problem: AnalysisScenario

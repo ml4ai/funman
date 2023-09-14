@@ -9,7 +9,7 @@ import sys
 from statistics import mean as average
 from typing import Dict, List, Literal, Optional, Union
 
-from pydantic import BaseModel
+from pydantic import ConfigDict, BaseModel
 from pysmt.fnode import FNode
 from pysmt.shortcuts import REAL, Symbol
 
@@ -67,12 +67,9 @@ class ModelParameter(LabeledParameter):
     * symbol: a pysmt FNode corresponding to the parameter variable
 
     """
-
-    class Config:
-        underscore_attrs_are_private = True
-        smart_union = True
-        extra = "forbid"
-        # arbitrary_types_allowed = True
+    # TODO[pydantic]: The following keys were removed: `underscore_attrs_are_private`, `smart_union`.
+    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-config for more information.
+    model_config = ConfigDict(smart_union=True, extra="forbid")
 
     _symbol: FNode = None
 
@@ -130,9 +127,9 @@ class Interval(BaseModel):
     lb: Union[float, str]
     ub: Union[float, str]
     cached_width: Optional[float] = None
-
-    class Config:
-        fields = {"cached_width": {"exclude": True}}
+    # TODO[pydantic]: The following keys were removed: `fields`.
+    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-config for more information.
+    model_config = ConfigDict(fields={"cached_width": {"exclude": True}})
 
     def __hash__(self):
         return int(math_utils.plus(self.lb, self.ub))
@@ -472,9 +469,9 @@ class Box(BaseModel):
     label: Label = LABEL_UNKNOWN
     bounds: Dict[str, Interval] = {}
     cached_width: Optional[float] = None
-
-    class Config:
-        fields = {"cached_width": {"exclude": True}}
+    # TODO[pydantic]: The following keys were removed: `fields`.
+    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-config for more information.
+    model_config = ConfigDict(fields={"cached_width": {"exclude": True}})
 
     def __hash__(self):
         return int(sum([i.__hash__() for _, i in self.bounds.items()]))

@@ -2,7 +2,7 @@ from typing import Dict, List, Union
 
 import graphviz
 import sympy
-from pydantic import BaseModel
+from pydantic import ConfigDict, BaseModel
 from pysmt.shortcuts import REAL, Div, Plus, Real, Symbol
 
 from funman.representation.representation import ModelParameter
@@ -138,9 +138,10 @@ class AbstractPetriNetModel(Model):
 
 
 class GeneratedPetriNetModel(AbstractPetriNetModel):
-    class Config:
-        underscore_attrs_are_private = True
-        arbitrary_types_allowed = True
+    # TODO[pydantic]: The following keys were removed: `underscore_attrs_are_private`.
+    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-config for more information.
+    model_config = ConfigDict(arbitrary_types_allowed=True
+    )
 
     petrinet: GeneratedPetrinet
     _transition_rates_cache: Dict[str, Union[sympy.Expr, str]] = {}
@@ -324,7 +325,14 @@ class GeneratedPetriNetModel(AbstractPetriNetModel):
 
 
 class PetrinetDynamics(BaseModel):
-    json_graph: Dict[str, List[Dict[str, Union[int, str, Dict[str, str]]]]]
+    json_graph: Dict[
+        str,
+        List[
+            Dict[
+                str, Union[Dict[str, Union[str, bool, float]], int, str, float]
+            ]
+        ],
+    ]
 
     # def __init__(self, **kwargs):
     #     super().__init__(**kwargs)
