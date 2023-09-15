@@ -80,8 +80,14 @@ class State(BaseModel):
     units: Optional[Unit] = None
 
 
-class States(BaseModel):
-    RootModel: List[State]
+class States(RootModel):
+    root: List[State]
+
+    def __iter__(self):
+        return iter(self.root)
+
+    def __getitem__(self, item):
+        return self.root[item]
 
 
 class Transition(BaseModel):
@@ -92,8 +98,14 @@ class Transition(BaseModel):
     properties: Optional[Properties] = None
 
 
-class Transitions(BaseModel):
-    RootModel: List[Transition]
+class Transitions(RootModel):
+    root: List[Transition]
+
+    def __iter__(self):
+        return iter(self.root)
+
+    def __getitem__(self, item):
+        return self.root[item]
 
 
 class TypeSystem(BaseModel):
@@ -130,7 +142,9 @@ class Semantics(BaseModel):
 
 
 class Model(BaseModel):
-    model_config = ConfigDict(extra="allow", populate_by_name=True)
+    model_config = ConfigDict(
+        extra="allow", populate_by_name=True, protected_namespaces=()
+    )
 
     name: str
     schema_: AnyUrl = Field(..., alias="schema")

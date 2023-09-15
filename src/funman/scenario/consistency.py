@@ -46,8 +46,6 @@ class ConsistencyScenario(AnalysisScenario, BaseModel):
         method to encode the scenario, by default None
     """
 
-    # TODO[pydantic]: The following keys were removed: `underscore_attrs_are_private`, `smart_union`.
-    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-config for more information.
     model_config = ConfigDict(extra="forbid")
 
     model: Union[

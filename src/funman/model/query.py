@@ -39,8 +39,6 @@ class QueryEncoded(Query):
     Class to contain a formula that is already encoded by a pysmt FNode.
     """
 
-    # TODO[pydantic]: The following keys were removed: `underscore_attrs_are_private`.
-    # Check https://docs.pydantic.dev/dev-v2/migration/#chann.
     model_config = ConfigDict(
         arbitrary_types_allowed=True,
     )

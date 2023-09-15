@@ -232,13 +232,13 @@ class GeneratedPetriNetModel(AbstractPetriNetModel):
         )
 
     def _state_vars(self) -> List[State]:
-        return self.petrinet.model.states.__root__
+        return self.petrinet.model.states
 
     def _state_var_names(self) -> List[str]:
         return [self._state_var_name(s) for s in self._state_vars()]
 
     def _transitions(self) -> List[Transition]:
-        return self.petrinet.model.transitions.__root__
+        return self.petrinet.model.transitions
 
     def _state_var_name(self, state_var: State) -> str:
         return state_var.id
@@ -295,8 +295,8 @@ class GeneratedPetriNetModel(AbstractPetriNetModel):
             return [p.id for p in self.petrinet.semantics.ode.parameters]
         else:
             # Create a parameter for each transition and initial state variable
-            return [t.id for t in self.petrinet.model.transitions.__root__] + [
-                f"{s.id}0" for s in self.petrinet.model.states.__root__
+            return [t.id for t in self.petrinet.model.transitions] + [
+                f"{s.id}0" for s in self.petrinet.model.states
             ]
 
     def _parameter_values(self):
