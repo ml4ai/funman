@@ -39,6 +39,21 @@ class AnalysisScenario(ABC, BaseModel):
         """
         return len([p for p in self.parameters])
 
+    def search_space_volume(self):
+        ps = ParameterSpace(num_dimensions=self.num_dimensions())
+        ps_result = {"type": "box", "label": "true"}
+        bounds = {}
+        for param in self.parameters:
+            lb_ub = {}
+            lb_ub["lb"] = param.lb
+            lb_ub["ub"] = param.ub
+            bounds[f"{param.name}"] = lb_ub
+        ps_result["bounds"] = bounds
+        ps.append_result(ps_result)
+        for box in ps.true_boxes:
+            ps_volume = box._get_product_of_parameter_widths()
+        return ps_volume
+
     def structure_parameters(self):
         return [
             p for p in self.parameters if isinstance(p, StructureParameter)
