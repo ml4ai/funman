@@ -107,10 +107,10 @@ class TestCompilation(unittest.TestCase):
 
         for box in ps.true_boxes:
             with self.assertRaises(Exception):
-                true_volume = box._get_product_of_parameter_widths()
+                true_volume = box.volume()
 
         for box in ps.false_boxes:
-            false_volume = box._get_product_of_parameter_widths()
+            false_volume = box.volume()
             assert false_volume == 0.25
 
     def test_ps_labeled_volume(self):

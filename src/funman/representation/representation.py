@@ -848,7 +848,7 @@ class Box(BaseModel):
 
         return min_width
 
-    def _get_product_of_parameter_widths(
+    def volume(
         self, normalize = None, parameters: List[ModelParameter] = None,
         *, ignore_zero_width_dimensions = True
     ) -> Decimal:
@@ -1399,11 +1399,11 @@ class ParameterSpace(BaseModel):
         # TODO should actually be able to compact the true and false boxes together, since they are both labeled.
         # TODO can calculate the percentage of the total parameter space.  Is there an efficient way to get the initial PS so we can find the volume of that box? or to access unknown boxes?
         for box in self.true_boxes:
-            true_volume = box._get_product_of_parameter_widths()
+            true_volume = box.volume()
             labeled_vol += true_volume
 
         for box in self.false_boxes:
-            false_volume = box._get_product_of_parameter_widths()
+            false_volume = box.volume()
             labeled_vol += false_volume
         return labeled_vol
 
@@ -1412,7 +1412,7 @@ class ParameterSpace(BaseModel):
         max_vol = 0
         max_box = (self.true_boxes)[0]
         for box in self.true_boxes:
-            box_vol = box._get_product_of_parameter_widths()
+            box_vol = box.volume()
             if box_vol > max_vol:
                 max_vol = box_vol
                 max_box = box

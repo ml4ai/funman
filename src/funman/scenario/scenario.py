@@ -47,13 +47,13 @@ class AnalysisScenario(ABC, BaseModel):
         bounds = {}
         for param in self.parameters:
             bounds[param.name] = Interval(lb = param.lb, ub = param.ub)
-        return Box(bounds = bounds)._get_product_of_parameter_widths()
+        return Box(bounds = bounds).volume()
     
     def representable_space_volume(self) -> Decimal:
         bounds = {}
         for param in self.parameters:
             bounds[param.name] = Interval(lb = NEG_INFINITY, ub = POS_INFINITY)
-        return Box(bounds = bounds)._get_product_of_parameter_widths()
+        return Box(bounds = bounds).volume()
 
     def structure_parameters(self):
         return [
