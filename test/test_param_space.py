@@ -164,6 +164,30 @@ class TestCompilation(unittest.TestCase):
 
         assert ps.labeled_volume() == 0.4
 
+    def test_search_space_volume(self):
+        parameters = [
+            ModelParameter(name="x"),
+            ModelParameter(name="y"),
+        ]
+        x = parameters[0].symbol()
+        y = parameters[1].symbol()
+
+        # 0.0 < x < 5.0, 10.0 < y < 12.0
+        model = EncodedModel()
+        model.parameters = parameters
+        model._formula = And(
+            LE(x, Real(5.0)),
+            GE(x, Real(0.0)),
+            LE(y, Real(12.0)),
+            GE(y, Real(10.0)),
+        )
+
+        scenario = ParameterSynthesisScenario(
+            parameters=parameters, model=model, query=QueryTrue(),
+        )
+
+        assert scenario.search_space_volume() == 1000000000000.0
+
     def test_ps_largest_true_box(self):
         ps = ParameterSpace(num_dimensions=2)
 
