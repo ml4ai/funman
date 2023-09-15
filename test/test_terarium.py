@@ -163,6 +163,7 @@ class TestTerarium(unittest.TestCase):
         self.poll_until_done(client, uuid)
         results = self.get_status(client, uuid)
 
+        progress = results.get("progress", 0.0)
         is_done_processing = results.get("done", False)
         error_occurred = results.get("error", False)
 
@@ -180,4 +181,6 @@ class TestTerarium(unittest.TestCase):
             assert (
                 is_done_processing is True
             ), f"Expected work to be done for {uuid}"
+
+        assert progress > 0.999999, "Progress was not at 100%"
         return results

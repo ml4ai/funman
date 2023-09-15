@@ -1,3 +1,4 @@
+import copy
 import queue
 import sys
 import threading
@@ -9,6 +10,7 @@ from funman import Funman
 from funman.funman import FUNMANConfig
 from funman.model.model import Model
 from funman.representation.representation import ParameterSpace
+from funman.scenario.scenario import AnalysisScenario
 from funman.server.exception import FunmanWorkerException
 from funman.server.query import (
     FunmanResults,
@@ -38,6 +40,7 @@ class FunmanWorker:
         self._stop_event = None
         self._thread = None
         self._id_lock = threading.Lock()
+        self._results_lock = threading.Lock()
         self._set_lock = threading.Lock()
 
         self.storage = storage
@@ -134,9 +137,10 @@ class FunmanWorker:
             raise FunmanWorkerException(
                 f"FunmanWorker must be running to get results: {self.get_state()}"
             )
-        if self.is_processing_id(id):
-            return self.current_results
-        return self.storage.get_result(id)
+        with self._id_lock:
+            if self.current_id == id:
+                return copy.copy(self.current_results)
+            return self.storage.get_result(id)
 
     def halt(self, id: str):
         if not self.in_state(WorkerState.RUNNING):
@@ -161,14 +165,26 @@ class FunmanWorker:
         with self._id_lock:
             return self.current_id
 
-    def _update_current_results(self, results: ParameterSpace):
-        if self.current_results is None:
-            print(
-                "WARNING: Attempted to update results while results was None"
-            )
-            return
-        # TODO handle copy?
-        self.current_results.parameter_space = results
+    def _update_current_results(
+        self, scenario: AnalysisScenario, results: ParameterSpace
+    ):
+        with self._results_lock:
+            if self.current_results is None:
+                print(
+                    "WARNING: Attempted to update results while current_results was None"
+                )
+                return
+
+            if self.current_results.is_final():
+                raise Exception(
+                    "Cannot update current_results as it is already finalized"
+                )
+
+            # TODO handle copy?
+            self.current_results.parameter_space = results
+            # TODO set progress
+            print("TODO compute progress")
+            self.current_results.progress = 0.5
 
     def _run(self, stop_event: threading.Event):
         print("FunmanWorker running...")
@@ -213,16 +229,20 @@ class FunmanWorker:
                         scenario,
                         config=config,
                         haltEvent=self._halt_event,
-                        resultsCallback=self._update_current_results,
+                        resultsCallback=lambda results: self._update_current_results(
+                            scenario, results
+                        ),
                     )
-                    self.current_results.finalize_result(result)
+                    with self._results_lock:
+                        self.current_results.finalize_result(result)
                     print(f"Completed work on: {work.id}")
                 except Exception as e:
                     print(
                         f"Internal Server Error ({work.id}):", file=sys.stderr
                     )
                     traceback.print_exc()
-                    self.current_results.finalize_result_as_error()
+                    with self._results_lock:
+                        self.current_results.finalize_result_as_error()
                     print(f"Aborting work on: {work.id}")
                 finally:
                     self.storage.add_result(self.current_results)

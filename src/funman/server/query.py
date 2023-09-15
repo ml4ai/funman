@@ -50,6 +50,7 @@ class FunmanWorkUnit(BaseModel):
     """
 
     id: str
+    progress: float = 0.0
     model: Union[
         RegnetModel,
         PetrinetModel,
@@ -118,7 +119,13 @@ class FunmanWorkUnit(BaseModel):
 
 
 class FunmanResults(BaseModel):
+    class Config:
+        underscore_attrs_are_private = True
+
+    _finalized: bool = False
+
     id: str
+    progress: float = 0.0
     model: Union[
         GeneratedRegnetModel,
         GeneratedPetriNetModel,
@@ -133,12 +140,18 @@ class FunmanResults(BaseModel):
     error: bool = False
     parameter_space: Optional[ParameterSpace] = None
 
+    def is_final(self):
+        return self._finalized
+
     def finalize_result(
         self,
         result: Union[
             ConsistencyScenarioResult, ParameterSynthesisScenarioResult
         ],
     ):
+        if self._finalized:
+            raise Exception("FunmanResults was already finalized")
+        self._finalized = True
         ps = None
         if isinstance(result, ConsistencyScenarioResult):
             ps = result.parameter_space
@@ -150,13 +163,18 @@ class FunmanResults(BaseModel):
 
         self.parameter_space = ps
         self.done = True
+        self.progress = 1.0
 
     def finalize_result_as_error(
         self,
     ):
+        if self._finalized:
+            raise Exception("FunmanResults was already finalized")
+        self._finalized = True
         self.parameter_space = None
         self.error = True
         self.done = True
+        self.progress = 1.0
 
     def dataframe(
         self, points: List[Point], interpolate="linear", max_time=None
