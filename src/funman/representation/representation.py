@@ -6,7 +6,7 @@ import copy
 import logging
 import math
 import sys
-from decimal import Decimal
+from decimal import ROUND_CEILING, Decimal
 from statistics import mean as average
 from typing import Dict, List, Literal, Optional, Union
 
@@ -862,12 +862,14 @@ class Box(BaseModel):
         if parameters is None:
             pnames = list(self.bounds.keys())
         else:
-            pnames = [p.name for p in parameters]
+            pnames = [
+                p.name if isinstance(p.name, str) else p.name.name
+                for p in parameters
+            ]
 
         # handle the volume of zero dimensions
         if len(pnames) <= 0:
-            # TODO undefined?
-            return Decimal(0.0)
+            return Decimal("nan")
 
         # if no parameters are normalized then default to an empty dict
         if normalize is None:
@@ -883,9 +885,25 @@ class Box(BaseModel):
             # filter widths of zero from the
             widths = {p: w for p, w in widths.items() if w != 0.0}
 
+        # TODO in there a 'class' of parameters that we can identify
+        # that need this same treatment. Specifically looking for
+        # strings 'num_steps' and 'step_size' is brittle.
+        num_timepoints = 1
+        if "num_steps" in widths:
+            del widths["num_steps"]
+            # TODO this timepoint computation could use more thought
+            # for the moment it just takes the ceil(width) + 1.0
+            # so num steps 1.0 to 2.5 would result in:
+            # ceil(2.5 - 1.0) + 1.0 = 3.0
+            num_timepoints = Decimal(
+                self.bounds["num_steps"].width()
+            ).to_integral_exact(rounding=ROUND_CEILING)
+            num_timepoints += 1
+        if "step_size" in widths:
+            del widths["step_size"]
+
         if len(widths) <= 0:
             # TODO handle volume of a point
-            print("WARNING: Asking for volume of a point")
             return Decimal(0.0)
 
         # compute product
@@ -894,6 +912,7 @@ class Box(BaseModel):
             if param_width < 0:
                 raise Exception("Negative parameter width")
             product *= Decimal(param_width)
+        product *= num_timepoints
         return product
 
     def width(

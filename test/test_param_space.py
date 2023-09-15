@@ -300,15 +300,24 @@ class TestCompilation(unittest.TestCase):
 
         # TODO find better way to capture errors on other thread
         failed_callback = False
+        prev_ratio = 0.0
 
         def callback(results: ParameterSpace):
             nonlocal failed_callback
+            nonlocal prev_ratio
             labeled_volume = results.labeled_volume()
             ratio = float(labeled_volume / search_volume)
+            if ratio < prev_ratio:
+                failed_callback = True
+                raise Exception(
+                    f"labeled volume/search volume ratio decreased:  {prev_ratio} -> {ratio}"
+                )
+            prev_ratio = ratio
+
             if not (0.0 <= ratio <= 1.0):
                 failed_callback = True
                 raise Exception(
-                    f"labeled volume/search volume ratio out of bounds: {ratio}"
+                    f"labeled volume/search volume ratio out of bounds:  {labeled_volume}/{search_volume} = {ratio}"
                 )
 
         Funman().solve(scenario, config, resultsCallback=callback)
