@@ -48,10 +48,7 @@ class TestCompilation(unittest.TestCase):
                 "label": "true",
                 "bounds": {
                     "inf_o_o": {"lb": 0.0, "ub": 0.3},
-                    "rec_o_o": {
-                        "lb": 0.3,
-                        "ub": 0.5,
-                    },
+                    "rec_o_o": {"lb": 0.3, "ub": 0.5},
                 },
             }
         )
@@ -74,6 +71,157 @@ class TestCompilation(unittest.TestCase):
         assert len(ps.true_boxes) == 1
         assert len(ps.false_boxes) == 1
         assert ps.consistent()
+
+    def test_box_volume(self):
+        ps = ParameterSpace(num_dimensions=2)
+
+        ps.append_result(
+            {
+                "type": "box",
+                "label": "true",
+                "bounds": {
+                    "inf_o_o": {"lb": 0.0, "ub": 0.3},
+                    "rec_o_o": {"lb": 0.5, "ub": 0.3},
+                },
+            }
+        )
+
+        ps.append_result(
+            {
+                "type": "box",
+                "label": "false",
+                "bounds": {
+                    "inf_o_o": {"lb": 0.5, "ub": 1.0},
+                    "rec_o_o": {"lb": 0.5, "ub": 1.0},
+                },
+            }
+        )
+
+        for box in ps.true_boxes:
+            with self.assertRaises(Exception):
+                true_volume = box._get_product_of_parameter_widths()
+
+        for box in ps.false_boxes:
+            false_volume = box._get_product_of_parameter_widths()
+            assert false_volume == 0.25
+
+    def test_ps_labeled_volume(self):
+        ps = ParameterSpace(num_dimensions=2)
+
+        ps.append_result(
+            {
+                "type": "box",
+                "label": "true",
+                "bounds": {
+                    "inf_o_o": {"lb": 0, "ub": 0.3},
+                    "rec_o_o": {"lb": 0, "ub": 0.3},
+                },
+            }
+        )
+        ps.append_result(
+            {
+                "type": "box",
+                "label": "true",
+                "bounds": {
+                    "inf_o_o": {"lb": 0.0, "ub": 0.3},
+                    "rec_o_o": {"lb": 0.3, "ub": 0.5},
+                },
+            }
+        )
+
+        ps.append_result(
+            {
+                "type": "box",
+                "label": "false",
+                "bounds": {
+                    "inf_o_o": {"lb": 0.5, "ub": 1.0},
+                    "rec_o_o": {"lb": 0.5, "ub": 1.0},
+                },
+            }
+        )
+
+        ps.append_result(
+            {
+                "type": "box",
+                "label": "unknown",
+                "bounds": {
+                    "inf_o_o": {"lb": 0.0, "ub": 0.5},
+                    "rec_o_o": {"lb": 0.5, "ub": 1.0},
+                },
+            }
+        )
+
+        ps.append_result(
+            {
+                "type": "box",
+                "label": "unknown",
+                "bounds": {
+                    "inf_o_o": {"lb": 0.3, "ub": 1.0},
+                    "rec_o_o": {"lb": 0.0, "ub": 0.5},
+                },
+            }
+        )
+
+        assert ps.labeled_volume() == 0.4
+
+    def test_ps_largest_true_box(self):
+        ps = ParameterSpace(num_dimensions=2)
+
+        ps.append_result(
+            {
+                "type": "box",
+                "label": "true",
+                "bounds": {
+                    "inf_o_o": {"lb": 0.0, "ub": 0.3},
+                    "rec_o_o": {"lb": 0.0, "ub": 0.3},
+                },
+            }
+        )
+        ps.append_result(
+            {
+                "type": "box",
+                "label": "true",
+                "bounds": {
+                    "inf_o_o": {"lb": 0.0, "ub": 0.3},
+                    "rec_o_o": {"lb": 0.3, "ub": 0.5},
+                },
+            }
+        )
+
+        ps.append_result(
+            {
+                "type": "box",
+                "label": "false",
+                "bounds": {
+                    "inf_o_o": {"lb": 0.5, "ub": 1.0},
+                    "rec_o_o": {"lb": 0.5, "ub": 1.0},
+                },
+            }
+        )
+
+        ps.append_result(
+            {
+                "type": "box",
+                "label": "unknown",
+                "bounds": {
+                    "inf_o_o": {"lb": 0.0, "ub": 0.5},
+                    "rec_o_o": {"lb": 0.5, "ub": 1.0},
+                },
+            }
+        )
+
+        ps.append_result(
+            {
+                "type": "box",
+                "label": "true",
+                "bounds": {
+                    "inf_o_o": {"lb": 0.3, "ub": 1.0},
+                    "rec_o_o": {"lb": 0.0, "ub": 0.5},
+                },
+            }
+        )
+
+        assert ps.max_true_volume()[0] == 0.5
 
 
 if __name__ == "__main__":

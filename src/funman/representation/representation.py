@@ -824,6 +824,68 @@ class Box(BaseModel):
 
         return max_width, widths[max_width]
 
+    def _get_min_width_Parameter(
+        self, normalize={}, parameters: List[ModelParameter] = None
+    ):
+        if parameters:
+            widths = {
+                parameter.name: (
+                    self.bounds[parameter.name].width(
+                        normalize=normalize[parameter.name]
+                    )
+                    if parameter.name in normalize
+                    else self.bounds[parameter.name].width()
+                )
+                for parameter in parameters
+            }
+        else:
+            widths = {
+                p: (
+                    self.bounds[p].width(normalize=normalize[parameter.name])
+                    if p in normalize
+                    else self.bounds[p].width()
+                )
+                for p in self.bounds
+            }
+        min_width = min(widths, key=widths.get)
+
+        return min_width, widths[min_width]
+
+    def _get_product_of_parameter_widths(
+        self, normalize={}, parameters: List[ModelParameter] = None
+    ):
+        if parameters:
+            widths = {
+                parameter.name: (
+                    self.bounds[parameter.name].width(
+                        normalize=normalize[parameter.name]
+                    )
+                    if parameter.name in normalize
+                    else self.bounds[parameter.name].width()
+                )
+                for parameter in parameters
+            }
+        else:
+            widths = {
+                p: (
+                    self.bounds[p].width(normalize=normalize[parameter.name])
+                    if p in normalize
+                    else self.bounds[p].width()
+                )
+                for p in self.bounds
+            }
+        min_width_param = self._get_min_width_Parameter()
+        if min_width_param[1] < 0:
+            raise Exception(
+                f"Negative box length: lb > ub for parameter {min_width_param[0]}. To fix this, switch the lower and upper bounds."
+            )
+        else:
+            product = 1
+            for param_width in widths.values():
+                product *= param_width
+
+        return product
+
     def width(
         self,
         normalize={},
@@ -1329,6 +1391,32 @@ class ParameterSpace(BaseModel):
         """
         self.true_boxes = self._box_list_compact(self.true_boxes)
         self.false_boxes = self._box_list_compact(self.false_boxes)
+
+    def labeled_volume(self):
+        self._compact()
+        labeled_vol = 0
+        # TODO should actually be able to compact the true and false boxes together, since they are both labeled.
+        # TODO can calculate the percentage of the total parameter space.  Is there an efficient way to get the initial PS so we can find the volume of that box? or to access unknown boxes?
+        for box in self.true_boxes:
+            true_volume = box._get_product_of_parameter_widths()
+            labeled_vol += true_volume
+
+        for box in self.false_boxes:
+            false_volume = box._get_product_of_parameter_widths()
+            labeled_vol += false_volume
+        return labeled_vol
+
+    def max_true_volume(self):
+        self.true_boxes = self._box_list_compact(self.true_boxes)
+        max_vol = 0
+        max_box = (self.true_boxes)[0]
+        for box in self.true_boxes:
+            box_vol = box._get_product_of_parameter_widths()
+            if box_vol > max_vol:
+                max_vol = box_vol
+                max_box = box
+
+        return max_vol, max_box
 
     def _box_list_compact(self, group: List[Box]) -> List[Box]:
         """
