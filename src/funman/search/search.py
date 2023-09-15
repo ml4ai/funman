@@ -9,7 +9,7 @@ from funman.representation.explanation import Explanation
 
 import pysmt
 from pysmt.shortcuts import Solver
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from pysmt.solvers.solver import Model as pysmtModel
 
 from funman.funman import FUNMANConfig

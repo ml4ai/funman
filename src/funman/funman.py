@@ -75,7 +75,7 @@ class FUNMANConfig(BaseModel):
     """Normalize scenarios prior to solving"""
     normalize: bool = True
     """Normalization constant to use for normalization (attempt to compute if None)"""
-    normalization_constant: float = None
+    normalization_constant: Optional[float] = None
     """ Simplify query by propagating substutions """
     simplify_query: bool = True
     """ Series approximation threshold for dropping series terms """
