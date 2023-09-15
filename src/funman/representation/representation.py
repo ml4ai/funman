@@ -6,6 +6,7 @@ import copy
 import logging
 import math
 import sys
+from decimal import Decimal
 from statistics import mean as average
 from typing import Dict, List, Literal, Optional, Union
 
@@ -853,7 +854,7 @@ class Box(BaseModel):
 
     def _get_product_of_parameter_widths(
         self, normalize={}, parameters: List[ModelParameter] = None
-    ):
+    ) -> Decimal:
         if parameters:
             widths = {
                 parameter.name: (
@@ -874,15 +875,12 @@ class Box(BaseModel):
                 )
                 for p in self.bounds
             }
-        min_width_param = self._get_min_width_Parameter()
-        if min_width_param[1] < 0:
-            raise Exception(
-                f"Negative box length: lb > ub for parameter {min_width_param[0]}. To fix this, switch the lower and upper bounds."
-            )
-        else:
-            product = 1
-            for param_width in widths.values():
-                product *= param_width
+
+        product = Decimal(1.0)
+        for param_width in widths.values():
+            if param_width < 0:
+                raise Exception("...")
+            product *= Decimal(param_width)
 
         return product
 
