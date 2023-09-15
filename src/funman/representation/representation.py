@@ -879,7 +879,7 @@ class Box(BaseModel):
         product = Decimal(1.0)
         for param_width in widths.values():
             if param_width < 0:
-                raise Exception("...")
+                raise Exception("Negative parameter width")
             product *= Decimal(param_width)
 
         return product
