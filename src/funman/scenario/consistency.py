@@ -48,7 +48,7 @@ class ConsistencyScenario(AnalysisScenario, BaseModel):
 
     # TODO[pydantic]: The following keys were removed: `underscore_attrs_are_private`, `smart_union`.
     # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-config for more information.
-    model_config = ConfigDict(smart_union=True, extra="forbid")
+    model_config = ConfigDict(extra="forbid")
 
     model: Union[
         GeneratedRegnetModel,
@@ -204,8 +204,6 @@ class ConsistencyScenarioResult(AnalysisScenarioResult, BaseModel):
     search statistics.
     """
 
-    # TODO[pydantic]: The following keys were removed: `underscore_attrs_are_private`.
-    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-config for more information.
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     scenario: ConsistencyScenario

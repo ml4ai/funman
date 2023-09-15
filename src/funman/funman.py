@@ -25,8 +25,6 @@ class FUNMANConfig(BaseModel):
     Base definition of a configuration object
     """
 
-    # TODO[pydantic]: The following keys were removed: `underscore_attrs_are_private`.
-    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-config for more information.
     model_config = ConfigDict(
         arbitrary_types_allowed=True,
         validate_default=True,

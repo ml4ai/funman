@@ -53,9 +53,10 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
     points in the region are valid (true) parameters for the model or invalid
     (false) parameters.
     """
+
     # TODO[pydantic]: The following keys were removed: `underscore_attrs_are_private`, `smart_union`.
     # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-config for more information.
-    model_config = ConfigDict(smart_union=True, extra="forbid")
+    model_config = ConfigDict(extra="forbid")
 
     model: Union[
         GeneratedPetriNetModel,
@@ -247,6 +248,7 @@ class ParameterSynthesisScenarioResult(AnalysisScenarioResult, BaseModel):
     ParameterSynthesisScenario result, which includes the parameter space and
     search statistics.
     """
+
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     # episode: SearchEpisode

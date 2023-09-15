@@ -15,8 +15,6 @@ class EnsembleModel(Model):
     _var_name_map: Dict[str, Tuple[str, Model]] = None
     _parameter_name_map: Dict[str, Tuple[str, Model]] = None
     _parameter_map: Dict[str, ModelParameter] = None
-    # TODO[pydantic]: The following keys were removed: `underscore_attrs_are_private`.
-    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-config for more information.
     model_config = ConfigDict()
 
     def __init__(self, **kwargs):

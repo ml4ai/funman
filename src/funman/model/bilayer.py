@@ -149,8 +149,6 @@ class BilayerGraph(ABC, BaseModel):
     Abstract representation of a Bilayer graph.
     """
 
-    # TODO[pydantic]: The following keys were removed: `underscore_attrs_are_private`.
-    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-config for more information.
     model_config = ConfigDict()
 
     json_graph: Dict
@@ -208,8 +206,6 @@ class BilayerDynamics(BilayerGraph):
     * flux nodes (causal relationships).
     """
 
-    # TODO[pydantic]: The following keys were removed: `underscore_attrs_are_private`.
-    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-config for more information.
     model_config = ConfigDict()
 
     _tangent: Dict[
@@ -468,8 +464,6 @@ class BilayerModel(Model):
 
     """
 
-    # TODO[pydantic]: The following keys were removed: `underscore_attrs_are_private`.
-    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-config for more information.
     model_config = ConfigDict()
 
     bilayer: BilayerDynamics

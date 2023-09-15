@@ -67,8 +67,6 @@ class BilayerEncoder(Encoder):
     as defined by a Bilayer model.
     """
 
-    # TODO[pydantic]: The following keys were removed: `underscore_attrs_are_private`.
-    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-config for more information.
     model_config = ConfigDict()
 
     def _encode_next_step(
