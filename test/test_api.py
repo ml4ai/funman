@@ -50,6 +50,9 @@ class TestAPI(unittest.TestCase):
         self.test_dir.mkdir()
         settings.data_path = str(self.test_dir)
 
+    def tearDown(self):
+        settings.data_path = "."
+
     def wait_for_done(self, client, id, wait_time=1.0, steps=20):
         while True:
             sleep(wait_time)

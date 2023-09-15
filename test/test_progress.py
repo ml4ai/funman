@@ -1,6 +1,7 @@
 import json
 import unittest
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from time import sleep
 
 from fastapi.testclient import TestClient
@@ -33,7 +34,31 @@ TEST_BASE_URL = "funman"
 
 
 class TestProgress(unittest.TestCase):
-    def test_progress_via_api(self):
+    """
+    Tests on the progress reported by queries to the API
+    """
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        settings.funman_api_token = TEST_API_TOKEN
+        settings.funman_base_url = TEST_BASE_URL
+        cls._tmpdir = TemporaryDirectory(prefix=f"{cls.__name__}_")
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        settings.funman_api_token = None
+        settings.funman_base_url = None
+        cls._tmpdir.cleanup()
+
+    def setUp(self):
+        self.test_dir = Path(self._tmpdir.name) / self._testMethodName
+        self.test_dir.mkdir()
+        settings.data_path = str(self.test_dir)
+
+    def tearDown(self):
+        settings.data_path = "."
+
+    def test_progress(self):
         """
         Run subtest_progress for each of the pairs
         """
@@ -47,9 +72,9 @@ class TestProgress(unittest.TestCase):
         for model_path, request_path in pairs:
             msg = f"({model_path.name}, {request_path.name})"
             with self.subTest(msg):
-                self.subtest_progress_via_api(model_path, request_path)
+                self.subtest_progress(model_path, request_path)
 
-    def subtest_progress_via_api(self, model_path, request_path):
+    def subtest_progress(self, model_path, request_path):
         """
         Check that progress:
         - starts at 0.0
@@ -63,10 +88,12 @@ class TestProgress(unittest.TestCase):
 
         # Start a test API client
         with TestClient(app) as client:
+            headers = {"token": f"{TEST_API_TOKEN}"}
             # Make the initial query
             response = client.post(
                 "/api/queries",
                 json={"model": model, "request": request},
+                headers=headers,
             )
             # Ensure the response code reports success
             assert (
@@ -88,7 +115,9 @@ class TestProgress(unittest.TestCase):
                 # Wait
                 sleep(1.0)
                 # Get status
-                response = client.get(f"/api/queries/{work_id}")
+                response = client.get(
+                    f"/api/queries/{work_id}", headers=headers
+                )
                 # Ensure success response
                 assert (
                     response.status_code == 200

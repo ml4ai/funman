@@ -1,19 +1,29 @@
+import json
 import os
 import unittest
+from pathlib import Path
 
 from pysmt.shortcuts import GE, LE, And, Real, Symbol
 from pysmt.typing import REAL
 
-from funman.funman import FUNMANConfig
+from funman.api.api import _wrap_with_internal_model
+from funman.funman import Funman, FUNMANConfig
 from funman.model import EncodedModel, QueryTrue
+from funman.model.generated_models.petrinet import Model as GeneratedPetriNet
 from funman.representation import ParameterSpace
 from funman.representation.representation import ModelParameter
 from funman.scenario.parameter_synthesis import ParameterSynthesisScenario
+from funman.server.query import FunmanWorkUnit
 from funman.translate import EncodedEncoder
 
 RESOURCES = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "../resources"
 )
+
+AMR_DIR = Path(RESOURCES) / "amr"
+MIRA_PETRI_DIR = AMR_DIR / "petrinet" / "mira"
+MIRA_PETRI_MODELS = MIRA_PETRI_DIR / "models"
+MIRA_PETRI_REQUESTS = MIRA_PETRI_DIR / "requests"
 
 
 class TestCompilation(unittest.TestCase):
@@ -259,6 +269,50 @@ class TestCompilation(unittest.TestCase):
         )
 
         assert ps.max_true_volume()[0] == 0.5
+
+    def test_volume(self):
+        model_path = Path(
+            MIRA_PETRI_MODELS / "scenario2_a_beta_scale_static.json"
+        )
+        request_path = Path(MIRA_PETRI_REQUESTS / "request2_b_synthesize.json")
+
+        model = json.loads(model_path.read_bytes())
+        request = json.loads(request_path.read_bytes())
+
+        work = FunmanWorkUnit.parse_obj(
+            {
+                "id": "mock_work",
+                # TODO improve testing experience when loading model files without using api
+                "model": _wrap_with_internal_model(
+                    GeneratedPetriNet.parse_obj(model)
+                ),
+                "request": request,
+            }
+        )
+        scenario = work.to_scenario()
+        config = (
+            FUNMANConfig()
+            if work.request.config is None
+            else work.request.config
+        )
+
+        search_volume = scenario.search_space_volume()
+
+        # TODO find better way to capture errors on other thread
+        failed_callback = False
+
+        def callback(results: ParameterSpace):
+            nonlocal failed_callback
+            labeled_volume = results.labeled_volume()
+            ratio = float(labeled_volume / search_volume)
+            if not (0.0 <= ratio <= 1.0):
+                failed_callback = True
+                raise Exception(
+                    f"labeled volume/search volume ratio out of bounds: {ratio}"
+                )
+
+        Funman().solve(scenario, config, resultsCallback=callback)
+        assert not failed_callback, "volume ratio check filed"
 
 
 if __name__ == "__main__":
