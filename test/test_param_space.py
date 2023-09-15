@@ -1,7 +1,15 @@
 import os
 import unittest
 
+from pysmt.shortcuts import GE, LE, And, Real, Symbol
+from pysmt.typing import REAL
+
 from funman.representation import ParameterSpace
+from funman.funman import FUNMANConfig
+from funman.model import EncodedModel, QueryTrue
+from funman.representation.representation import ModelParameter
+from funman.scenario.parameter_synthesis import ParameterSynthesisScenario
+from funman.translate import EncodedEncoder
 
 RESOURCES = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "../resources"
