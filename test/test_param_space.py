@@ -4,9 +4,9 @@ import unittest
 from pysmt.shortcuts import GE, LE, And, Real, Symbol
 from pysmt.typing import REAL
 
-from funman.representation import ParameterSpace
 from funman.funman import FUNMANConfig
 from funman.model import EncodedModel, QueryTrue
+from funman.representation import ParameterSpace
 from funman.representation.representation import ModelParameter
 from funman.scenario.parameter_synthesis import ParameterSynthesisScenario
 from funman.translate import EncodedEncoder
@@ -191,10 +191,15 @@ class TestCompilation(unittest.TestCase):
         )
 
         scenario = ParameterSynthesisScenario(
-            parameters=parameters, model=model, query=QueryTrue(),
+            parameters=parameters,
+            model=model,
+            query=QueryTrue(),
         )
 
-        assert scenario.search_space_volume() == scenario.representable_space_volume()
+        assert (
+            scenario.search_space_volume()
+            == scenario.representable_space_volume()
+        )
 
     def test_ps_largest_true_box(self):
         ps = ParameterSpace(num_dimensions=2)

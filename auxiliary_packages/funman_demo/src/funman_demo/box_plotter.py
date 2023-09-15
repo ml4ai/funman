@@ -8,8 +8,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from IPython.display import clear_output
 from matplotlib.lines import Line2D
-from funman.constants import BIG_NUMBER
 
+from funman.constants import BIG_NUMBER
 from funman.representation import ModelParameter
 from funman.representation.representation import Box, Interval, Point
 from funman.search import SearchEpisode
@@ -191,8 +191,12 @@ class BoxPlotter(object):
                 )
                 i_width_d = box.bounds[self.parameters[i].name].width()
                 j_width_d = box.bounds[self.parameters[j].name].width()
-                i_width = BIG_NUMBER if i_width_d > BIG_NUMBER else float(i_width_d)
-                j_width = BIG_NUMBER if j_width_d > BIG_NUMBER else float(j_width_d)
+                i_width = (
+                    BIG_NUMBER if i_width_d > BIG_NUMBER else float(i_width_d)
+                )
+                j_width = (
+                    BIG_NUMBER if j_width_d > BIG_NUMBER else float(j_width_d)
+                )
                 width_y = (
                     j_width
                     # if j != i

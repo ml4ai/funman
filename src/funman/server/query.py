@@ -146,8 +146,10 @@ class FunmanResults(BaseModel):
 
     def is_final(self):
         return self._finalized
-    
-    def update_parameter_space(self, scenario: AnalysisScenario, results: ParameterSpace):
+
+    def update_parameter_space(
+        self, scenario: AnalysisScenario, results: ParameterSpace
+    ):
         # TODO handle copy?
         self.parameter_space = results
         # compute volumes

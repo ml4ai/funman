@@ -8,7 +8,7 @@ import math
 import sys
 from decimal import Decimal
 from statistics import mean as average
-from typing import Dict, List, Literal, Optional, Tuple, Union
+from typing import Dict, List, Literal, Optional, Union
 
 from pydantic import ConfigDict, BaseModel, Field
 from pysmt.fnode import FNode
@@ -149,7 +149,9 @@ class Interval(BaseModel):
             self.lb, other.ub
         )
 
-    def width(self, normalize: Optional[Union[Decimal, float]] = None) -> Decimal:
+    def width(
+        self, normalize: Optional[Union[Decimal, float]] = None
+    ) -> Decimal:
         """
         The width of an interval is ub - lb.
 
@@ -849,8 +851,11 @@ class Box(BaseModel):
         return min_width
 
     def volume(
-        self, normalize = None, parameters: List[ModelParameter] = None,
-        *, ignore_zero_width_dimensions = True
+        self,
+        normalize=None,
+        parameters: List[ModelParameter] = None,
+        *,
+        ignore_zero_width_dimensions=True,
     ) -> Decimal:
         # construct a list of parameter names to consider
         # if no parameters are requested then use all of the bounds
@@ -863,17 +868,20 @@ class Box(BaseModel):
         if len(pnames) <= 0:
             # TODO undefined?
             return Decimal(0.0)
-        
+
         # if no parameters are normalized then default to an empty dict
         if normalize is None:
             normalize = {}
 
         # get a mapping of parameters to widths
         # use normalize.get(p.name, None) to select between default behavior and normalization
-        widths = { p:self.bounds[p].width(normalize=normalize.get(p, None)) for p in pnames }
+        widths = {
+            p: self.bounds[p].width(normalize=normalize.get(p, None))
+            for p in pnames
+        }
         if ignore_zero_width_dimensions:
-            # filter widths of zero from the 
-            widths = { p:w for p,w in widths.items() if w != 0.0 }
+            # filter widths of zero from the
+            widths = {p: w for p, w in widths.items() if w != 0.0}
 
         if len(widths) <= 0:
             # TODO handle volume of a point
@@ -906,7 +914,9 @@ class Box(BaseModel):
             p = self._get_max_width_Parameter(
                 normalize=normalize, parameters=parameters
             )
-            self.cached_width = self.bounds[p].width(normalize=normalize.get(p, None))
+            self.cached_width = self.bounds[p].width(
+                normalize=normalize.get(p, None)
+            )
         return self.cached_width
 
     def variance(self, overwrite_cache=False) -> float:
@@ -1449,9 +1459,7 @@ class ParameterSpace(BaseModel):
                     m = b._merge(c)
                     sorted_dimensions = {
                         p: [
-                            box if box != b else m
-                            for box in boxes
-                            if box != c
+                            box if box != b else m for box in boxes if box != c
                         ]
                         for p, boxes in sorted_dimensions.items()
                     }
