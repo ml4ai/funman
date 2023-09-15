@@ -23,9 +23,9 @@ from pysmt.shortcuts import (
     Times,
 )
 
-from funman import Funman
-from funman.benchmarks.benchmark import Benchmark
-from funman.funman import FUNMANConfig
+
+from funman_benchmarks.benchmark import Benchmark
+
 
 # from funman.funman import FUNMANConfig
 from funman.model import QueryLE

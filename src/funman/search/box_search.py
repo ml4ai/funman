@@ -380,7 +380,7 @@ class BoxSearch(Search):
         projected_box = box.project(
             episode.problem.model_parameters()
         ).project(episode.problem.model_parameters())
-        formula = episode.problem._smt_encoder.box_to_smt(projected_box)
+        formula = episode.problem._smt_encoder.box_to_smt(projected_box, infinity_constraints=False)
         episode._formula_stack.append(formula)
         solver.add_assertion(formula)
 

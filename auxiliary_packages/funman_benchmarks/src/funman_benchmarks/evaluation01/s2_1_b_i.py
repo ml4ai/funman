@@ -22,7 +22,9 @@ from pysmt.shortcuts import (
     Times,
 )
 
-from funman.benchmarks.evaluation01.evaluation1 import TestUnitTests
+
+from funman_benchmarks.evaluation01.evaluation01 import TestUnitTests
+
 from funman.funman import Funman, FUNMANConfig
 from funman.model.bilayer import BilayerDynamics
 from funman.model.query import QueryTrue
@@ -56,6 +58,7 @@ class TestS21BUnitTest(TestUnitTests):
         for simplify_query in [True, False]
         for series_approximation_threshold in [1e-1, 1e-3, 1e-5]
         for taylor_series_order in [1, 3, 5]
+        if not simplify_query or substitute_subformulas 
     ]
     # [
     #     {"dreal_mcts": False, "substitute_subformulas": False, "simplify_query": False,  "series_approximation_threshold": 1e-5,
@@ -188,7 +191,7 @@ class TestS21BUnitTest(TestUnitTests):
 
     def test_model_0(self):
         run_case_fn = partial(self.common_test_model, self.s2_models[0])
-        self.run_cases(run_case_fn, self.cases)
+        self.run_cases(run_case_fn, self.cases, self.s2_models[0])
 
     # @unittest.expectedFailure
     # def test_model_1(self):

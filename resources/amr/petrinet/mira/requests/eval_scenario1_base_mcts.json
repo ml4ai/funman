@@ -1,24 +1,29 @@
 {
-  "query": {},
-  "parameters": [],
+  "query": {
+    "variable": "I",
+    "ub": 1e5
+  },
+  "parameters": [
+    {
+      "name": "beta",
+      "lb": 0.0,
+      "ub": 1.0,
+      "label": "any"
+    }
+  ],
   "structure_parameters": [
     {
       "name": "num_steps",
-      "lb": 100,
-      "ub": 100,
+      "lb": 200,
+      "ub": 200,
       "label": "all"
     },
     {
       "name": "step_size",
-      "lb": 2,
-      "ub": 2,
+      "lb": 1,
+      "ub": 1,
       "label": "all"
     }
   ],
-  "config": {
-    "save_smtlib": true,
-    "substitute_subformulas": false,
-    "simplify_query": false,
-    "dreal_mcts": true
-  }
+  "config": {}
 }

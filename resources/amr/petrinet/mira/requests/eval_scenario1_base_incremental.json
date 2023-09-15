@@ -1,0 +1,29 @@
+{
+    "query": {
+        "variable": "I",
+        "ub": 1e5
+    },
+    "parameters": [
+        {
+            "name": "beta",
+            "lb": 0.0,
+            "ub": 1.0,
+            "label": "all"
+        }
+    ],
+    "structure_parameters": [
+        {
+            "name": "num_steps",
+            "lb": 100,
+            "ub": 100,
+            "label": "all"
+        },
+        {
+            "name": "step_size",
+            "lb": 1,
+            "ub": 1,
+            "label": "all"
+        }
+    ],
+    "config": {}
+}

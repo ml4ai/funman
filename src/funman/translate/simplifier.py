@@ -29,6 +29,10 @@ from funman.utils.sympy_utils import (
     to_sympy,
 )
 
+import logging
+
+l = logging.getLogger(__name__)
+l.setLevel(logging.INFO)
 
 class FUNMANSimplifier(pysmt.simplifier.Simplifier):
     def __init__(self, env=None):
@@ -37,15 +41,19 @@ class FUNMANSimplifier(pysmt.simplifier.Simplifier):
 
     def value_of(expr: Expr, subs: Dict[str, float] = {}):
         arg_values = [subs[str(v)] for v in expr.free_symbols]
-        lfn = lambdify(expr.free_symbols, expr, "numpy")
+        lfn = lambdify(list(expr.free_symbols), expr, 'numpy')
         if len(arg_values) > 0:
             try:
                 value = lfn(*arg_values)
             except OverflowError as e:
-                value = 0.0  # sys.float_info.max
-                print(
-                    f"Convert lambdify overflow of {expr} with {subs} from {N(expr, subs=subs)} to {value}"
-                )
+                val = N(expr, subs=subs)
+                if val > 1:
+                    value = sys.float_info.max
+                elif val < -1:
+                    value = sys.float_info.min
+                else:
+                    value = 0.0 
+                l.debug(f"Convert lambdify overflow of {expr} with {subs} from {val} to {value}")
             except:
                 pass
             # except UnderflowError as e:
@@ -83,9 +91,14 @@ class FUNMANSimplifier(pysmt.simplifier.Simplifier):
         #         mag = N(arg, subs=lb_values)
         #     term_magnitude[arg] = mag
 
+        if formula.func.is_Add:
+            args = formula.args
+        else:
+            args = [formula]
+
         to_drop = {
             arg: 0
-            for arg in formula.args
+            for arg in args
             if (
                 abs(FUNMANSimplifier.value_of(arg, subs=lb_values)) < threshold
                 and abs(FUNMANSimplifier.value_of(arg, subs=ub_values))
@@ -101,16 +114,16 @@ class FUNMANSimplifier(pysmt.simplifier.Simplifier):
         #     if status:
         #         print(f"{status} {arg}")
 
-        if len(to_drop) > 0:
-            print("*" * 80)
-            print(f"Drop\n {to_drop}")
-            print(f"From\n {formula}")
+        # if len(to_drop) > 0:
+        #     print("*" * 80)
+        #     print(f"Drop\n {to_drop}")
+        #     print(f"From\n {formula}")
 
         # for drop in to_drop:
         # subbed_formula = formula.subs(to_drop)
         if len(to_drop) > 0:
             subbed_formula = Add(
-                *[t for t in formula.args if t not in to_drop]
+                *[t for t in args if t not in to_drop]
             )
         else:
             subbed_formula = formula
@@ -182,7 +195,7 @@ class FUNMANSimplifier(pysmt.simplifier.Simplifier):
 
         # print(expanded_formula)
 
-        if threshold > 0:
+        if threshold is not None and threshold > 0:
             f = FUNMANSimplifier.approximate(
                 f, parameters, threshold=threshold
             )

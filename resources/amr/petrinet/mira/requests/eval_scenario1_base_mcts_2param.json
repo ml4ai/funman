@@ -1,0 +1,83 @@
+{
+    "query": {
+        "variable": "I",
+        "ub": 1e5
+    },
+    "parameters": [
+        {
+            "name": "beta",
+            "lb": 0.0,
+            "ub": 1.0,
+            "label": "any"
+        },
+        {
+            "name": "r_E_to_I",
+            "lb": 0.0,
+            "ub": 1.0,
+            "label": "any"
+        },
+        {
+            "name": "p_I_to_R",
+            "lb": 0.0,
+            "ub": 1.0,
+            "label": "any"
+        },
+        {
+            "name": "r_I_to_R",
+            "lb": 0.0,
+            "ub": 1.0,
+            "label": "any"
+        },
+        {
+            "name": "p_I_to_H",
+            "lb": 0.0,
+            "ub": 1.0,
+            "label": "any"
+        },
+        {
+            "name": "r_I_to_H",
+            "lb": 0.0,
+            "ub": 1.0,
+            "label": "any"
+        },
+        {
+            "name": "p_H_to_R",
+            "lb": 0.0,
+            "ub": 1.0,
+            "label": "any"
+        },
+        {
+            "name": "r_H_to_R",
+            "lb": 0.0,
+            "ub": 1.0,
+            "label": "any"
+        },
+        {
+            "name": "p_H_to_D",
+            "lb": 0.0,
+            "ub": 1.0,
+            "label": "any"
+        },
+        {
+            "name": "r_H_to_D",
+            "lb": 0.0,
+            "ub": 1.0,
+            "label": "any"
+        }
+    ],
+    "structure_parameters": [
+        {
+            "name": "num_steps",
+            "lb": 50,
+            "ub": 50,
+            "label": "all"
+        },
+        {
+            "name": "step_size",
+            "lb": 1,
+            "ub": 1,
+            "label": "all"
+        }
+    ],
+    "config": {}
+}

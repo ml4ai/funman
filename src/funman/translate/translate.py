@@ -872,7 +872,7 @@ class Encoder(ABC, BaseModel):
         return vals
 
     def interval_to_smt(
-        self, p: str, i: Interval, closed_upper_bound: bool = False
+        self, p: str, i: Interval, closed_upper_bound: bool = False, infinity_constraints=False
     ) -> FNode:
         """
         Convert the interval into contraints on parameter p.
@@ -894,13 +894,13 @@ class Encoder(ABC, BaseModel):
         else:
             lower = (
                 GE(Symbol(p, REAL), Real(i.lb))
-                if i.lb != NEG_INFINITY
+                if i.lb != NEG_INFINITY or infinity_constraints
                 else TRUE()
             )
             upper_ineq = LE if closed_upper_bound else LT
             upper = (
                 upper_ineq(Symbol(p, REAL), Real(i.ub))
-                if i.ub != POS_INFINITY
+                if i.ub != POS_INFINITY or infinity_constraints
                 else TRUE()
             )
             return And(
@@ -913,7 +913,7 @@ class Encoder(ABC, BaseModel):
             [Equals(p.symbol(), Real(value)) for p, value in pt.values.items()]
         )
 
-    def box_to_smt(self, box: Box, closed_upper_bound: bool = False):
+    def box_to_smt(self, box: Box, closed_upper_bound: bool = False, infinity_constraints = False):
         """
         Compile the interval for each parameter into SMT constraints on the corresponding parameter.
 
@@ -930,7 +930,7 @@ class Encoder(ABC, BaseModel):
         return And(
             [
                 self.interval_to_smt(
-                    p, interval, closed_upper_bound=closed_upper_bound
+                    p, interval, closed_upper_bound=closed_upper_bound, infinity_constraints=infinity_constraints
                 )
                 for p, interval in box.bounds.items()
             ]
