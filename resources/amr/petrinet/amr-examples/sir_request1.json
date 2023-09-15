@@ -54,8 +54,6 @@
     }
   ],
   "config": {
-    "solver": "dreal",
-    "dreal_mcts": true,
-    "tolerance": 1e-8
+    "normalization_constant": 1001
   }
 }

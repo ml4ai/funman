@@ -11,7 +11,7 @@ from interruptingcow import timeout
 
 class Benchmark(unittest.TestCase):
     RESOURCES = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)), "../../resources"
+        os.path.dirname(os.path.abspath(__file__)), "../../../../resources"
     )
 
     @contextmanager
@@ -23,7 +23,7 @@ class Benchmark(unittest.TestCase):
         finally:
             elapser = None
 
-    def case_already_ran(self, case):
+    def case_already_ran(self, case, scenario):
         if os.path.exists(self.out_file):
             with open(self.out_file, "r") as f:
                 try:
@@ -34,7 +34,7 @@ class Benchmark(unittest.TestCase):
                                 (k in result and result[k] == v)
                                 for k, v in case.items()
                             ]
-                        )
+                        ) and all(k in result["scenario"] for k in scenario)
                         if matches:
                             return True
                 except Exception as e:
@@ -53,16 +53,17 @@ class Benchmark(unittest.TestCase):
                 timedout = True
         return {"time": elapsed, "timedout": timedout}
 
-    def run_cases(self, run_case_fn, cases):
+    def run_cases(self, run_case_fn, cases, scenario):
         for case in cases:
             results = {"results": []}
-            if self.case_already_ran(case):
+            if self.case_already_ran(case, scenario):
                 print(f"Skipping already run case: {case}")
                 continue
             else:
                 print(f"Running case: {case}")
                 result = self.time_case(partial(run_case_fn, case))
                 result["end_time"] = str(datetime.datetime.now())
+                result["scenario"] = scenario
                 results["results"].append({**case, **result})
 
             json_results = {"results": []}

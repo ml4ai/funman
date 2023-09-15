@@ -327,7 +327,7 @@ class FunmanResults(BaseModel):
         symbols = {}
         # vars.sort(key=lambda x: x.symbol_name())
         for var in point.values:
-            if any(v in var for v in variables):
+            if any(f"{v}_" in var for v in variables):
                 var_name, timepoint = self._split_symbol(var)
                 if timepoint:
                     if var_name not in symbols:
@@ -365,7 +365,7 @@ class FunmanResults(BaseModel):
         variables=None,
         log_y=False,
         max_time=None,
-        **kwargs
+        **kwargs,
     ):
         """
         Plot the results in a matplotlib plot.

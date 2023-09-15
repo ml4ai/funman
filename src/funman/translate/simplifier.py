@@ -1,3 +1,4 @@
+import logging
 from typing import Dict, List
 
 import pysmt
@@ -29,31 +30,94 @@ from funman.utils.sympy_utils import (
     to_sympy,
 )
 
+l = logging.getLogger(__name__)
+l.setLevel(logging.INFO)
+
 
 class FUNMANSimplifier(pysmt.simplifier.Simplifier):
     def __init__(self, env=None):
         super().__init__(env=env)
         self.manager = self.env.formula_manager
 
-    def value_of(expr: Expr, subs: Dict[str, float] = {}):
+    def value_of(expr: Expr, subs: Dict[str, float] = {}, _lambdify=False):
         arg_values = [subs[str(v)] for v in expr.free_symbols]
-        lfn = lambdify(expr.free_symbols, expr, "numpy")
-        if len(arg_values) > 0:
-            try:
-                value = lfn(*arg_values)
-            except OverflowError as e:
-                value = 0.0  # sys.float_info.max
-                print(
-                    f"Convert lambdify overflow of {expr} with {subs} from {N(expr, subs=subs)} to {value}"
-                )
-            except:
-                pass
-            # except UnderflowError as e:
-            #     value = 0.0
+        if _lambdify:
+            lfn = lambdify(list(expr.free_symbols), expr, "math")
+            if len(arg_values) > 0:
+                try:
+                    value = lfn(*arg_values)
+                except OverflowError as e:
+                    val = N(expr, subs=subs)
+                    if val > 1:
+                        value = sys.float_info.max
+                    elif val < -1:
+                        value = sys.float_info.min
+                    else:
+                        value = 0.0
+                    l.debug(
+                        f"Convert lambdify overflow of {expr} with {subs} from {val} to {value}"
+                    )
+                except:
+                    pass
+                # except UnderflowError as e:
+                #     value = 0.0
 
+            else:
+                value = lfn()
         else:
-            value = lfn()
+            value = float(expr.evalf(10, subs=subs))
         return value
+
+    def arg_magnitude(
+        formula, lb_values: Dict[str, float], ub_values: Dict[str, float]
+    ):
+        """
+        Get the maximum magnitude of formula given the lb/ub of each parameter.  Assume that the formula is a polynomial term.  Use the ub for the variables in the numerator, and the lb for the variables in the denominator.
+
+        Parameters
+        ----------
+        formula : sympy.Formula
+            polynomial term to evaluate
+        lb_values : Dict[str, float]
+            lb values for each variable
+        ub_values : Dict[str, float]
+            ub values for each variable
+        """
+        if formula.is_Mul:
+            subs = {}
+            for a in formula.args:
+                if a.is_Pow:
+                    (var, exponent) = a.args
+                    subs[var.name] = (
+                        ub_values[var.name]
+                        if exponent >= 0
+                        else lb_values[var.name]
+                    )
+                elif a.is_number:
+                    pass
+                else:  # no exponent, i.e., 1
+                    subs[a.name] = ub_values[a.name]
+            value = formula.evalf(subs=subs)
+        elif formula.is_number:
+            value = formula
+        elif formula.is_Symbol:  # no exponent, i.e., 1
+            value = formula.evalf(subs={formula: ub_values[formula.name]})
+        elif formula.is_Pow:
+            value = formula.evalf(
+                subs={
+                    formula: (
+                        ub_values[args[0].name]
+                        if formula.args[-1] >= 0
+                        else lb_values[args[0].name]
+                    )
+                }
+            )
+        else:
+            raise Exception(
+                f"Don't know how to calculate magnitude of {formula}"
+            )
+
+        return abs(float(value))
 
     def approximate(formula, parameters: List[ModelParameter], threshold=1e-4):
         if len(formula.free_symbols) == 0:
@@ -83,14 +147,24 @@ class FUNMANSimplifier(pysmt.simplifier.Simplifier):
         #         mag = N(arg, subs=lb_values)
         #     term_magnitude[arg] = mag
 
-        to_drop = {
-            arg: 0
+        if formula.func.is_Add:
+            args = formula.args
+        else:
+            args = [formula]
+
+        arg_mag = {
+            arg: FUNMANSimplifier.arg_magnitude(arg, lb_values, ub_values)
             for arg in formula.args
-            if (
-                abs(FUNMANSimplifier.value_of(arg, subs=lb_values)) < threshold
-                and abs(FUNMANSimplifier.value_of(arg, subs=ub_values))
-                < threshold
-            )
+        }
+
+        to_drop = {
+            arg: value
+            for arg, value in arg_mag.items()
+            if value < threshold
+            # if (
+            #     abs(FUNMANSimplifier.value_of(arg, subs=lb_values)) < threshold
+            #     and abs(FUNMANSimplifier.value_of(arg, subs=ub_values)) < threshold
+            # )
         }
         # minimum_term_value = min(tm for arg, tm in term_magnitude.items()) if len(term_magnitude) > 0 else None
         # maximum_term_value = max(tm for arg, tm in term_magnitude.items()) if len(term_magnitude) > 0 else None
@@ -101,20 +175,18 @@ class FUNMANSimplifier(pysmt.simplifier.Simplifier):
         #     if status:
         #         print(f"{status} {arg}")
 
-        if len(to_drop) > 0:
-            print("*" * 80)
-            print(f"Drop\n {to_drop}")
-            print(f"From\n {formula}")
+        # if len(to_drop) > 0:
+        #     print("*" * 80)
+        #     print(f"Drop\n {to_drop}")
+        #     print(f"From\n {formula}")
 
         # for drop in to_drop:
         # subbed_formula = formula.subs(to_drop)
         if len(to_drop) > 0:
-            subbed_formula = Add(
-                *[t for t in formula.args if t not in to_drop]
-            )
+            subbed_formula = Add(*[t for t in args if t not in to_drop])
         else:
             subbed_formula = formula
-        print(
+        l.debug(
             f"*** {original_size}->{len(subbed_formula.args)}\t|{len(to_drop)}|"
         )
         # if len(to_drop) > 0:
@@ -171,18 +243,18 @@ class FUNMANSimplifier(pysmt.simplifier.Simplifier):
         f = expanded_formula
         if taylor_series_order is None:
             pass
-        elif not f.is_polynomial(formula.free_symbols):
+        else:  # if not f.is_polynomial(formula.free_symbols):
             f = series_approx(
                 f,
                 list(expanded_formula.free_symbols),
                 order=taylor_series_order,
             )
-
+            f = expand(f)
         # expanded_formula = expand(sympy_formula)
 
         # print(expanded_formula)
 
-        if threshold > 0:
+        if threshold is not None and threshold > 0:
             f = FUNMANSimplifier.approximate(
                 f, parameters, threshold=threshold
             )

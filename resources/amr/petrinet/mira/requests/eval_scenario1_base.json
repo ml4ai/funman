@@ -2,13 +2,16 @@
   "query": {},
   "parameters": [
     {
-      "name": "beta"
+      "name": "beta",
+      "lb": 0.1,
+      "ub": 0.9,
+      "label": "all"
     }
   ],
   "structure_parameters": [
     {
       "name": "num_steps",
-      "lb": 100,
+      "lb": 0,
       "ub": 100,
       "label": "all"
     },
@@ -19,10 +22,5 @@
       "label": "all"
     }
   ],
-  "config": {
-    "save_smtlib": true,
-    "substitute_subformulas": true,
-    "simplify_query": true,
-    "dreal_mcts": true
-  }
+  "config": {}
 }

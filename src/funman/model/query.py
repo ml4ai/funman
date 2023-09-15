@@ -3,7 +3,7 @@ This module defines all Query classes.  Queries are combined with Model objects 
 """
 from typing import List, Optional, Union
 
-from pydantic import ConfigDict, BaseModel
+from pydantic import BaseModel, ConfigDict
 from pysmt.formula import FNode
 
 from funman.model.model import Model

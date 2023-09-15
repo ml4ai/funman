@@ -5,7 +5,7 @@ import logging
 from abc import ABC, abstractmethod
 from typing import Dict, List, Set, Tuple, Union
 
-from pydantic import ConfigDict, BaseModel
+from pydantic import BaseModel, ConfigDict
 from pysmt.constants import Numeral
 from pysmt.formula import FNode
 from pysmt.shortcuts import (
@@ -185,9 +185,7 @@ class Encoder(ABC, BaseModel):
 
     """
 
-    model_config = ConfigDict(
-        arbitrary_types_allowed=True
-    )
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
     config: FUNMANConfig
     _timed_model_elements: Dict = None
@@ -218,6 +216,12 @@ class Encoder(ABC, BaseModel):
         variable_symbols = [self._encode_state_var(p) for p in variables]
 
         self._encode_timed_model_elements(self._scenario)
+
+    def can_encode():
+        """
+        Return boolean indicating if the scenario can be encoded with the FUNMANConfig
+        """
+        return True
 
     def _symbols(self, vars: List[FNode]) -> Dict[str, Dict[str, FNode]]:
         symbols = {}
@@ -255,7 +259,7 @@ class Encoder(ABC, BaseModel):
         return model_encoding, query_encoding
 
     @abstractmethod
-    def encode_model(self, model: "Model") -> Encoding:
+    def encode_model(self, model: "Model", config: "FUNMANConfig") -> Encoding:
         """
         Encode a model into an SMTLib formula.
 
@@ -370,44 +374,14 @@ class Encoder(ABC, BaseModel):
         self, scenario: "AnalysisScenario", normalization=True
     ):
         # Add parameter assignments
-        # norm = scenario.model.normalization() if normalization else 1.0
         parameters = scenario.model_parameters()
 
-        # Normalize
+        # Normalize if constant value
         parameter_assignments = {
             self._encode_state_var(k.name): Real(float(k.lb))
             for k in parameters
             if k.lb == k.ub
         }
-
-        # # to pysmt
-        # parameter_assignments = {
-        #     k: sympy_to_pysmt(to_sympy(v, [k.name for k in parameters]))
-        #     for k, v in parameter_assignments.items()
-        # }
-
-        # substitute and simplify
-        # parameter_assignments = self._propagate_substitutions(parameter_assignments)
-
-        # # # TODO Use init for the substitutions
-        # # init_assignments = {
-        # #     self._encode_state_var(k, time=0): scenario.model._get_init_value(k)
-        # #     for k in scenario.model._state_var_names()
-        # # }
-        # # init_assignments = {
-        # #     s: (Real(v) if isinstance(v, float) else Symbol(v, REAL))
-        # #     for s, v in init_assignments.items()
-        # # }
-
-        # time_var = scenario.model._time_var()
-        # if time_var is not None:
-        #     time_var_name = scenario.model._time_var_id(time_var)
-        #     time_symbol = self._encode_state_var(
-        #         time_var_name, time=0
-        #     )  # Needed so that there is a pysmt symbol for 't'
-
-        #     if self.config.substitute_subformulas:
-        #         init_assignments[time_symbol] = Real(0.0)
 
         return parameter_assignments
 
@@ -497,20 +471,35 @@ class Encoder(ABC, BaseModel):
         return configurations, max_step_index, max_step_size
 
     def _define_init_term(
-        self, model: Model, var: str, init_time: int, substitutions=None
+        self,
+        scenario: "AnalysisScenario",
+        var: str,
+        init_time: int,
+        substitutions=None,
     ):
-        value = model._get_init_value(var)
+        value = scenario.model._get_init_value(var, scenario, self.config)
 
         init_term = None
         substitution = ()
 
         if isinstance(value, FNode):
-            value_expr = sympy_to_pysmt(to_sympy(value, model._symbols()))
+            value_expr = to_sympy(value, scenario.model._symbols())
             if self.config.substitute_subformulas and substitutions:
-                value_expr = value_expr.substitute(substitutions).simplify()
-            # value_symbol = (
-            #     Symbol(value, REAL) if isinstance(value, str) else Real(value)
-            # )
+                value_expr = (
+                    sympy_to_pysmt(value_expr)
+                    .substitute(substitutions)
+                    .simplify()
+                )
+                # value_expr = FUNMANSimplifier.sympy_simplify(
+                #             value_expr,
+                #             parameters=scenario.model_parameters(),
+                #             substitutions=substitutions,
+                #             threshold=self.config.series_approximation_threshold,
+                #             taylor_series_order=self.config.taylor_series_order,
+                #         )
+            else:
+                value_expr = sympy_to_pysmt(value_expr)
+
             substitution = (
                 self._encode_state_var(var, time=init_time),
                 value_expr,
@@ -539,17 +528,6 @@ class Encoder(ABC, BaseModel):
         # Generate Parameter symbols and assignments
         substitutions = self._initialize_substitutions(scenario)
         initial_state = And([Equals(k, v) for k, v in substitutions.items()])
-        # Substitute parameters into initial state
-        # new_subs = {}
-        # for var, sub in self._timed_model_elements["time_step_substitutions"][
-        #     step_size_idx
-        # ].items():
-        #     new_subs[var] = sub.substitute(parameter_subs).simplify()
-
-        # self._timed_model_elements["time_step_substitutions"][step_size_idx] = {
-        #     **parameter_subs,
-        #     **new_subs,
-        # }
 
         state_var_names = scenario.model._state_var_names()
 
@@ -567,7 +545,7 @@ class Encoder(ABC, BaseModel):
 
         initial_state_vars_and_subs = [
             self._define_init_term(
-                scenario.model, var, init_time, substitutions=substitutions
+                scenario, var, init_time, substitutions=substitutions
             )
             for var in state_var_names
         ]
@@ -697,6 +675,8 @@ class Encoder(ABC, BaseModel):
     def encode_query_layer(
         self,
         query: Query,
+        scenario: "AnalysisScenario",
+        config: "FUNMANConfig",
         layer_idx: int,
         step_size: int = None,
         normalize=True,
@@ -724,7 +704,12 @@ class Encoder(ABC, BaseModel):
 
         if type(query) in query_handlers:
             layer = query_handlers[type(query)](
-                query, layer_idx, step_size, normalize=normalize
+                query,
+                scenario,
+                config,
+                layer_idx,
+                step_size,
+                normalize=normalize,
             )
             return layer
             # encoded_query.substitute(substitutions)
@@ -735,7 +720,9 @@ class Encoder(ABC, BaseModel):
                 f"Do not know how to encode query of type {type(query)}"
             )
 
-    def _return_encoded_query(self, model_encoding, query, normalize=True):
+    def _return_encoded_query(
+        self, query, scenario, config, layer_idx, step_size, normalize=True
+    ):
         return (
             query._formula,
             {str(v): v for v in query._formula.get_free_variables()},
@@ -748,10 +735,12 @@ class Encoder(ABC, BaseModel):
             else str(query.variable)
         )
 
-    def _encode_query_and(self, query, layer_idx, step_size, normalize=True):
+    def _encode_query_and(
+        self, query, scenario, config, layer_idx, step_size, normalize=True
+    ):
         queries = [
             self.encode_query_layer(
-                q, layer_idx, step_size, normalize=normalize
+                q, scenario, config, layer_idx, step_size, normalize=normalize
             )
             for q in query.queries
         ]
@@ -766,20 +755,22 @@ class Encoder(ABC, BaseModel):
     def _normalize(self, value):
         return sympy_to_pysmt(
             to_sympy(
-                Div(value, self._scenario.model.normalization()),
+                Div(value, Real(self._scenario.normalization_constant)),
                 self._scenario.model._symbols(),
             )
         )
 
-    def _encode_query_le(self, query, layer_idx, step_size, normalize=True):
+    def _encode_query_le(
+        self, query, scenario, config, layer_idx, step_size, normalize=True
+    ):
         step_size_idx = self._timed_model_elements["step_sizes"].index(
             step_size
         )
         time = self._timed_model_elements["state_timepoints"][step_size_idx][
             layer_idx
         ]
-        if normalize:
-            ub = self._normalize(Real(query.ub))
+        if config.normalize:
+            ub = Div(Real(query.ub), Real(scenario.normalization_constant))
         else:
             ub = Real(query.ub)
         q = LE(
@@ -789,15 +780,17 @@ class Encoder(ABC, BaseModel):
 
         return (q, {str(v): v for v in q.get_free_variables()})
 
-    def _encode_query_ge(self, query, layer_idx, step_size, normalize=True):
+    def _encode_query_ge(
+        self, query, scenario, config, layer_idx, step_size, normalize=True
+    ):
         step_size_idx = self._timed_model_elements["step_sizes"].index(
             step_size
         )
         time = self._timed_model_elements["state_timepoints"][step_size_idx][
             layer_idx
         ]
-        if normalize:
-            lb = self._normalize(query.lb)
+        if config.normalize:
+            lb = Div(Real(query.lb), Real(scenario.normalization_constant))
         else:
             lb = Real(query.lb)
         q = GE(
@@ -806,7 +799,9 @@ class Encoder(ABC, BaseModel):
         )
         return (q, {str(v): v for v in q.get_free_variables()})
 
-    def _encode_query_true(self, query, layer_idx, step_size, normalize=True):
+    def _encode_query_true(
+        self, query, scenario, config, layer_idx, step_size, normalize=True
+    ):
         return (TRUE(), {})
 
     def symbol_timeseries(
@@ -872,7 +867,11 @@ class Encoder(ABC, BaseModel):
         return vals
 
     def interval_to_smt(
-        self, p: str, i: Interval, closed_upper_bound: bool = False
+        self,
+        p: str,
+        i: Interval,
+        closed_upper_bound: bool = False,
+        infinity_constraints=False,
     ) -> FNode:
         """
         Convert the interval into contraints on parameter p.
@@ -894,13 +893,13 @@ class Encoder(ABC, BaseModel):
         else:
             lower = (
                 GE(Symbol(p, REAL), Real(i.lb))
-                if i.lb != NEG_INFINITY
+                if i.lb != NEG_INFINITY or infinity_constraints
                 else TRUE()
             )
             upper_ineq = LE if closed_upper_bound else LT
             upper = (
                 upper_ineq(Symbol(p, REAL), Real(i.ub))
-                if i.ub != POS_INFINITY
+                if i.ub != POS_INFINITY or infinity_constraints
                 else TRUE()
             )
             return And(
@@ -913,7 +912,12 @@ class Encoder(ABC, BaseModel):
             [Equals(p.symbol(), Real(value)) for p, value in pt.values.items()]
         )
 
-    def box_to_smt(self, box: Box, closed_upper_bound: bool = False):
+    def box_to_smt(
+        self,
+        box: Box,
+        closed_upper_bound: bool = False,
+        infinity_constraints=False,
+    ):
         """
         Compile the interval for each parameter into SMT constraints on the corresponding parameter.
 
@@ -930,7 +934,10 @@ class Encoder(ABC, BaseModel):
         return And(
             [
                 self.interval_to_smt(
-                    p, interval, closed_upper_bound=closed_upper_bound
+                    p,
+                    interval,
+                    closed_upper_bound=closed_upper_bound,
+                    infinity_constraints=infinity_constraints,
                 )
                 for p, interval in box.bounds.items()
             ]

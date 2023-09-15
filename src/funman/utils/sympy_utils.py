@@ -55,10 +55,11 @@ class SympySerializer(IdentityDagWalker):
         return sympy.Symbol(formula.symbol_name())
 
     def walk_real_constant(self, formula, args, **kwargs):
-        return formula.constant_value()
+        value = formula.constant_value()
+        return sympy.Rational(value)
 
     def walk_div(self, formula, args, **kwargs):
-        return sympify(args[0] / args[1])
+        return sympy.Mul(args[0], sympy.Pow(args[1], -1))
 
     def walk_pow(self, formula, args, **kwargs):
         return sympy.Pow(args[0], args[1])
@@ -133,7 +134,9 @@ def to_sympy(
     formula: Union[FNode, str],
     str_symbols: List[str],
 ) -> Expr:
-    if isinstance(formula, str):
+    if isinstance(formula, float):
+        expr = formula
+    elif isinstance(formula, str):
         unreserved_symbols = [replace_reserved(s) for s in str_symbols]
         clean_expr = replace_reserved(formula)
         symbol_map = {s: symbols(s) for s in unreserved_symbols}

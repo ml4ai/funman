@@ -4,7 +4,7 @@ from .translate import Encoder, Encoding
 
 
 class DecapodeEncoder(Encoder):
-    def encode_model(self, model: "Model") -> Encoding:
+    def encode_model(self, scenario: "AnalysisScenario") -> Encoding:
         """
         Encode a model into an SMTLib formula.
 

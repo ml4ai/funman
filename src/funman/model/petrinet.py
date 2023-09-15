@@ -2,9 +2,10 @@ from typing import Dict, List, Union
 
 import graphviz
 import sympy
-from pydantic import ConfigDict, BaseModel
+from pydantic import BaseModel, ConfigDict
 from pysmt.shortcuts import REAL, Div, Plus, Real, Symbol
 
+from funman.funman import FUNMANConfig
 from funman.representation.representation import ModelParameter
 from funman.translate.petrinet import PetrinetEncoder
 from funman.utils.sympy_utils import substitute, to_sympy
@@ -136,10 +137,21 @@ class AbstractPetriNetModel(Model):
 
         return dot
 
+    def calculate_normalization_constant(
+        self, scenario: "AnalysisScenario", config: "FUNMANConfig"
+    ) -> float:
+        vars = self._state_var_names()
+        values = {v: self._get_init_value(v, scenario, config) for v in vars}
+        if all(v.is_constant() for v in values.values()):
+            return float(sum(v.constant_value() for v in values.values()))
+        else:
+            raise Exception(
+                f"Cannot calculate the normalization constant for {type(self)} because the initial state variables are not constants. Try setting the 'normalization_constant' in the configuration to constant."
+            )
+
 
 class GeneratedPetriNetModel(AbstractPetriNetModel):
-    model_config = ConfigDict(arbitrary_types_allowed=True
-    )
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
     petrinet: GeneratedPetrinet
     _transition_rates_cache: Dict[str, Union[sympy.Expr, str]] = {}
@@ -182,8 +194,10 @@ class GeneratedPetriNetModel(AbstractPetriNetModel):
             symbols += [self._time_var().id]
         return symbols
 
-    def _get_init_value(self, var: str, normalize: bool = True):
-        value = Model._get_init_value(self, var)
+    def _get_init_value(
+        self, var: str, scenario: "AnalysisScenario", config: "FUNMANConfig"
+    ):
+        value = Model._get_init_value(self, var, scenario, config)
         if value is None:
             if hasattr(self.petrinet.semantics, "ode"):
                 initials = self.petrinet.semantics.ode.initials
@@ -203,9 +217,8 @@ class GeneratedPetriNetModel(AbstractPetriNetModel):
         elif isinstance(value, str):
             value = Symbol(value, REAL)
 
-        if normalize:
-            norm = self.normalization()
-            value = Div(value, norm)
+        if scenario.normalization_constant:
+            value = Div(value, Real(scenario.normalization_constant))
 
         return value
 

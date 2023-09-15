@@ -31,7 +31,7 @@ from funman.utils.sympy_utils import (
 from .translate import Encoder, Encoding
 
 l = logging.getLogger(__file__)
-l.setLevel(logging.DEBUG)
+l.setLevel(logging.INFO)
 
 
 class PetrinetEncoder(Encoder):
@@ -180,9 +180,7 @@ class PetrinetEncoder(Encoder):
                     flows = FUNMANSimplifier.sympy_simplify(
                         # flows.substitute(substitutions),
                         to_sympy(
-                            flows.substitute(substitutions)
-                            .simplify()
-                            .serialize(),
+                            flows.substitute(substitutions).simplify(),
                             scenario.model._symbols(),
                         ),
                         parameters=scenario.model_parameters(),
@@ -199,7 +197,7 @@ class PetrinetEncoder(Encoder):
 
         if self.config.use_compartmental_constraints:
             compartmental_bounds = self._encode_compartmental_bounds(
-                scenario.model, next_step, substitutions=substitutions
+                scenario, next_step, substitutions=substitutions
             ).simplify()
         else:
             compartmental_bounds = TRUE()
@@ -233,7 +231,7 @@ class PetrinetEncoder(Encoder):
 
         if self.config.use_compartmental_constraints:
             compartmental_bounds = self._encode_compartmental_bounds(
-                scenario.model, 0
+                scenario, 0
             )
             if self.config.substitute_subformulas and substitutions:
                 compartmental_bounds = compartmental_bounds.substitute(
@@ -246,36 +244,62 @@ class PetrinetEncoder(Encoder):
         return initial_state, substitutions
 
     def _encode_compartmental_bounds(
-        self, model: "Model", step, substitutions: Dict[FNode, FNode] = {}
+        self,
+        scenario: "AnalysisScenario",
+        step,
+        substitutions: Dict[FNode, FNode] = {},
     ):
         bounds = []
-        for var in model._state_vars():
+        for var in scenario.model._state_vars():
             lb = (
                 GE(
                     self._encode_state_var(
-                        model._state_var_name(var), time=step
+                        scenario.model._state_var_name(var), time=step
                     ),
                     Real(0.0),
                 )
                 # .substitute(substitutions)
                 # .simplify()
             )
-            ub = LE(
-                self._encode_state_var(model._state_var_name(var), time=step),
-                Plus(
-                    [
-                        self._encode_state_var(
-                            model._state_var_name(var1), time=step
-                        )
-                        for var1 in model._state_vars()
-                    ]
-                )
-                .substitute(substitutions)
-                .simplify(),
+            population = (
+                Real(1.0)
+                if self.config.normalize
+                else Real(scenario.normalization_constant)
             )
-            bounds += [lb, ub]
+            ub = LE(
+                self._encode_state_var(
+                    scenario.model._state_var_name(var), time=step
+                ),
+                population
+                # Plus(
+                #     [
+                #         self._encode_state_var(
+                #             model._state_var_name(var1), time=step
+                #         )
+                #         for var1 in model._state_vars()
+                #     ]
+                # )
+                # .substitute(substitutions)
+                # .simplify(),
+            )
 
-        return And(bounds)
+            bounds += [lb, ub]
+        # noise_var = Symbol("noise", REAL)
+        noise_const = Real(1e-3)
+        sum_vars = Plus(
+            [
+                self._encode_state_var(
+                    scenario.model._state_var_name(var), time=step
+                )
+                for var in scenario.model._state_vars()
+            ]
+        )
+        total = And(
+            LE(sum_vars, Plus(population, noise_const)),
+            LE(Minus(population, noise_const), sum_vars),
+        )
+
+        return And(bounds + [total])
 
     def _encode_transition_term(
         self, transition, current_state, next_state, scenario, substitutions={}

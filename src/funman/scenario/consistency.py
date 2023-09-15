@@ -6,7 +6,7 @@ from typing import Callable, Dict, Optional, Union
 
 import matplotlib.pyplot as plt
 import pandas as pd
-from pydantic import ConfigDict, BaseModel
+from pydantic import BaseModel, ConfigDict
 from pysmt.solvers.solver import Model as pysmt_Model
 
 from funman.model.bilayer import BilayerModel, validator
@@ -116,6 +116,13 @@ class ConsistencyScenario(AnalysisScenario, BaseModel):
         self._filter_parameters()
         num_parameters = len(self.parameters)
 
+        if config.normalization_constant is not None:
+            self.normalization_constant = config.normalization_constant
+        else:
+            self.normalization_constant = (
+                self.model.calculate_normalization_constant(self, config)
+            )
+
         if self._smt_encoder is None:
             self._smt_encoder = self.model.default_encoder(config, self)
 
@@ -149,7 +156,9 @@ class ConsistencyScenario(AnalysisScenario, BaseModel):
                                 (
                                     "F"
                                     if s is None
-                                    else ("T" if (s is not None and s) else " ")
+                                    else (
+                                        "T" if (s is not None and s) else " "
+                                    )
                                 )
                                 for s in t
                             ]
@@ -263,12 +272,16 @@ class ConsistencyScenarioResult(AnalysisScenarioResult, BaseModel):
         """
         if self.consistent:
             if variables is not None:
-                ax = self.dataframe(point)[variables].plot(marker="o", **kwargs)
+                ax = self.dataframe(point)[variables].plot(
+                    marker="o", **kwargs
+                )
             else:
                 ax = self.dataframe(point).plot(marker="o", **kwargs)
             plt.show(block=False)
         else:
-            raise Exception(f"Cannot plot result for an inconsistent scenario.")
+            raise Exception(
+                f"Cannot plot result for an inconsistent scenario."
+            )
         return ax
 
     def __repr__(self) -> str:

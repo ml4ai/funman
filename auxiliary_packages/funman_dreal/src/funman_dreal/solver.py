@@ -25,7 +25,7 @@ from pysmt.smtlib.script import SmtLibCommand
 from pysmt.smtlib.solver import SmtLibOptions, SmtLibSolver
 from pysmt.solvers.eager import EagerModel
 from pysmt.solvers.smtlib import SmtLibBasicSolver, SmtLibIgnoreMixin
-from pysmt.solvers.solver import Solver, SolverOptions
+from pysmt.solvers.solver import Solver, SolverOptions, UnsatCoreSolver
 from tenacity import retry
 
 import docker
@@ -407,7 +407,9 @@ class DReal(SmtLibSolver):
         return rval.getvalue()
 
 
-class DRealNative(Solver, SmtLibBasicSolver, SmtLibIgnoreMixin):
+class DRealNative(
+    Solver, UnsatCoreSolver, SmtLibBasicSolver, SmtLibIgnoreMixin
+):
     LOGICS = [QF_NRA]
     OptionsClass = SolverOptions
 
@@ -458,6 +460,8 @@ class DRealNative(Solver, SmtLibBasicSolver, SmtLibIgnoreMixin):
             ):
                 self.config.mcts = True
 
+        self.config.unsat_core = True
+
         self.context = dreal.Context(self.config)
         self.context.SetLogic(dreal.Logic.QF_NRA)
 
@@ -476,6 +480,7 @@ class DRealNative(Solver, SmtLibBasicSolver, SmtLibIgnoreMixin):
             elapser = None
 
     def __del__(self):
+        # print("Exit()")
         self.context.Exit()  # Exit() only logs within dreal
         self.context = None
 
@@ -548,6 +553,19 @@ class DRealNative(Solver, SmtLibBasicSolver, SmtLibIgnoreMixin):
         self.model = result
         return result
 
+    def get_unsat_core(self):
+        unsat_core = self.context.get_unsat_core()
+        f = self.converter.back(unsat_core)
+        return f
+
+    def get_named_unsat_core(self):
+        """Returns the unsat core as a dict of names to formulae.
+
+        After a call to solve() yielding UNSAT, returns the unsat core as a
+        dict of names to formulae
+        """
+        raise NotImplementedError
+
     def _send_command(self, cmd):
         handlers = {
             smtcmd.SET_LOGIC: self.cmd_set_logic,
@@ -571,9 +589,13 @@ class DRealNative(Solver, SmtLibBasicSolver, SmtLibIgnoreMixin):
 
     def get_value(self, item):
         # print(f"get_value() {item}: {self.model[item]}")
-        mid = (self.model[item].ub() - self.model[item].lb()) / 2.0
-        mid = mid + self.model[item].lb()
-        if not math.isinf(mid):
+        ub = self.model[item].ub()
+        lb = self.model[item].lb()
+        mid = (ub - lb) / 2.0
+        mid = mid + lb
+        if not mid.is_integer() and (ub.is_integer() or lb.is_integer()):
+            return Real(lb) if lb.is_integer() else Real(ub)
+        elif not math.isinf(mid):
             return Real(mid)
         else:
             return Real(self.model[item].lb())

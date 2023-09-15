@@ -312,3 +312,6 @@ gmon.out
 ./*.json
 *.smt2
 **/profile.stats
+unsat.core
+.gitignore
+core.dimacs

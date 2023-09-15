@@ -7,6 +7,7 @@ from functools import reduce
 from typing import Dict, List, Tuple
 
 import pysmt
+from pydantic import ConfigDict
 from pysmt.formula import FNode
 from pysmt.shortcuts import (
     GE,
@@ -39,7 +40,6 @@ from funman.representation.representation import Box, Interval
 from funman.translate import Encoder, Encoding, EncodingOptions
 from funman.translate.simplifier import FUNMANSimplifier
 from funman.utils.sympy_utils import to_sympy
-from pydantic import ConfigDict
 
 l = logging.Logger(__name__)
 
@@ -292,7 +292,9 @@ class BilayerEncoder(Encoder):
     ):
         ans = And(
             [
-                self._encode_measurements_timepoint(measurements, timepoints[i])
+                self._encode_measurements_timepoint(
+                    measurements, timepoints[i]
+                )
                 for i in range(len(timepoints))
             ]
         )
@@ -309,6 +311,26 @@ class BilayerEncoder(Encoder):
             ]
         )
         return observable_defs
+
+    def can_encode():
+        """
+        Return boolean indicating if the scenario can be encoded with the FUNMANConfig
+        """
+        encodable = True
+        reasons = []
+        if self.config.substitute_subformulas:
+            if not all(
+                v in self._scenario.model.init_values
+                for v in self._scenario.model._state_var_names()
+            ):
+                encodable = False
+                reasons.append(
+                    "Cannot use configuration option 'substitute_subformulas=True' if there is no init_values specified for model."
+                )
+        if len(reasons) > 0:
+            l.error(reasons)
+
+        return encodable
 
     def _encode_bilayer(
         self, scenario, timepoints, time_dependent_parameters=False
@@ -339,7 +361,9 @@ class BilayerEncoder(Encoder):
         bilayer = scenario.model.bilayer
         ## Calculate time step size
         time_step_size = next_timepoint - timepoint
-        eqns = []  ## List of SMT equations for a given timepoint. These will be
+        eqns = (
+            []
+        )  ## List of SMT equations for a given timepoint. These will be
         ## joined by an "And" command and returned
 
         for t in bilayer._tangent:  ## Loop over _tangents (derivatives)

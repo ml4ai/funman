@@ -10,12 +10,13 @@ from decimal import ROUND_CEILING, Decimal
 from statistics import mean as average
 from typing import Dict, List, Literal, Optional, Union
 
-from pydantic import ConfigDict, BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from pysmt.fnode import FNode
 from pysmt.shortcuts import REAL, Symbol
 
 import funman.utils.math_utils as math_utils
 from funman.constants import BIG_NUMBER, NEG_INFINITY, POS_INFINITY
+from funman.representation.explanation import Explanation
 from funman.utils.sympy_utils import to_sympy
 
 from .symbol import ModelSymbol
@@ -33,7 +34,7 @@ LABEL_ANY = "any"
 LABEL_ALL = "all"
 
 
-class ModelParameter(BaseModel):
+class Parameter(BaseModel):
     name: Union[str, ModelSymbol]
     lb: Union[float, str] = NEG_INFINITY
     ub: Union[float, str] = POS_INFINITY
@@ -41,11 +42,14 @@ class ModelParameter(BaseModel):
     def width(self) -> Union[str, float]:
         return math_utils.minus(self.ub, self.lb)
 
+    def is_unbound(self) -> bool:
+        return self.lb == NEG_INFINITY and self.ub == POS_INFINITY
+
     def __hash__(self):
         return abs(hash(self.name))
 
 
-class LabeledParameter(ModelParameter):
+class LabeledParameter(Parameter):
     label: Literal["any", "all"] = LABEL_ANY
 
     def is_synthesized(self) -> bool:
@@ -407,6 +411,7 @@ class Point(BaseModel):
     type: Literal["point"] = "point"
     label: Label = LABEL_UNKNOWN
     values: Dict[str, float]
+    normalized_values: Optional[Dict[str, float]] = None
 
     # def __init__(self, **kw) -> None:
     #     super().__init__(**kw)
@@ -423,16 +428,24 @@ class Point(BaseModel):
         res = Point(values={k: v for k, v in data["values"].items()})
         return res
 
-    def denormalize(self, model):
-        norm = to_sympy(model.normalization(), model._symbols())
-        denormalized_values = {
-            k: (v * norm if model._is_normalized(k) else v)
-            for k, v in self.values.items()
-        }
-        denormalized_point = Point(
-            label=self.label, values=denormalized_values, type=self.type
-        )
-        return denormalized_point
+    def denormalize(self, scenario):
+        if scenario.normalization_constant:
+            norm = to_sympy(
+                scenario.normalization_constant, scenario.model._symbols()
+            )
+            denormalized_values = {
+                k: (v * norm if scenario.model._is_normalized(k) else v)
+                for k, v in self.values.items()
+            }
+            denormalized_point = Point(
+                label=self.label,
+                values=denormalized_values,
+                normalized_values=self.values,
+                type=self.type,
+            )
+            return denormalized_point
+        else:
+            return self
 
     def __hash__(self):
         return int(
@@ -463,6 +476,7 @@ class Box(BaseModel):
     type: Literal["box"] = "box"
     label: Label = LABEL_UNKNOWN
     bounds: Dict[str, Interval] = {}
+    explanation: Optional[Explanation] = None
     cached_width: Optional[float] = Field(default=None, exclude=True)
 
     def __hash__(self):

@@ -6,3 +6,4 @@ pycln
 pytest-cov
 twine
 autodoc_pydantic
+parameterized

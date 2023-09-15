@@ -1,12 +1,12 @@
 from typing import Dict, List, Tuple
 
 import graphviz
+from pydantic import ConfigDict
 from pysmt.shortcuts import REAL, Div, Real, Symbol
 
 from funman.representation import ModelParameter
 
 from .model import Model
-from pydantic import ConfigDict
 
 
 class EnsembleModel(Model):
@@ -37,7 +37,17 @@ class EnsembleModel(Model):
 
         return EnsembleEncoder(config=config, scenario=scenario)
 
-    def _get_init_value(self, var: str, normalize=True):
+    def calculate_normalization_constant(
+        self, scenario: "AnalysisScenario", config: "FUNMANConfig"
+    ) -> float:
+        return max(
+            m.calculate_normalization_constant(scenario, config)
+            for m in self.models
+        )
+
+    def _get_init_value(
+        self, var: str, scenario: "AnalysisScenario", config: "FUNMANConfig"
+    ):
         (m_name, orig_var) = self._var_name_map[var]
         value = self._model_name_map[m_name].init_values[orig_var]
         if isinstance(value, str):
@@ -45,8 +55,8 @@ class EnsembleModel(Model):
         else:
             value = Real(value)
 
-        if normalize:
-            norm = self.normalization()
+        if scenario.normalization_constant:
+            norm = Real(scenario.normalization_constant)
             value = Div(value, norm)
         return value
 

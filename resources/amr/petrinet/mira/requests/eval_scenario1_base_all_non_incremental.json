@@ -1,0 +1,26 @@
+{
+    "query": {},
+    "parameters": [
+        {
+            "name": "beta",
+            "lb": 0.1,
+            "ub": 0.9,
+            "label": "all"
+        }
+    ],
+    "structure_parameters": [
+        {
+            "name": "num_steps",
+            "lb": 100,
+            "ub": 100,
+            "label": "all"
+        },
+        {
+            "name": "step_size",
+            "lb": 2,
+            "ub": 2,
+            "label": "all"
+        }
+    ],
+    "config": {}
+}

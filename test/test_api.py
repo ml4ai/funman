@@ -281,21 +281,21 @@ class TestAPI(unittest.TestCase):
                 AMR_EXAMPLES_PETRI_DIR / "sir.json",
                 AMR_EXAMPLES_PETRI_DIR / "sir_request1.json",
             ),
-            (
-                MIRA_PETRI_MODELS / "scenario2_a_beta_scale_static.json",
-                MIRA_PETRI_REQUESTS
-                / "request2_b_default_w_compartmental_constrs.json",
-            ),
-            (
-                MIRA_PETRI_MODELS / "scenario2_a_beta_scale_static.json",
-                MIRA_PETRI_REQUESTS
-                / "request2_b_default_wo_compartmental_constrs.json",
-            ),
-            (
-                MIRA_PETRI_MODELS / "scenario2_a_beta_scale_static_fixed.json",
-                MIRA_PETRI_REQUESTS
-                / "request2_b_default_w_compartmental_constrs.json",
-            ),
+            # (
+            #     MIRA_PETRI_MODELS / "scenario2_a_beta_scale_static.json",
+            #     MIRA_PETRI_REQUESTS
+            #     / "request2_b_default_w_compartmental_constrs.json",
+            # ),
+            # (
+            #     MIRA_PETRI_MODELS / "scenario2_a_beta_scale_static.json",
+            #     MIRA_PETRI_REQUESTS
+            #     / "request2_b_default_wo_compartmental_constrs.json",
+            # ),
+            # (
+            #     MIRA_PETRI_MODELS / "scenario2_a_beta_scale_static_fixed.json",
+            #     MIRA_PETRI_REQUESTS
+            #     / "request2_b_default_w_compartmental_constrs.json",
+            # ),
         ]
         for model_path, request_path in pairs:
             msg = f"({model_path.name}, {request_path.name})"

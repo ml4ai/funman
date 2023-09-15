@@ -7,7 +7,7 @@ import threading
 from typing import Callable, Optional, Union
 
 import multiprocess as mp
-from pydantic import ConfigDict, BaseModel, field_validator
+from pydantic import BaseModel, ConfigDict, field_validator
 
 from funman.utils.handlers import (
     NoopResultHandler,
@@ -72,16 +72,18 @@ class FUNMANConfig(BaseModel):
     substitute_subformulas: bool = True
     """Enforce compartmental variable constraints"""
     use_compartmental_constraints: bool = True
-    """Normalize"""
+    """Normalize scenarios prior to solving"""
     normalize: bool = True
+    """Normalization constant to use for normalization (attempt to compute if None)"""
+    normalization_constant: Optional[float] = None
     """ Simplify query by propagating substutions """
     simplify_query: bool = True
     """ Series approximation threshold for dropping series terms """
-    series_approximation_threshold: float = 0
+    series_approximation_threshold: float = 1e-8
     """ Generate profiling output"""
     profile: bool = False
     """ Use Taylor series of given order to approximate transition function, if None, then do not compute series """
-    taylor_series_order: Optional[int] = None
+    taylor_series_order: int = 3
 
     @field_validator("solver")
     @classmethod
@@ -132,7 +134,6 @@ class Funman(object):
             The resulting data, statistics, and other relevant information
             produced by the analysis.
         """
-        problem.model._normalize = config.normalize
 
         if config.profile:
             import cProfile

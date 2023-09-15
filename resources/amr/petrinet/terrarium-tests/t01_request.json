@@ -1,0 +1,45 @@
+{
+    "query": {
+        "queries": [
+            {
+                "variable": "I",
+                "ub": 0.9
+            }
+        ]
+    },
+    "parameters": [
+        {
+            "name": "beta"
+        },
+        {
+            "name": "gamma"
+        },
+        {
+            "name": "S0"
+        },
+        {
+            "name": "I0"
+        },
+        {
+            "name": "R0"
+        }
+    ],
+    "structure_parameters": [
+        {
+            "name": "step_size",
+            "lb": 1.0,
+            "ub": 1.0,
+            "label": "all"
+        },
+        {
+            "name": "num_steps",
+            "lb": 2.0,
+            "ub": 2.0,
+            "label": "all"
+        }
+    ],
+    "config": {
+        "profile": true,
+        "normalize": 1.0
+    }
+}

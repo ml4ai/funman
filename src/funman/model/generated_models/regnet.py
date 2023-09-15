@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Optional, Union
 
-from pydantic import ConfigDict, AnyUrl, BaseModel, Field, RootModel
+from pydantic import AnyUrl, BaseModel, ConfigDict, Field, RootModel
 
 
 class Distribution(BaseModel):

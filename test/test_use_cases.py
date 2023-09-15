@@ -129,6 +129,7 @@ class TestUseCases(unittest.TestCase):
                 number_of_processes=1,
                 normalize=False,
                 simplify_query=False,
+                normalization_constant=12,
             ),
         )
         assert result
@@ -181,11 +182,12 @@ class TestUseCases(unittest.TestCase):
         result: ParameterSynthesisScenarioResult = funman.solve(
             scenario,
             config=FUNMANConfig(
-                solver="dreal",
-                dreal_mcts=True,
+                # solver="dreal",
+                # dreal_mcts=True,
                 tolerance=1e-8,
                 number_of_processes=1,
                 normalize=False,
+                simplify_query=False,
                 _handler=ResultCombinedHandler(
                     [
                         ResultCacheWriter(f"box_search.json"),
