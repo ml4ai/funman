@@ -179,12 +179,7 @@ class FunmanWorker:
                 raise Exception(
                     "Cannot update current_results as it is already finalized"
                 )
-
-            # TODO handle copy?
-            self.current_results.parameter_space = results
-            # TODO set progress
-            print("TODO compute progress")
-            self.current_results.progress = 0.5
+            self.current_results.update_parameter_space(scenario, results)
 
     def _run(self, stop_event: threading.Event):
         print("FunmanWorker running...")
@@ -234,7 +229,7 @@ class FunmanWorker:
                         ),
                     )
                     with self._results_lock:
-                        self.current_results.finalize_result(result)
+                        self.current_results.finalize_result(scenario, result)
                     print(f"Completed work on: {work.id}")
                 except Exception as e:
                     print(

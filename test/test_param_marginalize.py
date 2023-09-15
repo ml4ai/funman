@@ -131,10 +131,10 @@ def marginalize(b1, b2, var):
                 marg_var_ub_1 = bound.ub
                 bounds_1 = Interval(marg_var_lb_1, marg_var_ub_1)
 
-        interval_union_result = Interval.union(bounds_0, bounds_1)[0]
+        interval_union_result = Interval.union(bounds_0, bounds_1)
         print(interval_union_result)
-        interval_union_height = Interval.union(bounds_0, bounds_1)[1]
-        print(interval_union_height)
+        # interval_union_height = Interval.union(bounds_0, bounds_1)[1]
+        # print(interval_union_height)
         if (
             len(interval_union_result) == 1
         ):  ## intersection along all variables (including marginal): form the union.

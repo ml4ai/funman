@@ -8,7 +8,7 @@ import math
 import sys
 from decimal import Decimal
 from statistics import mean as average
-from typing import Dict, List, Literal, Optional, Union
+from typing import Dict, List, Literal, Optional, Tuple, Union
 
 from pydantic import ConfigDict, BaseModel, Field
 from pysmt.fnode import FNode
@@ -149,7 +149,7 @@ class Interval(BaseModel):
             self.lb, other.ub
         )
 
-    def width(self, normalize=None):
+    def width(self, normalize: Optional[Union[Decimal, float]] = None) -> Decimal:
         """
         The width of an interval is ub - lb.
 
@@ -159,11 +159,7 @@ class Interval(BaseModel):
             ub - lb
         """
         if self.cached_width is None:
-            if self.lb == NEG_INFINITY or self.ub == POS_INFINITY:
-                self.cached_width = BIG_NUMBER
-            else:
-                self.cached_width = self.ub - self.lb
-
+            self.cached_width = Decimal(self.ub) - Decimal(self.lb)
         if normalize is not None:
             return self.cached_width / normalize
         else:
@@ -357,8 +353,8 @@ class Interval(BaseModel):
         """
         if self == other:  ## intervals are equal, so return original interval
             ans = self
-            total_height = [self.width()]
-            return [ans], total_height
+            # total_height = [self.width()]
+            return [ans]
         else:  ## intervals are not the same. start by identifying the lower and higher intervals.
             if self.lb == other.lb:
                 if math_utils.lt(self.ub, other.lb):
@@ -377,16 +373,16 @@ class Interval(BaseModel):
             minInterval.ub, maxInterval.lb
         ):  ## intervals intersect.
             ans = Interval(lb=minInterval.lb, ub=maxInterval.ub)
-            total_height = ans.width()
-            return [ans], total_height
+            # total_height = ans.width()
+            return [ans]
         elif math_utils.lt(
             minInterval.ub, maxInterval.lb
         ):  ## intervals are disjoint.
             ans = [minInterval, maxInterval]
-            total_height = [
-                math_utils.plus(minInterval.width(), maxInterval.width())
-            ]
-            return ans, total_height
+            # total_height = [
+            #     math_utils.plus(minInterval.width(), maxInterval.width())
+            # ]
+            return ans
 
     def contains_value(self, value: float) -> bool:
         """
@@ -787,12 +783,12 @@ class Box(BaseModel):
         parameter_widths = {
             p: average([pt[p] for pt in point_distances]) for p in self.bounds
         }
-        normalized_parameter_widths = {
-            p: average([pt[p] for pt in point_distances])
-            / (self.bounds[p].width())
-            for p in self.bounds
-            if self.bounds[p].width() > 0
-        }
+        # normalized_parameter_widths = {
+        #     p: average([pt[p] for pt in point_distances])
+        #     / (self.bounds[p].width())
+        #     for p in self.bounds
+        #     if self.bounds[p].width() > 0
+        # }
         max_width_parameter = max(
             parameter_widths, key=lambda k: parameter_widths[k]
         )
@@ -800,7 +796,7 @@ class Box(BaseModel):
 
     def _get_max_width_Parameter(
         self, normalize={}, parameters: List[ModelParameter] = None
-    ):
+    ) -> Union[str, ModelSymbol]:
         if parameters:
             widths = {
                 parameter.name: (
@@ -815,7 +811,7 @@ class Box(BaseModel):
         else:
             widths = {
                 p: (
-                    self.bounds[p].width(normalize=normalize[parameter.name])
+                    self.bounds[p].width(normalize=normalize[p])
                     if p in normalize
                     else self.bounds[p].width()
                 )
@@ -823,11 +819,11 @@ class Box(BaseModel):
             }
         max_width = max(widths, key=widths.get)
 
-        return max_width, widths[max_width]
+        return max_width
 
     def _get_min_width_Parameter(
         self, normalize={}, parameters: List[ModelParameter] = None
-    ):
+    ) -> Union[str, ModelSymbol]:
         if parameters:
             widths = {
                 parameter.name: (
@@ -842,7 +838,7 @@ class Box(BaseModel):
         else:
             widths = {
                 p: (
-                    self.bounds[p].width(normalize=normalize[parameter.name])
+                    self.bounds[p].width(normalize=normalize[p])
                     if p in normalize
                     else self.bounds[p].width()
                 )
@@ -850,38 +846,46 @@ class Box(BaseModel):
             }
         min_width = min(widths, key=widths.get)
 
-        return min_width, widths[min_width]
+        return min_width
 
     def _get_product_of_parameter_widths(
-        self, normalize={}, parameters: List[ModelParameter] = None
+        self, normalize = None, parameters: List[ModelParameter] = None,
+        *, ignore_zero_width_dimensions = True
     ) -> Decimal:
-        if parameters:
-            widths = {
-                parameter.name: (
-                    self.bounds[parameter.name].width(
-                        normalize=normalize[parameter.name]
-                    )
-                    if parameter.name in normalize
-                    else self.bounds[parameter.name].width()
-                )
-                for parameter in parameters
-            }
+        # construct a list of parameter names to consider
+        # if no parameters are requested then use all of the bounds
+        if parameters is None:
+            pnames = list(self.bounds.keys())
         else:
-            widths = {
-                p: (
-                    self.bounds[p].width(normalize=normalize[parameter.name])
-                    if p in normalize
-                    else self.bounds[p].width()
-                )
-                for p in self.bounds
-            }
+            pnames = [p.name for p in parameters]
 
+        # handle the volume of zero dimensions
+        if len(pnames) <= 0:
+            # TODO undefined?
+            return Decimal(0.0)
+        
+        # if no parameters are normalized then default to an empty dict
+        if normalize is None:
+            normalize = {}
+
+        # get a mapping of parameters to widths
+        # use normalize.get(p.name, None) to select between default behavior and normalization
+        widths = { p:self.bounds[p].width(normalize=normalize.get(p, None)) for p in pnames }
+        if ignore_zero_width_dimensions:
+            # filter widths of zero from the 
+            widths = { p:w for p,w in widths.items() if w != 0.0 }
+
+        if len(widths) <= 0:
+            # TODO handle volume of a point
+            print("WARNING: Asking for volume of a point")
+            return Decimal(0.0)
+
+        # compute product
         product = Decimal(1.0)
         for param_width in widths.values():
             if param_width < 0:
                 raise Exception("Negative parameter width")
             product *= Decimal(param_width)
-
         return product
 
     def width(
@@ -899,11 +903,10 @@ class Box(BaseModel):
             Max{p: parameter}(p.ub-p.lb)
         """
         if self.cached_width is None or overwrite_cache:
-            _, width = self._get_max_width_Parameter(
+            p = self._get_max_width_Parameter(
                 normalize=normalize, parameters=parameters
             )
-            self.cached_width = width
-
+            self.cached_width = self.bounds[p].width(normalize=normalize.get(p, None))
         return self.cached_width
 
     def variance(self, overwrite_cache=False) -> float:
@@ -945,10 +948,10 @@ class Box(BaseModel):
             )
             if mid == self.bounds[p].lb or mid == self.bounds[p].ub:
                 # Fall back to box midpoint if point-based mid is degenerate
-                p, _ = self._get_max_width_Parameter()
+                p = self._get_max_width_Parameter()
                 mid = self.bounds[p].midpoint()
         else:
-            p, _ = self._get_max_width_Parameter(
+            p = self._get_max_width_Parameter(
                 normalize=normalize, parameters=parameters
             )
             mid = self.bounds[p].midpoint()
@@ -1425,32 +1428,34 @@ class ParameterSpace(BaseModel):
         # Interate through boxes in order wrt. one of the dimensions. For each box, scan the dimensions, counting the number of dimensions that each box meeting in at least one dimension, meets.
         # Merging a dimension where lb(I) = ub(I'), results in an interval I'' = [lb(I), lb(I')].
 
-        if len(group) > 0:
-            dimensions = group[0].bounds.keys()
-            # keep a sorted list of boxes by dimension based upon the upper bound in the dimension
-            sorted_dimensions = {p: [b for b in group] for p in dimensions}
-            for p, boxes in sorted_dimensions.items():
-                boxes.sort(key=lambda x: x.bounds[p].ub)
-            dim = next(iter(sorted_dimensions.keys()))
-            merged = True
-            while merged:
-                merged = False
-                for b in sorted_dimensions[dim]:
-                    # candidates for merge are all boxes that meet or are equal in a dimension
-                    candidates = b._get_merge_candidates(sorted_dimensions)
-                    # pick first candidate
-                    if len(candidates) > 0:
-                        c = next(iter(candidates))
-                        m = b._merge(c)
-                        sorted_dimensions = {
-                            p: [
-                                box if box != b else m
-                                for box in boxes
-                                if box != c
-                            ]
-                            for p, boxes in sorted_dimensions.items()
-                        }
-                        merged = True
-                        break
+        if len(group) <= 0:
+            return []
 
-            return sorted_dimensions[dim]
+        dimensions = group[0].bounds.keys()
+        # keep a sorted list of boxes by dimension based upon the upper bound in the dimension
+        sorted_dimensions = {p: [b for b in group] for p in dimensions}
+        for p, boxes in sorted_dimensions.items():
+            boxes.sort(key=lambda x: x.bounds[p].ub)
+        dim = next(iter(sorted_dimensions.keys()))
+        merged = True
+        while merged:
+            merged = False
+            for b in sorted_dimensions[dim]:
+                # candidates for merge are all boxes that meet or are equal in a dimension
+                candidates = b._get_merge_candidates(sorted_dimensions)
+                # pick first candidate
+                if len(candidates) > 0:
+                    c = next(iter(candidates))
+                    m = b._merge(c)
+                    sorted_dimensions = {
+                        p: [
+                            box if box != b else m
+                            for box in boxes
+                            if box != c
+                        ]
+                        for p, boxes in sorted_dimensions.items()
+                    }
+                    merged = True
+                    break
+
+        return sorted_dimensions[dim]

@@ -194,7 +194,7 @@ class TestCompilation(unittest.TestCase):
             parameters=parameters, model=model, query=QueryTrue(),
         )
 
-        assert scenario.search_space_volume() == 1000000000000.0
+        assert scenario.search_space_volume() == scenario.representable_space_volume()
 
     def test_ps_largest_true_box(self):
         ps = ParameterSpace(num_dimensions=2)
