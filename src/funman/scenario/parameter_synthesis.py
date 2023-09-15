@@ -6,7 +6,7 @@ from functools import partial
 from typing import Callable, Dict, List, Optional, Union
 
 from pandas import DataFrame
-from pydantic import ConfigDict, BaseModel
+from pydantic import BaseModel, ConfigDict
 from pysmt.formula import FNode
 from pysmt.shortcuts import BOOL, Iff, Symbol
 

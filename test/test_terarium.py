@@ -110,7 +110,9 @@ class TestTerarium(unittest.TestCase):
             max_steps -= 1
             assert max_steps > 0
 
-    def post_query(self, client: TestClient, model: dict, request: dict) -> str:
+    def post_query(
+        self, client: TestClient, model: dict, request: dict
+    ) -> str:
         """
         Make a POST request to /api/queries through the TestClient.
         - model: The model to query

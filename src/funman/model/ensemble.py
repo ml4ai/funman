@@ -1,12 +1,12 @@
 from typing import Dict, List, Tuple
 
 import graphviz
+from pydantic import ConfigDict
 from pysmt.shortcuts import REAL, Div, Real, Symbol
 
 from funman.representation import ModelParameter
 
 from .model import Model
-from pydantic import ConfigDict
 
 
 class EnsembleModel(Model):

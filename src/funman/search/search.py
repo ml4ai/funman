@@ -5,17 +5,17 @@ from multiprocessing import Array, Queue, Value
 from multiprocessing.managers import SyncManager
 from queue import Queue as SQueue
 from typing import Callable, Dict, List, Optional, Union
-from funman.representation.explanation import Explanation
 
 import pysmt
-from pysmt.shortcuts import Solver
 from pydantic import BaseModel, ConfigDict
+from pysmt.shortcuts import Solver
 from pysmt.solvers.solver import Model as pysmtModel
 
 from funman.funman import FUNMANConfig
+from funman.representation.explanation import Explanation
 from funman.representation.representation import Box, Interval, ModelParameter
 from funman.scenario.scenario import AnalysisScenario
-from pysmt.solvers.solver import Model as pysmtModel
+
 
 class SearchStatistics(BaseModel):
     model_config = ConfigDict(
@@ -115,5 +115,5 @@ class Search(ABC):
         if result:
             result = s.get_model()
         else:
-            result = s.get_unsat_core()
+            result = Explanation(explanation=s.get_unsat_core())
         return result

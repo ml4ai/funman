@@ -5,7 +5,7 @@ import logging
 from abc import ABC, abstractmethod
 from typing import Dict, List, Set, Tuple, Union
 
-from pydantic import ConfigDict, BaseModel
+from pydantic import BaseModel, ConfigDict
 from pysmt.constants import Numeral
 from pysmt.formula import FNode
 from pysmt.shortcuts import (
@@ -185,9 +185,7 @@ class Encoder(ABC, BaseModel):
 
     """
 
-    model_config = ConfigDict(
-        arbitrary_types_allowed=True
-    )
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
     config: FUNMANConfig
     _timed_model_elements: Dict = None

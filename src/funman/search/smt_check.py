@@ -4,13 +4,13 @@ import sys
 import threading
 from functools import partial
 from typing import Callable, Optional, Tuple, Union
-from funman.representation.explanation import Explanation
 
 from pysmt.formula import FNode
 from pysmt.logics import QF_NRA
 from pysmt.shortcuts import REAL, And, Equals, Real, Solver, Symbol
 from pysmt.solvers.solver import Model as pysmtModel
 
+from funman.representation.explanation import Explanation
 from funman.representation.representation import (
     LABEL_FALSE,
     LABEL_TRUE,
@@ -88,7 +88,7 @@ class SMTCheck(Search):
                     models[point] = result
                     consistent[point] = result_dict
                     parameter_space.true_points.append(point)
-            elif result is not None and isinstance(result, str):
+            elif result is not None and isinstance(result, Explanation):
                 box = Box(
                     bounds={
                         p.name: Interval(lb=p.lb, ub=p.ub)
@@ -138,7 +138,9 @@ class SMTCheck(Search):
             ).simplify()
         return formula, simplified_formula
 
-    def solve_formula(self, s: Solver, formula: FNode, episode) -> Union[pysmtModel, Explanation]:
+    def solve_formula(
+        self, s: Solver, formula: FNode, episode
+    ) -> Union[pysmtModel, Explanation]:
         s.push(1)
         s.add_assertion(formula)
         if episode.config.save_smtlib:

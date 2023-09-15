@@ -10,12 +10,13 @@ from decimal import ROUND_CEILING, Decimal
 from statistics import mean as average
 from typing import Dict, List, Literal, Optional, Union
 
-from pydantic import ConfigDict, BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from pysmt.fnode import FNode
 from pysmt.shortcuts import REAL, Symbol
 
 import funman.utils.math_utils as math_utils
 from funman.constants import BIG_NUMBER, NEG_INFINITY, POS_INFINITY
+from funman.representation.explanation import Explanation
 from funman.utils.sympy_utils import to_sympy
 
 from .symbol import ModelSymbol
@@ -410,7 +411,7 @@ class Point(BaseModel):
     type: Literal["point"] = "point"
     label: Label = LABEL_UNKNOWN
     values: Dict[str, float]
-    normalized_values: Optional[Dict[str, float]]
+    normalized_values: Optional[Dict[str, float]] = None
 
     # def __init__(self, **kw) -> None:
     #     super().__init__(**kw)
@@ -475,7 +476,7 @@ class Box(BaseModel):
     type: Literal["box"] = "box"
     label: Label = LABEL_UNKNOWN
     bounds: Dict[str, Interval] = {}
-    explanation: Optional[str]
+    explanation: Optional[Explanation] = None
     cached_width: Optional[float] = Field(default=None, exclude=True)
 
     def __hash__(self):

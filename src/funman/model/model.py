@@ -6,7 +6,7 @@ import uuid
 from abc import ABC
 from typing import Dict, List, Optional
 
-from pydantic import ConfigDict, BaseModel
+from pydantic import BaseModel, ConfigDict
 from pysmt.formula import FNode
 from pysmt.shortcuts import REAL, Div, Plus, Real, Symbol
 

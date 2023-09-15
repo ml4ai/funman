@@ -2,7 +2,7 @@ from typing import Dict, List, Union
 
 import graphviz
 import sympy
-from pydantic import ConfigDict, BaseModel
+from pydantic import BaseModel, ConfigDict
 from pysmt.shortcuts import REAL, Div, Plus, Real, Symbol
 
 from funman.funman import FUNMANConfig
@@ -151,8 +151,7 @@ class AbstractPetriNetModel(Model):
 
 
 class GeneratedPetriNetModel(AbstractPetriNetModel):
-    model_config = ConfigDict(arbitrary_types_allowed=True
-    )
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
     petrinet: GeneratedPetrinet
     _transition_rates_cache: Dict[str, Union[sympy.Expr, str]] = {}

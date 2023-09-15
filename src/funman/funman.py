@@ -7,7 +7,7 @@ import threading
 from typing import Callable, Optional, Union
 
 import multiprocess as mp
-from pydantic import ConfigDict, BaseModel, field_validator
+from pydantic import BaseModel, ConfigDict, field_validator
 
 from funman.utils.handlers import (
     NoopResultHandler,

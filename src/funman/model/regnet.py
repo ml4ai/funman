@@ -90,13 +90,15 @@ class GeneratedRegnetModel(AbstractRegnetModel):
 
     def _parameter_values(self):
         return {
-            self._parameter_id(t): t.value for t in self.regnet.model.parameters
+            self._parameter_id(t): t.value
+            for t in self.regnet.model.parameters
         }
 
     def _transition_rate_constant(self, transitition: GeneratedRegnetEdge):
         return (
             transitition.properties.rate_constant
-            if transitition.properties and transitition.properties.rate_constant
+            if transitition.properties
+            and transitition.properties.rate_constant
             else transitition.id
         )
 
