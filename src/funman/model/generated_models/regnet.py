@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Optional, Union
 
-from pydantic import AnyUrl, BaseModel, Extra, Field
+from pydantic import ConfigDict, AnyUrl, BaseModel, Field, RootModel
 
 
 class Distribution(BaseModel):
@@ -15,15 +15,14 @@ class Distribution(BaseModel):
 
 
 class Grounding(BaseModel):
-    class Config:
-        extra = Extra.forbid
+    model_config = ConfigDict(extra="forbid")
 
     identifiers: Optional[Dict[str, Any]] = None
     modifiers: Optional[Dict[str, Any]] = None
 
 
-class ParamOrNumber(BaseModel):
-    __root__: Union[float, str]
+class ParamOrNumber(RootModel):
+    root: Union[float, str]
 
 
 class SignedGraphElement(BaseModel):
@@ -56,8 +55,7 @@ class Edge(SignedGraphElement):
 
 
 class Model1(BaseModel):
-    class Config:
-        extra = Extra.forbid
+    model_config = ConfigDict(extra="forbid")
 
     vertices: List[Vertice]
     edges: List[Edge]
@@ -65,6 +63,8 @@ class Model1(BaseModel):
 
 
 class Model(BaseModel):
+    model_config = ConfigDict(protected_namespaces=())
+
     name: str
     schema_: AnyUrl = Field(..., alias="schema")
     schema_name: Optional[str] = None

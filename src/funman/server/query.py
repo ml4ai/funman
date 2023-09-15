@@ -50,6 +50,9 @@ class FunmanWorkUnit(BaseModel):
     """
 
     id: str
+    progress: float = 0.0
+    coverage_of_search_space: float = 0.0
+    coverage_of_representable_space: float = 0.0
     model: Union[
         RegnetModel,
         PetrinetModel,
@@ -118,7 +121,15 @@ class FunmanWorkUnit(BaseModel):
 
 
 class FunmanResults(BaseModel):
+    class Config:
+        underscore_attrs_are_private = True
+
+    _finalized: bool = False
+
     id: str
+    progress: float = 0.0
+    coverage_of_search_space: float = 0.0
+    coverage_of_representable_space: float = 0.0
     model: Union[
         GeneratedRegnetModel,
         GeneratedPetriNetModel,
@@ -133,12 +144,47 @@ class FunmanResults(BaseModel):
     error: bool = False
     parameter_space: Optional[ParameterSpace] = None
 
+    def is_final(self):
+        return self._finalized
+
+    def update_parameter_space(
+        self, scenario: AnalysisScenario, results: ParameterSpace
+    ):
+        # TODO handle copy?
+        self.parameter_space = results
+        # compute volumes
+        labeled_volume = results.labeled_volume()
+        # TODO precompute and cache?
+        search_volume = scenario.search_space_volume()
+        # TODO precompute and cache?
+        repr_volume = scenario.representable_space_volume()
+        # compute ratios
+        if search_volume == 0.0:
+            # TODO handle point volume?
+            coverage_of_search_space = 0.0
+        else:
+            coverage_of_search_space = float(labeled_volume / search_volume)
+
+        if repr_volume == 0.0:
+            # TODO handle point volume?
+            coverage_of_repr_space = 0.0
+        else:
+            coverage_of_repr_space = float(search_volume / repr_volume)
+
+        self.progress = coverage_of_search_space
+        self.coverage_of_search_space = coverage_of_search_space
+        self.coverage_of_representable_space = coverage_of_repr_space
+
     def finalize_result(
         self,
+        scenario: AnalysisScenario,
         result: Union[
             ConsistencyScenarioResult, ParameterSynthesisScenarioResult
         ],
     ):
+        if self._finalized:
+            raise Exception("FunmanResults was already finalized")
+        self._finalized = True
         ps = None
         if isinstance(result, ConsistencyScenarioResult):
             ps = result.parameter_space
@@ -148,15 +194,19 @@ class FunmanResults(BaseModel):
         if ps is None:
             raise Exception("No ParameterSpace for result")
 
-        self.parameter_space = ps
+        self.update_parameter_space(scenario, ps)
         self.done = True
+        self.progress = 1.0
 
     def finalize_result_as_error(
         self,
     ):
-        self.parameter_space = None
+        if self._finalized:
+            raise Exception("FunmanResults was already finalized")
+        self._finalized = True
         self.error = True
         self.done = True
+        self.progress = 1.0
 
     def dataframe(
         self, points: List[Point], interpolate="linear", max_time=None

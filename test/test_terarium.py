@@ -1,4 +1,5 @@
 import json
+import os
 import unittest
 from pathlib import Path
 from time import sleep
@@ -9,9 +10,11 @@ from fastapi.testclient import TestClient
 from funman.api.api import app
 
 # Read in the model associated with this example
-RESOURCES_PREFIX = "resources/"
+RESOURCES_PREFIX = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "../resources"
+)
 TEST_JSON = json.loads(
-    Path(f"{RESOURCES_PREFIX}terarium-tests.json").read_bytes()
+    Path(f"{RESOURCES_PREFIX}/terarium-tests.json").read_bytes()
 )
 
 
@@ -23,7 +26,7 @@ class TestTerarium(unittest.TestCase):
 
             # Read in the model dict
             model = json.loads(
-                Path(f'{RESOURCES_PREFIX}{test["model-path"]}').read_bytes()
+                Path(f'{RESOURCES_PREFIX}/{test["model-path"]}').read_bytes()
             )
 
             # Either read in the request json or default to an empty dict
@@ -32,7 +35,7 @@ class TestTerarium(unittest.TestCase):
             else:
                 request = json.loads(
                     Path(
-                        f'{RESOURCES_PREFIX}{test["request-path"]}'
+                        f'{RESOURCES_PREFIX}/{test["request-path"]}'
                     ).read_bytes()
                 )
 
@@ -107,9 +110,7 @@ class TestTerarium(unittest.TestCase):
             max_steps -= 1
             assert max_steps > 0
 
-    def post_query(
-        self, client: TestClient, model: dict, request: dict
-    ) -> str:
+    def post_query(self, client: TestClient, model: dict, request: dict) -> str:
         """
         Make a POST request to /api/queries through the TestClient.
         - model: The model to query
@@ -152,7 +153,6 @@ class TestTerarium(unittest.TestCase):
         *,
         expect_error: bool = False,
     ) -> dict:
-
         """
         Make a query with a provided model and request and wait until it is done processing
         (by polling the status of the request until it reports it is done).
@@ -163,6 +163,7 @@ class TestTerarium(unittest.TestCase):
         self.poll_until_done(client, uuid)
         results = self.get_status(client, uuid)
 
+        progress = results.get("progress", 0.0)
         is_done_processing = results.get("done", False)
         error_occurred = results.get("error", False)
 
@@ -180,4 +181,6 @@ class TestTerarium(unittest.TestCase):
             assert (
                 is_done_processing is True
             ), f"Expected work to be done for {uuid}"
+
+        assert progress > 0.999999, "Progress was not at 100%"
         return results

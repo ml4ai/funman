@@ -6,7 +6,7 @@ import uuid
 from abc import ABC
 from typing import Dict, List
 
-from pydantic import BaseModel
+from pydantic import ConfigDict, BaseModel
 from pysmt.formula import FNode
 from pysmt.shortcuts import REAL, Div, Plus, Real, Symbol
 
@@ -18,9 +18,7 @@ class Model(ABC, BaseModel):
     The abstract base class for Models.
     """
 
-    class Config:
-        underscore_attrs_are_private = True
-        allow_inf_nan = True
+    model_config = ConfigDict(allow_inf_nan=True)
 
     name: str = f"model_{uuid.uuid4()}"
     init_values: Dict[str, float] = {}

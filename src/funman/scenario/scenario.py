@@ -1,11 +1,15 @@
 import threading
 from abc import ABC, abstractclassmethod, abstractmethod
+from decimal import Decimal
 from typing import List, Optional, Union
 
 from pydantic import BaseModel
 
+from funman.constants import NEG_INFINITY, POS_INFINITY
 from funman.model.encoded import EncodedModel
 from funman.representation.representation import (
+    Box,
+    Interval,
     ModelParameter,
     ParameterSpace,
     StructureParameter,
@@ -37,7 +41,19 @@ class AnalysisScenario(ABC, BaseModel):
         """
         Return the number of parameters (dimensions) that are synthesized.  A parameter is synthesized if it has a domain with width greater than zero and it is either labeled as LABEL_ALL or is a structural parameter (which are LABEL_ALL by default).
         """
-        return len([p for p in self.parameters])
+        return len(self.parameters)
+
+    def search_space_volume(self) -> Decimal:
+        bounds = {}
+        for param in self.parameters:
+            bounds[param.name] = Interval(lb=param.lb, ub=param.ub)
+        return Box(bounds=bounds).volume()
+
+    def representable_space_volume(self) -> Decimal:
+        bounds = {}
+        for param in self.parameters:
+            bounds[param.name] = Interval(lb=NEG_INFINITY, ub=POS_INFINITY)
+        return Box(bounds=bounds).volume()
 
     def structure_parameters(self):
         return [

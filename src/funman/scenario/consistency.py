@@ -6,7 +6,7 @@ from typing import Callable, Dict, Optional, Union
 
 import matplotlib.pyplot as plt
 import pandas as pd
-from pydantic import BaseModel
+from pydantic import ConfigDict, BaseModel
 from pysmt.solvers.solver import Model as pysmt_Model
 
 from funman.model.bilayer import BilayerModel, validator
@@ -46,10 +46,7 @@ class ConsistencyScenario(AnalysisScenario, BaseModel):
         method to encode the scenario, by default None
     """
 
-    class Config:
-        underscore_attrs_are_private = True
-        smart_union = True
-        extra = "forbid"
+    model_config = ConfigDict(extra="forbid")
 
     model: Union[
         GeneratedRegnetModel,
@@ -152,9 +149,7 @@ class ConsistencyScenario(AnalysisScenario, BaseModel):
                                 (
                                     "F"
                                     if s is None
-                                    else (
-                                        "T" if (s is not None and s) else " "
-                                    )
+                                    else ("T" if (s is not None and s) else " ")
                                 )
                                 for s in t
                             ]
@@ -207,9 +202,7 @@ class ConsistencyScenarioResult(AnalysisScenarioResult, BaseModel):
     search statistics.
     """
 
-    class Config:
-        underscore_attrs_are_private = True
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
     scenario: ConsistencyScenario
     parameter_space: ParameterSpace
@@ -270,16 +263,12 @@ class ConsistencyScenarioResult(AnalysisScenarioResult, BaseModel):
         """
         if self.consistent:
             if variables is not None:
-                ax = self.dataframe(point)[variables].plot(
-                    marker="o", **kwargs
-                )
+                ax = self.dataframe(point)[variables].plot(marker="o", **kwargs)
             else:
                 ax = self.dataframe(point).plot(marker="o", **kwargs)
             plt.show(block=False)
         else:
-            raise Exception(
-                f"Cannot plot result for an inconsistent scenario."
-            )
+            raise Exception(f"Cannot plot result for an inconsistent scenario.")
         return ax
 
     def __repr__(self) -> str:

@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
 
-from pydantic import AnyUrl, BaseModel, Extra, Field
+from pydantic import ConfigDict, AnyUrl, BaseModel, Field, RootModel
 
 
 class Rate(BaseModel):
@@ -22,24 +22,21 @@ class Initial(BaseModel):
 
 
 class Distribution(BaseModel):
-    class Config:
-        extra = Extra.allow
+    model_config = ConfigDict(extra="allow")
 
     type: str
     parameters: Dict[str, Any]
 
 
 class Grounding(BaseModel):
-    class Config:
-        extra = Extra.forbid
+    model_config = ConfigDict(extra="forbid")
 
     identifiers: Dict[str, Any]
     modifiers: Optional[Dict[str, Any]] = None
 
 
 class Properties(BaseModel):
-    class Config:
-        extra = Extra.allow
+    model_config = ConfigDict(extra="allow")
 
     name: str
     description: Optional[str] = None
@@ -47,8 +44,7 @@ class Properties(BaseModel):
 
 
 class Unit(BaseModel):
-    class Config:
-        extra = Extra.allow
+    model_config = ConfigDict(extra="allow")
 
     expression: Optional[str] = None
     expression_mathml: Optional[str] = None
@@ -84,8 +80,14 @@ class State(BaseModel):
     units: Optional[Unit] = None
 
 
-class States(BaseModel):
-    __root__: List[State]
+class States(RootModel):
+    root: List[State]
+
+    def __iter__(self):
+        return iter(self.root)
+
+    def __getitem__(self, item):
+        return self.root[item]
 
 
 class Transition(BaseModel):
@@ -96,13 +98,18 @@ class Transition(BaseModel):
     properties: Optional[Properties] = None
 
 
-class Transitions(BaseModel):
-    __root__: List[Transition]
+class Transitions(RootModel):
+    root: List[Transition]
+
+    def __iter__(self):
+        return iter(self.root)
+
+    def __getitem__(self, item):
+        return self.root[item]
 
 
 class TypeSystem(BaseModel):
-    class Config:
-        extra = Extra.forbid
+    model_config = ConfigDict(extra="forbid")
 
     states: States
     transitions: Transitions
@@ -120,8 +127,7 @@ class TypingSemantics(BaseModel):
 
 
 class Model1(BaseModel):
-    class Config:
-        extra = Extra.forbid
+    model_config = ConfigDict(extra="forbid")
 
     states: States
     transitions: Transitions
@@ -136,9 +142,9 @@ class Semantics(BaseModel):
 
 
 class Model(BaseModel):
-    class Config:
-        extra = Extra.allow
-        allow_population_by_field_name = True
+    model_config = ConfigDict(
+        extra="allow", populate_by_name=True, protected_namespaces=()
+    )
 
     name: str
     schema_: AnyUrl = Field(..., alias="schema")

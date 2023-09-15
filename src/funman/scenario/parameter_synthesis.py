@@ -6,7 +6,7 @@ from functools import partial
 from typing import Callable, Dict, List, Optional, Union
 
 from pandas import DataFrame
-from pydantic import BaseModel
+from pydantic import ConfigDict, BaseModel
 from pysmt.formula import FNode
 from pysmt.shortcuts import BOOL, Iff, Symbol
 
@@ -54,10 +54,7 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
     (false) parameters.
     """
 
-    class Config:
-        underscore_attrs_are_private = True
-        smart_union = True
-        extra = "forbid"
+    model_config = ConfigDict(extra="forbid")
 
     model: Union[
         GeneratedPetriNetModel,
@@ -250,8 +247,7 @@ class ParameterSynthesisScenarioResult(AnalysisScenarioResult, BaseModel):
     search statistics.
     """
 
-    class Config:
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
     # episode: SearchEpisode
     scenario: ParameterSynthesisScenario

@@ -2,7 +2,7 @@ from typing import Dict, List, Union
 
 import graphviz
 import sympy
-from pydantic import BaseModel
+from pydantic import ConfigDict, BaseModel
 from pysmt.shortcuts import REAL, Div, Plus, Real, Symbol
 
 from funman.representation.representation import ModelParameter
@@ -138,9 +138,8 @@ class AbstractPetriNetModel(Model):
 
 
 class GeneratedPetriNetModel(AbstractPetriNetModel):
-    class Config:
-        underscore_attrs_are_private = True
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(arbitrary_types_allowed=True
+    )
 
     petrinet: GeneratedPetrinet
     _transition_rates_cache: Dict[str, Union[sympy.Expr, str]] = {}
@@ -233,13 +232,13 @@ class GeneratedPetriNetModel(AbstractPetriNetModel):
         )
 
     def _state_vars(self) -> List[State]:
-        return self.petrinet.model.states.__root__
+        return self.petrinet.model.states
 
     def _state_var_names(self) -> List[str]:
         return [self._state_var_name(s) for s in self._state_vars()]
 
     def _transitions(self) -> List[Transition]:
-        return self.petrinet.model.transitions.__root__
+        return self.petrinet.model.transitions
 
     def _state_var_name(self, state_var: State) -> str:
         return state_var.id
@@ -296,8 +295,8 @@ class GeneratedPetriNetModel(AbstractPetriNetModel):
             return [p.id for p in self.petrinet.semantics.ode.parameters]
         else:
             # Create a parameter for each transition and initial state variable
-            return [t.id for t in self.petrinet.model.transitions.__root__] + [
-                f"{s.id}0" for s in self.petrinet.model.states.__root__
+            return [t.id for t in self.petrinet.model.transitions] + [
+                f"{s.id}0" for s in self.petrinet.model.states
             ]
 
     def _parameter_values(self):
@@ -324,7 +323,14 @@ class GeneratedPetriNetModel(AbstractPetriNetModel):
 
 
 class PetrinetDynamics(BaseModel):
-    json_graph: Dict[str, List[Dict[str, Union[int, str, Dict[str, str]]]]]
+    json_graph: Dict[
+        str,
+        List[
+            Dict[
+                str, Union[Dict[str, Union[str, bool, float]], int, str, float]
+            ]
+        ],
+    ]
 
     # def __init__(self, **kwargs):
     #     super().__init__(**kwargs)

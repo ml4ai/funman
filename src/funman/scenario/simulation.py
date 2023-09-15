@@ -52,7 +52,7 @@ class SimulationScenario(AnalysisScenario, BaseModel):
 
 class SimulationScenarioResult(AnalysisScenarioResult, BaseModel):
     scenario: SimulationScenario
-    results: Any
+    results: Any = None
     query_satisfied: bool
 
     def plot(self, **kwargs):

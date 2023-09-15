@@ -1,6 +1,6 @@
 from typing import List
 
-from pydantic import Extra
+from pydantic import ConfigDict, Extra
 from pysmt.formula import FNode
 from pysmt.shortcuts import TRUE
 
@@ -13,9 +13,9 @@ class EncodedModel(Model):
     Model that holds an SMT formula encoding a model.  This class is meant to wrap hand-coded SMT formulas.
     """
 
-    class Config:
-        arbitrary_types_allowed = True
-        underscore_attrs_are_private = True
+    model_config = ConfigDict(
+        arbitrary_types_allowed=True,
+    )
 
     _formula: FNode = TRUE()
     parameters: List[ModelParameter] = []

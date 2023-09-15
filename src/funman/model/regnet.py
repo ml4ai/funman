@@ -80,7 +80,7 @@ class GeneratedRegnetModel(AbstractRegnetModel):
         return vertice.sign
 
     def _vertice_rate_constant(self, vertex: GeneratedRegnetVertice):
-        return vertex.rate_constant.__root__
+        return vertex.rate_constant
 
     def _parameter_id(self, parameter: GeneratedRegnetParameter):
         return parameter.id
@@ -90,15 +90,13 @@ class GeneratedRegnetModel(AbstractRegnetModel):
 
     def _parameter_values(self):
         return {
-            self._parameter_id(t): t.value
-            for t in self.regnet.model.parameters
+            self._parameter_id(t): t.value for t in self.regnet.model.parameters
         }
 
     def _transition_rate_constant(self, transitition: GeneratedRegnetEdge):
         return (
-            transitition.properties.rate_constant.__root__
-            if transitition.properties
-            and transitition.properties.rate_constant
+            transitition.properties.rate_constant
+            if transitition.properties and transitition.properties.rate_constant
             else transitition.id
         )
 
@@ -106,7 +104,7 @@ class GeneratedRegnetModel(AbstractRegnetModel):
         value = Model._get_init_value(self, var)
         if value is None:
             state_var = next(s for s in self._state_vars() if s.id == var)
-            value = state_var.initial.__root__
+            value = state_var.initial
         return value
 
 

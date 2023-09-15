@@ -30,23 +30,28 @@ TEST_OUT.mkdir(parents=True, exist_ok=True)
 
 TEST_API_TOKEN = "funman-test-api-token"
 TEST_BASE_URL = "funman"
-settings.funman_api_token = TEST_API_TOKEN
-settings.funman_base_url = TEST_BASE_URL
 
 
 class TestAPI(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
+        settings.funman_api_token = TEST_API_TOKEN
+        settings.funman_base_url = TEST_BASE_URL
         cls._tmpdir = TemporaryDirectory(prefix=f"{cls.__name__}_")
 
     @classmethod
     def tearDownClass(cls) -> None:
+        settings.funman_api_token = None
+        settings.funman_base_url = None
         cls._tmpdir.cleanup()
 
     def setUp(self):
         self.test_dir = Path(self._tmpdir.name) / self._testMethodName
         self.test_dir.mkdir()
         settings.data_path = str(self.test_dir)
+
+    def tearDown(self):
+        settings.data_path = "."
 
     def wait_for_done(self, client, id, wait_time=1.0, steps=20):
         while True:
