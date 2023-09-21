@@ -7,31 +7,26 @@ from funman_demo.sim.CHIME.CHIME_SIR import main as run_CHIME_SIR
 from pysmt.shortcuts import GE, LE, And, Real, Symbol
 from pysmt.typing import REAL
 
-from funman import Funman
-from funman.funman import FUNMANConfig
-from funman.model import (
+from funman import (
+    BilayerDynamics,
+    BilayerModel,
+    ConsistencyScenario,
+    ConsistencyScenarioResult,
     EncodedModel,
+    Funman,
+    FUNMANConfig,
+    ModelParameter,
+    ParameterSynthesisScenario,
+    ParameterSynthesisScenarioResult,
     QueryFunction,
     QueryLE,
     QueryTrue,
-    SimulatorModel,
-)
-from funman.model.bilayer import BilayerDynamics, BilayerModel
-from funman.representation.representation import (
-    ModelParameter,
-    StructureParameter,
-)
-from funman.scenario import (
-    ConsistencyScenario,
-    ConsistencyScenarioResult,
-    ParameterSynthesisScenario,
-    ParameterSynthesisScenarioResult,
-)
-from funman.scenario.simulation import (
+    ResultCombinedHandler,
     SimulationScenario,
     SimulationScenarioResult,
+    SimulatorModel,
+    StructureParameter,
 )
-from funman.utils.handlers import ResultCombinedHandler
 
 RESOURCES = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "../resources"
@@ -115,11 +110,12 @@ class TestUseCases(unittest.TestCase):
         )
 
         funman = Funman()
-
+        model = EncodedModel(parameters=parameters)
+        model._formula = formula
         result: ParameterSynthesisScenarioResult = funman.solve(
             ParameterSynthesisScenario(
                 parameters=parameters,
-                model=EncodedModel(_formula=formula),
+                model=model,
                 query=QueryTrue(),
             ),
             config=FUNMANConfig(

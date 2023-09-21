@@ -2,32 +2,9 @@ from abc import ABC, abstractmethod
 from typing import Dict, List, Literal, Optional, Union
 
 import graphviz
-from pydantic import BaseModel, ConfigDict, validator
-from pysmt.formula import FNode
-from pysmt.shortcuts import (
-    FALSE,
-    GE,
-    GT,
-    LE,
-    LT,
-    TRUE,
-    And,
-    Equals,
-    ForAll,
-    Function,
-    FunctionType,
-    Iff,
-    Int,
-    Plus,
-    Real,
-    Symbol,
-    Times,
-    get_model,
-    simplify,
-    substitute,
-)
-from pysmt.typing import BOOL, INT, REAL
+from pydantic import BaseModel, ConfigDict
 
+from funman.config import FUNMANConfig
 from funman.model import Model
 from funman.representation.representation import ModelParameter
 

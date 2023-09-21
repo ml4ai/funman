@@ -2,7 +2,6 @@ import datetime
 import threading
 from abc import ABC, abstractmethod
 from multiprocessing import Array, Queue, Value
-from multiprocessing.managers import SyncManager
 from queue import Queue as SQueue
 from typing import Callable, Dict, List, Optional, Union
 
@@ -11,8 +10,8 @@ from pydantic import BaseModel, ConfigDict
 from pysmt.shortcuts import Solver
 from pysmt.solvers.solver import Model as pysmtModel
 
-from funman.funman import FUNMANConfig
-from funman.representation.explanation import Explanation
+from funman.config import FUNMANConfig
+from funman.representation.explanation import BoxExplanation
 from funman.representation.representation import Box, Interval, ModelParameter
 from funman.scenario.scenario import AnalysisScenario
 
@@ -72,7 +71,7 @@ class SearchEpisode(BaseModel):
 
     structural_configuration: Dict[str, int] = {}
     problem: AnalysisScenario
-    config: FUNMANConfig
+    config: "FUNMANConfig"
     statistics: SearchStatistics = None
     _model: pysmt.solvers.solver.Model = None
 
@@ -110,10 +109,10 @@ class Search(ABC):
     ) -> SearchEpisode:
         pass
 
-    def invoke_solver(self, s: Solver) -> Union[pysmtModel, Explanation]:
+    def invoke_solver(self, s: Solver) -> Union[pysmtModel, BoxExplanation]:
         result = s.solve()
         if result:
             result = s.get_model()
         else:
-            result = Explanation(explanation=s.get_unsat_core())
+            result = BoxExplanation(expression=s.get_unsat_core())
         return result

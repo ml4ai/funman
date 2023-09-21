@@ -19,6 +19,7 @@ from pysmt.shortcuts import (
     get_env,
 )
 
+from funman import FUNMANConfig
 from funman.model.model import Model
 from funman.translate.simplifier import FUNMANSimplifier
 from funman.utils.sympy_utils import (

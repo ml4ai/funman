@@ -2,10 +2,10 @@
 This module defines the abstract base classes for the model encoder classes in funman.translate package.
 """
 import logging
-from abc import ABC, abstractmethod
+from abc import ABC
 from typing import Dict, List, Set, Tuple, Union
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, PrivateAttr
 from pysmt.constants import Numeral
 from pysmt.formula import FNode
 from pysmt.shortcuts import (
@@ -24,8 +24,9 @@ from pysmt.shortcuts import (
 )
 from pysmt.solvers.solver import Model as pysmtModel
 
+from funman import Box, Interval, ModelParameter, Point
+from funman.config import FUNMANConfig
 from funman.constants import NEG_INFINITY, POS_INFINITY
-from funman.funman import FUNMANConfig
 from funman.model.model import Model
 from funman.model.query import (
     Query,
@@ -36,13 +37,8 @@ from funman.model.query import (
     QueryTrue,
 )
 from funman.representation import ModelParameter
-from funman.representation.representation import (
-    Box,
-    Interval,
-    ModelParameter,
-    Point,
-)
 from funman.representation.symbol import ModelSymbol
+from funman.scenario.scenario import AnalysisScenario
 from funman.translate.simplifier import FUNMANSimplifier
 from funman.utils.sympy_utils import (
     FUNMANFormulaManager,
@@ -187,21 +183,20 @@ class Encoder(ABC, BaseModel):
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    config: FUNMANConfig
+    config: "FUNMANConfig"
     _timed_model_elements: Dict = None
     _min_time_point: int
     _min_step_size: int
     _untimed_symbols: Set[str] = set([])
     _timed_symbols: Set[str] = set([])
     _untimed_constraints: FNode
-    _scenario: "AnalysisScenario"
+    scenario: AnalysisScenario
     # _assignments: Dict[str, float] = {}
     _env = get_env()
     _env._simplifier = FUNMANSimplifier(_env)
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self._scenario = kwargs["scenario"]
 
         env = get_env()
         if not isinstance(env._formula_manager, FUNMANFormulaManager):
@@ -211,11 +206,11 @@ class Encoder(ABC, BaseModel):
 
         # Need to initialize pysmt symbols for parameters to help with parsing custom rate equations
         variables = [
-            p.name for p in self._scenario.model._parameters()
-        ] + self._scenario.model._state_var_names()
+            p.name for p in self.scenario.model._parameters()
+        ] + self.scenario.model._state_var_names()
         variable_symbols = [self._encode_state_var(p) for p in variables]
 
-        self._encode_timed_model_elements(self._scenario)
+        self._encode_timed_model_elements(self.scenario)
 
     def can_encode():
         """
@@ -258,24 +253,7 @@ class Encoder(ABC, BaseModel):
         query_encoding._encoder = self
         return model_encoding, query_encoding
 
-    @abstractmethod
-    def encode_model(self, model: "Model", config: "FUNMANConfig") -> Encoding:
-        """
-        Encode a model into an SMTLib formula.
-
-        Parameters
-        ----------
-        model : Model
-            model to encode
-
-        Returns
-        -------
-        Encoding
-            formula and symbols for the encoding
-        """
-        pass
-
-    def encode_simplified(self, model, query, step_size_idx: int):
+    def _encode_simplified(self, model, query, step_size_idx: int):
         formula = And(model, query)
         if self.config.substitute_subformulas:
             sub_formula = formula.substitute(
@@ -324,7 +302,7 @@ class Encoder(ABC, BaseModel):
                 step_size_idx
             ][layer_idx]
             c, substitutions = self._encode_next_step(
-                self._scenario,
+                self.scenario,
                 timepoint,
                 next_timepoint,
                 substitutions=substitutions,
@@ -755,8 +733,8 @@ class Encoder(ABC, BaseModel):
     def _normalize(self, value):
         return sympy_to_pysmt(
             to_sympy(
-                Div(value, Real(self._scenario.normalization_constant)),
-                self._scenario.model._symbols(),
+                Div(value, Real(self.scenario.normalization_constant)),
+                self.scenario.model._symbols(),
             )
         )
 

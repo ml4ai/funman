@@ -5,7 +5,7 @@ import pandas as pd
 from matplotlib import pyplot as plt
 from pydantic import BaseModel
 
-from funman.funman import FUNMANConfig
+from funman.config import FUNMANConfig
 from funman.model.bilayer import BilayerModel
 from funman.model.decapode import DecapodeModel
 from funman.model.encoded import EncodedModel
@@ -14,6 +14,7 @@ from funman.model.petrinet import GeneratedPetriNetModel, PetrinetModel
 from funman.model.query import QueryAnd, QueryFunction, QueryLE, QueryTrue
 from funman.model.regnet import GeneratedRegnetModel, RegnetModel
 from funman.representation import ModelParameter
+from funman.representation.explanation import Explanation
 from funman.representation.representation import (
     LABEL_ANY,
     LABEL_TRUE,
@@ -121,9 +122,6 @@ class FunmanWorkUnit(BaseModel):
 
 
 class FunmanResults(BaseModel):
-    class Config:
-        underscore_attrs_are_private = True
-
     _finalized: bool = False
 
     id: str
@@ -359,9 +357,12 @@ class FunmanResults(BaseModel):
 
         return ax
 
+    def points(self) -> List[Point]:
+        return self.parameter_space.points()
+
     def plot(
         self,
-        points: List[Point],
+        points: Optional[List[Point]] = None,
         variables=None,
         log_y=False,
         max_time=None,
@@ -376,6 +377,16 @@ class FunmanResults(BaseModel):
             failure if scenario is not consistent.
         """
 
+        import logging
+
+        # remove matplotlib debugging
+        logging.getLogger("matplotlib.font_manager").disabled = True
+        logging.getLogger("matplotlib.pyplot").disabled = True
+        logging.getLogger("funman.translate.translate").setLevel(logging.DEBUG)
+
+        if points is None:
+            points = self.points()
+
         df = self.dataframe(points, max_time=max_time)
 
         if variables is not None:
@@ -388,3 +399,6 @@ class FunmanResults(BaseModel):
             plt.ylim(bottom=0)
         # plt.show(block=False)
         return ax
+
+    def explain(self) -> Explanation:
+        return self.parameter_space.explain()

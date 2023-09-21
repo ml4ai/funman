@@ -22,6 +22,7 @@ from pysmt.logics import QF_NRA
 from pysmt.shortcuts import And, Not, Solver, get_model
 from pysmt.solvers.solver import Model as pysmtModel
 
+from funman.config import FUNMANConfig
 from funman.representation.explanation import Explanation
 from funman.representation.representation import (
     LABEL_DROPPED,
@@ -333,52 +334,64 @@ class BoxSearch(Search):
         episode : episode
             data for the current search
         """
-        if episode.config.simplify_query:
-            while episode._formula_stack_time > 0:
+
+        # Prepare the formula stack by popping irrelevant layers
+        time_difference = timepoint - episode._formula_stack_time
+        if time_difference < 0:
+            for i in range(abs(int(time_difference))):
                 solver.pop(1)
                 episode._formula_stack.pop()
                 episode._formula_stack_time -= 1
+        elif time_difference > 0:
+            # Prepare the formulas for each added layer
+            layer_formulas = []
+            step_size = episode.structural_configuration["step_size"]
 
-            formula = episode.problem.encode_simplified(
-                box, timepoint, episode.config
-            )
-            solver.push(1)
-            episode._formula_stack.append(formula)
-            solver.add_assertion(formula)
-            episode._formula_stack_time += 1
-        else:
-            solver_timepoint = episode._formula_stack_time
-            time_difference = timepoint - solver_timepoint
-            if time_difference > 0:
-                for i in range(int(time_difference)):
-                    solver.push(1)
-                    timepoints = [solver_timepoint + i + 1]
-                    formula = And(
-                        episode.problem._model_encoding.encoding(
-                            episode.problem._model_encoding._encoder.encode_model_layer,
-                            layers=timepoints,
-                            box=box,
+            model_encoding = episode.problem._model_encoding[step_size]
+            model_encoder = model_encoding._encoder
+            query_encoding = episode.problem._query_encoding[step_size]
+            query_encoder = query_encoding._encoder
+            step_size_idx = model_encoder._timed_model_elements[
+                "step_sizes"
+            ].index(step_size)
+
+            for t in range(episode._formula_stack_time + 1, timepoint + 1):
+                formula = And(
+                    model_encoding.encoding(
+                        model_encoder.encode_model_layer,
+                        layers=[t],
+                        box=box,
+                    ),
+                    query_encoding.encoding(
+                        partial(
+                            query_encoder.encode_query_layer,
+                            episode.problem.query,
+                            episode.problem,
+                            episode.config,
                         ),
-                        episode.problem._query_encoding.encoding(
-                            partial(
-                                episode.problem._query_encoding._encoder.encode_query_layer,
-                                episode.problem.query,
-                                episode.problem,
-                                episode.config,
-                            ),
-                            layers=timepoints,
-                            box=box,
-                            assumptions=episode.problem._assume_query,
-                        ),
-                    )
-                    episode._formula_stack.append(formula)
-                    solver.add_assertion(formula)
-                    episode._formula_stack_time += 1
-            elif time_difference < 0:  # need to pop
-                for i in range(abs(int(time_difference))):
-                    solver.pop(1)
-                    episode._formula_stack.pop()
-                    episode._formula_stack_time -= 1
+                        layers=[t],
+                        box=box,
+                        assumptions=episode.problem._assume_query,
+                    ),
+                )
+                layer_formulas.append(formula)
+
+            # Simplify formulas if needed
+            if episode.config.simplify_query:
+                substitutions = model_encoder._timed_model_elements[
+                    "time_step_substitutions"
+                ][step_size_idx]
+                simplified_formulas = [
+                    x.substitute(substitutions).simplify()
+                    for x in layer_formulas
+                ]
+                layer_formulas = simplified_formulas
+
+            for formula in layer_formulas:
+                solver.push(1)
+                episode._formula_stack.append(formula)
+                solver.add_assertion(formula)
+                episode._formula_stack_time += 1
 
     def _initialize_box(self, solver, box: Box, episode: BoxSearchEpisode):
         box_timepoint = int(box.bounds["num_steps"].lb)
@@ -475,7 +488,7 @@ class BoxSearch(Search):
                 for point in points:
                     point = point.denormalize(episode.problem)
                     _point_handler_fn(point)
-                    rval.put(point.dict())
+                    rval.put(point.model_dump())
 
             else:  # unsat
                 explanation = result
@@ -590,7 +603,7 @@ class BoxSearch(Search):
                         break
                     try:
                         box: Box = episode._get_unknown()
-                        rval.put(box.dict())
+                        rval.put(box.model_dump())
                         l.info(f"{process_name} claimed work")
                     except Empty:
                         exit = self._handle_empty_queue(
@@ -638,7 +651,7 @@ class BoxSearch(Search):
                                 ):
                                     l.info(f"{process_name} produced work")
                                 else:
-                                    rval.put(box.dict())
+                                    rval.put(box.model_dump())
                                 if episode.config.number_of_processes > 1:
                                     # FIXME This would only be none when
                                     # the number of processes is 1. This
@@ -654,7 +667,7 @@ class BoxSearch(Search):
                                     curr_step_box,
                                     explanation=not_false_explanation,
                                 )
-                                rval.put(curr_step_box.dict())
+                                rval.put(curr_step_box.model_dump())
                                 print(f"+++ True({curr_step_box})")
 
                                 # Advance a true box to be considered for later timepoints
@@ -666,7 +679,7 @@ class BoxSearch(Search):
                             episode._add_false(
                                 box, explanation=not_true_explanation
                             )  # TODO consider merging lists of boxes
-                            rval.put(box.dict())
+                            rval.put(box.model_dump())
                             print(f"--- False({box})")
                         solver.pop(1)  # Remove box from solver
                         episode._formula_stack.pop()
@@ -894,16 +907,11 @@ class BoxSearch(Search):
                 ]
                 for step_size in step_sizes
             }
-
+            # initialize empty encoding
+            problem._initialize_encodings(config)
             for step_size_idx, step_size in enumerate(step_sizes):
                 num_steps = max(configurations_by_step_size[step_size])
 
-                # initialize empty encoding
-                problem._encode_timed(
-                    num_steps,
-                    step_size_idx,
-                    config,
-                )
                 structural_configuration = {
                     "step_size": step_size,
                     "num_steps": num_steps,

@@ -1,17 +1,17 @@
 import threading
 from abc import ABC, abstractclassmethod, abstractmethod
 from decimal import Decimal
-from typing import List, Optional, Union
+from typing import List, Optional
 
 from pydantic import BaseModel
 
-from funman.constants import NEG_INFINITY, POS_INFINITY
-from funman.model.encoded import EncodedModel
-from funman.representation.representation import (
+from funman import (
+    NEG_INFINITY,
+    POS_INFINITY,
     Box,
     Interval,
     ModelParameter,
-    ParameterSpace,
+    Parameter,
     StructureParameter,
 )
 
@@ -21,7 +21,7 @@ class AnalysisScenario(ABC, BaseModel):
     Abstract class for Analysis Scenarios.
     """
 
-    parameters: List[Union[ModelParameter, StructureParameter]]
+    parameters: List[Parameter]
     normalization_constant: Optional[float] = None
 
     @abstractclassmethod
@@ -32,10 +32,6 @@ class AnalysisScenario(ABC, BaseModel):
     def solve(
         self, config: "FUNMANConfig", haltEvent: Optional[threading.Event]
     ):
-        pass
-
-    @abstractmethod
-    def _encode(self, config: "FUNMANConfig"):
         pass
 
     def num_dimensions(self):
@@ -69,6 +65,28 @@ class AnalysisScenario(ABC, BaseModel):
 
     def structure_parameter(self, name: str) -> StructureParameter:
         return next(p for p in self.parameters if p.name == name)
+
+    def _process_parameters(self):
+        if len(self.structure_parameters()) == 0:
+            # either undeclared or wrong type
+            # if wrong type, recover structure parameters
+            self.parameters = [
+                (
+                    StructureParameter(name=p.name, lb=p.lb, ub=p.ub)
+                    if (p.name == "num_steps" or p.name == "step_size")
+                    else p
+                )
+                for p in self.parameters
+            ]
+            if len(self.structure_parameters()) == 0:
+                # Add the structure parameters if still missing
+                self.parameters += [
+                    StructureParameter(name="num_steps", lb=0, ub=0),
+                    StructureParameter(name="step_size", lb=1, ub=1),
+                ]
+
+        self._extract_non_overriden_parameters()
+        self._filter_parameters()
 
     def _extract_non_overriden_parameters(self):
         from funman.server.query import LABEL_ANY
@@ -115,6 +133,14 @@ class AnalysisScenario(ABC, BaseModel):
                 or isinstance(p, StructureParameter)
             ]
             self.parameters = filtered_parameters
+
+    def _set_normalization(self, config):
+        if config.normalization_constant is not None:
+            self.normalization_constant = config.normalization_constant
+        else:
+            self.normalization_constant = (
+                self.model.calculate_normalization_constant(self, config)
+            )
 
 
 class AnalysisScenarioResult(ABC):

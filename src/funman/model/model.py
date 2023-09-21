@@ -4,13 +4,49 @@ This module represents the abstract base classes for models.
 import copy
 import uuid
 from abc import ABC
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Union
 
 from pydantic import BaseModel, ConfigDict
 from pysmt.formula import FNode
 from pysmt.shortcuts import REAL, Div, Plus, Real, Symbol
 
+from funman import Constraint
 from funman.representation.representation import ModelParameter
+
+# from .bilayer import BilayerModel
+# from .decapode import DecapodeModel
+# from .petrinet import GeneratedPetriNetModel, PetrinetModel
+# from .regnet import GeneratedRegnetModel, RegnetModel
+
+
+def _wrap_with_internal_model(
+    model: Union[
+        "GeneratedPetriNet",
+        "GeneratedRegNet",
+        "RegnetModel",
+        "PetrinetModel",
+        "DecapodeModel",
+        "BilayerModel",
+    ]
+) -> Union[
+    "GeneratedPetriNetModel",
+    "GeneratedRegnetModel",
+    "RegnetModel",
+    "PetrinetModel",
+    "DecapodeModel",
+    "BilayerModel",
+]:
+    from .generated_models.petrinet import Model as GeneratedPetriNet
+    from .generated_models.regnet import Model as GeneratedRegNet
+    from .petrinet import GeneratedPetriNetModel
+    from .regnet import GeneratedRegnetModel
+
+    if isinstance(model, GeneratedPetriNet):
+        return GeneratedPetriNetModel(petrinet=model)
+    elif isinstance(model, GeneratedRegNet):
+        return GeneratedRegnetModel(regnet=model)
+    else:
+        return model
 
 
 class Model(ABC, BaseModel):
@@ -26,6 +62,7 @@ class Model(ABC, BaseModel):
     _normalization_constant: Optional[float] = None
     _extra_constraints: FNode = None
     _normalization_term: Optional[FNode] = None
+    _constraints: List[Constraint] = None
 
     # @abstractmethod
     # def default_encoder(self, config: "FUNMANConfig") -> "Encoder":
@@ -39,8 +76,11 @@ class Model(ABC, BaseModel):
     #     """
     #     pass
 
+    def constraints(self) -> List[Constraint]:
+        return self._constraints
+
     def _symbols(self):
-        return self._state_var_names() + self._parameter_names()
+        return list(set(self._state_var_names() + self._parameter_names()))
 
     def _get_init_value(
         self, var: str, scenario: "AnalysisScenario", config: "FUNMANConfig"

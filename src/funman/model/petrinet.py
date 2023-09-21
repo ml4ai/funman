@@ -5,9 +5,12 @@ import sympy
 from pydantic import BaseModel, ConfigDict
 from pysmt.shortcuts import REAL, Div, Plus, Real, Symbol
 
-from funman.funman import FUNMANConfig
+from funman.representation.constraint import (
+    Constraint,
+    InitialStateConstraint,
+    TransitionConstraint,
+)
 from funman.representation.representation import ModelParameter
-from funman.translate.petrinet import PetrinetEncoder
 from funman.utils.sympy_utils import substitute, to_sympy
 
 from .generated_models.petrinet import Model as GeneratedPetrinet
@@ -149,6 +152,22 @@ class AbstractPetriNetModel(Model):
                 f"Cannot calculate the normalization constant for {type(self)} because the initial state variables are not constants. Try setting the 'normalization_constant' in the configuration to constant."
             )
 
+    def constraints(self) -> List[Constraint]:
+        if self._constraints is None:
+            self._constraints = [
+                self._initial_state_constraint(),
+                self._transition_constraint(),
+            ]
+        return self._constraints
+
+    def _initial_state_constraint(self) -> InitialStateConstraint:
+        c = InitialStateConstraint()
+        return c
+
+    def _transition_constraint(self) -> TransitionConstraint:
+        c = TransitionConstraint()
+        return c
+
 
 class GeneratedPetriNetModel(AbstractPetriNetModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
@@ -167,6 +186,8 @@ class GeneratedPetriNetModel(AbstractPetriNetModel):
         Encoder
             SMT encoder for model
         """
+        from funman.translate.petrinet import PetrinetEncoder
+
         return PetrinetEncoder(
             config=config,
             scenario=scenario,

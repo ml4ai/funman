@@ -10,6 +10,7 @@ from pysmt.logics import QF_NRA
 from pysmt.shortcuts import REAL, And, Equals, Real, Solver, Symbol
 from pysmt.solvers.solver import Model as pysmtModel
 
+from funman.config import FUNMANConfig
 from funman.representation.explanation import Explanation
 from funman.representation.representation import (
     LABEL_FALSE,
@@ -19,7 +20,6 @@ from funman.representation.representation import (
     ParameterSpace,
     Point,
 )
-from funman.scenario.scenario import AnalysisScenario
 from funman.utils.smtlib_utils import smtlibscript_from_formula_list
 
 # import funman.search as search

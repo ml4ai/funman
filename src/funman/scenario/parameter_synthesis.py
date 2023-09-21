@@ -72,8 +72,8 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
     _smt_encoder: Optional[
         Encoder
     ] = None  # TODO set to model.default_encoder()
-    _model_encoding: Optional[Encoding] = None
-    _query_encoding: Optional[Encoding] = None
+    _model_encoding: Optional[Dict[int, Encoding]] = {}
+    _query_encoding: Optional[Dict[int, Encoding]] = {}
     _assume_model: Optional[FNode] = None
     _assume_query: Optional[FNode] = None
     _original_parameter_widths: Dict[str, float] = {}
@@ -111,37 +111,12 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
         else:
             search = config._search()
 
-        if len(self.structure_parameters()) == 0:
-            # either undeclared or wrong type
-            # if wrong type, recover structure parameters
-            self.parameters = [
-                (
-                    StructureParameter(name=p.name, lb=p.lb, ub=p.ub)
-                    if (p.name == "num_steps" or p.name == "step_size")
-                    else p
-                )
-                for p in self.parameters
-            ]
-            if len(self.structure_parameters()) == 0:
-                # Add the structure parameters if still missing
-                self.parameters += [
-                    StructureParameter(name="num_steps", lb=0, ub=0),
-                    StructureParameter(name="step_size", lb=1, ub=1),
-                ]
+        self._process_parameters()
 
-        self._extract_non_overriden_parameters()
-        self._filter_parameters()
-
-        if config.normalization_constant is not None:
-            self.normalization_constant = config.normalization_constant
-        else:
-            self.normalization_constant = (
-                self.model.calculate_normalization_constant(self, config)
-            )
+        self._set_normalization(config)
 
         num_parameters = len(self.parameters)
-        if self._smt_encoder is None:
-            self._smt_encoder = self.model.default_encoder(config, self)
+        self._initialize_encodings(config)
 
         self._original_parameter_widths = {
             p: minus(p.ub, p.lb) for p in self.parameters
@@ -159,75 +134,47 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
             parameter_space=parameter_space, scenario=self
         )
 
-    def _results_str(self, result: List[Dict]):
-        return "\n".join(
-            ["num_steps\tstep_size\t|true|\t|false|"]
-            + [
-                f"{r['num_steps']}\t\t{r['step_size']}\t\t{len(r['parameter_space'].true_boxes)}\t{len(r['parameter_space'].false_boxes)}"
-                for r in result
-            ]
-        )
-
-    def _encode(self, config: "FUNMANConfig"):
-        """
-        The encoding uses assumption symbols for the model and query so that it is possible to push/pop the (possibly negated) symbols to reason about cases where the model or query must be true or false.
-
-        Returns
-        -------
-        _type_
-            _description_
-        """
-        if self._smt_encoder is None:
-            self._smt_encoder = self.model.default_encoder(config)
-        self._assume_model = Symbol("assume_model")
-        self._assume_query = Symbol("assume_query")
-        self._model_encoding = self._smt_encoder.encode_model(
-            self.model, config
-        )
-        self._model_encoding._formula = Iff(
-            self._assume_model, self._model_encoding._formula
-        )
-        self._query_encoding = self._smt_encoder.encode_query(
-            self._model_encoding, self.query
-        )
-        self._query_encoding._formula = Iff(
-            self._assume_query, self._query_encoding._formula
-        )
-        return self._model_encoding, self._query_encoding
-
-    def _encode_timed(self, num_steps, step_size_idx, config: "FUNMANConfig"):
+    def _initialize_encodings(self, config: "FUNMANConfig"):
         # self._assume_model = Symbol("assume_model")
-        if self._smt_encoder._timed_model_elements:
-            step_size = self._smt_encoder._timed_model_elements["step_sizes"][
-                step_size_idx
-            ]
-            self._assume_query = [
-                Symbol(f"assume_query_{t}")
-                for t in range(0, (num_steps * step_size) + 1, step_size)
-            ]
-        # This will overwrite the _model_encoding for each configuration, but the encoder will retain components of the configurations.
-        (
-            model_encoding,
-            query_encoding,
-        ) = self._smt_encoder.initialize_encodings(
-            self, num_steps, step_size_idx
+        self._smt_encoder = self.model.default_encoder(config, self)
+        assert self._smt_encoder._timed_model_elements
+
+        times = list(
+            set(
+                [
+                    t
+                    for s in self._smt_encoder._timed_model_elements[
+                        "state_timepoints"
+                    ]
+                    for t in s
+                ]
+            )
         )
-        # self._smt_encoder.encode_model_timed(
-        #     self, num_steps, step_size
-        # )
+        times.sort()
 
-        self._model_encoding = model_encoding
-        self._query_encoding = query_encoding
+        self._assume_query = [Symbol(f"assume_query_{t}") for t in times]
+        for step_size_idx, step_size in enumerate(
+            self._smt_encoder._timed_model_elements["step_sizes"]
+        ):
+            num_steps = max(
+                self._smt_encoder._timed_model_elements["state_timepoints"][
+                    step_size_idx
+                ]
+            )
+            (
+                model_encoding,
+                query_encoding,
+            ) = self._smt_encoder.initialize_encodings(
+                self, num_steps, step_size_idx
+            )
+            # self._smt_encoder.encode_model_timed(
+            #     self, num_steps, step_size
+            # )
 
-        # This will create a new formula for each query without caching them (its typically inexpensive)
-        # self._query_encoding = self._smt_encoder.initialize_encoding(self, num_steps, step_size)
-        # self._smt_encoder.encode_query(
-        #     self.query, num_steps, step_size
-        # )
-        # self._query_encoding.assume(self._assume_query)
-        return self._model_encoding, self._query_encoding
+            self._model_encoding[step_size] = model_encoding
+            self._query_encoding[step_size] = query_encoding
 
-    def encode_simplified(
+    def _encode_simplified(
         self, box: Box, timepoint: int, config: "FUNMANConfig"
     ):
         model_encoding = self._model_encoding.encoding(
@@ -250,7 +197,7 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
             "step_sizes"
         ].index(self._model_encoding.step_size)
 
-        return self._smt_encoder.encode_simplified(
+        return self._smt_encoder._encode_simplified(
             model_encoding, query_encoding, step_size_idx
         )
 
@@ -308,10 +255,12 @@ class ParameterSynthesisScenarioResult(AnalysisScenarioResult, BaseModel):
             malformed points
         """
         # for each true box
+        from funman.config import FUNMANConfig
+
         dfs = []
         for point in points:
             if isinstance(point, dict):
-                point = Point.parse_obj(point)
+                point = Point.model_validate(point)
             if not isinstance(point, Point):
                 raise Exception("Provided point is not of type Point")
             # update the model with the
@@ -336,4 +285,4 @@ class ParameterSynthesisScenarioResult(AnalysisScenarioResult, BaseModel):
         return dfs
 
     def __repr__(self) -> str:
-        return str(self.dict())
+        return str(self.model_dump())

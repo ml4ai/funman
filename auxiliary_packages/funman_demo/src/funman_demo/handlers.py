@@ -44,7 +44,7 @@ class ResultCacheWriter(ResultHandler):
     def process(self, result: dict) -> None:
         self.parameter_space.append_result(result)
         self.f.seek(0)
-        json.dump(self.parameter_space.dict(), self.f, indent=2)
+        json.dump(self.parameter_space.model_dump(), self.f, indent=2)
         self.f.flush()
 
     def close(self) -> None:

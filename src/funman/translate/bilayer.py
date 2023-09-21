@@ -67,8 +67,6 @@ class BilayerEncoder(Encoder):
     as defined by a Bilayer model.
     """
 
-    model_config = ConfigDict()
-
     def _encode_next_step(
         self,
         scenario: "AnalysisScenario",
@@ -320,8 +318,8 @@ class BilayerEncoder(Encoder):
         reasons = []
         if self.config.substitute_subformulas:
             if not all(
-                v in self._scenario.model.init_values
-                for v in self._scenario.model._state_var_names()
+                v in self.scenario.model.init_values
+                for v in self.scenario.model._state_var_names()
             ):
                 encodable = False
                 reasons.append(

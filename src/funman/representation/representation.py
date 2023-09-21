@@ -10,15 +10,16 @@ from decimal import ROUND_CEILING, Decimal
 from statistics import mean as average
 from typing import Dict, List, Literal, Optional, Union
 
+from matplotlib import pyplot as plt
+from matplotlib.lines import Line2D
 from pydantic import BaseModel, ConfigDict, Field
 from pysmt.fnode import FNode
 from pysmt.shortcuts import REAL, Symbol
 
 import funman.utils.math_utils as math_utils
-from funman.constants import BIG_NUMBER, NEG_INFINITY, POS_INFINITY
-from funman.representation.explanation import Explanation
-from funman.utils.sympy_utils import to_sympy
+from funman import BIG_NUMBER, NEG_INFINITY, POS_INFINITY, to_sympy
 
+from .explanation import BoxExplanation, Explanation, ParameterSpaceExplanation
 from .symbol import ModelSymbol
 
 l = logging.getLogger(__name__)
@@ -186,7 +187,7 @@ class Interval(BaseModel):
             return False
 
     def __repr__(self):
-        return str(self.dict())
+        return str(self.model_dump())
 
     def __str__(self):
         return f"Interval([{self.lb}, {self.ub}))"
@@ -418,10 +419,10 @@ class Point(BaseModel):
     #     self.values = kw['values']
 
     def __str__(self):
-        return f"Point({self.dict()})"
+        return f"Point({self.model_dump()})"
 
     def __repr__(self) -> str:
-        return str(self.dict())
+        return str(self.model_dump())
 
     @staticmethod
     def from_dict(data):
@@ -476,8 +477,11 @@ class Box(BaseModel):
     type: Literal["box"] = "box"
     label: Label = LABEL_UNKNOWN
     bounds: Dict[str, Interval] = {}
-    explanation: Optional[Explanation] = None
+    explanation: Optional[BoxExplanation] = None
     cached_width: Optional[float] = Field(default=None, exclude=True)
+
+    def explain(self) -> BoxExplanation:
+        return self.explanation
 
     def __hash__(self):
         return int(sum([i.__hash__() for _, i in self.bounds.items()]))
@@ -647,7 +651,7 @@ class Box(BaseModel):
             return False
 
     def __repr__(self):
-        return str(self.dict())
+        return str(self.model_dump())
 
     def __str__(self):
         return f"Box({self.bounds}), width = {self.width()}"
@@ -1234,6 +1238,17 @@ class ParameterSpace(BaseModel):
     true_points: List[Point] = []
     false_points: List[Point] = []
 
+    def points(self) -> List[Point]:
+        return self.true_points + self.false_points
+
+    def explain(self) -> ParameterSpaceExplanation:
+        true_explanations = [box.explain() for box in self.true_boxes]
+        false_explanations = [box.explain() for box in self.false_boxes]
+        return ParameterSpaceExplanation(
+            true_explanations=true_explanations,
+            false_explanations=false_explanations,
+        )
+
     @staticmethod
     def _from_configurations(
         configurations: List[Dict[str, Union[int, "ParameterSpace"]]]
@@ -1348,6 +1363,15 @@ class ParameterSpace(BaseModel):
         raise NotImplementedError()
 
     def plot(self, color="b", alpha=0.2):
+        import logging
+
+        from funman_demo import BoxPlotter
+
+        # remove matplotlib debugging
+        logging.getLogger("matplotlib.font_manager").disabled = True
+        logging.getLogger("matplotlib.pyplot").disabled = True
+        logging.getLogger("funman.translate.translate").setLevel(logging.DEBUG)
+
         custom_lines = [
             Line2D([0], [0], color="g", lw=4, alpha=alpha),
             Line2D([0], [0], color="r", lw=4, alpha=alpha),
@@ -1368,19 +1392,19 @@ class ParameterSpace(BaseModel):
             raise Exception("obj is not a dict")
 
         try:
-            return Point.parse_obj(obj)
+            return Point.model_validate(obj)
         except:
             pass
 
         try:
-            return Box.parse_obj(obj)
+            return Box.model_validate(obj)
         except:
             pass
 
         raise Exception(f"obj of type {obj['type']}")
 
     def __repr__(self) -> str:
-        return str(self.dict())
+        return str(self.model_dump())
 
     def append_result(self, result: dict):
         inst = ParameterSpace.decode_labeled_object(result)

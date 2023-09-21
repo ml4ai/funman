@@ -2,6 +2,8 @@
 This module defines enocoders for already encoded models.  (Technically, a
 pass-through that helps make the encoder abstraction uniform.)
 """
+from typing import List
+
 from funman.model import Model
 from funman.model.encoded import EncodedModel
 from funman.translate import Encoder, Encoding, EncodingOptions
@@ -44,9 +46,16 @@ class EncodedEncoder(Encoder):
             )
 
     def encode_model_layer(self, layer_idx: int, step_size: int = None):
-        return self.encode_model(self._scenario.model)._layers[layer_idx]
+        return self.encode_model(self.scenario.model)._layers[layer_idx]
 
     def encode_model_timed(
         self, scenario: "AnalysisScenario", num_steps: int, step_size: int
     ) -> Encoding:
         return self.encode_model(scenario.model)._layers[layer_idx]
+
+    def _get_untimed_symbols(self, model: Model) -> List[str]:
+        untimed_symbols = []
+        # All flux nodes correspond to untimed symbols
+        for var_name in [p.name for p in self.scenario.parameters]:
+            untimed_symbols.append(var_name)
+        return untimed_symbols

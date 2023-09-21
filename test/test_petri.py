@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from funman_demo.handlers import RealtimeResultPlotter, ResultCacheWriter
 
 from funman import Funman
-from funman.funman import FUNMANConfig
+from funman.config import FUNMANConfig
 from funman.model import EnsembleModel, PetrinetModel, QueryLE
 from funman.model.petrinet import PetrinetDynamics
 from funman.model.query import QueryAnd

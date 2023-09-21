@@ -7,8 +7,6 @@ import traceback
 from enum import Enum
 from typing import Optional
 
-from funman import Funman
-from funman.funman import FUNMANConfig
 from funman.model.model import Model
 from funman.representation.representation import ParameterSpace
 from funman.scenario.scenario import AnalysisScenario
@@ -186,6 +184,9 @@ class FunmanWorker:
             self.current_results.update_parameter_space(scenario, results)
 
     def _run(self, stop_event: threading.Event):
+        from funman import Funman
+        from funman.config import FUNMANConfig
+
         l.info("FunmanWorker running...")
         try:
             while True:

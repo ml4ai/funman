@@ -6,10 +6,11 @@ from pathlib import Path
 from pysmt.shortcuts import GE, LE, And, Real, Symbol
 from pysmt.typing import REAL
 
-from funman.api.api import _wrap_with_internal_model
-from funman.funman import Funman, FUNMANConfig
+from funman import Funman
+from funman.config import FUNMANConfig
 from funman.model import EncodedModel, QueryTrue
 from funman.model.generated_models.petrinet import Model as GeneratedPetriNet
+from funman.model.model import _wrap_with_internal_model
 from funman.representation import ParameterSpace
 from funman.representation.representation import ModelParameter
 from funman.scenario.parameter_synthesis import ParameterSynthesisScenario
@@ -279,12 +280,12 @@ class TestCompilation(unittest.TestCase):
         model = json.loads(model_path.read_bytes())
         request = json.loads(request_path.read_bytes())
 
-        work = FunmanWorkUnit.parse_obj(
+        work = FunmanWorkUnit.model_validate(
             {
                 "id": "mock_work",
                 # TODO improve testing experience when loading model files without using api
                 "model": _wrap_with_internal_model(
-                    GeneratedPetriNet.parse_obj(model)
+                    GeneratedPetriNet.model_validate(model)
                 ),
                 "request": request,
             }

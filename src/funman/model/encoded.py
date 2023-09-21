@@ -1,6 +1,6 @@
-from typing import List
+from typing import List, Optional
 
-from pydantic import ConfigDict, Extra
+from pydantic import ConfigDict, Extra, PrivateAttr
 from pysmt.formula import FNode
 from pysmt.shortcuts import TRUE
 
@@ -17,8 +17,8 @@ class EncodedModel(Model):
         arbitrary_types_allowed=True,
     )
 
-    _formula: FNode = TRUE()
-    parameters: List[ModelParameter] = []
+    _formula: FNode = PrivateAttr(TRUE())
+    parameters: Optional[List[ModelParameter]] = None
 
     def default_encoder(
         self, config: "FUNMANConfig", scenario: "AnalysisScenario"
@@ -36,4 +36,10 @@ class EncodedModel(Model):
         return EncodedEncoder(config=config, scenario=scenario)
 
     def _parameter_names(self) -> List[str]:
-        return [p.name for p in self.parameters]
+        if self.parameters:
+            return [p.name for p in self.parameters]
+        else:
+            return None
+
+    def _state_var_names(self) -> List[str]:
+        return [str(x) for x in self._formula.get_free_variables()]

@@ -9,27 +9,24 @@ import pandas as pd
 from pydantic import BaseModel, ConfigDict
 from pysmt.solvers.solver import Model as pysmt_Model
 
-from funman.model.bilayer import BilayerModel, validator
-from funman.model.decapode import DecapodeModel
-from funman.model.encoded import EncodedModel
-from funman.model.ensemble import EnsembleModel
-from funman.model.petrinet import GeneratedPetriNetModel, PetrinetModel
-from funman.model.query import (
+from funman import (
+    BilayerModel,
+    DecapodeModel,
+    EncodedModel,
+    EnsembleModel,
+    ParameterSpace,
+    Point,
     QueryAnd,
     QueryEncoded,
     QueryFunction,
     QueryLE,
     QueryTrue,
-)
-from funman.model.regnet import GeneratedRegnetModel, RegnetModel
-from funman.representation.representation import (
-    ParameterSpace,
-    Point,
     StructureParameter,
 )
+from funman.model.petrinet import GeneratedPetriNetModel, PetrinetModel
+from funman.model.regnet import GeneratedRegnetModel, RegnetModel
 from funman.scenario import AnalysisScenario, AnalysisScenarioResult
-from funman.translate import Encoder
-from funman.translate.translate import Encoding
+from funman.translate import Encoder, Encoding
 
 
 class ConsistencyScenario(AnalysisScenario, BaseModel):
@@ -173,15 +170,6 @@ class ConsistencyScenario(AnalysisScenario, BaseModel):
             ]
         )
 
-    def _encode(self, config: "FUNMANConfig"):
-        if self._smt_encoder is None:
-            self._smt_encoder = self.model.default_encoder(config)
-        self._model_encoding = self._smt_encoder.encode_model(self.model)
-        self._query_encoding = self._smt_encoder.encode_query(
-            self._model_encoding, self.query
-        )
-        return self._model_encoding, self._query_encoding
-
     def _encode_timed(self, num_steps, step_size_idx, config: "FUNMANConfig"):
         # # This will overwrite the _model_encoding for each configuration, but the encoder will retain components of the configurations.
         # self._model_encoding = self._smt_encoder.encode_model_timed(
@@ -202,7 +190,6 @@ class ConsistencyScenario(AnalysisScenario, BaseModel):
 
         self._model_encoding = model_encoding
         self._query_encoding = query_encoding
-        return self._model_encoding, self._query_encoding
 
 
 class ConsistencyScenarioResult(AnalysisScenarioResult, BaseModel):

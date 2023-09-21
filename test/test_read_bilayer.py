@@ -4,7 +4,7 @@ import unittest
 
 from pysmt.shortcuts import get_model
 
-from funman.funman import FUNMANConfig
+from funman import FUNMANConfig
 from funman.model import BilayerDynamics
 from funman.model.bilayer import BilayerModel
 from funman.model.query import QueryTrue
