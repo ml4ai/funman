@@ -357,12 +357,12 @@ class BoxSearch(Search):
 
             for t in range(episode._formula_stack_time + 1, timepoint + 1):
                 formula = And(
-                    model_encoding.encoding(
+                    model_encoding.construct_encoding(
                         model_encoder.encode_model_layer,
                         layers=[t],
                         box=box,
                     ),
-                    query_encoding.encoding(
+                    query_encoding.construct_encoding(
                         partial(
                             query_encoder.encode_query_layer,
                             episode.problem.query,
@@ -371,7 +371,7 @@ class BoxSearch(Search):
                         ),
                         layers=[t],
                         box=box,
-                        assumptions=episode.problem._assume_query,
+                        assumptions=episode.problem._assumptions,
                     ),
                 )
                 layer_formulas.append(formula)

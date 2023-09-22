@@ -107,8 +107,6 @@
     }
   ],
   "config": {
-    "solver": "dreal",
-    "save_smtlib": true,
-    "substitute_subformulas": true
+    
   }
 }

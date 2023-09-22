@@ -3,7 +3,7 @@ This module defines the abstract base classes for the model encoder classes in f
 """
 import logging
 from abc import ABC
-from typing import Dict, List, Set, Tuple, Union
+from typing import Dict, List, Optional, Set, Tuple, Union
 
 from pydantic import BaseModel, ConfigDict, PrivateAttr
 from pysmt.constants import Numeral
@@ -36,6 +36,7 @@ from funman.model.query import (
     QueryLE,
     QueryTrue,
 )
+from funman.representation.assumption import Assumption
 from funman.representation import ModelParameter
 from funman.representation.symbol import ModelSymbol
 from funman.scenario.scenario import AnalysisScenario
@@ -101,12 +102,12 @@ class LayeredEncoding(BaseModel):
     # def set_symbols(cls, v: FNode):
     #     cls.symbols = Symbol(v, REAL)
 
-    def encoding(
+    def construct_encoding(
         self,
         encoding_fn,
         layers=None,
         box: Box = None,
-        assumptions: List[FNode] = None,
+        assumptions: Optional[List[Assumption]] = None,
     ):
         if layers:
             # return And([self._layers[i][0] for i in layers])

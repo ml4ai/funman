@@ -28,19 +28,17 @@ from funman.model.query import (
     QueryLE,
 )
 from funman.model.regnet import GeneratedRegnetModel, RegnetModel
-from funman.representation import ModelParameter, StructureParameter
 from funman.representation.representation import (
     Box,
-    ModelParameter,
     ParameterSpace,
     Point,
-    StructureParameter,
 )
 from funman.scenario import (
     AnalysisScenario,
     AnalysisScenarioResult,
     ConsistencyScenario,
 )
+from funman.representation.assumption import Assumption
 from funman.translate.translate import Encoder, Encoding
 from funman.utils.math_utils import minus
 
@@ -74,6 +72,7 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
     ] = None  # TODO set to model.default_encoder()
     _model_encoding: Optional[Dict[int, Encoding]] = {}
     _query_encoding: Optional[Dict[int, Encoding]] = {}
+
     _assume_model: Optional[FNode] = None
     _assume_query: Optional[FNode] = None
     _original_parameter_widths: Dict[str, float] = {}
@@ -152,7 +151,11 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
         )
         times.sort()
 
-        self._assume_query = [Symbol(f"assume_query_{t}") for t in times]
+        # Initialize Assumptions
+        # Maintain backward support for query as a single constraint
+        self._assumptions.append(Assumption(constraint=self.query))
+
+        #self._assume_query = [Symbol(f"assume_query_{t}") for t in times]
         for step_size_idx, step_size in enumerate(
             self._smt_encoder._timed_model_elements["step_sizes"]
         ):
@@ -174,32 +177,6 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
             self._model_encoding[step_size] = model_encoding
             self._query_encoding[step_size] = query_encoding
 
-    def _encode_simplified(
-        self, box: Box, timepoint: int, config: "FUNMANConfig"
-    ):
-        model_encoding = self._model_encoding.encoding(
-            self._model_encoding._encoder.encode_model_layer,
-            layers=list(range(timepoint + 1)),
-            box=box,
-        )
-        query_encoding = self._query_encoding.encoding(
-            partial(
-                self._query_encoding._encoder.encode_query_layer,
-                self.query,
-                self,
-                config,
-            ),
-            layers=[timepoint],
-            box=box,
-            assumptions=self._assume_query,
-        )
-        step_size_idx = self._smt_encoder._timed_model_elements[
-            "step_sizes"
-        ].index(self._model_encoding.step_size)
-
-        return self._smt_encoder._encode_simplified(
-            model_encoding, query_encoding, step_size_idx
-        )
 
 
 class ParameterSynthesisScenarioResult(AnalysisScenarioResult, BaseModel):

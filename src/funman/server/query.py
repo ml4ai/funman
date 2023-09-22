@@ -1,5 +1,6 @@
 import random
 from typing import Dict, List, Optional, Tuple, Union
+from funman.representation.constraint import Constraint, ModelConstraint, ParameterConstraint, StateVariableConstraint
 
 import pandas as pd
 from matplotlib import pyplot as plt
@@ -37,6 +38,7 @@ from funman.scenario.scenario import AnalysisScenario
 
 class FunmanWorkRequest(BaseModel):
     query: Optional[Union[QueryAnd, QueryLE, QueryFunction, QueryTrue]] = None
+    constraints: Optional[List[Union[StateVariableConstraint]]] = None
     parameters: Optional[List[LabeledParameter]] = None
     config: Optional[FUNMANConfig] = None
     structure_parameters: Optional[List[LabeledParameter]] = None
@@ -72,6 +74,9 @@ class FunmanWorkUnit(BaseModel):
             if self.request.query is not None
             else QueryTrue()
         )
+
+        constraints: List[Constraint] = [ModelConstraint(model=self.model)] + self.request.constraints
+
         parameters = []
         if (
             hasattr(self.request, "parameters")
@@ -100,6 +105,10 @@ class FunmanWorkUnit(BaseModel):
                     )
                 )
 
+        constraints += [
+            ParameterConstraint(parameter=parameter) for parameter in parameters
+        ]
+
         if (
             not hasattr(self.request, "parameters")
             or self.request.parameters is None
@@ -109,6 +118,7 @@ class FunmanWorkUnit(BaseModel):
                 model=self.model,
                 query=query,
                 parameters=parameters,
+                constraints=constraints,
             )
 
         if isinstance(self.model, EnsembleModel):
@@ -117,7 +127,10 @@ class FunmanWorkUnit(BaseModel):
             )
 
         return ParameterSynthesisScenario(
-            model=self.model, query=query, parameters=parameters
+            model=self.model,
+            query=query,
+            parameters=parameters,
+            constraints=constraints,
         )
 
 

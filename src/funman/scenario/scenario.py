@@ -1,7 +1,8 @@
 import threading
 from abc import ABC, abstractclassmethod, abstractmethod
 from decimal import Decimal
-from typing import List, Optional
+from typing import List, Optional, Union
+
 
 from pydantic import BaseModel
 
@@ -14,6 +15,12 @@ from funman import (
     Parameter,
     StructureParameter,
 )
+from funman.representation.constraint import (
+    ModelConstraint,
+    ParameterConstraint,
+    StateVariableConstraint,
+)
+from funman.representation.assumption import Assumption
 
 
 class AnalysisScenario(ABC, BaseModel):
@@ -23,6 +30,18 @@ class AnalysisScenario(ABC, BaseModel):
 
     parameters: List[Parameter]
     normalization_constant: Optional[float] = None
+    constraints: Optional[List[
+        Union[ModelConstraint, ParameterConstraint, StateVariableConstraint]
+    ]] = None
+    _assumptions: List[Assumption] = []
+
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        # create assumptions for each constraint that may be assumed.
+        for constraint in self.constraints:
+            if constraint.assumable():
+                self._assumptions.append(Assumption(constraint=constraint))
 
     @abstractclassmethod
     def get_kind(cls) -> str:
@@ -53,9 +72,7 @@ class AnalysisScenario(ABC, BaseModel):
         return Box(bounds=bounds).volume()
 
     def structure_parameters(self):
-        return [
-            p for p in self.parameters if isinstance(p, StructureParameter)
-        ]
+        return [p for p in self.parameters if isinstance(p, StructureParameter)]
 
     def model_parameters(self):
         return [p for p in self.parameters if isinstance(p, ModelParameter)]

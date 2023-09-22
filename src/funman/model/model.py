@@ -62,7 +62,6 @@ class Model(ABC, BaseModel):
     _normalization_constant: Optional[float] = None
     _extra_constraints: FNode = None
     _normalization_term: Optional[FNode] = None
-    _constraints: List[Constraint] = None
 
     # @abstractmethod
     # def default_encoder(self, config: "FUNMANConfig") -> "Encoder":
@@ -75,9 +74,6 @@ class Model(ABC, BaseModel):
     #         SMT encoder for model
     #     """
     #     pass
-
-    def constraints(self) -> List[Constraint]:
-        return self._constraints
 
     def _symbols(self):
         return list(set(self._state_var_names() + self._parameter_names()))
