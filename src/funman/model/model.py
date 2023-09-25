@@ -10,8 +10,7 @@ from pydantic import BaseModel, ConfigDict
 from pysmt.formula import FNode
 from pysmt.shortcuts import REAL, Div, Plus, Real, Symbol
 
-from funman import Constraint
-from funman.representation.representation import ModelParameter
+from funman.representation.parameter import ModelParameter
 
 # from .bilayer import BilayerModel
 # from .decapode import DecapodeModel

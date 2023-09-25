@@ -2,7 +2,6 @@
 This module defines the Parameter Synthesis scenario.
 """
 import threading
-from functools import partial
 from typing import Callable, Dict, List, Optional, Union
 
 from pandas import DataFrame
@@ -10,6 +9,12 @@ from pydantic import BaseModel, ConfigDict
 from pysmt.formula import FNode
 from pysmt.shortcuts import BOOL, Iff, Symbol
 
+from funman import (
+    ModelConstraint,
+    ParameterConstraint,
+    StateVariableConstraint,
+    QueryConstraint
+)
 from funman.model import (
     BilayerModel,
     DecapodeModel,
@@ -28,17 +33,13 @@ from funman.model.query import (
     QueryLE,
 )
 from funman.model.regnet import GeneratedRegnetModel, RegnetModel
-from funman.representation.representation import (
-    Box,
-    ParameterSpace,
-    Point,
-)
+from funman.representation.assumption import Assumption
+from funman.representation.representation import ParameterSpace, Point
 from funman.scenario import (
     AnalysisScenario,
     AnalysisScenarioResult,
     ConsistencyScenario,
 )
-from funman.representation.assumption import Assumption
 from funman.translate.translate import Encoder, Encoding
 from funman.utils.math_utils import minus
 
@@ -70,11 +71,11 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
     _smt_encoder: Optional[
         Encoder
     ] = None  # TODO set to model.default_encoder()
-    _model_encoding: Optional[Dict[int, Encoding]] = {}
-    _query_encoding: Optional[Dict[int, Encoding]] = {}
+    # _model_encoding: Optional[Dict[int, Encoding]] = {}
+    # _query_encoding: Optional[Dict[int, Encoding]] = {}
 
-    _assume_model: Optional[FNode] = None
-    _assume_query: Optional[FNode] = None
+    # _assume_model: Optional[FNode] = None
+    # _assume_query: Optional[FNode] = None
     _original_parameter_widths: Dict[str, float] = {}
 
     @classmethod
@@ -153,9 +154,13 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
 
         # Initialize Assumptions
         # Maintain backward support for query as a single constraint
-        self._assumptions.append(Assumption(constraint=self.query))
+        if self.query is not None:
+            query_constraint = QueryConstraint(name="query", query=self.query)
+            self.constraints += [query_constraint]
+            self._assumptions.append(Assumption(constraint=query_constraint))
 
-        #self._assume_query = [Symbol(f"assume_query_{t}") for t in times]
+
+        # self._assume_query = [Symbol(f"assume_query_{t}") for t in times]
         for step_size_idx, step_size in enumerate(
             self._smt_encoder._timed_model_elements["step_sizes"]
         ):
@@ -165,18 +170,18 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
                 ]
             )
             (
-                model_encoding,
-                query_encoding,
-            ) = self._smt_encoder.initialize_encodings(
-                self, num_steps, step_size_idx
-            )
+                # model_encoding,
+                # query_encoding,
+                encoding
+            ) = self._smt_encoder.initialize_encodings(self, num_steps)
             # self._smt_encoder.encode_model_timed(
             #     self, num_steps, step_size
             # )
 
-            self._model_encoding[step_size] = model_encoding
-            self._query_encoding[step_size] = query_encoding
+            self._encodings[step_size] = encoding
 
+            # self._model_encoding[step_size] = model_encoding
+            # self._query_encoding[step_size] = query_encoding
 
 
 class ParameterSynthesisScenarioResult(AnalysisScenarioResult, BaseModel):

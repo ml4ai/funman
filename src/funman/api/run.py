@@ -8,6 +8,7 @@ from typing import Dict, Tuple, Union
 # import matplotlib.pyplot as plt
 import pydantic
 
+import funman
 from funman.api.settings import Settings
 from funman.model.generated_models.petrinet import Model as GeneratedPetriNet
 from funman.model.generated_models.regnet import Model as GeneratedRegnet

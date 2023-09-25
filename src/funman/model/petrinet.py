@@ -5,8 +5,7 @@ import sympy
 from pydantic import BaseModel, ConfigDict
 from pysmt.shortcuts import REAL, Div, Plus, Real, Symbol
 
-
-from funman.representation.representation import ModelParameter
+from funman.representation.parameter import ModelParameter
 from funman.utils.sympy_utils import substitute, to_sympy
 
 from .generated_models.petrinet import Model as GeneratedPetrinet
@@ -147,9 +146,6 @@ class AbstractPetriNetModel(Model):
             raise Exception(
                 f"Cannot calculate the normalization constant for {type(self)} because the initial state variables are not constants. Try setting the 'normalization_constant' in the configuration to constant."
             )
-
-
-
 
 
 class GeneratedPetriNetModel(AbstractPetriNetModel):

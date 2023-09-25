@@ -26,9 +26,6 @@ class GrometEncodingOptions(EncodingOptions):
     Gromet encoding options.
     """
 
-    def __init__(self) -> None:
-        super().__init__()
-
 
 class GrometEncoder(Encoder):
     """
@@ -39,7 +36,9 @@ class GrometEncoder(Encoder):
     def __init__(
         self,
         gromet_fn,
-        config: GrometEncodingOptions = GrometEncodingOptions(),
+        config: GrometEncodingOptions = GrometEncodingOptions(
+            num_steps=0, step_size=0
+        ),
     ) -> None:
         super().__init__(config)
         self._gromet_fn = gromet_fn

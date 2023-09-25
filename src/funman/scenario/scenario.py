@@ -1,8 +1,7 @@
 import threading
 from abc import ABC, abstractclassmethod, abstractmethod
 from decimal import Decimal
-from typing import List, Optional, Union
-
+from typing import Dict, List, Optional, Union
 
 from pydantic import BaseModel
 
@@ -11,16 +10,15 @@ from funman import (
     POS_INFINITY,
     Box,
     Interval,
+    ModelConstraint,
     ModelParameter,
     Parameter,
     StructureParameter,
-)
-from funman.representation.constraint import (
-    ModelConstraint,
-    ParameterConstraint,
-    StateVariableConstraint,
+    QueryConstraint,
+    ParameterConstraint
 )
 from funman.representation.assumption import Assumption
+from funman.translate.translate import Encoding
 
 
 class AnalysisScenario(ABC, BaseModel):
@@ -30,11 +28,20 @@ class AnalysisScenario(ABC, BaseModel):
 
     parameters: List[Parameter]
     normalization_constant: Optional[float] = None
-    constraints: Optional[List[
-        Union[ModelConstraint, ParameterConstraint, StateVariableConstraint]
-    ]] = None
+    constraints: Optional[
+        List[
+            Union[
+                "ModelConstraint",
+                "ParameterConstraint",
+                "StateVariableConstraint",
+                "QueryConstraint"
+            ]
+        ]
+    ] = None
     _assumptions: List[Assumption] = []
 
+    # Encoding for different step sizes (key)
+    _encodings: Optional[Dict[int, Encoding]] = {}
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -72,7 +79,9 @@ class AnalysisScenario(ABC, BaseModel):
         return Box(bounds=bounds).volume()
 
     def structure_parameters(self):
-        return [p for p in self.parameters if isinstance(p, StructureParameter)]
+        return [
+            p for p in self.parameters if isinstance(p, StructureParameter)
+        ]
 
     def model_parameters(self):
         return [p for p in self.parameters if isinstance(p, ModelParameter)]
@@ -106,7 +115,7 @@ class AnalysisScenario(ABC, BaseModel):
         self._filter_parameters()
 
     def _extract_non_overriden_parameters(self):
-        from funman.server.query import LABEL_ANY
+        from funman.constants import LABEL_ANY
 
         # If a model has parameters that are not overridden by the scenario, then add them to the scenario
         model_parameters = self.model._parameter_names()

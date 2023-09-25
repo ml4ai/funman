@@ -6,7 +6,7 @@ from pydantic import BaseModel, ConfigDict
 
 from funman.config import FUNMANConfig
 from funman.model import Model
-from funman.representation.representation import ModelParameter
+from funman.representation.parameter import ModelParameter
 
 
 class BilayerMetadata(BaseModel):

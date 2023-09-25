@@ -1,11 +1,11 @@
 import random
 from typing import Dict, List, Optional, Tuple, Union
-from funman.representation.constraint import Constraint, ModelConstraint, ParameterConstraint, StateVariableConstraint
 
 import pandas as pd
 from matplotlib import pyplot as plt
 from pydantic import BaseModel
 
+from funman import LABEL_ALL, LABEL_ANY, ModelParameter
 from funman.config import FUNMANConfig
 from funman.model.bilayer import BilayerModel
 from funman.model.decapode import DecapodeModel
@@ -14,17 +14,20 @@ from funman.model.ensemble import EnsembleModel
 from funman.model.petrinet import GeneratedPetriNetModel, PetrinetModel
 from funman.model.query import QueryAnd, QueryFunction, QueryLE, QueryTrue
 from funman.model.regnet import GeneratedRegnetModel, RegnetModel
-from funman.representation import ModelParameter
+from funman.representation.constraint import (
+    Constraint,
+    ModelConstraint,
+    ParameterConstraint,
+    StateVariableConstraint,
+    QueryConstraint
+)
 from funman.representation.explanation import Explanation
-from funman.representation.representation import (
-    LABEL_ANY,
-    LABEL_TRUE,
+from funman.representation.parameter import (
     LabeledParameter,
     ModelParameter,
-    ParameterSpace,
-    Point,
     StructureParameter,
 )
+from funman.representation.representation import ParameterSpace, Point
 from funman.scenario.consistency import (
     ConsistencyScenario,
     ConsistencyScenarioResult,
@@ -75,7 +78,13 @@ class FunmanWorkUnit(BaseModel):
             else QueryTrue()
         )
 
-        constraints: List[Constraint] = [ModelConstraint(model=self.model)] + self.request.constraints
+        constraints: List[Constraint] = [
+            ModelConstraint(name="model_dynamics", model=self.model)
+        ] 
+        if self.request.constraints is not None:
+            constraints += self.request.constraints
+
+
 
         parameters = []
         if (
@@ -106,7 +115,8 @@ class FunmanWorkUnit(BaseModel):
                 )
 
         constraints += [
-            ParameterConstraint(parameter=parameter) for parameter in parameters
+            ParameterConstraint(name=parameter.name, parameter=parameter)
+            for parameter in parameters
         ]
 
         if (

@@ -10,9 +10,9 @@ from pydantic import BaseModel, ConfigDict
 from pysmt.shortcuts import Solver
 from pysmt.solvers.solver import Model as pysmtModel
 
+from funman import Box, Interval, ModelParameter
 from funman.config import FUNMANConfig
 from funman.representation.explanation import BoxExplanation
-from funman.representation.representation import Box, Interval, ModelParameter
 from funman.scenario.scenario import AnalysisScenario
 
 
@@ -114,5 +114,6 @@ class Search(ABC):
         if result:
             result = s.get_model()
         else:
-            result = BoxExplanation(expression=s.get_unsat_core())
+            result = BoxExplanation()
+            result._expression =s.get_unsat_core()
         return result

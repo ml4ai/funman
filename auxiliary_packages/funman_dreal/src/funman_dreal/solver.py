@@ -27,6 +27,7 @@ from pysmt.solvers.eager import EagerModel
 from pysmt.solvers.smtlib import SmtLibBasicSolver, SmtLibIgnoreMixin
 from pysmt.solvers.solver import Solver, SolverOptions, UnsatCoreSolver
 from tenacity import retry
+from pysmt.formula import FNode
 
 import docker
 from funman.utils.smtlib_utils import FUNMANSmtPrinter
@@ -553,8 +554,8 @@ class DRealNative(
         self.model = result
         return result
 
-    def get_unsat_core(self):
-        unsat_core = self.context.get_unsat_core()
+    def get_unsat_core(self)->FNode:
+        unsat_core:dreal.Formula = self.context.get_unsat_core()
         f = self.converter.back(unsat_core)
         return f
 

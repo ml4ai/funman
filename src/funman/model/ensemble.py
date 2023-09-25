@@ -4,7 +4,7 @@ import graphviz
 from pydantic import ConfigDict
 from pysmt.shortcuts import REAL, Div, Real, Symbol
 
-from funman.representation import ModelParameter
+from funman.representation.parameter import ModelParameter
 
 from .model import Model
 

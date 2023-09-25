@@ -11,6 +11,7 @@ from pysmt.solvers.solver import (
     SolverOptions,
     UnsatCoreSolver,
 )
+from pysmt.smtlib.parser import SmtLibParser, Tokenizer
 from pysmt.walkers import DagWalker
 
 
@@ -26,9 +27,15 @@ class DRealConverter(Converter, DagWalker):
         # Maps an internal yices instance into the corresponding symbol
         self.decl_to_symbol = {}
 
-    # FIXME convert to FNode instead of string
-    def back(self, formula: dreal.Formula) -> str:
-        return formula.ToPrefix()
+    def rewrite_dreal_formula(self, formula:dreal.Formula)-> str:
+        str_formula = str(formula).replace(" and ", " & ").replace(" or ", " | ")
+        return str_formula
+
+    
+    def back(self, dreal_formula: dreal.Formula) -> FNode:
+        from pysmt.parsing import parse
+        formula = parse(self.rewrite_dreal_formula(dreal_formula))
+        return formula
 
     @catch_conversion_error
     def convert(self, formula):

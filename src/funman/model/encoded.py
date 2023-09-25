@@ -5,7 +5,7 @@ from pysmt.formula import FNode
 from pysmt.shortcuts import TRUE
 
 from funman.model import Model
-from funman.representation.representation import ModelParameter
+from funman.representation.parameter import ModelParameter
 
 
 class EncodedModel(Model):

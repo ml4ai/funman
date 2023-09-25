@@ -85,25 +85,51 @@ def minus(lhs, rhs):
     return lhs - rhs
 
 
-def plus(lhs, rhs):
-    if lhs == NEG_INFINITY:
-        if rhs == POS_INFINITY:
+def plus(numer, denom):
+    if numer == NEG_INFINITY:
+        if denom == POS_INFINITY:
             return 0
         else:
             return NEG_INFINITY
-    if rhs == NEG_INFINITY:
-        if lhs == POS_INFINITY:
+    if denom == NEG_INFINITY:
+        if numer == POS_INFINITY:
             return 0
         else:
             return NEG_INFINITY
-    if lhs == POS_INFINITY:
-        if rhs == NEG_INFINITY:
+    if numer == POS_INFINITY:
+        if denom == NEG_INFINITY:
             return 0
         else:
             return POS_INFINITY
-    if rhs == POS_INFINITY:
-        if lhs == NEG_INFINITY:
+    if denom == POS_INFINITY:
+        if numer == NEG_INFINITY:
             return 0
         else:
             return POS_INFINITY
-    return lhs + rhs
+    return numer + denom
+
+
+def div(numer: float, denom: float) -> float:
+    if numer == NEG_INFINITY:
+        if denom == POS_INFINITY:
+            return NEG_INFINITY
+        else:
+            return POS_INFINITY
+    if denom == NEG_INFINITY:
+        if numer == POS_INFINITY:
+            return NEG_INFINITY
+        else:
+            return POS_INFINITY
+    if numer == POS_INFINITY:
+        if denom == NEG_INFINITY:
+            return NEG_INFINITY
+        else:
+            return POS_INFINITY
+    if denom == POS_INFINITY:
+        if numer == NEG_INFINITY:
+            return NEG_INFINITY
+        else:
+            return POS_INFINITY
+    if float(denom) == 0.0:
+        raise ZeroDivisionError()
+    return numer / denom

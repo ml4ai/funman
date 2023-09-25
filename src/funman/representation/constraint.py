@@ -1,38 +1,73 @@
-from typing import Optional, List, Union
-from pydantic import BaseModel, field_validator
+from typing import Optional, Union
 
+from pydantic import BaseModel, ConfigDict, field_validator
+
+from .interval import Interval
+from .parameter import Parameter
+from funman.model.query import Query
+from funman.model import Model
 
 class Constraint(BaseModel):
     _assumable: bool = True
+    name: str
+
+    model_config = ConfigDict(
+        extra="forbid"
+    )
 
     def assumable(self) -> bool:
         return self._assumable
 
+    def __hash__(self) -> int:
+        return 1
+
 
 class ModelConstraint(Constraint):
     _assumable: bool = False
+    model: Model
+
+    model_config = ConfigDict(
+        extra="forbid"
+    )
+
+    def __hash__(self) -> int:
+        return 2
 
 
 class ParameterConstraint(Constraint):
     _assumable: bool = False
+    parameter: Parameter
+
+    model_config = ConfigDict(
+        extra="forbid"
+    )
+
+    def __hash__(self) -> int:
+        return 1
+
+class QueryConstraint(Constraint):
+    _assumable: bool = True
+    query: Query
+
+    model_config = ConfigDict(
+        extra="forbid"
+    )
+
+    def __hash__(self) -> int:
+        return 4
 
 
 class StateVariableConstraint(Constraint):
     variable: str
-    bounds: Optional[List[Union[float, int]]] = None
-    timepoints: Optional[List[Union[float, int]]] = None
+    bounds: "Interval" = None
+    timepoints: Optional["Interval"] = None
 
-    @field_validator("bounds", "timepoints")
-    @classmethod
-    def well_formed_bounds(cls, b: Optional[List[Union[float, int]]]):
-        if b is None:
-            return b
-        else:
-            if len(b) == 2 and b[0] <= b[1]:
-                return b
-            else:
-                raise ValueError(
-                    "must be a pair of numbers, and the lower bound must be no more than the upper bound"
-                )
+    model_config = ConfigDict(
+        extra="forbid"
+    )
 
+    def __hash__(self) -> int:
+        return 3
 
+    def contains_time(self, time: Union[float, int]) -> bool:
+        return self.timepoints is None or self.timepoints.contains_value(time)

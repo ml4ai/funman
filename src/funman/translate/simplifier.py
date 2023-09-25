@@ -21,8 +21,8 @@ from sympy import (
     sympify,
 )
 
+from funman import ModelParameter
 from funman.constants import POS_INFINITY
-from funman.representation.representation import ModelParameter
 from funman.utils.sympy_utils import (
     replace_reserved,
     series_approx,

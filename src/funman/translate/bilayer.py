@@ -26,6 +26,7 @@ from pysmt.shortcuts import (
 )
 from pysmt.typing import REAL
 
+from funman import ModelParameter
 from funman.model.bilayer import (
     BilayerEdge,
     BilayerFluxNode,
@@ -35,7 +36,6 @@ from funman.model.bilayer import (
     BilayerStateNode,
 )
 from funman.model.model import Model
-from funman.representation import ModelParameter
 from funman.representation.representation import Box, Interval
 from funman.translate import Encoder, Encoding, EncodingOptions
 from funman.translate.simplifier import FUNMANSimplifier
