@@ -101,7 +101,11 @@ class Box(BaseModel):
     cached_width: Optional[float] = Field(default=None, exclude=True)
 
     def explain(self) -> BoxExplanation:
-        return self.explanation
+        expl = {
+            "box": {k:v.model_dump() for k, v in self.bounds.items() }
+        }
+        expl.update(self.explanation.explain())
+        return expl
 
     def __hash__(self):
         return int(sum([i.__hash__() for _, i in self.bounds.items()]))

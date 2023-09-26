@@ -51,6 +51,7 @@ from funman.representation.constraint import (
     QueryConstraint
 )
 from funman.translate.simplifier import FUNMANSimplifier
+from funman.utils import math_utils
 from funman.utils.sympy_utils import (
     FUNMANFormulaManager,
     sympy_to_pysmt,
@@ -902,9 +903,12 @@ class Encoder(ABC, BaseModel):
                 else query.bounds
             )
             symbol = self._encode_state_var(var=query.variable, time=time)
+            
+            norm = scenario.normalization_constant if options.normalize else 1.0
+
             formula = self.interval_to_smt(
-                parameter.name,
-                Interval(lb=parameter.lb, ub=parameter.ub),
+                query.variable,
+                Interval(lb=math_utils.div(query.bounds.lb,norm), ub=math_utils.div(query.bounds.ub,norm)),
                 time=time,
                 closed_upper_bound=False,
                 infinity_constraints=False,

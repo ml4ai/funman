@@ -1,5 +1,6 @@
 import functools
 from fractions import Fraction
+from typing import List
 
 import dreal
 from pysmt.decorators import catch_conversion_error
@@ -13,7 +14,8 @@ from pysmt.solvers.solver import (
 )
 from pysmt.smtlib.parser import SmtLibParser, Tokenizer
 from pysmt.walkers import DagWalker
-
+from pysmt.shortcuts import Symbol
+import re
 
 class DRealConverter(Converter, DagWalker):
     def __init__(self, environment):
@@ -28,13 +30,26 @@ class DRealConverter(Converter, DagWalker):
         self.decl_to_symbol = {}
 
     def rewrite_dreal_formula(self, formula:dreal.Formula)-> str:
-        str_formula = str(formula).replace(" and ", " & ").replace(" or ", " | ")
+        # Convert and, or, and "b" markers
+        str_formula = str(formula).replace(" and ", " & ").replace(" or ", " | ").replace("b(", "(").replace("==", "=")
+        
+        # Replace integers with floats
+        str_formula = re.sub(r"(?<![.d_0-9a-z])[0-9]+(?![.d])", r"\g<0>.0", str_formula)
+
         return str_formula
 
+    def create_dreal_symbols(self, rewritten_formula:str)-> List[Symbol]:
+        patterns = ["(disj[0-9]+)", "(conj[0-9]+)"]
+        symbol_names = [ q for p in patterns for q in list(re.findall(p, rewritten_formula))]
+        symbols = [Symbol(s) for s in symbol_names]
+        return symbols
     
     def back(self, dreal_formula: dreal.Formula) -> FNode:
         from pysmt.parsing import parse
-        formula = parse(self.rewrite_dreal_formula(dreal_formula))
+
+        rewritten_formula = self.rewrite_dreal_formula(dreal_formula)
+        new_symbols = self.create_dreal_symbols(rewritten_formula)
+        formula = parse(rewritten_formula)
         return formula
 
     @catch_conversion_error
