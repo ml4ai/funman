@@ -32,7 +32,7 @@ class ParameterSpacePlotter:
             self.ps = parameter_space
         else:
             # FIXME this is a hack to accept ParameterSpace objects from the openapi client
-            self.ps = ParameterSpace.parse_obj(parameter_space.to_dict())
+            self.ps = ParameterSpace.model_validate(parameter_space.to_dict())
 
         # TODO this should be easier to access
         values = []

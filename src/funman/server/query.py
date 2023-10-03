@@ -5,7 +5,8 @@ import pandas as pd
 from matplotlib import pyplot as plt
 from pydantic import BaseModel
 
-from funman.funman import FUNMANConfig
+from funman import LABEL_ANY, ModelParameter
+from funman.config import FUNMANConfig
 from funman.model.bilayer import BilayerModel
 from funman.model.decapode import DecapodeModel
 from funman.model.encoded import EncodedModel
@@ -13,16 +14,16 @@ from funman.model.ensemble import EnsembleModel
 from funman.model.petrinet import GeneratedPetriNetModel, PetrinetModel
 from funman.model.query import QueryAnd, QueryFunction, QueryLE, QueryTrue
 from funman.model.regnet import GeneratedRegnetModel, RegnetModel
-from funman.representation import ModelParameter
-from funman.representation.representation import (
-    LABEL_ANY,
-    LABEL_TRUE,
+from funman.representation.constraint import (
+    StateVariableConstraint,
+)
+from funman.representation.explanation import Explanation
+from funman.representation.parameter import (
     LabeledParameter,
     ModelParameter,
-    ParameterSpace,
-    Point,
     StructureParameter,
 )
+from funman.representation.representation import ParameterSpace, Point
 from funman.scenario.consistency import (
     ConsistencyScenario,
     ConsistencyScenarioResult,
@@ -36,9 +37,16 @@ from funman.scenario.scenario import AnalysisScenario
 
 class FunmanWorkRequest(BaseModel):
     query: Optional[Union[QueryAnd, QueryLE, QueryFunction, QueryTrue]] = None
+    constraints: Optional[List[Union[StateVariableConstraint]]] = None
     parameters: Optional[List[LabeledParameter]] = None
     config: Optional[FUNMANConfig] = None
     structure_parameters: Optional[List[LabeledParameter]] = None
+
+
+class FunmanProgress(BaseModel):
+    progress: float = 0.0
+    coverage_of_search_space: float = 0.0
+    coverage_of_representable_space: float = 0.0
 
 
 class FunmanWorkUnit(BaseModel):
@@ -50,9 +58,7 @@ class FunmanWorkUnit(BaseModel):
     """
 
     id: str
-    progress: float = 0.0
-    coverage_of_search_space: float = 0.0
-    coverage_of_representable_space: float = 0.0
+    progress: FunmanProgress = FunmanProgress()
     model: Union[
         RegnetModel,
         PetrinetModel,
@@ -71,6 +77,7 @@ class FunmanWorkUnit(BaseModel):
             if self.request.query is not None
             else QueryTrue()
         )
+
         parameters = []
         if (
             hasattr(self.request, "parameters")
@@ -108,6 +115,7 @@ class FunmanWorkUnit(BaseModel):
                 model=self.model,
                 query=query,
                 parameters=parameters,
+                constraints=self.request.constraints,
             )
 
         if isinstance(self.model, EnsembleModel):
@@ -116,20 +124,17 @@ class FunmanWorkUnit(BaseModel):
             )
 
         return ParameterSynthesisScenario(
-            model=self.model, query=query, parameters=parameters
+            model=self.model,
+            query=query,
+            parameters=parameters,
+            constraints=self.request.constraints,
         )
 
 
 class FunmanResults(BaseModel):
-    class Config:
-        underscore_attrs_are_private = True
-
     _finalized: bool = False
 
     id: str
-    progress: float = 0.0
-    coverage_of_search_space: float = 0.0
-    coverage_of_representable_space: float = 0.0
     model: Union[
         GeneratedRegnetModel,
         GeneratedPetriNetModel,
@@ -139,6 +144,7 @@ class FunmanResults(BaseModel):
         BilayerModel,
         EncodedModel,
     ]
+    progress: FunmanProgress = FunmanProgress()
     request: FunmanWorkRequest
     done: bool = False
     error: bool = False
@@ -149,7 +155,7 @@ class FunmanResults(BaseModel):
 
     def update_parameter_space(
         self, scenario: AnalysisScenario, results: ParameterSpace
-    ):
+    ) -> FunmanProgress:
         # TODO handle copy?
         self.parameter_space = results
         # compute volumes
@@ -171,9 +177,10 @@ class FunmanResults(BaseModel):
         else:
             coverage_of_repr_space = float(search_volume / repr_volume)
 
-        self.progress = coverage_of_search_space
-        self.coverage_of_search_space = coverage_of_search_space
-        self.coverage_of_representable_space = coverage_of_repr_space
+        self.progress.progress = coverage_of_search_space
+        self.progress.coverage_of_search_space = coverage_of_search_space
+        self.progress.coverage_of_representable_space = coverage_of_repr_space
+        return self.progress
 
     def finalize_result(
         self,
@@ -196,7 +203,7 @@ class FunmanResults(BaseModel):
 
         self.update_parameter_space(scenario, ps)
         self.done = True
-        self.progress = 1.0
+        self.progress.progress = 1.0
 
     def finalize_result_as_error(
         self,
@@ -206,7 +213,7 @@ class FunmanResults(BaseModel):
         self._finalized = True
         self.error = True
         self.done = True
-        self.progress = 1.0
+        self.progress.progress = 1.0
 
     def dataframe(
         self, points: List[Point], interpolate="linear", max_time=None
@@ -359,9 +366,12 @@ class FunmanResults(BaseModel):
 
         return ax
 
+    def points(self) -> List[Point]:
+        return self.parameter_space.points()
+
     def plot(
         self,
-        points: List[Point],
+        points: Optional[List[Point]] = None,
         variables=None,
         log_y=False,
         max_time=None,
@@ -376,6 +386,16 @@ class FunmanResults(BaseModel):
             failure if scenario is not consistent.
         """
 
+        import logging
+
+        # remove matplotlib debugging
+        logging.getLogger("matplotlib.font_manager").disabled = True
+        logging.getLogger("matplotlib.pyplot").disabled = True
+        logging.getLogger("funman.translate.translate").setLevel(logging.DEBUG)
+
+        if points is None:
+            points = self.points()
+
         df = self.dataframe(points, max_time=max_time)
 
         if variables is not None:
@@ -388,3 +408,6 @@ class FunmanResults(BaseModel):
             plt.ylim(bottom=0)
         # plt.show(block=False)
         return ax
+
+    def explain(self) -> Explanation:
+        return self.parameter_space.explain()

@@ -6,3 +6,4 @@ is capable of solving.
 from .scenario import *
 from .consistency import *
 from .parameter_synthesis import *
+from .simulation import *

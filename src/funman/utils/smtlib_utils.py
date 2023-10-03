@@ -199,7 +199,9 @@ def model_to_dict(self):
                 if var[1].is_constant()
                 else self.get_py_value(var[0], model_completion=False)
             )
-            if isinstance(value, Numeral):
+            if isinstance(value, bool):
+                pass
+            elif isinstance(value, Numeral):
                 l.warning(
                     f"Setting value of Numeral {var} to 0.0 because cannot convert to float"
                 )

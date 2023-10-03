@@ -17,6 +17,9 @@ class Query(BaseModel):
 
     model: Optional[Model] = None
 
+    def __str__(self) -> str:
+        return self.__class__.__name__
+
 
 class QueryFunction(Query):
     """
@@ -31,6 +34,7 @@ class QueryTrue(Query):
     Query that represents logical true.  I.e., this query does not place any additional constraints upon a model.
     """
 
+    model_config = ConfigDict(extra="forbid")
     pass
 
 
@@ -39,9 +43,7 @@ class QueryEncoded(Query):
     Class to contain a formula that is already encoded by a pysmt FNode.
     """
 
-    model_config = ConfigDict(
-        arbitrary_types_allowed=True,
-    )
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
     _formula: FNode
 

@@ -31,11 +31,11 @@ from typing_extensions import Annotated
 from funman import __version__ as FunmanVersion
 from funman.api.settings import Settings
 from funman.model.bilayer import BilayerModel
-from funman.model.decapode import DecapodeModel
 from funman.model.generated_models.petrinet import Model as GeneratedPetriNet
 from funman.model.generated_models.regnet import Model as GeneratedRegNet
-from funman.model.petrinet import GeneratedPetriNetModel, PetrinetModel
-from funman.model.regnet import GeneratedRegnetModel, RegnetModel
+from funman.model.model import _wrap_with_internal_model
+from funman.model.petrinet import PetrinetModel
+from funman.model.regnet import RegnetModel
 from funman.server.exception import NotFoundFunmanException
 from funman.server.query import (
     FunmanResults,
@@ -222,31 +222,6 @@ async def post_queries(
 ):
     with internal_error_handler():
         return worker.enqueue_work(_wrap_with_internal_model(model), request)
-
-
-def _wrap_with_internal_model(
-    model: Union[
-        GeneratedPetriNet,
-        GeneratedRegNet,
-        RegnetModel,
-        PetrinetModel,
-        DecapodeModel,
-        BilayerModel,
-    ]
-) -> Union[
-    GeneratedPetriNetModel,
-    GeneratedRegnetModel,
-    RegnetModel,
-    PetrinetModel,
-    DecapodeModel,
-    BilayerModel,
-]:
-    if isinstance(model, GeneratedPetriNet):
-        return GeneratedPetriNetModel(petrinet=model)
-    elif isinstance(model, GeneratedRegNet):
-        return GeneratedRegnetModel(regnet=model)
-    else:
-        return model
 
 
 # include routers

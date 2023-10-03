@@ -8,3 +8,4 @@ from .encoded import *
 from .gromet import *
 from .petrinet import *
 from .ensemble import *
+from .simplifier import *

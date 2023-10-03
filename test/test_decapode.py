@@ -9,7 +9,7 @@ import os
 import unittest
 
 from funman import Funman
-from funman.funman import FUNMANConfig
+from funman.config import FUNMANConfig
 from funman.model.decapode import DecapodeDynamics, DecapodeModel
 from funman.model.query import Query, QueryAnd, QueryTrue
 from funman.representation.representation import ModelParameter

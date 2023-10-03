@@ -3,9 +3,6 @@ from typing import Any, Dict, List, Union
 import graphviz
 from pydantic import BaseModel
 
-from funman.representation.representation import ModelParameter
-from funman.translate.regnet import RegnetEncoder
-
 from .generated_models.regnet import Edge as GeneratedRegnetEdge
 from .generated_models.regnet import Model as GeneratedRegnet
 from .generated_models.regnet import Parameter as GeneratedRegnetParameter
@@ -25,6 +22,8 @@ class AbstractRegnetModel(Model):
         Encoder
             SMT encoder for model
         """
+        from funman.translate.regnet import RegnetEncoder
+
         return RegnetEncoder(
             config=config,
             scenario=scenario,

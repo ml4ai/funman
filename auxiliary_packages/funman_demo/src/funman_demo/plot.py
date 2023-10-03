@@ -5,10 +5,8 @@ import matplotlib.pyplot as plt
 from IPython.display import clear_output
 from matplotlib.lines import Line2D
 
-from funman.representation.representation import Box, Point
+from funman import Box, Point
 from funman.scenario import ParameterSpace
-
-from .box_plotter import BoxPlotter
 
 l = logging.getLogger(__file__)
 l.setLevel(logging.INFO)

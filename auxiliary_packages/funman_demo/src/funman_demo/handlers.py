@@ -6,9 +6,14 @@ from typing import Dict, List
 import matplotlib.pyplot as plt
 from IPython.display import Image, display
 
-from funman.representation import ModelParameter
-from funman.search import Box, ParameterSpace, Point
-from funman.utils.handlers import ResultHandler, WaitAction
+from funman import (
+    Box,
+    ModelParameter,
+    ParameterSpace,
+    Point,
+    ResultHandler,
+    WaitAction,
+)
 
 from .box_plotter import BoxPlotter
 
@@ -44,7 +49,7 @@ class ResultCacheWriter(ResultHandler):
     def process(self, result: dict) -> None:
         self.parameter_space.append_result(result)
         self.f.seek(0)
-        json.dump(self.parameter_space.dict(), self.f, indent=2)
+        json.dump(self.parameter_space.model_dump(), self.f, indent=2)
         self.f.flush()
 
     def close(self) -> None:

@@ -6,7 +6,6 @@ from pysmt.shortcuts import (
     TRUE,
     And,
     Equals,
-    Minus,
     Plus,
     Real,
     Symbol,
@@ -119,7 +118,7 @@ class RegnetEncoder(Encoder):
 
         return formula
 
-    def _get_timed_symbols(self, model: Model) -> List[str]:
+    def _get_timed_symbols(self, model: Model) -> Set[str]:
         """
         Get the names of the state (i.e., timed) variables of the model.
 
@@ -134,4 +133,4 @@ class RegnetEncoder(Encoder):
             state variable names
         """
 
-        return model._state_var_names()
+        return set(model._state_var_names())

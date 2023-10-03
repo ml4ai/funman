@@ -4,16 +4,12 @@ This module encodes bilayer models into a SMTLib formula.
 """
 import logging
 from functools import reduce
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Set
 
-import pysmt
-from pydantic import ConfigDict
 from pysmt.formula import FNode
 from pysmt.shortcuts import (
     GE,
-    GT,
     LE,
-    LT,
     TRUE,
     And,
     Equals,
@@ -26,6 +22,7 @@ from pysmt.shortcuts import (
 )
 from pysmt.typing import REAL
 
+from funman import ModelParameter
 from funman.model.bilayer import (
     BilayerEdge,
     BilayerFluxNode,
@@ -35,9 +32,8 @@ from funman.model.bilayer import (
     BilayerStateNode,
 )
 from funman.model.model import Model
-from funman.representation import ModelParameter
 from funman.representation.representation import Box, Interval
-from funman.translate import Encoder, Encoding, EncodingOptions
+from funman.translate import Encoder, Encoding
 from funman.translate.simplifier import FUNMANSimplifier
 from funman.utils.sympy_utils import to_sympy
 
@@ -66,8 +62,6 @@ class BilayerEncoder(Encoder):
     formula defines a series of steps that update a set of variables each step,
     as defined by a Bilayer model.
     """
-
-    model_config = ConfigDict()
 
     def _encode_next_step(
         self,
@@ -118,11 +112,11 @@ class BilayerEncoder(Encoder):
             And(untimed_constraints).simplify(), super_untimed_constraints
         )
 
-    def _get_timed_symbols(self, model: Model) -> List[str]:
-        timed_symbols = []
+    def _get_timed_symbols(self, model: Model) -> Set[str]:
+        timed_symbols = set([])
         # All state nodes correspond to timed symbols
         for idx, node in model.bilayer._state.items():
-            timed_symbols.append(node.parameter)
+            timed_symbols.add(node.parameter)
         return timed_symbols
 
     def encode_model(self, model: Model, time_dependent_parameters=False):
@@ -320,8 +314,8 @@ class BilayerEncoder(Encoder):
         reasons = []
         if self.config.substitute_subformulas:
             if not all(
-                v in self._scenario.model.init_values
-                for v in self._scenario.model._state_var_names()
+                v in self.scenario.model.init_values
+                for v in self.scenario.model._state_var_names()
             ):
                 encodable = False
                 reasons.append(

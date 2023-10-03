@@ -9,9 +9,9 @@ import numpy as np
 from IPython.display import clear_output
 from matplotlib.lines import Line2D
 
+from funman import Box, Interval, Point
 from funman.constants import BIG_NUMBER
 from funman.representation import ModelParameter
-from funman.representation.representation import Box, Interval, Point
 from funman.search import SearchEpisode
 
 l = logging.getLogger(__file__)

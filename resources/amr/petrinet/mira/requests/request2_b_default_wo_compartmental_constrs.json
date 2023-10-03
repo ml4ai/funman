@@ -18,7 +18,7 @@
     "config": {
         "solver": "dreal",
         "save_smtlib": true,
-        "substitute_subformulas": false,
+        "substitute_subformulas": true,
         "use_compartmental_constraints": false
     }
 }
