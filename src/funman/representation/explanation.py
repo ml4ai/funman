@@ -55,7 +55,7 @@ class BoxExplanation(Explanation):
         self.relevant_assumptions = [
             a
             for symbol, a in assumption_symbols.items()
-            if symbol in expression_symbols
+            if any(symbol in es for es in expression_symbols)
         ]
         return self.relevant_assumptions
 
