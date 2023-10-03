@@ -6,7 +6,6 @@ from typing import Any
 
 from pydantic import BaseModel
 
-from funman.model.model import Model
 from funman.model.query import Query, QueryFunction
 from funman.model.simulator import SimulatorModel
 from funman.scenario import AnalysisScenario, AnalysisScenarioResult

@@ -1,13 +1,10 @@
-from typing import Any, List, Dict, Callable, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 from pydantic import BaseModel
-
+from pysmt.formula import FNode
 
 from .assumption import Assumption
 
-from pysmt.formula import FNode
-from pysmt.logics import QF_NRA
-from pysmt.shortcuts import Solver
 
 class Explanation(BaseModel):
     _expression: FNode
@@ -15,40 +12,70 @@ class Explanation(BaseModel):
     def explain(self) -> Dict[str, Any]:
         return {
             "description": "The expression is implied by this scenario and is unsatisfiable",
-            "expression" : self._expression.serialize()
+            "expression": self._expression.serialize(),
         }
 
+
 class BoxExplanation(Explanation):
-    unsat_assumptions: List[Assumption] = []
+    relevant_assumptions: List[Assumption] = []
     expression: Optional[str] = None
 
-    def check_assumptions(self, episode:"BoxSearchEpisode", my_solver: Callable) -> List[Assumption]:
+    def check_assumptions(
+        self,
+        episode: "BoxSearchEpisode",
+        my_solver: Callable,
+        options: "EncodingOptions",
+    ) -> List[Assumption]:
+        """
+        Find the assumptions that are unit clauses in the expression (unsat core).
+
+        Parameters
+        ----------
+        episode : BoxSearchEpisode
+            _description_
+        my_solver : Callable
+            _description_
+
+        Returns
+        -------
+        List[Assumption]
+            _description_
+        """
         self.expression = self._expression.serialize()
         # FIXME use step size from options
-        assumption_symbols:Dict[Assumption, FNode] = episode.problem._encodings[1]._encoder.encode_assumptions(episode.problem._assumptions, None)
-        with my_solver() as solver:
-            solver.add_assertion(self._expression)
-            solver.push(1)
+        assumption_symbols: Dict[str, Assumption] = {
+            str(a): a for a in episode.problem._assumptions
+        }
+        # with my_solver() as solver:
+        #     solver.add_assertion(self._expression)
+        #     solver.push(1)
+        expression_symbols = [
+            str(v) for v in self._expression.get_free_variables()
+        ]
+        self.relevant_assumptions = [
+            a
+            for symbol, a in assumption_symbols.items()
+            if symbol in expression_symbols
+        ]
+        return self.relevant_assumptions
 
-            self.unsat_assumptions = [a for a, symbol in assumption_symbols.items() if not self.satisfies_assumption(symbol, solver)]
-        return self.unsat_assumptions
-    
-    def satisfies_assumption(self, assumption: FNode, solver: Solver)-> bool:
-        solver.push(1)
-        solver.add_assertion(assumption)
-        is_sat = solver.solve()
-        solver.pop(1)
-        return is_sat
+    # def satisfies_assumption(self, assumption: FNode)-> bool:
+    #     # solver.push(1)
+    #     # solver.add_assertion(assumption)
+    #     # is_sat = solver.solve()
+    #     # solver.pop(1)
+    #     is_sat =
+    #     return is_sat
 
     def explain(self) -> Dict[str, Any]:
-        unsat_constraints = [a.constraint.model_dump() for a in self.unsat_assumptions]
-        expl = {
-            "description": "The scenario implies that the constraints are unsatisfiable",
-            "unsat_constraints": unsat_constraints
-                }
+        relevant_constraints = [
+            a.constraint.model_dump() for a in self.relevant_assumptions
+        ]
+        expl = {"relevant_constraints": relevant_constraints}
         if self.expression is not None:
             expl["expression"] = self.expression
         return expl
+
 
 class ParameterSpaceExplanation(Explanation):
     true_explanations: List[BoxExplanation] = []

@@ -180,7 +180,7 @@ class TestUseCases(unittest.TestCase):
             config=FUNMANConfig(
                 # solver="dreal",
                 # dreal_mcts=True,
-                tolerance=1e-8,
+                tolerance=1e-6,
                 number_of_processes=1,
                 normalize=False,
                 simplify_query=False,

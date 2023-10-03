@@ -8,7 +8,6 @@ import sys
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-import openapi_python_client
 import openapi_python_client as opc
 from openapi_python_client import MetaType
 from openapi_python_client.cli import handle_errors

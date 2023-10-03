@@ -61,3 +61,8 @@ extend_skip =  '''
 )/
 '''
 skip_glob = ["**/__init__.py", "*venv*"]
+
+[tool.pylint.messages_control]
+disable= [
+  "W0212:protected-access"
+]

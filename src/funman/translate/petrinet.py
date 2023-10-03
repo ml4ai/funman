@@ -1,5 +1,5 @@
 import logging
-from typing import Dict, List, Union
+from typing import Dict, List, Union, Set
 
 import sympy
 from pysmt.formula import FNode
@@ -16,10 +16,8 @@ from pysmt.shortcuts import (
     Real,
     Symbol,
     Times,
-    get_env,
 )
 
-from funman import FUNMANConfig
 from funman.model.model import Model
 from funman.translate.simplifier import FUNMANSimplifier
 from funman.utils.sympy_utils import (
@@ -380,7 +378,7 @@ class PetrinetEncoder(Encoder):
                 # .simplify()
             )
 
-    def _get_timed_symbols(self, model: Model) -> List[str]:
+    def _get_timed_symbols(self, model: Model) -> Set[str]:
         """
         Get the names of the state (i.e., timed) variables of the model.
 
@@ -394,8 +392,8 @@ class PetrinetEncoder(Encoder):
         List[str]
             state variable names
         """
-        state_vars = model._state_var_names()
+        state_vars = set(model._state_var_names())
         time_var = model._time_var()
         if time_var:
-            state_vars.append(f"timer_{time_var.id}")
+            state_vars.add(f"timer_{time_var.id}")
         return state_vars

@@ -6,41 +6,13 @@ from typing import Callable, Dict, List, Optional, Union
 
 from pandas import DataFrame
 from pydantic import BaseModel, ConfigDict
-from pysmt.formula import FNode
-from pysmt.shortcuts import BOOL, Iff, Symbol
 
-from funman import (
-    ModelConstraint,
-    ParameterConstraint,
-    StateVariableConstraint,
-    QueryConstraint
-)
-from funman.model import (
-    BilayerModel,
-    DecapodeModel,
-    EncodedModel,
-    GeneratedPetriNetModel,
-    GeneratedRegnetModel,
-    PetrinetModel,
-    QueryTrue,
-)
-from funman.model.petrinet import GeneratedPetriNetModel
-from funman.model.query import (
-    QueryAnd,
-    QueryEncoded,
-    QueryFunction,
-    QueryGE,
-    QueryLE,
-)
-from funman.model.regnet import GeneratedRegnetModel, RegnetModel
-from funman.representation.assumption import Assumption
 from funman.representation.representation import ParameterSpace, Point
 from funman.scenario import (
     AnalysisScenario,
     AnalysisScenarioResult,
     ConsistencyScenario,
 )
-from funman.translate.translate import Encoder, Encoding
 from funman.utils.math_utils import minus
 
 
@@ -53,26 +25,7 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
     (false) parameters.
     """
 
-    model_config = ConfigDict(extra="forbid")
-
-    model: Union[
-        GeneratedPetriNetModel,
-        GeneratedRegnetModel,
-        RegnetModel,
-        PetrinetModel,
-        DecapodeModel,
-        BilayerModel,
-        EncodedModel,
-    ]
-    query: Union[
-        QueryAnd, QueryGE, QueryLE, QueryEncoded, QueryFunction, QueryTrue
-    ] = QueryTrue()
     _search: str = "BoxSearch"
-    _smt_encoder: Optional[
-        Encoder
-    ] = None  # TODO set to model.default_encoder()
-    # _model_encoding: Optional[Dict[int, Encoding]] = {}
-    # _query_encoding: Optional[Dict[int, Encoding]] = {}
 
     # _assume_model: Optional[FNode] = None
     # _assume_query: Optional[FNode] = None
@@ -81,6 +34,15 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
     @classmethod
     def get_kind(cls) -> str:
         return "parameter_synthesis"
+
+    def get_search(self, config: "FUNMANConfig") -> "Search":
+        if config._search is None:
+            from funman.search.box_search import BoxSearch
+
+            search = BoxSearch()
+        else:
+            search = config._search()
+        return search
 
     def solve(
         self,
@@ -103,20 +65,7 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
         ParameterSpace
             The parameter space.
         """
-
-        if config._search is None:
-            from funman.search.box_search import BoxSearch
-
-            search = BoxSearch()
-        else:
-            search = config._search()
-
-        self._process_parameters()
-
-        self._set_normalization(config)
-
-        num_parameters = len(self.parameters)
-        self._initialize_encodings(config)
+        search = self.initialize(config)
 
         self._original_parameter_widths = {
             p: minus(p.ub, p.lb) for p in self.parameters
@@ -129,59 +78,10 @@ class ParameterSynthesisScenario(AnalysisScenario, BaseModel):
             resultsCallback=resultsCallback,
         )
 
-        parameter_space.num_dimensions = num_parameters
+        parameter_space.num_dimensions =  len(self.parameters)
         return ParameterSynthesisScenarioResult(
             parameter_space=parameter_space, scenario=self
         )
-
-    def _initialize_encodings(self, config: "FUNMANConfig"):
-        # self._assume_model = Symbol("assume_model")
-        self._smt_encoder = self.model.default_encoder(config, self)
-        assert self._smt_encoder._timed_model_elements
-
-        times = list(
-            set(
-                [
-                    t
-                    for s in self._smt_encoder._timed_model_elements[
-                        "state_timepoints"
-                    ]
-                    for t in s
-                ]
-            )
-        )
-        times.sort()
-
-        # Initialize Assumptions
-        # Maintain backward support for query as a single constraint
-        if self.query is not None:
-            query_constraint = QueryConstraint(name="query", query=self.query)
-            self.constraints += [query_constraint]
-            self._assumptions.append(Assumption(constraint=query_constraint))
-
-
-        # self._assume_query = [Symbol(f"assume_query_{t}") for t in times]
-        for step_size_idx, step_size in enumerate(
-            self._smt_encoder._timed_model_elements["step_sizes"]
-        ):
-            num_steps = max(
-                self._smt_encoder._timed_model_elements["state_timepoints"][
-                    step_size_idx
-                ]
-            )
-            (
-                # model_encoding,
-                # query_encoding,
-                encoding
-            ) = self._smt_encoder.initialize_encodings(self, num_steps)
-            # self._smt_encoder.encode_model_timed(
-            #     self, num_steps, step_size
-            # )
-
-            self._encodings[step_size] = encoding
-
-            # self._model_encoding[step_size] = model_encoding
-            # self._query_encoding[step_size] = query_encoding
 
 
 class ParameterSynthesisScenarioResult(AnalysisScenarioResult, BaseModel):

@@ -2,13 +2,12 @@ from typing import Union
 
 from pydantic import BaseModel
 
-from funman.model.query import Query
 
 from .constraint import (
     ModelConstraint,
     ParameterConstraint,
+    QueryConstraint,
     StateVariableConstraint,
-    QueryConstraint
 )
 
 
@@ -26,5 +25,5 @@ class Assumption(BaseModel):
         else:
             return f"assume_{str(self.constraint)}"
 
-    def __hash__(self)-> int:
+    def __hash__(self) -> int:
         return hash(self.constraint)

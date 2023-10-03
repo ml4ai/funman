@@ -105,12 +105,12 @@ class TestProgress(unittest.TestCase):
             work_id = work_unit.id
 
             # Check that the progress starts at 0.0
-            progress = work_unit.progress
+            progress = work_unit.progress.progress
             assert round(progress, 5) == 0.0, "Progress did not start at 0.0"
             prev_progress = progress
 
             # Check the status of the query several times while sleeping between
-            steps = 20
+            steps = 30
             while True:
                 # Wait
                 sleep(1.0)
@@ -125,7 +125,7 @@ class TestProgress(unittest.TestCase):
                 # Parse data to a FunmanResults object
                 data = FunmanResults.parse_raw(response.content.decode())
                 prev_progress = progress
-                progress = data.progress
+                progress = data.progress.progress
 
                 assert (
                     progress >= 0.0

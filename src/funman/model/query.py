@@ -20,6 +20,7 @@ class Query(BaseModel):
     def __str__(self) -> str:
         return self.__class__.__name__
 
+
 class QueryFunction(Query):
     """
     This query uses a Python function passed to the constructor to evaluate a query on the results of a scenario.
@@ -32,9 +33,8 @@ class QueryTrue(Query):
     """
     Query that represents logical true.  I.e., this query does not place any additional constraints upon a model.
     """
-    model_config = ConfigDict(
-        extra="forbid"
-    )
+
+    model_config = ConfigDict(extra="forbid")
     pass
 
 
@@ -43,9 +43,7 @@ class QueryEncoded(Query):
     Class to contain a formula that is already encoded by a pysmt FNode.
     """
 
-    model_config = ConfigDict(
-        arbitrary_types_allowed=True
-    )
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
     _formula: FNode
 

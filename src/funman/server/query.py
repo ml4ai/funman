@@ -5,7 +5,7 @@ import pandas as pd
 from matplotlib import pyplot as plt
 from pydantic import BaseModel
 
-from funman import LABEL_ALL, LABEL_ANY, ModelParameter
+from funman import LABEL_ANY, ModelParameter
 from funman.config import FUNMANConfig
 from funman.model.bilayer import BilayerModel
 from funman.model.decapode import DecapodeModel
@@ -15,11 +15,7 @@ from funman.model.petrinet import GeneratedPetriNetModel, PetrinetModel
 from funman.model.query import QueryAnd, QueryFunction, QueryLE, QueryTrue
 from funman.model.regnet import GeneratedRegnetModel, RegnetModel
 from funman.representation.constraint import (
-    Constraint,
-    ModelConstraint,
-    ParameterConstraint,
     StateVariableConstraint,
-    QueryConstraint
 )
 from funman.representation.explanation import Explanation
 from funman.representation.parameter import (
@@ -47,6 +43,12 @@ class FunmanWorkRequest(BaseModel):
     structure_parameters: Optional[List[LabeledParameter]] = None
 
 
+class FunmanProgress(BaseModel):
+    progress: float = 0.0
+    coverage_of_search_space: float = 0.0
+    coverage_of_representable_space: float = 0.0
+
+
 class FunmanWorkUnit(BaseModel):
     """
     Fields
@@ -56,9 +58,7 @@ class FunmanWorkUnit(BaseModel):
     """
 
     id: str
-    progress: float = 0.0
-    coverage_of_search_space: float = 0.0
-    coverage_of_representable_space: float = 0.0
+    progress: FunmanProgress = FunmanProgress()
     model: Union[
         RegnetModel,
         PetrinetModel,
@@ -77,14 +77,6 @@ class FunmanWorkUnit(BaseModel):
             if self.request.query is not None
             else QueryTrue()
         )
-
-        constraints: List[Constraint] = [
-            ModelConstraint(name="model_dynamics", model=self.model)
-        ] 
-        if self.request.constraints is not None:
-            constraints += self.request.constraints
-
-
 
         parameters = []
         if (
@@ -114,11 +106,6 @@ class FunmanWorkUnit(BaseModel):
                     )
                 )
 
-        constraints += [
-            ParameterConstraint(name=parameter.name, parameter=parameter)
-            for parameter in parameters
-        ]
-
         if (
             not hasattr(self.request, "parameters")
             or self.request.parameters is None
@@ -128,7 +115,7 @@ class FunmanWorkUnit(BaseModel):
                 model=self.model,
                 query=query,
                 parameters=parameters,
-                constraints=constraints,
+                constraints=self.request.constraints,
             )
 
         if isinstance(self.model, EnsembleModel):
@@ -140,7 +127,7 @@ class FunmanWorkUnit(BaseModel):
             model=self.model,
             query=query,
             parameters=parameters,
-            constraints=constraints,
+            constraints=self.request.constraints,
         )
 
 
@@ -148,9 +135,6 @@ class FunmanResults(BaseModel):
     _finalized: bool = False
 
     id: str
-    progress: float = 0.0
-    coverage_of_search_space: float = 0.0
-    coverage_of_representable_space: float = 0.0
     model: Union[
         GeneratedRegnetModel,
         GeneratedPetriNetModel,
@@ -160,6 +144,7 @@ class FunmanResults(BaseModel):
         BilayerModel,
         EncodedModel,
     ]
+    progress: FunmanProgress = FunmanProgress()
     request: FunmanWorkRequest
     done: bool = False
     error: bool = False
@@ -170,7 +155,7 @@ class FunmanResults(BaseModel):
 
     def update_parameter_space(
         self, scenario: AnalysisScenario, results: ParameterSpace
-    ):
+    ) -> FunmanProgress:
         # TODO handle copy?
         self.parameter_space = results
         # compute volumes
@@ -192,9 +177,10 @@ class FunmanResults(BaseModel):
         else:
             coverage_of_repr_space = float(search_volume / repr_volume)
 
-        self.progress = coverage_of_search_space
-        self.coverage_of_search_space = coverage_of_search_space
-        self.coverage_of_representable_space = coverage_of_repr_space
+        self.progress.progress = coverage_of_search_space
+        self.progress.coverage_of_search_space = coverage_of_search_space
+        self.progress.coverage_of_representable_space = coverage_of_repr_space
+        return self.progress
 
     def finalize_result(
         self,
@@ -217,7 +203,7 @@ class FunmanResults(BaseModel):
 
         self.update_parameter_space(scenario, ps)
         self.done = True
-        self.progress = 1.0
+        self.progress.progress = 1.0
 
     def finalize_result_as_error(
         self,
@@ -227,7 +213,7 @@ class FunmanResults(BaseModel):
         self._finalized = True
         self.error = True
         self.done = True
-        self.progress = 1.0
+        self.progress.progress = 1.0
 
     def dataframe(
         self, points: List[Point], interpolate="linear", max_time=None

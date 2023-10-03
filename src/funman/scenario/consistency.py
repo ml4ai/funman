@@ -2,31 +2,16 @@
 This submodule defines a consistency scenario.  Consistency scenarios specify an existentially quantified model.  If consistent, the solution assigns any unassigned variable, subject to their bounds and other constraints.  
 """
 import threading
-from typing import Callable, Dict, Optional, Union
+from typing import Callable, Dict, Optional
 
 import matplotlib.pyplot as plt
 import pandas as pd
 from pydantic import BaseModel, ConfigDict
 from pysmt.solvers.solver import Model as pysmt_Model
 
-from funman import (
-    BilayerModel,
-    DecapodeModel,
-    EncodedModel,
-    EnsembleModel,
-    ParameterSpace,
-    Point,
-    QueryAnd,
-    QueryEncoded,
-    QueryFunction,
-    QueryLE,
-    QueryTrue,
-    StructureParameter,
-)
-from funman.model.petrinet import GeneratedPetriNetModel, PetrinetModel
-from funman.model.regnet import GeneratedRegnetModel, RegnetModel
+from funman import ParameterSpace, Point
 from funman.scenario import AnalysisScenario, AnalysisScenarioResult
-from funman.translate import Encoder, Encoding
+from funman.translate import Encoding
 
 
 class ConsistencyScenario(AnalysisScenario, BaseModel):
@@ -43,27 +28,20 @@ class ConsistencyScenario(AnalysisScenario, BaseModel):
         method to encode the scenario, by default None
     """
 
-    model_config = ConfigDict(extra="forbid")
-
-    model: Union[
-        GeneratedRegnetModel,
-        GeneratedPetriNetModel,
-        RegnetModel,
-        EnsembleModel,
-        PetrinetModel,
-        DecapodeModel,
-        BilayerModel,
-        EncodedModel,
-    ]
-    query: Union[QueryAnd, QueryLE, QueryEncoded, QueryFunction, QueryTrue]
-    _smt_encoder: Optional[Encoder] = None
-    _model_encoding: Optional[Encoding] = None
-    _query_encoding: Optional[Encoding] = None
     _box: Optional[Encoding] = None
 
     @classmethod
     def get_kind(cls) -> str:
         return "consistency"
+
+    def get_search(self, config: "FUNMANConfig") -> "Search":
+        if config._search is None:
+            from funman.search.smt_check import SMTCheck
+
+            search = SMTCheck()
+        else:
+            search = config._search()
+        return search
 
     def solve(
         self,
@@ -84,44 +62,7 @@ class ConsistencyScenario(AnalysisScenario, BaseModel):
         result
             ConsistencyScenarioResult indicating whether the model is consistent.
         """
-        if config._search is None:
-            from funman.search.smt_check import SMTCheck
-
-            search = SMTCheck()
-        else:
-            search = config._search()
-
-        if len(self.structure_parameters()) == 0:
-            # either undeclared or wrong type
-            # if wrong type, recover structure parameters
-            self.parameters = [
-                (
-                    StructureParameter(name=p.name, lb=p.lb, ub=p.ub)
-                    if (p.name == "num_steps" or p.name == "step_size")
-                    else p
-                )
-                for p in self.parameters
-            ]
-            if len(self.structure_parameters()) == 0:
-                # Add the structure parameters if still missing
-                self.parameters += [
-                    StructureParameter(name="num_steps", lb=0, ub=0),
-                    StructureParameter(name="step_size", lb=1, ub=1),
-                ]
-
-        self._extract_non_overriden_parameters()
-        self._filter_parameters()
-        num_parameters = len(self.parameters)
-
-        if config.normalization_constant is not None:
-            self.normalization_constant = config.normalization_constant
-        else:
-            self.normalization_constant = (
-                self.model.calculate_normalization_constant(self, config)
-            )
-
-        if self._smt_encoder is None:
-            self._smt_encoder = self.model.default_encoder(config, self)
+        search = self.initialize(config)
 
         parameter_space, models, consistent = search.search(
             self,
@@ -129,7 +70,7 @@ class ConsistencyScenario(AnalysisScenario, BaseModel):
             haltEvent=haltEvent,
             resultsCallback=resultsCallback,
         )
-        parameter_space.num_dimensions = num_parameters
+        parameter_space.num_dimensions =  len(self.parameters)
 
         scenario_result = ConsistencyScenarioResult(
             scenario=self,
@@ -139,57 +80,6 @@ class ConsistencyScenario(AnalysisScenario, BaseModel):
         scenario_result._models = models
 
         return scenario_result
-
-    def _results_str(self, starting_steps, result):
-        return "\n".join(
-            [
-                x
-                for x in [
-                    (
-                        str(i + starting_steps)
-                        + ": ["
-                        + "".join(
-                            [
-                                (
-                                    "F"
-                                    if s is None
-                                    else (
-                                        "T" if (s is not None and s) else " "
-                                    )
-                                )
-                                for s in t
-                            ]
-                        )
-                        + "]"
-                        if any([True for r in t if r is not None])
-                        else ""
-                    )
-                    for i, t in enumerate(result)
-                ]
-                if x != ""
-            ]
-        )
-
-    def _encode_timed(self, num_steps, step_size_idx, config: "FUNMANConfig"):
-        # # This will overwrite the _model_encoding for each configuration, but the encoder will retain components of the configurations.
-        # self._model_encoding = self._smt_encoder.encode_model_timed(
-        #     self, num_steps, step_size
-        # )
-
-        # # This will create a new formula for each query without caching them (its typically inexpensive)
-        # self._query_encoding = self._smt_encoder.encode_query(
-        #     self.query, num_steps, step_size
-        # )
-
-        (
-            model_encoding,
-            query_encoding,
-        ) = self._smt_encoder.initialize_encodings(
-            self, num_steps, step_size_idx
-        )
-
-        self._model_encoding = model_encoding
-        self._query_encoding = query_encoding
 
 
 class ConsistencyScenarioResult(AnalysisScenarioResult, BaseModel):
@@ -237,7 +127,7 @@ class ConsistencyScenarioResult(AnalysisScenarioResult, BaseModel):
         """
         if self.consistent:
             timeseries = self.scenario._smt_encoder.symbol_timeseries(
-                self.scenario._model_encoding, self._models[point]
+                self.scenario._encodings[point.values['step_size']], self._models[point]
             )
             df = pd.DataFrame.from_dict(timeseries)
             if interpolate:

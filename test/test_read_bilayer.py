@@ -8,7 +8,7 @@ from funman import FUNMANConfig
 from funman.model import BilayerDynamics
 from funman.model.bilayer import BilayerModel
 from funman.model.query import QueryTrue
-from funman.representation.representation import StructureParameter
+from funman.representation.parameter import StructureParameter
 from funman.scenario.consistency import ConsistencyScenario
 from funman.translate import BilayerEncoder
 

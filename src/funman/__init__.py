@@ -16,6 +16,7 @@ from .funman import *
 from .utils import *
 from .representation import *
 from .model import *
+from .search import *
 from .scenario import *
 
 from .server import *

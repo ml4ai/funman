@@ -1,6 +1,6 @@
 from typing import List, Optional
 
-from pydantic import ConfigDict, Extra, PrivateAttr
+from pydantic import ConfigDict, PrivateAttr
 from pysmt.formula import FNode
 from pysmt.shortcuts import TRUE
 

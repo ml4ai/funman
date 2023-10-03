@@ -1,10 +1,14 @@
 from decimal import Decimal
 from typing import List, Optional, Union
 
-from pydantic import BaseModel, ConfigDict, Field
+from numpy import average
+from pydantic import BaseModel, Field
 
 import funman.utils.math_utils as math_utils
-from funman.constants import LABEL_FALSE, LABEL_TRUE, LABEL_UNKNOWN
+from funman.constants import (
+    NEG_INFINITY,
+    POS_INFINITY,
+)
 
 
 class Interval(BaseModel):

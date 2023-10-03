@@ -5,24 +5,15 @@ import pysmt
 from pysmt.fnode import FNode
 from pysmt.shortcuts import get_env
 from sympy import (
-    Abs,
     Add,
     Expr,
-    Float,
-    Max,
     N,
-    cancel,
     expand,
-    factor,
     lambdify,
-    nsimplify,
-    series,
     symbols,
-    sympify,
 )
 
 from funman import ModelParameter
-from funman.constants import POS_INFINITY
 from funman.utils.sympy_utils import (
     replace_reserved,
     series_approx,
@@ -106,9 +97,9 @@ class FUNMANSimplifier(pysmt.simplifier.Simplifier):
             value = formula.evalf(
                 subs={
                     formula: (
-                        ub_values[args[0].name]
+                        ub_values[formula.args[0].name]
                         if formula.args[-1] >= 0
-                        else lb_values[args[0].name]
+                        else lb_values[formula.args[0].name]
                     )
                 }
             )

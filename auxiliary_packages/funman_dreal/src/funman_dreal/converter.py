@@ -1,10 +1,13 @@
 import functools
+import re
 from fractions import Fraction
 from typing import List
 
 import dreal
 from pysmt.decorators import catch_conversion_error
 from pysmt.formula import FNode
+from pysmt.shortcuts import Symbol
+from pysmt.smtlib.parser import SmtLibParser, Tokenizer
 from pysmt.solvers.solver import (
     Converter,
     IncrementalTrackingSolver,
@@ -12,10 +15,8 @@ from pysmt.solvers.solver import (
     SolverOptions,
     UnsatCoreSolver,
 )
-from pysmt.smtlib.parser import SmtLibParser, Tokenizer
 from pysmt.walkers import DagWalker
-from pysmt.shortcuts import Symbol
-import re
+
 
 class DRealConverter(Converter, DagWalker):
     def __init__(self, environment):
@@ -29,27 +30,59 @@ class DRealConverter(Converter, DagWalker):
         # Maps an internal yices instance into the corresponding symbol
         self.decl_to_symbol = {}
 
-    def rewrite_dreal_formula(self, formula:dreal.Formula)-> str:
+    def rewrite_dreal_formula(self, formula: dreal.Formula) -> str:
         # Convert and, or, and "b" markers
-        str_formula = str(formula).replace(" and ", " & ").replace(" or ", " | ").replace("b(", "(").replace("==", "=")
-        
+        str_formula = (
+            str(formula)
+            .replace(" and ", " & ")
+            .replace(" or ", " | ")
+            .replace("b(", "(")
+            .replace("==", "=")
+        )
+
+        # Remove scientific notation
+        str_formula = re.sub(
+            r"(?<![.d_0-9a-z])[0-9]+.[0-9]+e(-|)[0-9]+(?![.d])",
+            lambda x: str(Fraction(x.group())),
+            str_formula,
+        )
+
         # Replace integers with floats
-        str_formula = re.sub(r"(?<![.d_0-9a-z])[0-9]+(?![.d])", r"\g<0>.0", str_formula)
+        str_formula = re.sub(
+            r"(?<![.d_0-9a-z])[0-9]+(?!([.de-]|[0-9]))", r"\g<0>.0", str_formula
+        )
+
+        # Remove "pow" and add "^"
+        # str_formula = str_formula.replace("pow(gamma, 2.0)", "gamma^2.0")
+        # str_formula = str_formula.replace("pow(beta, 2.0)", "beta^2.0")
+
+        str_formula = re.sub(
+            r"pow\([a-z]+\, [0-9.]+\)",
+            lambda x: x.group().split(",")[0].split("(")[1]
+            + "^"
+            + x.group().split(",")[1].split(")")[0].strip(),
+            str_formula,
+        )
 
         return str_formula
 
-    def create_dreal_symbols(self, rewritten_formula:str)-> List[Symbol]:
-        patterns = ["(disj[0-9]+)", "(conj[0-9]+)"]
-        symbol_names = [ q for p in patterns for q in list(re.findall(p, rewritten_formula))]
+    def create_dreal_symbols(self, rewritten_formula: str) -> List[Symbol]:
+        patterns = ["(disj[0-9]+)", "(conj[0-9]+)", "neg"]
+        symbol_names = [
+            q for p in patterns for q in list(re.findall(p, rewritten_formula))
+        ]
         symbols = [Symbol(s) for s in symbol_names]
         return symbols
-    
+
     def back(self, dreal_formula: dreal.Formula) -> FNode:
         from pysmt.parsing import parse
 
-        rewritten_formula = self.rewrite_dreal_formula(dreal_formula)
-        new_symbols = self.create_dreal_symbols(rewritten_formula)
-        formula = parse(rewritten_formula)
+        try:
+            rewritten_formula = self.rewrite_dreal_formula(dreal_formula)
+            new_symbols = self.create_dreal_symbols(rewritten_formula)
+            formula = parse(rewritten_formula)
+        except Exception as e:
+            raise e
         return formula
 
     @catch_conversion_error
@@ -63,6 +96,11 @@ class DRealConverter(Converter, DagWalker):
 
     def walk_iff(self, formula, args, **kwargs):
         res = dreal.Iff(args[0], args[1])
+        # self._check_term_result(res)
+        return res
+
+    def walk_implies(self, formula, args, **kwargs):
+        res = dreal.Implies(args[0], args[1])
         # self._check_term_result(res)
         return res
 

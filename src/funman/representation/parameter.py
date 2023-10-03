@@ -2,20 +2,16 @@ import copy
 import logging
 from typing import Literal, Union
 
-from matplotlib import pyplot as plt
-from matplotlib.lines import Line2D
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict
 from pysmt.fnode import FNode
 from pysmt.shortcuts import REAL, Symbol
 
 import funman.utils.math_utils as math_utils
 from funman import (
-    BIG_NUMBER,
     LABEL_ALL,
     LABEL_ANY,
     NEG_INFINITY,
     POS_INFINITY,
-    to_sympy,
 )
 
 from .symbol import ModelSymbol

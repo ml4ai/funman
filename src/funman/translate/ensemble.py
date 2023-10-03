@@ -1,14 +1,10 @@
-from typing import Dict, List
+from typing import Dict, List, Set
 
 from pysmt.formula import FNode
 from pysmt.shortcuts import (
     REAL,
     TRUE,
     And,
-    Equals,
-    Minus,
-    Plus,
-    Real,
     Symbol,
     Times,
     substitute,
@@ -96,7 +92,7 @@ class EnsembleEncoder(Encoder):
 
         return Times([param_symbol] + ins)
 
-    def _get_timed_symbols(self, model: Model) -> List[str]:
+    def _get_timed_symbols(self, model: Model) -> Set[str]:
         """
         Get the names of the state (i.e., timed) variables of the model.
 
@@ -110,4 +106,4 @@ class EnsembleEncoder(Encoder):
         List[str]
             state variable names
         """
-        return model._state_var_names()
+        return set(model._state_var_names())

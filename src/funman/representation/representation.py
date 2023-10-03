@@ -12,15 +12,13 @@ from typing import Dict, List, Literal, Optional, Union
 
 from matplotlib import pyplot as plt
 from matplotlib.lines import Line2D
-from pydantic import BaseModel, ConfigDict, Field
-from pysmt.fnode import FNode
-from pysmt.shortcuts import REAL, Symbol
+from pydantic import BaseModel, Field
 
 import funman.utils.math_utils as math_utils
-from funman import BIG_NUMBER, NEG_INFINITY, POS_INFINITY, to_sympy
-from funman.constants import LABEL_FALSE, LABEL_TRUE, LABEL_UNKNOWN, Label
+from funman import to_sympy
+from funman.constants import LABEL_UNKNOWN, Label
 
-from .explanation import BoxExplanation, Explanation, ParameterSpaceExplanation
+from .explanation import BoxExplanation, ParameterSpaceExplanation
 from .interval import Interval
 from .parameter import ModelParameter
 from .symbol import ModelSymbol
@@ -101,9 +99,7 @@ class Box(BaseModel):
     cached_width: Optional[float] = Field(default=None, exclude=True)
 
     def explain(self) -> BoxExplanation:
-        expl = {
-            "box": {k:v.model_dump() for k, v in self.bounds.items() }
-        }
+        expl = {"box": {k: v.model_dump() for k, v in self.bounds.items()}}
         expl.update(self.explanation.explain())
         return expl
 
@@ -436,7 +432,10 @@ class Box(BaseModel):
         max_width_parameter = max(
             parameter_widths, key=lambda k: parameter_widths[k]
         )
-        return max_width_parameter
+        if parameter_widths[max_width_parameter] == 0.0:
+            return None
+        else:
+            return max_width_parameter
 
     def _get_max_width_Parameter(
         self, normalize={}, parameters: List[ModelParameter] = None
@@ -611,22 +610,24 @@ class Box(BaseModel):
         List[Box]
             Boxes resulting from the split.
         """
-
+        p = None
         if points:
             p = self._get_max_width_point_Parameter(points)
-            mid = self.bounds[p].midpoint(
-                points=[[pt.values[p] for pt in grp] for grp in points]
-            )
-            if mid == self.bounds[p].lb or mid == self.bounds[p].ub:
-                # Fall back to box midpoint if point-based mid is degenerate
-                p = self._get_max_width_Parameter()
-                mid = self.bounds[p].midpoint()
-        else:
+            if p is not None:
+                mid = self.bounds[p].midpoint(
+                    points=[[pt.values[p] for pt in grp] for grp in points]
+                )
+                if mid == self.bounds[p].lb or mid == self.bounds[p].ub:
+                    # Fall back to box midpoint if point-based mid is degenerate
+                    p = self._get_max_width_Parameter()
+                    mid = self.bounds[p].midpoint()
+        if p is None:
             p = self._get_max_width_Parameter(
                 normalize=normalize, parameters=parameters
             )
             mid = self.bounds[p].midpoint()
 
+        # print(f"Split({p}[{self.bounds[p].lb, mid}][{mid, self.bounds[p].ub}])")
         b1 = self._copy()
         b2 = self._copy()
 

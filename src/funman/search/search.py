@@ -11,9 +11,10 @@ from pysmt.shortcuts import Solver
 from pysmt.solvers.solver import Model as pysmtModel
 
 from funman import Box, Interval, ModelParameter
-from funman.config import FUNMANConfig
-from funman.representation.explanation import BoxExplanation
-from funman.scenario.scenario import AnalysisScenario
+
+from ..config import FUNMANConfig
+from ..representation.explanation import BoxExplanation
+from ..scenario.scenario import AnalysisScenario
 
 
 class SearchStatistics(BaseModel):
@@ -115,5 +116,5 @@ class Search(ABC):
             result = s.get_model()
         else:
             result = BoxExplanation()
-            result._expression =s.get_unsat_core()
+            result._expression = s.get_unsat_core()
         return result

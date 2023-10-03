@@ -3,9 +3,8 @@ from typing import Dict, List, Union
 import graphviz
 import sympy
 from pydantic import BaseModel, ConfigDict
-from pysmt.shortcuts import REAL, Div, Plus, Real, Symbol
+from pysmt.shortcuts import REAL, Div, Real, Symbol
 
-from funman.representation.parameter import ModelParameter
 from funman.utils.sympy_utils import substitute, to_sympy
 
 from .generated_models.petrinet import Model as GeneratedPetrinet
@@ -217,7 +216,7 @@ class GeneratedPetriNetModel(AbstractPetriNetModel):
         elif isinstance(value, str):
             value = Symbol(value, REAL)
 
-        if scenario.normalization_constant:
+        if scenario.normalization_constant and config.normalize:
             value = Div(value, Real(scenario.normalization_constant))
 
         return value

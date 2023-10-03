@@ -12,6 +12,7 @@ from funman.representation.representation import ParameterSpace
 from funman.scenario.scenario import AnalysisScenario
 from funman.server.exception import FunmanWorkerException
 from funman.server.query import (
+    FunmanProgress,
     FunmanResults,
     FunmanWorkRequest,
     FunmanWorkUnit,
@@ -169,7 +170,7 @@ class FunmanWorker:
 
     def _update_current_results(
         self, scenario: AnalysisScenario, results: ParameterSpace
-    ):
+    ) -> FunmanProgress:
         with self._results_lock:
             if self.current_results is None:
                 print(
@@ -181,7 +182,9 @@ class FunmanWorker:
                 raise Exception(
                     "Cannot update current_results as it is already finalized"
                 )
-            self.current_results.update_parameter_space(scenario, results)
+            return self.current_results.update_parameter_space(
+                scenario, results
+            )
 
     def _run(self, stop_event: threading.Event):
         from funman import Funman

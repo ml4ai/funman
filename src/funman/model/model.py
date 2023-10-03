@@ -8,7 +8,7 @@ from typing import Dict, List, Optional, Union
 
 from pydantic import BaseModel, ConfigDict
 from pysmt.formula import FNode
-from pysmt.shortcuts import REAL, Div, Plus, Real, Symbol
+from pysmt.shortcuts import REAL, Div, Real, Symbol
 
 from funman.representation.parameter import ModelParameter
 

@@ -18,8 +18,9 @@ from pysmt.exceptions import (
     SolverReturnedUnknownResultError,
     UnknownSolverAnswerError,
 )
+from pysmt.formula import FNode
 from pysmt.logics import QF_NRA
-from pysmt.shortcuts import Real, get_env
+from pysmt.shortcuts import Real, get_env, BOOL, Bool
 from pysmt.smtlib.parser import SmtLibParser
 from pysmt.smtlib.script import SmtLibCommand
 from pysmt.smtlib.solver import SmtLibOptions, SmtLibSolver
@@ -27,7 +28,6 @@ from pysmt.solvers.eager import EagerModel
 from pysmt.solvers.smtlib import SmtLibBasicSolver, SmtLibIgnoreMixin
 from pysmt.solvers.solver import Solver, SolverOptions, UnsatCoreSolver
 from tenacity import retry
-from pysmt.formula import FNode
 
 import docker
 from funman.utils.smtlib_utils import FUNMANSmtPrinter
@@ -554,8 +554,8 @@ class DRealNative(
         self.model = result
         return result
 
-    def get_unsat_core(self)->FNode:
-        unsat_core:dreal.Formula = self.context.get_unsat_core()
+    def get_unsat_core(self) -> FNode:
+        unsat_core: dreal.Formula = self.context.get_unsat_core()
         f = self.converter.back(unsat_core)
         return f
 
@@ -584,22 +584,26 @@ class DRealNative(
         for sn in self.symbols:
             s = self.symbols[sn][0]
             if s.is_term():
-                v = self.get_value(self.symbols[sn][1])
+                v = self.get_value(self.symbols[sn])
                 assignment[s] = v
         return EagerModel(assignment=assignment, environment=self.environment)
 
-    def get_value(self, item):
+    def get_value(self, symbol_pair):
         # print(f"get_value() {item}: {self.model[item]}")
-        ub = self.model[item].ub()
-        lb = self.model[item].lb()
-        mid = (ub - lb) / 2.0
-        mid = mid + lb
-        if not mid.is_integer() and (ub.is_integer() or lb.is_integer()):
-            return Real(lb) if lb.is_integer() else Real(ub)
-        elif not math.isinf(mid):
-            return Real(mid)
+        (symbol, item) = symbol_pair
+        if symbol.get_type()  == BOOL:
+            return Bool(bool(self.model[item]))
         else:
-            return Real(self.model[item].lb())
+            ub = self.model[item].ub()
+            lb = self.model[item].lb()
+            mid = (ub - lb) / 2.0
+            mid = mid + lb
+            if not mid.is_integer() and (ub.is_integer() or lb.is_integer()):
+                return Real(lb) if lb.is_integer() else Real(ub)
+            elif not math.isinf(mid):
+                return Real(mid)
+            else:
+                return Real(self.model[item].lb())
 
     @clear_pending_pop
     def solve(self, assumptions=None):

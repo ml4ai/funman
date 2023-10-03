@@ -6,8 +6,10 @@ from typing import List
 
 from funman.model import Model
 from funman.model.encoded import EncodedModel
-from funman.translate import Encoder, Encoding, EncodingOptions
-from funman.translate.translate import LayeredEncoding
+from funman.representation.assumption import Assumption
+from funman.representation.constraint import ModelConstraint
+from funman.translate import Encoder, Encoding
+from funman.translate.translate import EncodingOptions, LayeredEncoding
 
 
 class EncodedEncoder(Encoder):
@@ -45,8 +47,15 @@ class EncodedEncoder(Encoder):
                 f"An EncodedEncoder cannot encode models of type: {type(model)}"
             )
 
-    def encode_model_layer(self, layer_idx: int, step_size: int = None):
-        return self.encode_model(self.scenario.model)._layers[layer_idx]
+    def encode_model_layer(
+        self,
+        scenario: "AnalysisScenario",
+        constraint: ModelConstraint,
+        layer_idx: int,
+        options: EncodingOptions,
+        assumptions: List[Assumption],
+    ):
+        return self.encode_model(scenario.model)._layers[layer_idx]
 
     def encode_model_timed(
         self, scenario: "AnalysisScenario", num_steps: int, step_size: int
@@ -56,6 +65,6 @@ class EncodedEncoder(Encoder):
     def _get_untimed_symbols(self, model: Model) -> List[str]:
         untimed_symbols = []
         # All flux nodes correspond to untimed symbols
-        for var_name in [p.name for p in self.scenario.parameters]:
+        for var_name in model._parameter_names():
             untimed_symbols.append(var_name)
         return untimed_symbols
