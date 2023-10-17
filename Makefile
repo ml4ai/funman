@@ -180,7 +180,12 @@ delete-dev-container:
 	docker rm ${DEV_CONTAINER}
 
 pull-dev-container:
+ifndef TARGET_ARCH
 	docker pull ${DEV_IMAGE}
+else
+	echo "Using arch:" ${TARGET_ARCH} 
+	docker pull --platform ${TARGET_ARCH} ${DEV_IMAGE}
+endif
 
 delete-dev-container-if-out-of-date: pull-dev-container
 	@if (docker container inspect ${DEV_CONTAINER} > /dev/null 2>&1) ; then \
